@@ -21,16 +21,17 @@ export function ProfileCommunitiesPage() {
   const { page, pageSize, setPage } = useUrlPagination()
   const [communities, setCommunities] = useState<Community[]>([])
   const [totalItems, setTotalItems] = useState(0)
+  const profileId = profile?.id
 
   useEffect(() => { if (normalized) void loadProfileByUrl(normalized); else clearProfile() }, [normalized, loadProfileByUrl, clearProfile])
   useEffect(() => {
-    if (!profile) { setCommunities([]); setTotalItems(0); return }
+    if (!profileId) return
     let active = true
-    void getProfileCommunities(profile.id, { page, pageSize }).then(result => {
+    void getProfileCommunities(profileId, { page, pageSize }).then(result => {
       if (active) { setCommunities(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setCommunities([]); setTotalItems(0) } })
     return () => { active = false }
-  }, [profile?.id, page, pageSize, setPage])
+  }, [profileId, page, pageSize, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!profile) return <NotFoundPage />

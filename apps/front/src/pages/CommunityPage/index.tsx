@@ -23,8 +23,9 @@ export function CommunityPage() {
   const clearCommunity = useCommunityStore(state => state.clearCommunity)
   const loadRelationships = useCommunityRelationshipStore(state => state.loadRelationships)
   const session = useAuthStore(state => state.session)
+  const communityId = community?.id
   useEffect(() => { if (requestedUrl) void loadCommunityByUrl(requestedUrl); else clearCommunity() }, [requestedUrl, loadCommunityByUrl, clearCommunity])
-  useEffect(() => { if (community) void loadRelationships(community.id).catch(() => undefined) }, [community?.id, loadRelationships, session?.user.id])
+  useEffect(() => { if (communityId) void loadRelationships(communityId).catch(() => undefined) }, [communityId, loadRelationships, session?.user.id])
   if (loadedUrl !== requestedUrl) return null
   if (!community) return <NotFoundPage />
   return (

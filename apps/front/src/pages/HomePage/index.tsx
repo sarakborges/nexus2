@@ -28,7 +28,7 @@ export function HomePage() {
       void getOwnedProfiles({ page, pageSize }).then((result: PaginatedResult<Profile>) => {
         if (active) { setProfiles(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
       }).catch(() => { if (active) { setProfiles([]); setTotalItems(0) } })
-    } else { setProfiles([]); setTotalItems(0) }
+    }
     return () => { active = false }
   }, [userId, page, pageSize, setPage])
 
@@ -38,6 +38,8 @@ export function HomePage() {
   }
   const handleSelectProfile = async (profileId: string) => { await setCurrentProfile(profileId) }
   const currentProfileId = session?.user.currentProfile
+  const visibleProfiles = userId ? profiles : []
+  const visibleTotalItems = userId ? totalItems : 0
 
   return (
     <main className="account-page">
@@ -45,14 +47,14 @@ export function HomePage() {
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
-            <p className="account-card__description">{t('HOME_WELCOME', { name: profiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
+            <p className="account-card__description">{t('HOME_WELCOME', { name: visibleProfiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
           </div>
           <Button variation="transparent" onClick={() => void handleSignOut()}>{t('AUTH_SIGN_OUT')}</Button>
         </header>
         <p className="account-card__description">{session?.user.email}</p>
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
-          {profiles.map(profile => {
+          {visibleProfiles.map(profile => {
             const current = profile.id === currentProfileId
             return (
               <div className="account-card__profile-entry" key={profile.id}>
@@ -61,7 +63,7 @@ export function HomePage() {
               </div>
             )
           })}
-          <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
+          <Pagination page={page} pageSize={pageSize} totalItems={visibleTotalItems} onPageChange={setPage} />
         </div>
         <div className="account-card__actions">
           <Link className="account-card__action" to={ROUTES.createProfile}>{t('HOME_CREATE_PROFILE')}</Link>

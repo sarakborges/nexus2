@@ -36,31 +36,35 @@ export function CommunityMembersPage() {
   const [totalMembers, setTotalMembers] = useState(0)
   const [pending, setPending] = useState<Member[]>([])
   const [totalPending, setTotalPending] = useState(0)
+  const communityId = community?.id
+  const canViewPending = Boolean(communityId && currentProfileId && isStaff)
+  const visiblePending = canViewPending ? pending : []
+  const visibleTotalPending = canViewPending ? totalPending : 0
   const { page, pageSize, setPage } = useUrlPagination('page')
   const { page: pendingPage, pageSize: pendingPageSize, setPage: setPendingPage } = useUrlPagination('pendingPage')
 
   useEffect(() => { if (normalized) void loadCommunityByUrl(normalized); else clearCommunity() }, [normalized, loadCommunityByUrl, clearCommunity])
-  useEffect(() => { if (community) void loadRelationships(community.id).catch(() => undefined) }, [community?.id, loadRelationships, session?.user.id])
+  useEffect(() => { if (communityId) void loadRelationships(communityId).catch(() => undefined) }, [communityId, loadRelationships, session?.user.id])
 
   const visibleTab: MemberTab = isStaff ? activeTab : 'all'
 
   useEffect(() => {
-    if (!community) return
+    if (!communityId) return
     let active = true
-    void getCommunityMembers(community.id, visibleTab, { page, pageSize }, currentProfileId ?? undefined).then(result => {
+    void getCommunityMembers(communityId, visibleTab, { page, pageSize }, currentProfileId ?? undefined).then(result => {
       if (active) { setMembers(result.items); setTotalMembers(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setMembers([]); setTotalMembers(0) } })
     return () => { active = false }
-  }, [community?.id, visibleTab, page, pageSize, currentProfileId, relationships, setPage])
+  }, [communityId, visibleTab, page, pageSize, currentProfileId, relationships, setPage])
 
   useEffect(() => {
-    if (!community || !currentProfileId || !isStaff) { setPending([]); setTotalPending(0); return }
+    if (!communityId || !currentProfileId || !isStaff) return
     let active = true
-    void getPendingCommunityMembers(community.id, currentProfileId, { page: pendingPage, pageSize: pendingPageSize }).then(result => {
+    void getPendingCommunityMembers(communityId, currentProfileId, { page: pendingPage, pageSize: pendingPageSize }).then(result => {
       if (active) { setPending(result.items); setTotalPending(result.totalItems); if (result.page !== pendingPage) setPendingPage(result.page) }
     }).catch(() => { if (active) { setPending([]); setTotalPending(0) } })
     return () => { active = false }
-  }, [community?.id, currentProfileId, isStaff, pendingPage, pendingPageSize, relationships, setPendingPage])
+  }, [communityId, currentProfileId, isStaff, pendingPage, pendingPageSize, relationships, setPendingPage])
 
 
   if (loadedUrl !== normalized) return null
@@ -94,11 +98,11 @@ export function CommunityMembersPage() {
         <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
         <Link className="account-card__link" to={`${ROUTES.community}/${community.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
       </header>
-      {isStaff && totalPending > 0 && (
+      {canViewPending && visibleTotalPending > 0 && (
         <section className="account-card__profile-list">
           <h2>{t('COMMUNITY_PENDING_REQUESTS')}</h2>
-          {pending.map(renderMember)}
-          <Pagination page={pendingPage} pageSize={pendingPageSize} totalItems={totalPending} onPageChange={setPendingPage} />
+          {visiblePending.map(renderMember)}
+          <Pagination page={pendingPage} pageSize={pendingPageSize} totalItems={visibleTotalPending} onPageChange={setPendingPage} />
         </section>
       )}
       <div className="community-member__tabs" role="tablist">

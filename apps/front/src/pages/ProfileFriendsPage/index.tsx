@@ -25,17 +25,18 @@ export function ProfileFriendsPage() {
   const { page, pageSize, setPage } = useUrlPagination()
   const [friends, setFriends] = useState<Profile[]>([])
   const [totalItems, setTotalItems] = useState(0)
+  const profileId = profile?.id
 
   useEffect(() => { if (normalized) void loadProfileByUrl(normalized); else clearProfile() }, [normalized, loadProfileByUrl, clearProfile])
   useEffect(() => {
-    if (!profile) { setFriends([]); setTotalItems(0); return }
+    if (!profileId) return
     let active = true
-    void getProfileFriends(profile.id, { page, pageSize }).then(result => {
+    void getProfileFriends(profileId, { page, pageSize }).then(result => {
       if (active) { setFriends(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setFriends([]); setTotalItems(0) } })
-    if (session?.user.currentProfile === profile.id) void loadRelationships(profile.id).catch(() => undefined)
+    if (session?.user.currentProfile === profileId) void loadRelationships(profileId).catch(() => undefined)
     return () => { active = false }
-  }, [profile?.id, page, pageSize, loadRelationships, session?.user.currentProfile, setPage])
+  }, [profileId, page, pageSize, loadRelationships, session?.user.currentProfile, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!profile) return <NotFoundPage />

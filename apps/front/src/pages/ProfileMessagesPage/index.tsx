@@ -37,12 +37,16 @@ export function ProfileMessagesPage() {
   const [content, setContent] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [senderProfiles, setSenderProfiles] = useState<Profile[]>([])
+  const profileId = profile?.id
 
   useEffect(() => { if (requestedUrl) void loadProfileByUrl(requestedUrl); else clearProfile() }, [requestedUrl, loadProfileByUrl, clearProfile])
   useEffect(() => {
-    if (profile) void loadMessages(profile.id, viewerProfileId, page, pageSize).then(actualPage => { if (actualPage !== page) setPage(actualPage) }).catch(() => clearMessages())
-    else clearMessages()
-  }, [profile?.id, viewerProfileId, page, pageSize, loadMessages, clearMessages, setPage])
+    if (!profileId) {
+      clearMessages()
+      return
+    }
+    void loadMessages(profileId, viewerProfileId, page, pageSize).then(actualPage => { if (actualPage !== page) setPage(actualPage) }).catch(() => clearMessages())
+  }, [profileId, viewerProfileId, page, pageSize, loadMessages, clearMessages, setPage])
   useEffect(() => {
     let active = true
     const ids = [...new Set(messages.map(message => message.fromProfileId))]
