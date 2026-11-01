@@ -5,7 +5,8 @@ import { updateSettings } from '@/Helpers/Systems/Settings'
 
 import { useSettingsStore } from '@/Stores/Settings.store'
 
-import { Portrait, ShadowButton, Text } from '@/DesignSystem'
+import { ShadowButton, Text } from '@/DesignSystem'
+import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
 
 import './LanguageOption.style.scss'
 
@@ -30,12 +31,7 @@ export function LanguageOption({ language }: LanguageOptionProps) {
       onClick={handleSelect}
       aria-pressed={isSelected}
     >
-      <span className="language-option__flag">
-        <Portrait
-          alt={languageName}
-          src={`/languages/${language}.webp`}
-        />
-      </span>
+      <LanguageFlag language={language} label={languageName} />
 
       <Text className="language-option__label">{languageName}</Text>
 

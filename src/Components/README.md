@@ -2,8 +2,8 @@
 
 Application components follow Atomic Design and compose the shared design system.
 
-- **Atoms** are feature-specific primitives. Add this layer when the application needs a primitive that should not belong to the shared design system.
-- **Molecules** combine design-system atoms and molecules into focused application controls.
+- **Atoms** are feature-specific primitives, such as the language flag.
+- **Molecules** combine application atoms and design-system elements into focused controls.
 - **Organisms** compose application molecules into complete interface sections.
 - **Templates** may be added when reusable page-level layouts are introduced.
 

@@ -38,6 +38,7 @@ src/
     Molecules/
     Organisms/
   Components/
+    Atoms/
     Molecules/
     Organisms/
   Helpers/
