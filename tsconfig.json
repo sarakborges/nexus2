@@ -13,12 +13,13 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
 
     "paths": {
       "@/*": ["./src/*"]
     },
 
-    "noImplicitAny": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },

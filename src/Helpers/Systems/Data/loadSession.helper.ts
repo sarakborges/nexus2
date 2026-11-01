@@ -1,13 +1,8 @@
-export const loadSession = (key: string) => {
-  try {
-    const data = sessionStorage.getItem(`nexus_${key}`) || ''
+import {
+  getBrowserStorage,
+  getStorageKey,
+  loadStorage
+} from '@/Helpers/Systems/Storage'
 
-    if (!data) {
-      return false
-    }
-
-    return JSON.parse(data)
-  } catch {
-    console.warn(`Error loading session: nexus_${key}`)
-  }
-}
+export const loadSession = <T>(key: string): T | null =>
+  loadStorage<T>(getBrowserStorage('session'), getStorageKey(key))

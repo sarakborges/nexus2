@@ -1,5 +1,5 @@
-import { LANGUAGES } from '@/Consts/Languages.const'
-import { getTexts } from '@/Helpers/Language'
+import { SUPPORTED_LANGUAGES } from '@/Constants/languages'
+import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
 import { Text } from '@/DesignSystem'
 import { LanguageOption } from '@/Components/Molecules/LanguageOption'
@@ -7,18 +7,20 @@ import { LanguageOption } from '@/Components/Molecules/LanguageOption'
 import './LanguageSelector.style.scss'
 
 export function LanguageSelector() {
-  const title = getTexts('LANGUAGES_TITLE')
+  const { t } = useTranslations()
 
   return (
-    <section className="language-selector" aria-label={title}>
-      <Text>{title}</Text>
+    <section
+      className="language-selector"
+      aria-labelledby="language-selector-title"
+    >
+      <Text as="h2" id="language-selector-title">
+        {t('LANGUAGES_TITLE')}
+      </Text>
 
       <div className="language-selector__options">
-        {LANGUAGES.map((language) => (
-          <LanguageOption
-            key={`language-selector-${language}`}
-            language={language}
-          />
+        {SUPPORTED_LANGUAGES.map((language) => (
+          <LanguageOption key={language} language={language} />
         ))}
       </div>
     </section>

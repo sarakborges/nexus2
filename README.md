@@ -33,20 +33,26 @@ src/
     main.css
     reset.css
     vars.css
-  DesignSystem/
-    Atoms/
-    Molecules/
-    Organisms/
   Components/
     Atoms/
     Molecules/
     Organisms/
+  Constants/
+  DesignSystem/
+    Atoms/
+    Molecules/
   Helpers/
     Language/
     Math/
     Systems/
+      Data/
+      Storage/
+  Hooks/
+    Language/
   Locales/
-    En/
+    en.ts
+  Stores/
+  Types/
   pages/
     HomePage/
       index.tsx
@@ -62,9 +68,4 @@ Both `DesignSystem` and `Components` follow Atomic Design. The design system con
 
 React Router is configured in declarative mode. Add route definitions in `src/routes/index.tsx`.
 
-Localization strings live in `src/Locales/` and are accessed through `src/Helpers/Language`. Generic browser persistence helpers use the `nexus_` storage namespace.
-
-## Deployment
-
-- **Vercel:** the project outputs static files to `build/`; `vercel.json` rewrites application paths to `index.html`.
-- **Docker:** the included Dockerfile builds the app and serves it with Nginx. Nginx is configured to fall back to `index.html` for client-side routes.
+Localization strings live in `src/Locales/` and are accessed through the typed `useTranslations` hook. Translation lookup is a pure function. Generic browser persistence helpers use the `nexus_` storage namespace; settings use a dedicated Zustand persistence store.

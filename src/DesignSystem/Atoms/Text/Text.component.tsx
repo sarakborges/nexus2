@@ -1,41 +1,21 @@
-import type { ReactNode } from 'react'
+import type { ComponentPropsWithoutRef } from 'react'
 
 import './Text.style.scss'
 
-type TextElement = 'p' | 'h1' | 'h2' | 'span'
+type TextElement = 'p' | 'span' | 'h1' | 'h2'
 
-type TextProps = {
-  as?: TextElement
-  children: ReactNode
+type TextProps<T extends TextElement = 'span'> = {
+  as?: T
   className?: string
-  id?: string
-}
+} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'className'>
 
-export function Text({
-  as = 'span',
-  children,
+export function Text<T extends TextElement = 'span'>({
+  as,
   className,
-  id
-}: TextProps) {
+  ...props
+}: TextProps<T>) {
+  const Component = as ?? 'span'
   const classNames = ['text', className].filter(Boolean).join(' ')
 
-  if (as === 'p' && typeof children === 'string') {
-    return (
-      <>
-        {children.split(/\n{2,}/).map((paragraph, index) => (
-          <p className={classNames} id={index === 0 ? id : undefined} key={index}>
-            {paragraph}
-          </p>
-        ))}
-      </>
-    )
-  }
-
-  const Component = as
-
-  return (
-    <Component className={classNames} id={id}>
-      {children}
-    </Component>
-  )
+  return <Component className={classNames} {...props} />
 }

@@ -1,16 +1,16 @@
+import type { Language } from '@/Constants/languages'
 import { Portrait } from '@/DesignSystem'
 
 import './LanguageFlag.style.scss'
 
 type LanguageFlagProps = {
-  language: string
-  label: string
+  language: Language
 }
 
-export function LanguageFlag({ language, label }: LanguageFlagProps) {
+export function LanguageFlag({ language }: LanguageFlagProps) {
   return (
     <span className="language-flag">
-      <Portrait alt={label} src={`/languages/${language}.webp`} />
+      <Portrait alt="" aria-hidden="true" src={`/languages/${language}.webp`} />
     </span>
   )
 }

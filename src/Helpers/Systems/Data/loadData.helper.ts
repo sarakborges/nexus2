@@ -1,13 +1,8 @@
-export const loadData = (key: string) => {
-  try {
-    const data = localStorage.getItem(`nexus_${key}`) || ''
+import {
+  getBrowserStorage,
+  getStorageKey,
+  loadStorage
+} from '@/Helpers/Systems/Storage'
 
-    if (!data) {
-      return false
-    }
-
-    return JSON.parse(data)
-  } catch {
-    console.warn(`Error loading data: nexus_${key}`)
-  }
-}
+export const loadData = <T>(key: string): T | null =>
+  loadStorage<T>(getBrowserStorage('local'), getStorageKey(key))
