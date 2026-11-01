@@ -1,0 +1,22 @@
+.language-option {
+  display: flex;
+  place-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+
+  width: 100%;
+  padding: 8px 24px;
+
+  &__label {
+    flex: 1;
+    padding: 4px 0;
+
+    font-size: 12px;
+    text-align: left;
+  }
+
+  &__selected-icon {
+    width: 12px;
+    height: 12px;
+  }
+}

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build, test, lint and Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.22.0
+          package-manager-cache: false
+
+      - name: Install locked workspace dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build all workspaces
+        run: npm run build
+
+      - name: Test backend authentication and community authorization
+        run: npm test --workspace @nexus/back
+
+      - name: Lint frontend
+        run: npm run lint --workspace @nexus/front
+
+      - name: Build Storybook
+        run: npm run build-storybook --workspace @nexus/front
+
+      - name: Build frontend Docker image
+        run: docker build --file apps/front/Dockerfile --tag nexus-front:ci .

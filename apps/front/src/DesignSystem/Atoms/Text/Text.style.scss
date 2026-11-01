@@ -1,0 +1,25 @@
+.text {
+  color: var(--text-color);
+  line-height: 1;
+  font-weight: 300;
+
+  &:is(h1) {
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+  }
+
+  &:is(h2) {
+    font-size: 20px;
+    font-weight: var(--font-weight-bold);
+  }
+
+  &:is(span) {
+    font-size: 14px;
+  }
+
+  &:is(p) {
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+}
