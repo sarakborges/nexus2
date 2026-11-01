@@ -2,7 +2,12 @@
   "name": "@nexus/back",
   "private": true,
   "version": "1.0.0",
-  "scripts": { "dev": "nest start --watch", "build": "nest build", "start": "node dist/main.js" },
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "test": "node --test test/*.test.cjs"
+  },
   "dependencies": {
     "@nexus/common": "*",
     "@nestjs/common": "^11.0.0",
@@ -15,6 +20,11 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
-  "devDependencies": { "@nestjs/schematics": "^11.0.0",
-    "@nestjs/cli": "^11.0.0", "@types/express": "^5.0.3", "@types/node": "^22.0.0", "typescript": "^5.9.2" }
+  "devDependencies": {
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/cli": "^11.0.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.2"
+  }
 }
