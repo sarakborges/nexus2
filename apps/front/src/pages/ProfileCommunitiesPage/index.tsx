@@ -27,10 +27,10 @@ export function ProfileCommunitiesPage() {
     if (!profile) { setCommunities([]); setTotalItems(0); return }
     let active = true
     void getProfileCommunities(profile.id, { page, pageSize }).then(result => {
-      if (active) { setCommunities(result.items); setTotalItems(result.totalItems) }
+      if (active) { setCommunities(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setCommunities([]); setTotalItems(0) } })
     return () => { active = false }
-  }, [profile?.id, page, pageSize])
+  }, [profile?.id, page, pageSize, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!profile) return <NotFoundPage />

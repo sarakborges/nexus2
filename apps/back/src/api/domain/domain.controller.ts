@@ -1,7 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
-import { IsArray, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { IsIn, IsString, MaxLength, MinLength } from 'class-validator'
 import type { CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
-import { AuthService } from '../auth/auth.service'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
@@ -40,7 +39,7 @@ class MessageDto {
 
 @Controller()
 export class DomainController {
-  constructor(private readonly domain: DomainService, private readonly auth: AuthService) {}
+  constructor(private readonly domain: DomainService) {}
 
   @Get('profiles') listProfiles(@Query() q: PaginationDto) { return this.domain.listProfiles(q) }
   @Get('profiles/owned') @UseGuards(JwtAccessGuard) ownedProfiles(@CurrentUser() u: { id: string }, @Query() q: PaginationDto) { return this.domain.listOwnedProfiles(u.id, q) }

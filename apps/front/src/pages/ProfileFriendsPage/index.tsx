@@ -31,11 +31,11 @@ export function ProfileFriendsPage() {
     if (!profile) { setFriends([]); setTotalItems(0); return }
     let active = true
     void getProfileFriends(profile.id, { page, pageSize }).then(result => {
-      if (active) { setFriends(result.items); setTotalItems(result.totalItems) }
+      if (active) { setFriends(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setFriends([]); setTotalItems(0) } })
     if (session?.user.currentProfile === profile.id) void loadRelationships(profile.id).catch(() => undefined)
     return () => { active = false }
-  }, [profile?.id, page, pageSize, loadRelationships, session?.user.currentProfile])
+  }, [profile?.id, page, pageSize, loadRelationships, session?.user.currentProfile, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!profile) return <NotFoundPage />

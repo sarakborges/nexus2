@@ -17,10 +17,10 @@ export function CommunitiesPage() {
   useEffect(() => {
     let active = true
     void getCommunities({ page, pageSize }).then(result => {
-      if (active) { setCommunities(result.items); setTotalItems(result.totalItems) }
+      if (active) { setCommunities(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setCommunities([]); setTotalItems(0) } })
     return () => { active = false }
-  }, [page, pageSize])
+  }, [page, pageSize, setPage])
 
   return (
     <main className="account-page">

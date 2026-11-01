@@ -12,8 +12,8 @@ export function GettingStartedPage() {
   const { t } = useTranslations()
   const signOut = useAuthStore((state) => state.signOut)
 
-  const handleSignOut = () => {
-    signOut()
+  const handleSignOut = async () => {
+    await signOut()
     navigate(ROUTES.signIn, { replace: true })
   }
 
@@ -30,7 +30,7 @@ export function GettingStartedPage() {
             </p>
           </div>
 
-          <Button variation="transparent" onClick={handleSignOut}>
+          <Button variation="transparent" onClick={() => void handleSignOut()}>
             {t('AUTH_SIGN_OUT')}
           </Button>
         </header>

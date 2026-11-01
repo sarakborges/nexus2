@@ -46,21 +46,21 @@ export function CommunityMembersPage() {
     if (!community) return
     let active = true
     void getCommunityMembers(community.id, activeTab, { page, pageSize }).then(result => {
-      if (active) { setMembers(result.items); setTotalMembers(result.totalItems) }
+      if (active) { setMembers(result.items); setTotalMembers(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setMembers([]); setTotalMembers(0) } })
     return () => { active = false }
-  }, [community?.id, activeTab, page, pageSize, relationships])
+  }, [community?.id, activeTab, page, pageSize, relationships, setPage])
 
   useEffect(() => {
     if (!community || !currentProfileId || !isStaff) { setPending([]); setTotalPending(0); return }
     let active = true
     void getPendingCommunityMembers(community.id, currentProfileId, { page: pendingPage, pageSize: pendingPageSize }).then(result => {
-      if (active) { setPending(result.items); setTotalPending(result.totalItems) }
+      if (active) { setPending(result.items); setTotalPending(result.totalItems); if (result.page !== pendingPage) setPendingPage(result.page) }
     }).catch(() => { if (active) { setPending([]); setTotalPending(0) } })
     return () => { active = false }
-  }, [community?.id, currentProfileId, isStaff, pendingPage, pendingPageSize, relationships])
+  }, [community?.id, currentProfileId, isStaff, pendingPage, pendingPageSize, relationships, setPendingPage])
 
-  useEffect(() => { setPage(1) }, [activeTab, community?.id])
+  useEffect(() => { setPage(1) }, [activeTab, community?.id, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!community) return <NotFoundPage />

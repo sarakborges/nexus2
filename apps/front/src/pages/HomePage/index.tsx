@@ -26,11 +26,11 @@ export function HomePage() {
     let active = true
     if (userId) {
       void getOwnedProfiles({ page, pageSize }).then((result: PaginatedResult<Profile>) => {
-        if (active) { setProfiles(result.items); setTotalItems(result.totalItems) }
+        if (active) { setProfiles(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
       }).catch(() => { if (active) { setProfiles([]); setTotalItems(0) } })
     } else { setProfiles([]); setTotalItems(0) }
     return () => { active = false }
-  }, [userId, page, pageSize])
+  }, [userId, page, pageSize, setPage])
 
   const handleSignOut = async () => {
     await signOut()

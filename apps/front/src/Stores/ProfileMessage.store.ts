@@ -8,7 +8,7 @@ type ProfileMessageStore = {
   messages: ProfileMessage[]
   totalItems: number
   totalPages: number
-  loadMessages: (profileId: string, viewerProfileId: string | null, page?: number, pageSize?: number) => Promise<void>
+  loadMessages: (profileId: string, viewerProfileId: string | null, page?: number, pageSize?: number) => Promise<number>
   sendMessage: (fromProfileId: string, toProfileId: string, content: string) => Promise<ProfileMessage>
   clearMessages: () => void
 }
@@ -24,6 +24,7 @@ export const useProfileMessageStore = create<ProfileMessageStore>((set, get) => 
     if (get().profileId === profileId && get().viewerProfileId === viewerProfileId) {
       set({ messages: result.items, totalItems: result.totalItems, totalPages: result.totalPages })
     }
+    return result.page
   },
   sendMessage: async (fromProfileId, toProfileId, content) => {
     const message = await createProfileMessage(fromProfileId, toProfileId, content)
