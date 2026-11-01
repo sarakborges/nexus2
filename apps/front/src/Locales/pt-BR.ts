@@ -50,6 +50,7 @@ export const ptBRTranslations = {
   AUTH_ERROR_INVALID_CREDENTIALS: 'O e-mail ou a senha estão incorretos.',
   AUTH_ERROR_STORAGE: 'O armazenamento do navegador está indisponível. Verifique as configurações e tente novamente.',
   AUTH_ERROR_CRYPTO: 'Este contexto do navegador não oferece suporte ao processamento seguro de senhas.',
+  AUTH_ERROR_NETWORK: 'Não foi possível conectar ao serviço de autenticação. Verifique se a API está disponível e tente novamente.',
   AUTH_ERROR_GENERIC: 'Ocorreu um erro. Tente novamente.',
   GETTING_STARTED_TITLE: 'Sua conta está pronta',
   GETTING_STARTED_DESCRIPTION: 'A conta foi criada. Agora, configure um perfil para que outras pessoas possam identificar você.',
