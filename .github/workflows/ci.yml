@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Build, test, lint and Docker
+    name: Build, test, lint and deployment configs
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -37,7 +37,52 @@ jobs:
       - name: Build all workspaces
         run: npm run build
 
-      - name: Test backend authentication and community authorization
+      - name: Validate Vercel Services routing and root-context containers
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readFileSync } from 'node:fs'
+
+          const config = JSON.parse(readFileSync('vercel.json', 'utf8'))
+          const required = {
+            front: 'Dockerfile.front',
+            bff: 'Dockerfile.bff',
+            back: 'Dockerfile.back'
+          }
+
+          for (const [name, entrypoint] of Object.entries(required)) {
+            const service = config.services?.[name]
+            if (!service) throw new Error(`Missing Vercel service: ${name}`)
+            if (service.root !== '.') throw new Error(`Service ${name} must use the monorepo root as Docker context.`)
+            if (service.runtime !== 'container') throw new Error(`Service ${name} must use the container runtime.`)
+            if (service.entrypoint !== entrypoint || !existsSync(entrypoint)) {
+              throw new Error(`Missing or unexpected Dockerfile for service ${name}.`)
+            }
+          }
+
+          const apiRoute = config.rewrites?.find((rule) =>
+            rule.source === '/api/(.*)' && rule.destination?.service === 'bff'
+          )
+          const frontRoute = config.rewrites?.find((rule) =>
+            rule.source === '/(.*)' && rule.destination?.service === 'front'
+          )
+          if (!apiRoute || !frontRoute) throw new Error('Public /api and frontend routes must target their expected services.')
+
+          const binding = config.services.bff.bindings?.find((item) =>
+            item.type === 'service' && item.service === 'back' &&
+            item.format === 'url' && item.env === 'BACKEND_SERVICE_URL'
+          )
+          if (!binding) throw new Error('The BFF must bind privately to the backend service.')
+          if (config.rewrites.some((rule) => rule.destination?.service === 'back')) {
+            throw new Error('The domain backend must not be exposed publicly.')
+          }
+
+          const frontDockerfile = readFileSync('Dockerfile.front', 'utf8')
+          if (!frontDockerfile.includes('COPY package.json package-lock.json ./')) {
+            throw new Error('Frontend container must install from the monorepo root lockfile.')
+          }
+          NODE
+
+      - name: Test backend authentication, authorization and Supabase persistence
         run: npm test --workspace @nexus/back
 
       - name: Lint frontend
@@ -46,8 +91,8 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook --workspace @nexus/front
 
-      - name: Validate full-stack Docker Compose
+      - name: Validate optional Docker Compose deployment
         run: docker compose --env-file .env.compose.example config --quiet
 
-      - name: Build full-stack Docker images
+      - name: Build optional Docker Compose images
         run: docker compose --env-file .env.compose.example build

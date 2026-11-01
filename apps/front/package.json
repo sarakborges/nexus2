@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
+    "prebuild": "npm --prefix ../.. run build --workspace @nexus/common",
     "build": "tsc -b && vite build --outDir build",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0 --outDir build",

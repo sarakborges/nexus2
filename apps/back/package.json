@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "nest start --watch",
+    "prebuild": "npm --prefix ../.. run build --workspace @nexus/common",
     "build": "nest build",
     "start": "node dist/main.js",
     "test": "node --test test/*.test.cjs"

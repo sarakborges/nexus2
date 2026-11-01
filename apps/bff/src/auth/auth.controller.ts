@@ -5,6 +5,7 @@ import { IsEmail, IsString, MinLength } from 'class-validator'
 import type { Request, Response } from 'express'
 import type { AuthTokenPair } from '@nexus/common'
 import { clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from './cookie.util'
+import { getBackendUrl } from '../backend-url.util'
 
 class CredentialsDto {
   @IsEmail() email!: string
@@ -18,7 +19,7 @@ type AuthResponse = { user: AuthTokenPair['user']; authenticated: true }
 
 @Controller('api/auth')
 export class AuthController {
-  private readonly backUrl = process.env.BACKEND_URL ?? 'http://localhost:3002/api'
+  private readonly backUrl = getBackendUrl()
   constructor(private readonly http: HttpService) {}
 
   @Post('sign-up')

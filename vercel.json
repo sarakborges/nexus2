@@ -1,11 +1,42 @@
 {
-  "installCommand": "npm ci --no-audit --no-fund",
-  "buildCommand": "npm run build --workspace @nexus/common && npm run build --workspace @nexus/front",
-  "outputDirectory": "apps/front/build",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "front": {
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "Dockerfile.front"
+    },
+    "bff": {
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "Dockerfile.bff",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "back",
+          "format": "url",
+          "env": "BACKEND_SERVICE_URL"
+        }
+      ]
+    },
+    "back": {
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "Dockerfile.back"
+    }
+  },
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "bff"
+      }
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": {
+        "service": "front"
+      }
     }
   ]
 }
