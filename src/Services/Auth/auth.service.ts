@@ -126,8 +126,14 @@ export const createAccount = async ({
   email,
   password
 }: SignUpCredentials): Promise<AuthUser> => {
-  const accounts = loadAccounts()
+  const normalizedName = name.trim()
   const normalizedEmail = normalizeEmail(email)
+
+  if (!normalizedName) {
+    throw new AuthError('INVALID_INPUT')
+  }
+
+  const accounts = loadAccounts()
 
   if (accounts.some((account) => account.email === normalizedEmail)) {
     throw new AuthError('EMAIL_ALREADY_EXISTS')
@@ -136,7 +142,7 @@ export const createAccount = async ({
   const salt = getCrypto().getRandomValues(new Uint8Array(16))
   const account: StoredAccount = {
     id: createId(),
-    name: name.trim(),
+    name: normalizedName,
     email: normalizedEmail,
     passwordSalt: encodeBase64(salt),
     passwordHash: await derivePasswordHash(password, salt)

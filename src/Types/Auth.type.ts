@@ -23,5 +23,6 @@ export type SignInCredentials = {
 export type AuthErrorCode =
   | 'EMAIL_ALREADY_EXISTS'
   | 'INVALID_CREDENTIALS'
+  | 'INVALID_INPUT'
   | 'STORAGE_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'

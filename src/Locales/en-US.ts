@@ -28,6 +28,7 @@ export const enUSTranslations = {
   AUTH_PASSWORDS_MISMATCH: 'The passwords do not match.',
   AUTH_ERROR_EMAIL_EXISTS: 'An account with this email already exists in this tab.',
   AUTH_ERROR_INVALID_CREDENTIALS: 'The email or password is incorrect.',
+  AUTH_ERROR_INVALID_INPUT: 'Enter a name before creating your account.',
   AUTH_ERROR_STORAGE: 'Session storage is unavailable. Check your browser settings and try again.',
   AUTH_ERROR_CRYPTO: 'This browser context does not support secure password processing.',
   AUTH_ERROR_GENERIC: 'Something went wrong. Please try again.',

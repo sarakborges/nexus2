@@ -30,6 +30,7 @@ export const ptBRTranslations = {
   AUTH_PASSWORDS_MISMATCH: 'As senhas não correspondem.',
   AUTH_ERROR_EMAIL_EXISTS: 'Já existe uma conta com este e-mail nesta aba.',
   AUTH_ERROR_INVALID_CREDENTIALS: 'O e-mail ou a senha estão incorretos.',
+  AUTH_ERROR_INVALID_INPUT: 'Informe um nome para criar sua conta.',
   AUTH_ERROR_STORAGE: 'O armazenamento da sessão está indisponível. Verifique as configurações do navegador e tente novamente.',
   AUTH_ERROR_CRYPTO: 'Este contexto do navegador não oferece suporte ao processamento seguro de senhas.',
   AUTH_ERROR_GENERIC: 'Ocorreu um erro. Tente novamente.',
