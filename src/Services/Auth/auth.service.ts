@@ -12,8 +12,17 @@ import type {
 } from '@/Types/Auth.type'
 
 const USERS_KEY = 'users_v2'
+const LEGACY_USERS_KEY = 'auth_accounts_v1'
 const SESSION_KEY = 'auth_session_v2'
+const LEGACY_SESSION_KEY = 'auth_session_v1'
 const PBKDF2_ITERATIONS = 310_000
+
+type LegacyUser = {
+  id: string
+  email: string
+  passwordHash: string
+  passwordSalt: string
+}
 
 export class AuthError extends Error {
   code: AuthErrorCode
@@ -91,16 +100,91 @@ const isUser = (value: unknown): value is User => {
   )
 }
 
+const isLegacyUser = (value: unknown): value is LegacyUser => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const user = value as Record<string, unknown>
+
+  return (
+    typeof user.id === 'string' &&
+    typeof user.email === 'string' &&
+    typeof user.passwordHash === 'string' &&
+    typeof user.passwordSalt === 'string'
+  )
+}
+
 const loadUsers = (): User[] => {
   const storedUsers = loadSession<unknown>(USERS_KEY)
 
-  return Array.isArray(storedUsers) ? storedUsers.filter(isUser) : []
+  if (Array.isArray(storedUsers)) {
+    return storedUsers.filter(isUser)
+  }
+
+  const legacyUsers = loadSession<unknown>(LEGACY_USERS_KEY)
+
+  if (!Array.isArray(legacyUsers)) {
+    return []
+  }
+
+  const migratedUsers: User[] = legacyUsers.filter(isLegacyUser).map((user) => ({
+    id: user.id,
+    email: user.email,
+    password: {
+      hash: user.passwordHash,
+      salt: user.passwordSalt
+    }
+  }))
+
+  if (
+    migratedUsers.length > 0 &&
+    saveSession({ key: USERS_KEY, value: migratedUsers })
+  ) {
+    deleteSession(LEGACY_USERS_KEY)
+  }
+
+  return migratedUsers
 }
 
 const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
   id: user.id,
   email: user.email
 })
+
+const parseSession = (value: unknown): AuthSession | null => {
+  if (!value || typeof value !== 'object') {
+    return null
+  }
+
+  const session = value as Record<string, unknown>
+  const user = session.user
+
+  if (
+    !user ||
+    typeof user !== 'object' ||
+    typeof session.authenticatedAt !== 'number'
+  ) {
+    return null
+  }
+
+  const candidate = user as Record<string, unknown>
+
+  if (
+    typeof candidate.id !== 'string' ||
+    typeof candidate.email !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    user: {
+      id: candidate.id,
+      email: candidate.email
+    },
+    authenticatedAt: session.authenticatedAt
+  }
+}
 
 export const createUser = async ({
   email,
@@ -170,41 +254,27 @@ export const createAuthSession = (
 }
 
 export const getCurrentAuthSession = (): AuthSession | null => {
-  const storedSession = loadSession<unknown>(SESSION_KEY)
+  const currentSession = parseSession(loadSession<unknown>(SESSION_KEY))
 
-  if (!storedSession || typeof storedSession !== 'object') {
-    return null
+  if (currentSession) {
+    return currentSession
   }
 
-  const session = storedSession as Record<string, unknown>
-  const user = session.user
+  const legacySession = parseSession(
+    loadSession<unknown>(LEGACY_SESSION_KEY)
+  )
 
   if (
-    !user ||
-    typeof user !== 'object' ||
-    typeof session.authenticatedAt !== 'number'
+    legacySession &&
+    saveSession({ key: SESSION_KEY, value: legacySession })
   ) {
-    return null
+    deleteSession(LEGACY_SESSION_KEY)
   }
 
-  const candidate = user as Record<string, unknown>
-
-  if (
-    typeof candidate.id !== 'string' ||
-    typeof candidate.email !== 'string'
-  ) {
-    return null
-  }
-
-  return {
-    user: {
-      id: candidate.id,
-      email: candidate.email
-    },
-    authenticatedAt: session.authenticatedAt
-  }
+  return legacySession
 }
 
 export const clearAuthSession = (): void => {
   deleteSession(SESSION_KEY)
+  deleteSession(LEGACY_SESSION_KEY)
 }
