@@ -1,221 +1,71 @@
 import { create } from 'zustand'
-
-import type {
-  CommunityRelationship,
-  CommunityRelationshipType
-} from '@/Models/CommunityRelationship.model'
+import type { CommunityRelationship, CommunityRelationshipType } from '@/Models/CommunityRelationship.model'
 import {
-  demoteCommunityModerator as buildDemotion,
-  getCommunityRelationships,
-  migrateLegacyCommunityRelationships,
-  removeCommunityRelationship as buildRemoval,
-  saveCommunityRelationships,
-  setCommunityRelationship as buildUpdate,
-  transferCommunityOwnership as buildOwnershipTransfer
+  demoteCommunityModerator, getCommunityRelationships, removeCommunityRelationship,
+  setCommunityRelationship, transferCommunityOwnership
 } from '@/Services/CommunityRelationship'
 
 type CommunityRelationshipStore = {
   relationships: CommunityRelationship[]
-  updateRelationship: (
-    profileId: string,
-    communityId: string,
-    type: CommunityRelationshipType,
-    actorProfileId: string
-  ) => boolean
+  loadedCommunityId: string | null
+  loadRelationships: (communityId: string) => Promise<void>
+  updateRelationship: (profileId: string, communityId: string, type: CommunityRelationshipType, actorProfileId: string) => Promise<boolean>
   addOwnerRelationship: (profileId: string, communityId: string) => boolean
-  demoteModerator: (
-    profileId: string,
-    communityId: string,
-    actorProfileId: string
-  ) => boolean
-  transferOwnership: (
-    currentOwnerProfileId: string,
-    newOwnerProfileId: string,
-    communityId: string
-  ) => boolean
-  removeRelationship: (
-    profileId: string,
-    communityId: string,
-    actorProfileId: string
-  ) => boolean
-  getRelationship: (
-    profileId: string,
-    communityId: string
-  ) => CommunityRelationship | null
+  demoteModerator: (profileId: string, communityId: string, actorProfileId: string) => Promise<boolean>
+  transferOwnership: (currentOwnerProfileId: string, newOwnerProfileId: string, communityId: string) => Promise<boolean>
+  removeRelationship: (profileId: string, communityId: string, actorProfileId: string) => Promise<boolean>
+  getRelationship: (profileId: string, communityId: string) => CommunityRelationship | null
   getCommunityIdsForProfile: (profileId: string) => string[]
   getMemberProfileIds: (communityId: string) => string[]
   getStaffProfileIds: (communityId: string) => string[]
   getPendingProfileIds: (communityId: string) => string[]
   getBlockedProfileIds: (communityId: string) => string[]
 }
-
-migrateLegacyCommunityRelationships()
-
-export const useCommunityRelationshipStore =
-  create<CommunityRelationshipStore>((set, get) => ({
-    relationships: getCommunityRelationships(),
-
-    updateRelationship: (profileId, communityId, type, actorProfileId) => {
-      const updatedRelationships = buildUpdate(
-        profileId,
-        communityId,
-        type,
-        actorProfileId,
-        get().relationships
-      )
-
-      if (
-        !updatedRelationships ||
-        !saveCommunityRelationships(updatedRelationships)
-      ) {
-        return false
-      }
-
-      set({ relationships: updatedRelationships })
+export const useCommunityRelationshipStore = create<CommunityRelationshipStore>((set, get) => ({
+  relationships: [],
+  loadedCommunityId: null,
+  loadRelationships: async (communityId) => {
+    const relationships = await getCommunityRelationships(communityId)
+    set({ relationships, loadedCommunityId: communityId })
+  },
+  updateRelationship: async (profileId, communityId, type, actorProfileId) => {
+    try {
+      const relationship = await setCommunityRelationship(profileId, communityId, type, actorProfileId)
+      set((state) => ({ relationships: [...state.relationships.filter(item => !(item.profiles[0] === profileId && item.profiles[1] === communityId)), relationship], loadedCommunityId: communityId }))
       return true
-    },
-
-    addOwnerRelationship: (profileId, communityId) => {
-      const updatedRelationships = buildUpdate(
-        profileId,
-        communityId,
-        'owner',
-        profileId,
-        get().relationships
-      )
-
-      if (
-        !updatedRelationships ||
-        !saveCommunityRelationships(updatedRelationships)
-      ) {
-        return false
-      }
-
-      set({ relationships: updatedRelationships })
+    } catch { return false }
+  },
+  addOwnerRelationship: () => false,
+  demoteModerator: async (profileId, communityId, actorProfileId) => {
+    try {
+      await demoteCommunityModerator(profileId, communityId, actorProfileId)
+      set((state) => ({ relationships: state.relationships.map(item => item.profiles[0] === profileId && item.profiles[1] === communityId ? { ...item, type: 'connection', updatedAt: Date.now() } : item) }))
       return true
-    },
-
-    demoteModerator: (profileId, communityId, actorProfileId) => {
-      const updatedRelationships = buildDemotion(
-        profileId,
-        communityId,
-        actorProfileId,
-        get().relationships
-      )
-
-      if (
-        !updatedRelationships ||
-        !saveCommunityRelationships(updatedRelationships)
-      ) {
-        return false
-      }
-
-      set({ relationships: updatedRelationships })
+    } catch { return false }
+  },
+  transferOwnership: async (currentOwnerProfileId, newOwnerProfileId, communityId) => {
+    try {
+      await transferCommunityOwnership(currentOwnerProfileId, newOwnerProfileId, communityId)
+      set((state) => ({ relationships: state.relationships.map(item => {
+        if (item.profiles[1] !== communityId) return item
+        if (item.profiles[0] === currentOwnerProfileId) return { ...item, type: 'moderator', updatedAt: Date.now() }
+        if (item.profiles[0] === newOwnerProfileId) return { ...item, type: 'owner', updatedAt: Date.now() }
+        return item
+      }) }))
       return true
-    },
-
-    transferOwnership: (
-      currentOwnerProfileId,
-      newOwnerProfileId,
-      communityId
-    ) => {
-      const updatedRelationships = buildOwnershipTransfer(
-        currentOwnerProfileId,
-        newOwnerProfileId,
-        communityId,
-        get().relationships
-      )
-
-      if (
-        !updatedRelationships ||
-        !saveCommunityRelationships(updatedRelationships)
-      ) {
-        return false
-      }
-
-      set({ relationships: updatedRelationships })
+    } catch { return false }
+  },
+  removeRelationship: async (profileId, communityId, actorProfileId) => {
+    try {
+      await removeCommunityRelationship(profileId, communityId, actorProfileId)
+      set((state) => ({ relationships: state.relationships.filter(item => !(item.profiles[0] === profileId && item.profiles[1] === communityId)) }))
       return true
-    },
-
-    removeRelationship: (profileId, communityId, actorProfileId) => {
-      if (!profileId || !communityId || !actorProfileId) {
-        return false
-      }
-
-      const previousRelationships = get().relationships
-      const updatedRelationships = buildRemoval(
-        profileId,
-        communityId,
-        actorProfileId,
-        previousRelationships
-      )
-
-      if (!updatedRelationships) {
-        return false
-      }
-
-      if (updatedRelationships.length === previousRelationships.length) {
-        return true
-      }
-
-      if (!saveCommunityRelationships(updatedRelationships)) {
-        return false
-      }
-
-      set({ relationships: updatedRelationships })
-      return true
-    },
-
-    getRelationship: (profileId, communityId) =>
-      get().relationships.find(
-        (item) =>
-          item.profiles[0] === profileId && item.profiles[1] === communityId
-      ) ?? null,
-
-    getCommunityIdsForProfile: (profileId) =>
-      get()
-        .relationships.filter(
-          (item) =>
-            item.profiles[0] === profileId &&
-            (item.type === 'owner' ||
-              item.type === 'moderator' ||
-              item.type === 'connection')
-        )
-        .map((item) => item.profiles[1]),
-
-    getMemberProfileIds: (communityId) =>
-      get()
-        .relationships.filter(
-          (item) =>
-            item.profiles[1] === communityId &&
-            (item.type === 'owner' ||
-              item.type === 'moderator' ||
-              item.type === 'connection')
-        )
-        .map((item) => item.profiles[0]),
-
-    getStaffProfileIds: (communityId) =>
-      get()
-        .relationships.filter(
-          (item) =>
-            item.profiles[1] === communityId &&
-            (item.type === 'owner' || item.type === 'moderator')
-        )
-        .map((item) => item.profiles[0]),
-
-    getPendingProfileIds: (communityId) =>
-      get()
-        .relationships.filter(
-          (item) =>
-            item.profiles[1] === communityId && item.type === 'requested'
-        )
-        .map((item) => item.profiles[0]),
-
-    getBlockedProfileIds: (communityId) =>
-      get()
-        .relationships.filter(
-          (item) =>
-            item.profiles[1] === communityId && item.type === 'blocked'
-        )
-        .map((item) => item.profiles[0])
-  }))
+    } catch { return false }
+  },
+  getRelationship: (profileId, communityId) => get().relationships.find(item => item.profiles[0] === profileId && item.profiles[1] === communityId) ?? null,
+  getCommunityIdsForProfile: (profileId) => get().relationships.filter(item => item.profiles[0] === profileId && ['owner', 'moderator', 'connection'].includes(item.type)).map(item => item.profiles[1]),
+  getMemberProfileIds: (communityId) => get().relationships.filter(item => item.profiles[1] === communityId && ['owner', 'moderator', 'connection'].includes(item.type)).map(item => item.profiles[0]),
+  getStaffProfileIds: (communityId) => get().relationships.filter(item => item.profiles[1] === communityId && ['owner', 'moderator'].includes(item.type)).map(item => item.profiles[0]),
+  getPendingProfileIds: (communityId) => get().relationships.filter(item => item.profiles[1] === communityId && item.type === 'requested').map(item => item.profiles[0]),
+  getBlockedProfileIds: (communityId) => get().relationships.filter(item => item.profiles[1] === communityId && item.type === 'blocked').map(item => item.profiles[0])
+}))

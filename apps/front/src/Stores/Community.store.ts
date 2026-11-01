@@ -1,70 +1,27 @@
 import { create } from 'zustand'
-
-import type {
-  Community,
-  CreateCommunityInput
-} from '@/Models/Community.model'
-import {
-  CommunityError,
-  createCommunity,
-  getCommunityByUrl,
-  getCommunities,
-  saveCommunities
-} from '@/Services/Community'
-import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
+import type { Community, CreateCommunityInput } from '@/Models/Community.model'
+import { createCommunity, getCommunityByUrl } from '@/Services/Community'
 
 type CommunityStore = {
   community: Community | null
   loadedUrl: string | null
-  loadCommunityByUrl: (url: string) => void
-  createCommunity: (
-    input: CreateCommunityInput,
-    ownerProfileId: string
-  ) => Community
+  loadCommunityByUrl: (url: string) => Promise<void>
+  createCommunity: (input: CreateCommunityInput, ownerProfileId: string) => Promise<Community>
   clearCommunity: () => void
 }
-
-export const useCommunityStore = create<CommunityStore>((set) => ({
+export const useCommunityStore = create<CommunityStore>((set, get) => ({
   community: null,
   loadedUrl: null,
-
-  loadCommunityByUrl: (url) => {
-    const normalizedUrl = url.trim().replace(/^@/, '').toLowerCase()
-
-    set({
-      community: normalizedUrl ? getCommunityByUrl(normalizedUrl) : null,
-      loadedUrl: normalizedUrl
-    })
+  loadCommunityByUrl: async (url) => {
+    const normalized = url.trim().replace(/^@/, '').toLowerCase()
+    set({ community: null, loadedUrl: normalized })
+    const community = normalized ? await getCommunityByUrl(normalized) : null
+    if (get().loadedUrl === normalized) set({ community })
   },
-
-  createCommunity: (input, ownerProfileId) => {
-    if (!ownerProfileId) {
-      throw new CommunityError('OWNER_PROFILE_REQUIRED')
-    }
-
-    const existingCommunities = getCommunities()
-    const community = createCommunity(input, existingCommunities)
-    const updatedCommunities = [...existingCommunities, community]
-
-    if (!saveCommunities(updatedCommunities)) {
-      throw new CommunityError('STORAGE_UNAVAILABLE')
-    }
-
-    if (
-      !useCommunityRelationshipStore
-        .getState()
-        .addOwnerRelationship(ownerProfileId, community.id)
-    ) {
-      saveCommunities(existingCommunities)
-      throw new CommunityError('STORAGE_UNAVAILABLE')
-    }
-
+  createCommunity: async (input, ownerProfileId) => {
+    const community = await createCommunity(input, ownerProfileId)
     set({ community, loadedUrl: community.url })
-
     return community
   },
-
-  clearCommunity: () => {
-    set({ community: null, loadedUrl: null })
-  }
+  clearCommunity: () => set({ community: null, loadedUrl: null })
 }))

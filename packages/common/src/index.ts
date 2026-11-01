@@ -1,7 +1,6 @@
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
-
 export type PaginationParams = { page?: number; pageSize?: number }
 export type PaginatedResult<T> = { items: T[]; page: number; pageSize: number; totalItems: number; totalPages: number }
 export type ProfileType = 'social' | 'rp' | 'business'
@@ -19,4 +18,5 @@ export type AuthTokenPair = { accessToken: string; refreshToken: string; expires
 export type AuthSession = { user: AuthenticatedUser; authenticatedAt: number }
 export type SignInCredentials = { email: string; password: string }
 export type SignUpCredentials = SignInCredentials
+export type UserPreferences = { language: 'system' | 'pt-BR' | 'en-US'; theme: 'system' | 'light' | 'dark' }
 export type ApiErrorResponse = { statusCode: number; message: string | string[]; error?: string }

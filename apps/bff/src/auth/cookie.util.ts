@@ -14,8 +14,8 @@ export function getCookie(request: Request, name: string): string | null {
 export function writeAuthCookies(response: Response, accessToken: string, refreshToken: string): void {
   const common = ['Path=/api', 'HttpOnly', 'SameSite=Lax', 'Priority=High', ...(process.env.NODE_ENV === 'production' ? ['Secure'] : [])].join('; ')
   response.setHeader('Set-Cookie', [
-    `${ACCESS_COOKIE}=${encodeURIComponent(accessToken)}; ${common}; Max-Age=900`,
-    `${REFRESH_COOKIE}=${encodeURIComponent(refreshToken)}; ${common}; Max-Age=2592000`
+    `${ACCESS_COOKIE}=${encodeURIComponent(accessToken)}; ${common}; Max-Age=${process.env.JWT_ACCESS_TTL_SECONDS ?? '900'}`,
+    `${REFRESH_COOKIE}=${encodeURIComponent(refreshToken)}; ${common}; Max-Age=${process.env.JWT_REFRESH_TTL_SECONDS ?? '2592000'}`
   ])
 }
 

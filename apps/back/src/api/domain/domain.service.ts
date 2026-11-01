@@ -87,7 +87,8 @@ export class DomainService {
     return community
   }
 
-  async getProfileRelationships(profileId: string): Promise<Relationship[]> {
+  async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
+    await this.assertOwns(userId, profileId)
     return (await this.data.read<Relationship>('relationships')).filter(r => r.profiles.includes(profileId))
   }
   async getProfileFriends(profileId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
@@ -156,7 +157,7 @@ export class DomainService {
     if (type === 'requested') allowed = self && targetRole === null
     if (type === 'connection') allowed = (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'requested'
     if (type === 'moderator') allowed = actorRole === 'owner' && targetRole === 'connection'
-    if (type === 'blocked') allowed = (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'connection'
+    if (type === 'blocked') allowed = (self && (targetRole === null || targetRole === 'connection')) || ((actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'connection')
     if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
     const record: CommunityRelationship = {
       profiles: [targetId, communityId], type,
@@ -176,7 +177,7 @@ export class DomainService {
     if (!target) return
     const actorRole = this.role(actorId, all.filter(r => r.profiles[1] === communityId))
     const self = actorId === targetId
-    const canSelf = self && ['connection', 'requested'].includes(target.type)
+    const canSelf = self && (['connection', 'requested'].includes(target.type) || (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null)))
     const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
       ['connection', 'requested', 'blocked'].includes(target.type) &&
       !(actorRole === 'moderator' && target.type === 'moderator')

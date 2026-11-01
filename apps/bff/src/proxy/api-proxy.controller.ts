@@ -2,7 +2,7 @@ import { All, Controller, HttpStatus, Logger, Req, Res } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import type { AxiosRequestConfig, Method } from 'axios'
 import type { Request, Response } from 'express'
-import { ACCESS_COOKIE, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
+import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
 
@@ -14,30 +14,39 @@ export class ApiProxyController {
 
   @All('{*path}')
   async proxy(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const accessToken = getCookie(req, ACCESS_COOKIE)
+    let accessToken = getCookie(req, ACCESS_COOKIE)
     const refreshToken = getCookie(req, REFRESH_COOKIE)
-    const headers: Record<string, string> = {}
-    if (accessToken) headers.Authorization = `Bearer ${accessToken}`
-
-    // Axios receives a params object: arrays and repeated query keys are serialized centrally.
-    const config: AxiosRequestConfig = {
-      url: `${this.backUrl}${req.path}`,
-      method: req.method as Method,
-      params: req.query,
-      data: req.body,
-      headers,
-      validateStatus: () => true
-    }
-
     try {
+      // If the short-lived access cookie has already expired, refresh before
+      // forwarding. This also works for optional-auth endpoints (profile walls).
+      if (!accessToken && refreshToken) {
+        const refreshed = await this.refreshTokens(refreshToken, res)
+        accessToken = refreshed?.accessToken ?? null
+        if (!refreshed) clearAuthCookies(res)
+      }
+
+      const headers: Record<string, string> = {}
+      if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+      // Axios serializes this structured object; do not manually build a query string.
+      const config: AxiosRequestConfig = {
+        url: `${this.backUrl}${req.path}`,
+        method: req.method as Method,
+        params: req.query,
+        data: req.body,
+        headers,
+        validateStatus: () => true
+      }
+
       let result = await this.http.axiosRef.request(config)
-      if (result.status === HttpStatus.UNAUTHORIZED && refreshToken) {
+      if (result.status === HttpStatus.UNAUTHORIZED && refreshToken && accessToken) {
         const refreshed = await this.refreshTokens(refreshToken, res)
         if (refreshed) {
           result = await this.http.axiosRef.request({
             ...config,
             headers: { ...headers, Authorization: `Bearer ${refreshed.accessToken}` }
           })
+        } else {
+          clearAuthCookies(res)
         }
       }
       res.status(result.status).send(result.data)

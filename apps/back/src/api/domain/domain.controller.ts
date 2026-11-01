@@ -57,7 +57,7 @@ export class DomainController {
     return this.domain.createCommunity(u.id, ownerProfileId, community)
   }
 
-  @Get('relationships') @UseGuards(JwtAccessGuard) getRelationships(@Query('profileId') id: string) { return this.domain.getProfileRelationships(id) }
+  @Get('relationships') @UseGuards(JwtAccessGuard) getRelationships(@CurrentUser() u: { id: string }, @Query('profileId') id: string) { return this.domain.getProfileRelationships(u.id, id) }
   @Get('relationships/friends/:profileId') getFriends(@Param('profileId') id: string, @Query() q: PaginationDto) { return this.domain.getProfileFriends(id, q) }
   @Post('relationships') @UseGuards(JwtAccessGuard) updateRelationship(@CurrentUser() u: { id: string }, @Body() body: ProfileRelationDto) {
     return this.domain.updateProfileRelationship(u.id, body.sourceProfileId, body.targetProfileId, body.type)
@@ -70,7 +70,7 @@ export class DomainController {
   @Get('communities/:communityId/members/pending') @UseGuards(JwtAccessGuard) pendingMembers(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Query('actorProfileId') actor: string, @Query() q: PaginationDto) {
     return this.domain.listPendingMembers(u.id, id, actor, q)
   }
-  @Get('communities/:communityId/members') @UseGuards(JwtAccessGuard) members(@Param('communityId') id: string, @Query('tab') tab: string | undefined, @Query() q: PaginationDto) {
+  @Get('communities/:communityId/members') members(@Param('communityId') id: string, @Query('tab') tab: string | undefined, @Query() q: PaginationDto) {
     return this.domain.listCommunityMembers(id, tab ?? 'all', q)
   }
   @Post('communities/:communityId/relationships/:profileId') @UseGuards(JwtAccessGuard) updateCommunityRelationship(@CurrentUser() u: { id: string }, @Param('communityId') cid: string, @Param('profileId') pid: string, @Body() body: CommunityRelationDto) {

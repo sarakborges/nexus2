@@ -1,5 +1,6 @@
-import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
+import axios from 'axios'
 import { IsEmail, IsString, MinLength } from 'class-validator'
 import type { Request, Response } from 'express'
 import type { AuthTokenPair } from '@nexus/common'
@@ -31,7 +32,7 @@ export class AuthController {
     const token = getCookie(req, REFRESH_COOKIE)
     if (!token) { clearAuthCookies(res); throw new UnauthorizedException('REFRESH_TOKEN_MISSING') }
     try {
-      const { data } = await this.http.axiosRef.post<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
+      const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
       writeAuthCookies(res, data.accessToken, data.refreshToken)
       return { user: data.user, authenticated: true }
     } catch { clearAuthCookies(res); throw new UnauthorizedException('REFRESH_TOKEN_INVALID') }
@@ -44,8 +45,19 @@ export class AuthController {
     finally { clearAuthCookies(res) }
     return { success: true }
   }
+  private async request<T>(url: string, body: unknown): Promise<{ data: T }> {
+    try { return await this.http.axiosRef.post<T>(url, body) }
+    catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status ?? HttpStatus.BAD_GATEWAY
+        const payload = error.response?.data ?? { message: 'BACKEND_UNAVAILABLE' }
+        throw new HttpException(payload, status)
+      }
+      throw error
+    }
+  }
   private async authenticate(route: 'sign-in' | 'sign-up', body: CredentialsDto, res: Response): Promise<AuthResponse> {
-    const { data } = await this.http.axiosRef.post<AuthTokenPair>(`${this.backUrl}/auth/${route}`, body)
+    const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/${route}`, body)
     writeAuthCookies(res, data.accessToken, data.refreshToken)
     return { user: data.user, authenticated: true }
   }

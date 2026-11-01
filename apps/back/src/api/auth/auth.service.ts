@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, UnauthorizedException } from '@n
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { createHash, randomBytes, randomUUID, pbkdf2Sync, timingSafeEqual } from 'node:crypto'
-import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials } from '@nexus/common'
+import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord, JwtPayload, RefreshTokenRecord } from './auth.types'
 
@@ -81,6 +81,23 @@ export class AuthService {
     const updated = { ...account, profiles: account.profiles.includes(profileId) ? account.profiles : [...account.profiles, profileId], currentProfile: account.currentProfile ?? profileId }
     await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
     return this.toPublicUser(updated)
+  }
+  async getPreferences(userId: string): Promise<UserPreferences> {
+    const accounts = await this.repository.read<AccountRecord>('accounts')
+    const account = accounts.find((item) => item.id === userId)
+    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    return account.preferences ?? { language: 'system', theme: 'system' }
+  }
+  async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences> {
+    const accounts = await this.repository.read<AccountRecord>('accounts')
+    const account = accounts.find((item) => item.id === userId)
+    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    const updated: AccountRecord = {
+      ...account,
+      preferences: { language: 'system', theme: 'system', ...account.preferences, ...preferences }
+    }
+    await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
+    return updated.preferences!
   }
   async ownsProfile(userId: string, profileId: string): Promise<boolean> {
     const accounts = await this.repository.read<AccountRecord>('accounts')

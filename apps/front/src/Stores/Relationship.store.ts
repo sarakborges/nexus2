@@ -1,112 +1,40 @@
 import { create } from 'zustand'
-
-import type {
-  Relationship,
-  RelationshipType
-} from '@/Models/Relationship.model'
-import { migrateLegacyCommunityRelationships } from '@/Services/CommunityRelationship'
-import {
-  getRelationships,
-  removeRelationship as buildRelationshipRemoval,
-  saveRelationships,
-  setRelationship as buildRelationshipUpdate
-} from '@/Services/Relationship'
+import type { Relationship, RelationshipType } from '@/Models/Relationship.model'
+import { getRelationships, removeRelationship, setRelationship } from '@/Services/Relationship'
 
 type RelationshipStore = {
   relationships: Relationship[]
-  updateRelationship: (
-    firstId: string,
-    secondId: string,
-    type: RelationshipType,
-    actorId: string
-  ) => boolean
-  removeRelationship: (firstId: string, secondId: string) => boolean
+  loadedProfileId: string | null
+  loadRelationships: (profileId: string) => Promise<void>
+  updateRelationship: (firstId: string, secondId: string, type: RelationshipType, actorId: string) => Promise<boolean>
+  removeRelationship: (firstId: string, secondId: string) => Promise<boolean>
   getRelationship: (firstId: string, secondId: string) => Relationship | null
   getRelatedIds: (participantId: string, type?: RelationshipType) => string[]
 }
-
-const getOtherParticipant = (
-  relationship: Relationship,
-  participantId: string
-): string | null => {
-  if (!relationship.profiles.includes(participantId)) {
-    return null
-  }
-
-  return relationship.profiles.find((id) => id !== participantId) ?? null
-}
-
-migrateLegacyCommunityRelationships()
-
 export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
-  relationships: getRelationships(),
-
-  updateRelationship: (firstId, secondId, type, actorId) => {
-    const updatedRelationships = buildRelationshipUpdate(
-      firstId,
-      secondId,
-      type,
-      actorId,
-      get().relationships
-    )
-
-    if (!updatedRelationships || !saveRelationships(updatedRelationships)) {
-      return false
-    }
-
-    set({ relationships: updatedRelationships })
-
-    return true
+  relationships: [],
+  loadedProfileId: null,
+  loadRelationships: async (profileId) => {
+    const relationships = await getRelationships(profileId)
+    set({ relationships, loadedProfileId: profileId })
   },
-
-  removeRelationship: (firstId, secondId) => {
-    if (!firstId || !secondId || firstId === secondId) {
-      return false
-    }
-
-    const previousRelationships = get().relationships
-    const updatedRelationships = buildRelationshipRemoval(
-      firstId,
-      secondId,
-      previousRelationships
-    )
-
-    if (updatedRelationships.length === previousRelationships.length) {
+  updateRelationship: async (firstId, secondId, type, actorId) => {
+    try {
+      const targetId = actorId === firstId ? secondId : firstId
+      const relationship = await setRelationship(actorId, targetId, type)
+      set((state) => ({
+        relationships: [...state.relationships.filter(item => !(item.profiles.includes(firstId) && item.profiles.includes(secondId))), relationship]
+      }))
       return true
-    }
-
-    if (!saveRelationships(updatedRelationships)) {
-      return false
-    }
-
-    set({ relationships: updatedRelationships })
-
-    return true
+    } catch { return false }
   },
-
-  getRelationship: (firstId, secondId) => {
-    if (!firstId || !secondId || firstId === secondId) {
-      return null
-    }
-
-    return (
-      get().relationships.find(
-        (relationship) =>
-          relationship.profiles.includes(firstId) &&
-          relationship.profiles.includes(secondId)
-      ) ?? null
-    )
+  removeRelationship: async (firstId, secondId) => {
+    try {
+      await removeRelationship(firstId, secondId)
+      set((state) => ({ relationships: state.relationships.filter(item => !(item.profiles.includes(firstId) && item.profiles.includes(secondId))) }))
+      return true
+    } catch { return false }
   },
-
-  getRelatedIds: (participantId, type) =>
-    get()
-      .relationships.filter(
-        (relationship) =>
-          relationship.profiles.includes(participantId) &&
-          (!type || relationship.type === type)
-      )
-      .map((relationship) =>
-        getOtherParticipant(relationship, participantId)
-      )
-      .filter((id): id is string => id !== null)
+  getRelationship: (firstId, secondId) => get().relationships.find(item => item.profiles.includes(firstId) && item.profiles.includes(secondId)) ?? null,
+  getRelatedIds: (id, type) => get().relationships.filter(item => item.profiles.includes(id) && (!type || item.type === type)).map(item => item.profiles.find(other => other !== id)!).filter(Boolean)
 }))

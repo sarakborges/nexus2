@@ -16,7 +16,9 @@ export class JwtAccessGuard implements CanActivate {
       if (payload.type !== 'access' || !payload.sub) throw new Error('wrong token type')
       request.user = { id: payload.sub, email: payload.email, profiles: [], currentProfile: null }
       return true
-    } catch { throw new UnauthorizedException('ACCESS_TOKEN_INVALID_OR_EXPIRED') }
+    } catch {
+      throw new UnauthorizedException('ACCESS_TOKEN_INVALID_OR_EXPIRED')
+    }
   }
 }
 
@@ -24,7 +26,9 @@ export class JwtAccessGuard implements CanActivate {
 export class OptionalJwtAccessGuard extends JwtAccessGuard {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<{ headers: { authorization?: string }; user?: AuthenticatedUser }>()
-    if (!request.headers.authorization?.startsWith('Bearer ')) return true
-    try { return await super.canActivate(context) } catch { request.user = undefined; return true }
+    // Public callers may omit a token; an expired supplied token must return 401
+    // so the BFF can rotate the refresh token and retry the original request.
+    if (!request.headers.authorization) return true
+    return super.canActivate(context)
   }
 }

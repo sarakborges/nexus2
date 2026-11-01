@@ -1,142 +1,18 @@
-import { loadData, saveData } from '@/Helpers/Systems/Data'
-import type {
-  Relationship,
-  RelationshipType
-} from '@/Models/Relationship.model'
+import type { Relationship, RelationshipType, PaginatedResult, Profile, PaginationParams } from '@nexus/common'
+import { api } from '../Http/api'
 
-const RELATIONSHIPS_KEY = 'relationships'
-const RELATIONSHIP_TYPES: RelationshipType[] = [
-  'connection',
-  'requested',
-  'blocked'
-]
-
-const normalizePair = (firstId: string, secondId: string): [string, string] =>
-  [firstId, secondId].sort() as [string, string]
-
-const samePair = (
-  first: [string, string],
-  second: [string, string]
-): boolean => first[0] === second[0] && first[1] === second[1]
-
-const parseRelationship = (value: unknown): Relationship | null => {
-  if (!value || typeof value !== 'object') {
-    return null
-  }
-
-  const relationship = value as Record<string, unknown>
-  const profiles = relationship.profiles
-
-  if (
-    !Array.isArray(profiles) ||
-    profiles.length !== 2 ||
-    typeof profiles[0] !== 'string' ||
-    typeof profiles[1] !== 'string' ||
-    profiles[0] === profiles[1] ||
-    typeof relationship.type !== 'string' ||
-    !RELATIONSHIP_TYPES.includes(relationship.type as RelationshipType) ||
-    typeof relationship.updatedAt !== 'number'
-  ) {
-    return null
-  }
-
-  return {
-    profiles: normalizePair(profiles[0], profiles[1]),
-    type: relationship.type as RelationshipType,
-    requestedBy:
-      typeof relationship.requestedBy === 'string'
-        ? relationship.requestedBy
-        : null,
-    blockedBy:
-      typeof relationship.blockedBy === 'string'
-        ? relationship.blockedBy
-        : null,
-    updatedAt: relationship.updatedAt
-  }
+export async function getRelationships(profileId: string): Promise<Relationship[]> {
+  const { data } = await api.get<Relationship[]>('/relationships', { params: { profileId } })
+  return data
 }
-
-export const getRelationships = (): Relationship[] => {
-  const storedRelationships = loadData<unknown>(RELATIONSHIPS_KEY)
-
-  if (!Array.isArray(storedRelationships)) {
-    return []
-  }
-
-  const relationships = storedRelationships
-    .map(parseRelationship)
-    .filter((relationship): relationship is Relationship => relationship !== null)
-
-  if (
-    relationships.length !== storedRelationships.length ||
-    storedRelationships.some(
-      (item) =>
-        !item ||
-        typeof item !== 'object' ||
-        !Object.prototype.hasOwnProperty.call(item, 'requestedBy') ||
-        !Object.prototype.hasOwnProperty.call(item, 'blockedBy')
-    )
-  ) {
-    saveRelationships(relationships)
-  }
-
-  return relationships
+export async function getProfileFriends(profileId: string, params: PaginationParams = {}): Promise<PaginatedResult<Profile>> {
+  const { data } = await api.get<PaginatedResult<Profile>>(`/relationships/friends/${encodeURIComponent(profileId)}`, { params })
+  return data
 }
-
-export const saveRelationships = (
-  relationships: Relationship[]
-): boolean => saveData({ key: RELATIONSHIPS_KEY, value: relationships })
-
-export const getRelationship = (
-  firstId: string,
-  secondId: string,
-  relationships: Relationship[] = getRelationships()
-): Relationship | null => {
-  if (!firstId || !secondId || firstId === secondId) {
-    return null
-  }
-
-  const pair = normalizePair(firstId, secondId)
-
-  return relationships.find((item) => samePair(item.profiles, pair)) ?? null
+export async function setRelationship(sourceProfileId: string, targetProfileId: string, type: RelationshipType): Promise<Relationship> {
+  const { data } = await api.post<Relationship>('/relationships', { sourceProfileId, targetProfileId, type })
+  return data
 }
-
-export const setRelationship = (
-  firstId: string,
-  secondId: string,
-  type: RelationshipType,
-  actorId: string,
-  relationships: Relationship[]
-): Relationship[] | null => {
-  if (
-    !firstId ||
-    !secondId ||
-    firstId === secondId ||
-    (actorId !== firstId && actorId !== secondId)
-  ) {
-    return null
-  }
-
-  const pair = normalizePair(firstId, secondId)
-  const relationship: Relationship = {
-    profiles: pair,
-    type,
-    requestedBy: type === 'requested' ? actorId : null,
-    blockedBy: type === 'blocked' ? actorId : null,
-    updatedAt: Date.now()
-  }
-
-  return [
-    ...relationships.filter((item) => !samePair(item.profiles, pair)),
-    relationship
-  ]
-}
-
-export const removeRelationship = (
-  firstId: string,
-  secondId: string,
-  relationships: Relationship[]
-): Relationship[] => {
-  const pair = normalizePair(firstId, secondId)
-
-  return relationships.filter((item) => !samePair(item.profiles, pair))
+export async function removeRelationship(sourceProfileId: string, targetProfileId: string): Promise<void> {
+  await api.post('/relationships/remove', { sourceProfileId, targetProfileId })
 }
