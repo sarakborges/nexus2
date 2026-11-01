@@ -9,11 +9,14 @@ import {
 
 function GuestOnlyRoute() {
   const session = useAuthStore(state => state.session)
-  if (!session) return <Outlet />
+  const isInitialized = useAuthStore(state => state.isInitialized)
+  if (!isInitialized || !session) return <Outlet />
   return <Navigate to={session.user.profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted} replace />
 }
 function AuthenticatedRoute() {
   const session = useAuthStore(state => state.session)
+  const isInitialized = useAuthStore(state => state.isInitialized)
+  if (!isInitialized) return <LandingPage />
   return session ? <Outlet /> : <Navigate to={ROUTES.signIn} replace />
 }
 function OnboardingRoute() {
@@ -25,8 +28,6 @@ function ProfileRequiredRoute() {
   return (session?.user.profiles.length ?? 0) > 0 ? <Outlet /> : <Navigate to={ROUTES.gettingStarted} replace />
 }
 export function AppRoutes() {
-  const ready = useAuthStore(state => state.isInitialized)
-  if (!ready) return <main className="account-page" aria-busy="true" />
   return (
     <Routes>
       <Route path={ROUTES.landing} element={<LandingPage />} />
