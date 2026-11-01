@@ -1,4 +1,5 @@
-import type { AuthenticatedUser, AuthSession, SignInCredentials, SignUpCredentials } from '@nexus/common'
+import axios from 'axios'
+import type { AuthenticatedUser, AuthSession, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { api, getApiErrorCode } from '../Http/api'
 
 export type AuthErrorCode = 'EMAIL_ALREADY_EXISTS' | 'INVALID_CREDENTIALS' | 'STORAGE_UNAVAILABLE' | 'CRYPTO_UNAVAILABLE' | 'NETWORK_ERROR'
@@ -15,7 +16,6 @@ function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
 }
 function isAuthenticatedUser(value: unknown): value is AuthenticatedUser {
   if (typeof value !== 'object' || value === null) return false
-
   const user = value as Record<string, unknown>
   return typeof user.id === 'string'
     && typeof user.email === 'string'
@@ -36,11 +36,11 @@ export async function getCurrentAuthSession(): Promise<AuthSession | null> {
   try {
     const { data } = await api.get<unknown>('/auth/me')
     if (typeof data !== 'object' || data === null || !('user' in data)) return null
-
     const user = (data as { user?: unknown }).user
     return isAuthenticatedUser(user) ? toSession(user) : null
-  } catch {
-    return null
+  } catch (error) {
+    if (axios.isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) return null
+    throw error
   }
 }
 export async function refreshAuthSession(): Promise<AuthenticatedUser> {
@@ -53,4 +53,12 @@ export async function setCurrentProfile(profileId: string): Promise<Authenticate
 }
 export async function signOutUser(): Promise<void> {
   try { await api.post('/auth/sign-out') } catch { /* Session cookies are cleared by the BFF even when the API is unavailable. */ }
+}
+export async function getUserPreferences(): Promise<UserPreferences> {
+  const { data } = await api.get<UserPreferences>('/auth/preferences')
+  return data
+}
+export async function saveUserPreferences(patch: Partial<UserPreferences>): Promise<UserPreferences> {
+  const { data } = await api.post<UserPreferences>('/auth/preferences', patch)
+  return data
 }

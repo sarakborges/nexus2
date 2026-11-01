@@ -6,6 +6,8 @@ import { useProfileStore } from './Profile.store'
 type AuthStore = {
   session: AuthSession | null
   isInitialized: boolean
+  initializationError: boolean
+  setSession: (session: AuthSession | null, hasError?: boolean) => void
   initialize: () => Promise<void>
   signIn: (credentials: SignInCredentials) => Promise<AuthenticatedUser>
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
@@ -16,21 +18,27 @@ type AuthStore = {
 export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   isInitialized: false,
+  initializationError: false,
+  setSession: (session, initializationError = false) => set({ session, isInitialized: true, initializationError }),
   initialize: async () => {
     if (get().isInitialized) return
-    const session = await getCurrentAuthSession()
-    set({ session, isInitialized: true })
+    try {
+      const session = await getCurrentAuthSession()
+      set({ session, isInitialized: true, initializationError: false })
+    } catch {
+      set({ session: null, isInitialized: true, initializationError: true })
+    }
   },
   signIn: async (credentials) => {
     const user = await signInUser(credentials)
     useProfileStore.getState().clearProfile()
-    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true })
+    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true, initializationError: false })
     return user
   },
   signUp: async (credentials) => {
     const user = await signUpUser(credentials)
     useProfileStore.getState().clearProfile()
-    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true })
+    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true, initializationError: false })
     return user
   },
   addProfileToUser: (profileId, makeCurrent = false) => {
@@ -51,6 +59,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: async () => {
     await signOutUser()
     useProfileStore.getState().clearProfile()
-    set({ session: null, isInitialized: true })
+    set({ session: null, isInitialized: true, initializationError: false })
   }
 }))
