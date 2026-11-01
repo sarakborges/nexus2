@@ -1,0 +1,51 @@
+services:
+  back:
+    build:
+      context: .
+      dockerfile: apps/back/Dockerfile
+    environment:
+      NODE_ENV: production
+      BACK_PORT: "3002"
+      BFF_ORIGIN: http://bff:3001
+      DATA_DIRECTORY: /var/lib/nexus
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
+      JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
+      JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-2592000}
+    volumes:
+      - nexus-data:/var/lib/nexus
+    expose:
+      - "3002"
+    restart: unless-stopped
+
+  bff:
+    build:
+      context: .
+      dockerfile: apps/bff/Dockerfile
+    environment:
+      NODE_ENV: production
+      BFF_PORT: "3001"
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
+      BACKEND_URL: http://back:3002/api
+      JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
+      JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-2592000}
+    depends_on:
+      - back
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+  front:
+    build:
+      context: .
+      dockerfile: apps/front/Dockerfile
+    environment:
+      BFF_UPSTREAM: http://bff:3001
+    depends_on:
+      - bff
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    restart: unless-stopped
+
+volumes:
+  nexus-data:

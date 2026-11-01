@@ -1,0 +1,39 @@
+FROM node:22.22-alpine AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/front/package.json apps/front/package.json
+COPY apps/bff/package.json apps/bff/package.json
+COPY apps/back/package.json apps/back/package.json
+COPY packages/common/package.json packages/common/package.json
+COPY packages/common/tsconfig.json packages/common/tsconfig.json
+
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+
+RUN npm run build --workspace @nexus/common
+RUN npm run build --workspace @nexus/back
+RUN npm prune --omit=dev --no-audit --no-fund
+
+FROM node:22.22-alpine AS runtime
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/packages/common ./packages/common
+COPY --from=build /app/apps/back/package.json ./apps/back/package.json
+COPY --from=build /app/apps/back/dist ./apps/back/dist
+
+RUN mkdir -p /var/lib/nexus && chown -R node:node /var/lib/nexus
+ENV DATA_DIRECTORY=/var/lib/nexus
+ENV BACK_PORT=3002
+
+USER node
+
+EXPOSE 3002
+
+CMD ["node", "apps/back/dist/main.js"]

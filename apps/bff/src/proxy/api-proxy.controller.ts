@@ -28,8 +28,11 @@ export class ApiProxyController {
       const headers: Record<string, string> = {}
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`
       // Axios serializes this structured object; do not manually build a query string.
+      // BACKEND_URL already contains the /api prefix. Strip the BFF route
+      // prefix before appending the incoming path to avoid /api/api/... URLs.
+      const backendPath = req.path.replace(/^\/api(?=\/|$)/, '')
       const config: AxiosRequestConfig = {
-        url: `${this.backUrl}${req.path}`,
+        url: `${this.backUrl}${backendPath}`,
         method: req.method as Method,
         params: req.query,
         data: req.body,
