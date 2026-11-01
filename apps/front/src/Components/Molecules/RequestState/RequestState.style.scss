@@ -1,0 +1,27 @@
+.request-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-height: 5rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.request-state__spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-color, currentColor);
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: request-state-spin 0.7s linear infinite;
+}
+
+@keyframes request-state-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .request-state__spinner { animation: none; }
+}
