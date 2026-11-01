@@ -34,6 +34,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
       {updateError && <RequestState isError />}
       <RequestState
         isLoading={Boolean(userId && preferencesQuery.isLoading)}
+        isFetching={Boolean(userId && preferencesQuery.isFetching)}
         isError={Boolean(userId && preferencesQuery.isError)}
         onRetry={() => void preferencesQuery.refetch()}
       >

@@ -90,6 +90,7 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
 
   return (
     <div className="account-card__relationship-actions">
+      <RequestState isFetching={relationshipsQuery.isFetching} />
       {mutation.isError && (
         <RequestState
           isError

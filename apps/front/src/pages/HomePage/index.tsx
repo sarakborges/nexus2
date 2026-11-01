@@ -66,6 +66,7 @@ export function HomePage() {
           </div>
         </header>
         <p className="account-card__description">{session?.user.email}</p>
+        {(selectProfileMutation.isError || signOutMutation.isError) && <RequestState isError />}
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
           <RequestState
