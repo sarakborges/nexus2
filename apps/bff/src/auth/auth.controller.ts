@@ -8,7 +8,10 @@ import { clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '.
 
 class CredentialsDto {
   @IsEmail() email!: string
-  @IsString() @MinLength(8) password!: string
+  @IsString() @MinLength(1) password!: string
+}
+class SignUpDto extends CredentialsDto {
+  @IsString() @MinLength(8) override password!: string
 }
 type AuthResponse = { user: AuthTokenPair['user']; authenticated: true }
 
@@ -18,7 +21,7 @@ export class AuthController {
   constructor(private readonly http: HttpService) {}
 
   @Post('sign-up')
-  async signUp(@Body() body: CredentialsDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+  async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     return this.authenticate('sign-up', body, res)
   }
   @Post('sign-in')

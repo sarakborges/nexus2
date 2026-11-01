@@ -5,10 +5,11 @@
   "type": "module",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
+    "predev": "npm run build --workspace @nexus/common",
     "dev": "concurrently -n FRONT,BFF,BACK -c blue,magenta,green \"npm run dev --workspace @nexus/front\" \"npm run dev --workspace @nexus/bff\" \"npm run dev --workspace @nexus/back\"",
-    "dev:front": "npm run dev --workspace @nexus/front",
+    "dev:front": "npm run build --workspace @nexus/common && npm run dev --workspace @nexus/front",
     "dev:bff": "npm run dev --workspace @nexus/bff",
-    "dev:back": "npm run dev --workspace @nexus/back",
+    "dev:back": "npm run build --workspace @nexus/common && npm run dev --workspace @nexus/back",
     "build": "npm run build --workspace @nexus/common && npm run build --workspace @nexus/back && npm run build --workspace @nexus/bff && npm run build --workspace @nexus/front",
     "lint": "npm run lint --workspace @nexus/front",
     "storybook": "npm run storybook --workspace @nexus/front",

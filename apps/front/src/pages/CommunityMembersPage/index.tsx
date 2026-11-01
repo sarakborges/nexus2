@@ -60,7 +60,6 @@ export function CommunityMembersPage() {
     return () => { active = false }
   }, [community?.id, currentProfileId, isStaff, pendingPage, pendingPageSize, relationships, setPendingPage])
 
-  useEffect(() => { setPage(1) }, [activeTab, community?.id, setPage])
 
   if (loadedUrl !== normalized) return null
   if (!community) return <NotFoundPage />
