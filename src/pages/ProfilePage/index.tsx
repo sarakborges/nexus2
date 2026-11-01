@@ -19,8 +19,9 @@ const PROFILE_TYPE_TRANSLATION_KEYS: Record<
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
+  const normalizedUrl = url?.trim().replace(/^@/, '').toLowerCase()
   const profile = useProfileStore((state) =>
-    state.allProfiles.find((item) => item.url === url) ?? null
+    state.allProfiles.find((item) => item.url === normalizedUrl) ?? null
   )
 
   if (!profile) {

@@ -34,6 +34,12 @@ The `Profile` model contains `id`, `name`, `url`, `picture`, `about` and `type`.
 
 Sign-up creates only a user and starts a session. It then routes to `/getting-started`, which explains profile setup and links to `/create-profile`. Creating a profile stores it in the global profile collection and adds its ID to the owner's `User.profiles` array. The first created profile becomes current automatically. Users can switch their current profile from Home; this updates `User.currentProfile` and the active session. Public profile pages can be viewed without signing in.
 
+## State management
+
+Zustand stores are the runtime source of truth for application data. `User.store.ts` and `Profile.store.ts` hydrate their collections from browser storage during initialization; pages and components then read the in-memory state instead of querying storage during render. Store actions persist a successful change and update the corresponding state in the same synchronous operation. Authentication actions also keep the active session synchronized with the user record.
+
+`Settings.store.ts` continues to use Zustand persistence for language and theme preferences. Services handle credential validation, profile validation and legacy-data migration; they are not used as a substitute for the stores during normal page rendering.
+
 ## Browser storage
 
 Persistent application records use `localStorage`:
@@ -91,6 +97,11 @@ src/
     Auth/
     Profile/
   Stores/
+    Auth.store.ts
+    User.store.ts
+    Profile.store.ts
+    Settings.store.ts
+    index.ts
   Types/
   pages/
     LandingPage/
@@ -118,7 +129,7 @@ The shared button atom uses the `variation` prop: `primary` (default), `secondar
 
 The modal is a controlled native `dialog`, allowing the browser to handle modal focus and keyboard behavior. Toast notifications dismiss themselves after 5,000 ms by default; the duration is configurable, and `0` disables auto-dismiss.
 
-React Router is configured in declarative mode. Unknown paths render `NotFoundPage`.
+React Router is configured in declarative mode. Unknown paths render `NotFoundPage`. Each route's `main` element uses a CSS entry animation; `prefers-reduced-motion` disables it, so page transitions require no JavaScript logic.
 
 The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Both language and appearance default to the system preferences until the user chooses a value manually. The language hook resolves browser locales; the appearance hook follows `prefers-color-scheme`. Manual choices are persisted, and users can select the system preference again.
 
