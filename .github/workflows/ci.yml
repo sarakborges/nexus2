@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Build, test, lint and Docker
+    name: Build, test, lint and deployment configs
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -37,7 +37,34 @@ jobs:
       - name: Build all workspaces
         run: npm run build
 
-      - name: Test backend authentication and community authorization
+      - name: Validate Vercel Services routing and private binding
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs'
+
+          const config = JSON.parse(readFileSync('vercel.json', 'utf8'))
+          const services = config.services ?? {}
+          for (const name of ['front', 'bff', 'back']) {
+            if (!services[name]?.root) throw new Error(`Missing Vercel service: ${name}`)
+          }
+
+          const apiRoute = config.rewrites?.find((rule) =>
+            rule.source === '/api/(.*)' && rule.destination?.service === 'bff'
+          )
+          const frontRoute = config.rewrites?.find((rule) =>
+            rule.source === '/(.*)' && rule.destination?.service === 'front'
+          )
+          if (!apiRoute || !frontRoute) throw new Error('Public /api and frontend routes must target their expected services.')
+
+          const binding = services.bff.bindings?.find((item) =>
+            item.type === 'service' && item.service === 'back' &&
+            item.format === 'url' && item.env === 'BACKEND_SERVICE_URL'
+          )
+          if (!binding) throw new Error('The BFF must bind privately to the backend service.')
+          if (apiRoute.destination.service === 'back') throw new Error('The domain backend must not be exposed publicly.')
+          NODE
+
+      - name: Test backend authentication, authorization and Supabase persistence
         run: npm test --workspace @nexus/back
 
       - name: Lint frontend
@@ -46,8 +73,8 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook --workspace @nexus/front
 
-      - name: Validate full-stack Docker Compose
+      - name: Validate optional Docker Compose deployment
         run: docker compose --env-file .env.compose.example config --quiet
 
-      - name: Build full-stack Docker images
+      - name: Build optional Docker Compose images
         run: docker compose --env-file .env.compose.example build
