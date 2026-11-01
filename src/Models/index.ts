@@ -1,4 +1,12 @@
 export type {
+  Community,
+  CreateCommunityInput
+} from './Community.model'
+export type {
+  Relationship,
+  RelationshipType
+} from './Relationship.model'
+export type {
   CreateProfileInput,
   Profile,
   ProfileType

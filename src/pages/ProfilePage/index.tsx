@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 
+import { RelationshipActions } from '@/Components'
+import { ROUTES } from '@/Constants/routes'
 import type { ProfileType } from '@/Models/Profile.model'
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileStore } from '@/Stores/Profile.store'
@@ -62,6 +64,15 @@ export function ProfilePage() {
             <p className="account-card__description">{profile.about}</p>
           )}
         </div>
+
+        <RelationshipActions targetId={profile.id} />
+
+        <Link
+          className="account-card__link"
+          to={`${ROUTES.profile}/${profile.url}/friends`}
+        >
+          {t('PROFILE_FRIENDS_LINK')}
+        </Link>
 
         <p className="account-card__profile-link">
           /profile/{profile.url}

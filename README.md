@@ -40,6 +40,14 @@ Zustand stores are the runtime source of truth for application state. `User.stor
 
 `Auth.store.ts` coordinates the authenticated session with user-store mutations and persists the active session to `sessionStorage`. `Settings.store.ts` uses Zustand persistence for language and theme preferences. Services handle credential validation, profile validation and legacy-data migration; components consume store state rather than reading browser storage directly.
 
+## Communities and relationships
+
+Communities have their own model with the same public fields as profiles: `id`, `name`, `url`, `picture`, `about` and `type`. They are persisted in `nexus_communities` and have public pages at `/community/:url`; `/communities` lists existing communities and authenticated users can create one at `/create-community`. The community store holds only the community currently being viewed.
+
+Relationships are persisted independently in `nexus_relationships`. Each entry contains a normalized two-ID pair in `profiles`, a `type` (`connection`, `requested` or `blocked`) and an `updatedAt` timestamp. For profile-to-community interactions, the pair contains the profile ID and the community ID. A connection is shown as a profile friend or community member. Profile friends are available at `/profile/:url/friends`; community members are available at `/community/:url/friends`.
+
+The relationship prototype does not yet record which participant initiated a request, so a `requested` relationship is visible to both participants and either side can accept it. Blocking is also represented as a shared pair status.
+
 ## Browser storage
 
 Persistent application records use `localStorage`:

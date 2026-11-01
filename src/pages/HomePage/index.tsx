@@ -93,12 +93,17 @@ export function HomePage() {
           })}
         </div>
 
-        <Link
-          className="account-card__action"
-          to={ROUTES.createProfile}
-        >
-          {t('HOME_CREATE_PROFILE')}
-        </Link>
+        <div className="account-card__actions">
+          <Link className="account-card__action" to={ROUTES.createProfile}>
+            {t('HOME_CREATE_PROFILE')}
+          </Link>
+          <Link className="account-card__action" to={ROUTES.communities}>
+            {t('COMMUNITIES_TITLE')}
+          </Link>
+          <Link className="account-card__action" to={ROUTES.createCommunity}>
+            {t('COMMUNITIES_CREATE')}
+          </Link>
+        </div>
       </section>
     </main>
   )
