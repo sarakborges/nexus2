@@ -1,0 +1,23 @@
+.toast {
+  width: fit-content;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 12px 16px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  background-color: var(--color-surface-raised);
+  color: var(--text-color);
+
+  &[data-tone='success'] {
+    border-color: var(--color-success);
+  }
+
+  &[data-tone='warning'] {
+    border-color: var(--color-warning);
+  }
+
+  &[data-tone='error'] {
+    border-color: var(--color-error);
+  }
+}

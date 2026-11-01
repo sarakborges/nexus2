@@ -1,0 +1,21 @@
+.language-flag {
+  display: flex;
+  place-content: center;
+  place-items: center;
+
+  width: 20px;
+  height: 20px;
+
+  border: 2px solid var(--color-neutral-weak);
+  border-radius: 4px;
+
+  .portrait {
+    width: 16px;
+    min-width: 16px;
+    overflow: hidden;
+
+    img {
+      border: 0;
+    }
+  }
+}

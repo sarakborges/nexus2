@@ -1,171 +1,27 @@
-# Nexus
+# Nexus monorepo
 
-Nexus is a React application built with Vite and TypeScript.
+## Workspaces
+- `apps/front`: React + Vite client.
+- `apps/bff`: NestJS Backend-for-Frontend. Owns browser session cookies and forwards requests.
+- `apps/back`: NestJS domain API. Owns validation, authorization, JWT issuance and persistence.
+- `packages/common`: shared TypeScript contracts and types.
 
-## Requirements
-
-- Node.js 22.22 or later
-- npm
-
-## Getting started
+## Development
+Node.js 22.22+ and npm workspaces are required.
 
 ```bash
 npm install
+cp apps/back/.env.example apps/back/.env
+cp apps/bff/.env.example apps/bff/.env
 npm run dev
 ```
 
-## Available scripts
+Front: http://localhost:5173 · BFF: http://localhost:3001 · Back: http://localhost:3002
 
-| Script | Description |
-| --- | --- |
-| `npm run dev` | Start the Vite development server |
-| `npm run build` | Type-check and create a production build in `build/` |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint |
-| `npm run prettier` | Format the project with Prettier |
-| `npm run storybook` | Start Storybook on port 6006 |
-| `npm run build-storybook` | Build the static Storybook |
+The front calls only the BFF. The BFF stores access and refresh JWTs in HttpOnly cookies and forwards API requests to the back. The back uses JSON files under `DATA_DIRECTORY` as a temporary persistence adapter while a free database is selected. This adapter is intended for local development or a single-instance deployment with persistent disk; it is not a shared store for horizontally scaled production instances.
 
-## User and profile models
+## Authentication
+Access tokens default to 15 minutes. Refresh tokens default to 30 days and rotate when used. Configure different random secrets for access and refresh signing. Tokens are HttpOnly cookies and are not exposed to browser JavaScript.
 
-The `User` model contains `id`, `email`, `password`, `profiles` and `currentProfile`. The password field stores a PBKDF2-derived verifier and salt rather than the original plain-text password. The `profiles` field is an array of profile IDs owned by that user. `currentProfile` is the ID of the profile currently selected by the user, or `null` when the user has not created a profile.
-
-The `Profile` model contains `id`, `name`, `url`, `picture`, `about` and `type`. The profile type is one of `social`, `rp` or `business`. The `url` field is a unique URL-safe profile slug, used by the public route `/profile/:url`.
-
-Sign-up creates only a user and starts a session. It then routes to `/getting-started`, which explains profile setup and links to `/create-profile`. Creating a profile stores it in the global profile collection and adds its ID to the owner's `User.profiles` array. The first created profile becomes current automatically. Users can switch their current profile from Home; this updates `User.currentProfile` and the active session. Public profile pages can be viewed without signing in.
-
-## State management
-
-Zustand stores are the runtime source of truth for application state. `User.store.ts` keeps user records in memory and persists successful user changes to `localStorage`. `Profile.store.ts` holds only the single profile currently being viewed; it never caches the global profile collection. Profile lookup and creation use the profile service for targeted reads and writes. The Home page loads the signed-in user's profile summaries for that screen without promoting the complete profile collection to a global store.
-
-`Auth.store.ts` coordinates the authenticated session with user-store mutations and persists the active session to `sessionStorage`. `Settings.store.ts` uses Zustand persistence for language and theme preferences. Services handle credential validation, profile validation and legacy-data migration; components consume store state rather than reading browser storage directly.
-
-## Communities and relationships
-
-Communities have their own model with the same public fields as profiles: `id`, `name`, `url`, `picture`, `about` and `type`. They are persisted in `nexus_communities` and have public pages at `/community/:url`; `/communities` lists existing communities and authenticated users can create one at `/create-community`. The community store holds only the community currently being viewed.
-
-Profile-to-profile relationships are persisted in `nexus_relationships`. Each entry contains the normalized pair in `profiles`, a `type` (`connection`, `requested` or `blocked`), `requestedBy`, `blockedBy` and an `updatedAt` timestamp. The actor fields store the profile ID that initiated the pending request or applied the block. A request sent by the current profile can be cancelled; a request sent by the other profile can be accepted. Only the profile that applied a block can remove it.
-
-Profile-to-community relationships use a separate storage, `nexus_community_relationships`, with entries whose ordered `profiles` pair is `[profileId, communityId]`. Its `type` distinguishes `owner`, `moderator`, `connection` (ordinary member), `requested` and `blocked` (banned). It also stores `requestedBy`, `blockedBy` and `updatedAt`. Creating a community automatically records the active profile as its owner. Owners can promote members to moderators, demote moderators, and transfer ownership to a moderator; ownership transfer makes the previous owner a moderator. Owners and moderators can accept or decline requests and ban or unban ordinary members. Moderators cannot change other staff members or ban them. The community members page has All members, Staff and Banned tabs at `/community/:url/members`. Profile communities are available at `/profile/:url/communities`; profile friends remain at `/profile/:url/friends`.
-
-Profile messages use `nexus_profile_messages`. A message stores its sender profile ID, recipient profile ID, content and creation timestamp. The profile owner sees every message addressed to that profile; another visitor sees only messages that visitor sent to the profile. The public message board is available at `/profile/:url/messages` and displays entries in reverse chronological order. This visibility rule is implemented in the client prototype only; browser storage is not a security boundary.
-
-Older relationship entries that do not contain an actor ID are migrated with a null actor. Their status is preserved, but the UI asks the user to clear an ambiguous legacy relationship before creating a new one. On initialization, legacy profile-community pairs are moved out of `nexus_relationships` into `nexus_community_relationships`; profile-to-profile pairs remain in `nexus_relationships`.
-
-## Browser storage
-
-Persistent application records use `localStorage`:
-- `nexus_users`: user records, including password verifiers, profile ID arrays and the current profile ID.
-- `nexus_profiles`: the persisted profile records.
-- `nexus_communities`: the persisted community records.
-- `nexus_relationships`: relationships between two profiles.
-- `nexus_community_relationships`: relationships between a profile and a community.
-- `nexus_profile_messages`: messages addressed to profiles.
-
-Only the active authenticated session uses `sessionStorage` (`nexus_auth_session_v2`). The account and profiles remain available after closing the tab or browser; the active session is scoped to the current tab.
-
-The migration reads user and profile records created by the earlier session-only prototype and moves them to the new local storage format. Legacy users with profiles but no current profile are assigned their first associated profile. Profiles without a type are migrated as `social`.
-
-This is still a client-side prototype, not production authentication or authorization. Browser storage can be inspected or modified; use a backend and database before relying on these records or protecting sensitive resources.
-
-## Component development
-
-Story files live beside their components in `*.stories.tsx` files. The Storybook catalog includes every Design System and application component. Use the Appearance toolbar to inspect stories with the light and dark themes; the accessibility addon checks rendered stories.
-
-## Project structure
-
-```
-src/
-  Assets/
-    Themes/
-      main.theme.css
-      light.theme.css
-      dark.theme.css
-    main.css
-    reset.css
-    vars.css
-  Components/
-    Atoms/
-    Molecules/
-    Organisms/
-  Constants/
-  DesignSystem/
-    Atoms/
-    Molecules/
-    Organisms/
-  Helpers/
-    Language/
-    Math/
-    Systems/
-      Data/
-      Storage/
-  Hooks/
-    Language/
-    System/
-    Theme/
-  Locales/
-    en-US.ts
-    pt-BR.ts
-  Models/
-    User.model.ts
-    Profile.model.ts
-    Community.model.ts
-    Relationship.model.ts
-    CommunityRelationship.model.ts
-    ProfileMessage.model.ts
-  Services/
-    Auth/
-    Community/
-    CommunityRelationship/
-    ProfileMessage/
-    Profile/
-    Relationship/
-  Stores/
-    Auth.store.ts
-    User.store.ts
-    Profile.store.ts
-    Community.store.ts
-    CommunityRelationship.store.ts
-    ProfileMessage.store.ts
-    Relationship.store.ts
-    Settings.store.ts
-    index.ts
-  Types/
-  pages/
-    LandingPage/
-    SignUpPage/
-    SignInPage/
-    GettingStartedPage/
-    CreateProfilePage/
-    HomePage/
-    ProfilePage/
-    ProfileFriendsPage/
-    ProfileCommunitiesPage/
-    CommunityPage/
-    CommunityMembersPage/
-    ProfileMessagesPage/
-    NotFoundPage/
-  routes/
-    index.tsx
-  App.tsx
-  main.tsx
-.storybook/
-  main.ts
-  preview.tsx
-public/
-  languages/
-```
-
-Both `DesignSystem` and `Components` follow Atomic Design. The design system contains application-independent visual primitives and compositions; application components compose those primitives into feature-specific controls and interface sections. Each area documents its layer boundaries in its own README.
-
-The shared button atom uses the `variation` prop: `primary` (default), `secondary`, `cancel` and `transparent`. Overlapping feature-specific button primitives should not be created.
-
-The modal is a controlled native `dialog`, allowing the browser to handle modal focus and keyboard behavior. Toast notifications dismiss themselves after 5,000 ms by default; the duration is configurable, and `0` disables auto-dismiss.
-
-React Router is configured in declarative mode. Unknown paths render `NotFoundPage`. Each route's `main` element uses a CSS entry animation; `prefers-reduced-motion` disables it, so page transitions require no JavaScript logic.
-
-All profile, community and message listings use pagination with 20 items per page by default.
-
-The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Both language and appearance default to the system preferences until the user chooses a value manually. The language hook resolves browser locales; the appearance hook follows `prefers-color-scheme`. Manual choices are persisted, and users can select the system preference again.
-
-Theme tokens are split by responsibility: `main.theme.css` defines primary, secondary and semantic success/warning/error colors; `light.theme.css` and `dark.theme.css` override only appearance-dependent neutral, text, surface and border tokens. Brand and status colors remain stable across appearances.
+## Pagination
+Paginated endpoints accept `page` and `pageSize` as query parameters. The front mirrors these values in the URL and sends them to the BFF through Axios `params`, rather than manually concatenating a query string.
