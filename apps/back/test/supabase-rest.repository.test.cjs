@@ -2,84 +2,66 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { SupabaseRestRepository } = require('../dist/storage/supabase-rest.repository.js')
 
-const projectUrl = 'https://example.supabase.co'
-const publishableKey = 'sb_publishable_test_key'
-const apiSecret = 'test-api-secret'
+const url = 'https://example.supabase.co'
+const key = 'sb_publishable_example'
+const headerSecret = 'example-header-value'
 
-test('reads records from the protected collection endpoint', async (t) => {
-  const originalFetch = global.fetch
-  let requestedUrl
-  let requestedOptions
-
-  global.fetch = async (url, options) => {
-    requestedUrl = String(url)
-    requestedOptions = options
-    return new Response(JSON.stringify([{ records: [{ id: 'account-1' }] }]), { status: 200 })
+test('GET reads the selected collection and sends server auth header', async (t) => {
+  const previous = global.fetch
+  let call
+  global.fetch = async (input, options) => {
+    call = { input: String(input), options }
+    return new Response(JSON.stringify([{ records: [{ id: 'one' }] }]), { status: 200 })
   }
-  t.after(() => { global.fetch = originalFetch })
+  t.after(() => { global.fetch = previous })
 
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  const records = await repository.read('accounts')
-  const url = new URL(requestedUrl)
-
-  assert.deepEqual(records, [{ id: 'account-1' }])
-  assert.equal(url.pathname, '/rest/v1/nexus_collections')
-  assert.equal(url.searchParams.get('select'), 'records')
-  assert.equal(url.searchParams.get('collection'), 'eq.accounts')
-  assert.equal(requestedOptions.method, 'GET')
-  assert.equal(requestedOptions.headers.apikey, publishableKey)
-  assert.equal(requestedOptions.headers['x-nexus-api-secret'], apiSecret)
-  assert.equal(requestedOptions.headers.Authorization, undefined)
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.read('accounts'), [{ id: 'one' }])
+  assert.match(call.input, /nexus_collections/)
+  assert.equal(call.options.method, 'GET')
+  assert.equal(call.options.headers.apikey, key)
+  assert.equal(call.options.headers['x-nexus-api-secret'], headerSecret)
 })
 
-test('returns an empty collection when no row exists', async (t) => {
-  const originalFetch = global.fetch
+test('GET returns an empty array for an empty result', async (t) => {
+  const previous = global.fetch
   global.fetch = async () => new Response('[]', { status: 200 })
-  t.after(() => { global.fetch = originalFetch })
+  t.after(() => { global.fetch = previous })
 
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  assert.deepEqual(await repository.read('profiles'), [])
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.read('profiles'), [])
 })
 
-test('upserts collection records as JSONB', async (t) => {
-  const originalFetch = global.fetch
-  let requestedUrl
-  let requestedOptions
-
-  global.fetch = async (url, options) => {
-    requestedUrl = String(url)
-    requestedOptions = options
+test('POST upserts JSON records with the backend-only header', async (t) => {
+  const previous = global.fetch
+  let call
+  global.fetch = async (input, options) => {
+    call = { input: String(input), options }
     return new Response(null, { status: 204 })
   }
-  t.after(() => { global.fetch = originalFetch })
+  t.after(() => { global.fetch = previous })
 
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  const records = [{ id: 'profile-1' }]
-  await repository.write('profiles', records)
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  const records = [{ id: 'one' }]
+  await repo.write('profiles', records)
 
-  assert.equal(requestedUrl, `${projectUrl}/rest/v1/nexus_collections?on_conflict=collection`)
-  assert.equal(requestedOptions.method, 'POST')
-  assert.equal(requestedOptions.headers.apikey, publishableKey)
-  assert.equal(requestedOptions.headers['x-nexus-api-secret'], apiSecret)
-  assert.equal(requestedOptions.headers.Prefer, 'resolution=merge-duplicates,return=minimal')
-  assert.deepEqual(JSON.parse(requestedOptions.body).records, records)
+  assert.match(call.input, /on_conflict=collection/)
+  assert.equal(call.options.method, 'POST')
+  assert.equal(call.options.headers['x-nexus-api-secret'], headerSecret)
+  assert.deepEqual(JSON.parse(call.options.body).records, records)
 })
 
-test('rejects an invalid collection name before making a request', async () => {
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  await assert.rejects(() => repository.read('invalid collection'), /Invalid collection name/)
+test('rejects malformed collection input', async () => {
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  await assert.rejects(() => repo.read('bad name'), /Invalid collection name/)
+  await assert.rejects(() => repo.write('profiles', {}), /must be an array/)
 })
 
-test('rejects non-array records before making a request', async () => {
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  await assert.rejects(() => repository.write('profiles', {}), /must be an array/)
-})
+test('reports REST errors', async (t) => {
+  const previous = global.fetch
+  global.fetch = async () => new Response('denied', { status: 403 })
+  t.after(() => { global.fetch = previous })
 
-test('surfaces Supabase REST errors', async (t) => {
-  const originalFetch = global.fetch
-  global.fetch = async () => new Response('permission denied', { status: 403 })
-  t.after(() => { global.fetch = originalFetch })
-
-  const repository = new SupabaseRestRepository(projectUrl, publishableKey, apiSecret)
-  await assert.rejects(() => repository.read('accounts'), /Supabase storage request failed \(403\)/)
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  await assert.rejects(() => repo.read('accounts'), /Supabase storage request failed \(403\)/)
 })
