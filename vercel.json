@@ -2,22 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "front": {
-      "root": "apps/front",
-      "framework": "vite",
-      "installCommand": "npm ci --no-audit --no-fund",
-      "outputDirectory": "build",
-      "rewrites": [
-        {
-          "source": "/(.*)",
-          "destination": "/index.html"
-        }
-      ]
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "apps/front/Dockerfile"
     },
     "bff": {
-      "root": "apps/bff",
-      "framework": "nestjs",
-      "entrypoint": "src/main.ts",
-      "installCommand": "npm ci --no-audit --no-fund",
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "apps/bff/Dockerfile",
       "bindings": [
         {
           "type": "service",
@@ -28,10 +20,9 @@
       ]
     },
     "back": {
-      "root": "apps/back",
-      "framework": "nestjs",
-      "entrypoint": "src/main.ts",
-      "installCommand": "npm ci --no-audit --no-fund"
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "apps/back/Dockerfile"
     }
   },
   "rewrites": [
