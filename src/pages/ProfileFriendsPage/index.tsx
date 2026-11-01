@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
-import type { Profile } from '@/Models/Profile.model'
-import { RelationshipActions } from '@/Components'
+import { Pagination, RelationshipActions } from '@/Components'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
+import { getPageItems } from '@/Helpers/Math/pagination.helper'
+import type { Profile } from '@/Models/Profile.model'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -25,6 +27,7 @@ export function ProfileFriendsPage() {
   const getRelatedIds = useRelationshipStore((state) => state.getRelatedIds)
   const relationships = useRelationshipStore((state) => state.relationships)
   const [friends, setFriends] = useState<Profile[]>([])
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (requestedUrl) {
@@ -40,6 +43,7 @@ export function ProfileFriendsPage() {
         ? getProfilesByIds(getRelatedIds(profile.id, 'connection'))
         : []
     )
+    setPage(1)
   }, [profile, relationships, getRelatedIds])
 
   if (loadedUrl !== requestedUrl) {
@@ -49,6 +53,8 @@ export function ProfileFriendsPage() {
   if (!profile) {
     return <NotFoundPage />
   }
+
+  const pageFriends = getPageItems(friends, page, DEFAULT_PAGE_SIZE)
 
   return (
     <main className="account-page">
@@ -63,7 +69,7 @@ export function ProfileFriendsPage() {
           </p>
         ) : (
           <div className="account-card__profile-list">
-            {friends.map((friend) => (
+            {pageFriends.map((friend) => (
               <div className="account-card__profile-entry" key={friend.id}>
                 <Link
                   className="account-card__link"
@@ -78,6 +84,12 @@ export function ProfileFriendsPage() {
             ))}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalItems={friends.length}
+          onPageChange={setPage}
+        />
 
         <Link
           className="account-card__link"

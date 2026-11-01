@@ -161,3 +161,81 @@
 .account-card__profile-entry:last-child {
   border-bottom: 0;
 }
+
+
+.community-member__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 12px;
+}
+
+.community-member__identity {
+  display: grid;
+  gap: 4px;
+}
+
+.community-member__role {
+  color: var(--color-neutral);
+  font-size: 12px;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.pagination__status {
+  color: var(--color-neutral);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-message-form {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-message-list {
+  display: grid;
+  gap: 0;
+}
+
+.profile-message {
+  display: grid;
+  gap: 12px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-message:first-child {
+  padding-top: 0;
+}
+
+.profile-message__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-message__date {
+  color: var(--color-neutral);
+  font-size: 12px;
+}
+
+.profile-message__content {
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

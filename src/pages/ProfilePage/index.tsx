@@ -80,6 +80,12 @@ export function ProfilePage() {
           >
             {t('PROFILE_COMMUNITIES_LINK')}
           </Link>
+          <Link
+            className="account-card__link"
+            to={`${ROUTES.profile}/${profile.url}/messages`}
+          >
+            {t('PROFILE_MESSAGES_LINK')}
+          </Link>
         </div>
 
         <p className="account-card__profile-link">

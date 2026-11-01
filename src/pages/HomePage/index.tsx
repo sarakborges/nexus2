@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
-import type { Profile } from '@/Models/Profile.model'
+import { Pagination } from '@/Components'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
+import { getPageItems } from '@/Helpers/Math/pagination.helper'
+import type { Profile } from '@/Models/Profile.model'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -17,6 +20,7 @@ export function HomePage() {
   const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
   const signOut = useAuthStore((state) => state.signOut)
   const [profiles, setProfiles] = useState<Profile[]>([])
+  const [page, setPage] = useState(1)
   const userId = session?.user.id
   const profileIds = session?.user.profiles ?? []
   const profileIdsKey = profileIds.join(',')
@@ -27,6 +31,7 @@ export function HomePage() {
         ? getProfilesByIds(profileIdsKey ? profileIdsKey.split(',') : [])
         : []
     )
+    setPage(1)
   }, [userId, profileIdsKey])
 
   const handleSignOut = () => {
@@ -39,6 +44,7 @@ export function HomePage() {
   }
 
   const currentProfileId = session?.user.currentProfile
+  const pageProfiles = getPageItems(profiles, page, DEFAULT_PAGE_SIZE)
 
   return (
     <main className="account-page">
@@ -64,7 +70,7 @@ export function HomePage() {
 
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
-          {profiles.map((profile) => {
+          {pageProfiles.map((profile) => {
             const isCurrentProfile = profile.id === currentProfileId
 
             return (
@@ -91,6 +97,11 @@ export function HomePage() {
               </div>
             )
           })}
+          <Pagination
+            page={page}
+            totalItems={profiles.length}
+            onPageChange={setPage}
+          />
         </div>
 
         <div className="account-card__actions">

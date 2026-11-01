@@ -14,6 +14,7 @@ import {
   NotFoundPage,
   ProfileCommunitiesPage,
   ProfileFriendsPage,
+  ProfileMessagesPage,
   ProfilePage,
   SignInPage,
   SignUpPage
@@ -114,6 +115,10 @@ export function AppRoutes() {
       <Route
         path={`${ROUTES.profile}/:url/communities`}
         element={<ProfileCommunitiesPage />}
+      />
+      <Route
+        path={`${ROUTES.profile}/:url/messages`}
+        element={<ProfileMessagesPage />}
       />
       <Route
         path={`${ROUTES.profile}/:url`}

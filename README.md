@@ -46,7 +46,9 @@ Communities have their own model with the same public fields as profiles: `id`, 
 
 Profile-to-profile relationships are persisted in `nexus_relationships`. Each entry contains the normalized pair in `profiles`, a `type` (`connection`, `requested` or `blocked`), `requestedBy`, `blockedBy` and an `updatedAt` timestamp. The actor fields store the profile ID that initiated the pending request or applied the block. A request sent by the current profile can be cancelled; a request sent by the other profile can be accepted. Only the profile that applied a block can remove it.
 
-Profile-to-community relationships use a separate storage, `nexus_community_relationships`, with entries whose ordered `profiles` pair is `[profileId, communityId]`. Its `type` adds `owner` to `connection`, `requested` and `blocked`; it also stores `requestedBy`, `blockedBy` and `updatedAt`. Creating a community automatically records the active profile as its owner. Owners can review and accept pending membership requests, remove members, and block or unblock profiles from the members page. Community members are available at `/community/:url/members`, and the communities associated with a profile are available at `/profile/:url/communities`. Profile friends remain at `/profile/:url/friends`.
+Profile-to-community relationships use a separate storage, `nexus_community_relationships`, with entries whose ordered `profiles` pair is `[profileId, communityId]`. Its `type` distinguishes `owner`, `moderator`, `connection` (ordinary member), `requested` and `blocked` (banned). It also stores `requestedBy`, `blockedBy` and `updatedAt`. Creating a community automatically records the active profile as its owner. Owners can promote members to moderators, demote moderators, and transfer ownership to a moderator; ownership transfer makes the previous owner a moderator. Owners and moderators can accept or decline requests and ban or unban ordinary members. Moderators cannot change other staff members or ban them. The community members page has All members, Staff and Banned tabs at `/community/:url/members`. Profile communities are available at `/profile/:url/communities`; profile friends remain at `/profile/:url/friends`.
+
+Profile messages use `nexus_profile_messages`. A message stores its sender profile ID, recipient profile ID, content and creation timestamp. The profile owner sees every message addressed to that profile; another visitor sees only messages that visitor sent to the profile. The public message board is available at `/profile/:url/messages` and displays entries in reverse chronological order. This visibility rule is implemented in the client prototype only; browser storage is not a security boundary.
 
 Older relationship entries that do not contain an actor ID are migrated with a null actor. Their status is preserved, but the UI asks the user to clear an ambiguous legacy relationship before creating a new one. On initialization, legacy profile-community pairs are moved out of `nexus_relationships` into `nexus_community_relationships`; profile-to-profile pairs remain in `nexus_relationships`.
 
@@ -58,6 +60,7 @@ Persistent application records use `localStorage`:
 - `nexus_communities`: the persisted community records.
 - `nexus_relationships`: relationships between two profiles.
 - `nexus_community_relationships`: relationships between a profile and a community.
+- `nexus_profile_messages`: messages addressed to profiles.
 
 Only the active authenticated session uses `sessionStorage` (`nexus_auth_session_v2`). The account and profiles remain available after closing the tab or browser; the active session is scoped to the current tab.
 
@@ -109,10 +112,12 @@ src/
     Community.model.ts
     Relationship.model.ts
     CommunityRelationship.model.ts
+    ProfileMessage.model.ts
   Services/
     Auth/
     Community/
     CommunityRelationship/
+    ProfileMessage/
     Profile/
     Relationship/
   Stores/
@@ -121,6 +126,7 @@ src/
     Profile.store.ts
     Community.store.ts
     CommunityRelationship.store.ts
+    ProfileMessage.store.ts
     Relationship.store.ts
     Settings.store.ts
     index.ts
@@ -137,6 +143,7 @@ src/
     ProfileCommunitiesPage/
     CommunityPage/
     CommunityMembersPage/
+    ProfileMessagesPage/
     NotFoundPage/
   routes/
     index.tsx
@@ -156,6 +163,8 @@ The shared button atom uses the `variation` prop: `primary` (default), `secondar
 The modal is a controlled native `dialog`, allowing the browser to handle modal focus and keyboard behavior. Toast notifications dismiss themselves after 5,000 ms by default; the duration is configurable, and `0` disables auto-dismiss.
 
 React Router is configured in declarative mode. Unknown paths render `NotFoundPage`. Each route's `main` element uses a CSS entry animation; `prefers-reduced-motion` disables it, so page transitions require no JavaScript logic.
+
+All profile, community and message listings use pagination with 20 items per page by default.
 
 The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Both language and appearance default to the system preferences until the user chooses a value manually. The language hook resolves browser locales; the appearance hook follows `prefers-color-scheme`. Manual choices are persisted, and users can select the system preference again.
 

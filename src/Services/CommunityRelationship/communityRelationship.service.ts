@@ -12,6 +12,7 @@ import {
 const COMMUNITY_RELATIONSHIPS_KEY = 'community_relationships'
 const RELATIONSHIP_TYPES: CommunityRelationshipType[] = [
   'owner',
+  'moderator',
   'connection',
   'requested',
   'blocked'
@@ -105,6 +106,19 @@ export const getCommunityRelationship = (
     samePair(item.profiles, [profileId, communityId])
   ) ?? null
 
+const getRole = (
+  profileId: string,
+  communityId: string,
+  relationships: CommunityRelationship[]
+): 'owner' | 'moderator' | 'connection' | 'requested' | 'blocked' | null =>
+  relationships.find(
+    (item) =>
+      item.profiles[0] === profileId && item.profiles[1] === communityId
+  )?.type ?? null
+
+const isStaffRole = (role: string | null): boolean =>
+  role === 'owner' || role === 'moderator'
+
 export const setCommunityRelationship = (
   profileId: string,
   communityId: string,
@@ -116,20 +130,41 @@ export const setCommunityRelationship = (
     return null
   }
 
-  const isProfileAction = actorProfileId === profileId
-  const isCommunityOwner = relationships.some(
-    (item) =>
-      item.profiles[0] === actorProfileId &&
-      item.profiles[1] === communityId &&
-      item.type === 'owner'
-  )
+  const targetRole = getRole(profileId, communityId, relationships)
+  const actorRole = getRole(actorProfileId, communityId, relationships)
+  const actorIsTarget = actorProfileId === profileId
+  let authorized = false
 
-  if (
-    (type === 'owner' && !isProfileAction) ||
-    (type === 'requested' && !isProfileAction) ||
-    (type !== 'owner' && type !== 'requested' &&
-      !isProfileAction && !isCommunityOwner)
-  ) {
+  switch (type) {
+    case 'owner':
+      authorized =
+        actorIsTarget &&
+        targetRole === null &&
+        !relationships.some(
+          (item) =>
+            item.profiles[1] === communityId && item.type === 'owner'
+        )
+      break
+    case 'requested':
+      authorized = actorIsTarget && targetRole === null
+      break
+    case 'connection':
+      authorized =
+        isStaffRole(actorRole) && targetRole === 'requested'
+      break
+    case 'moderator':
+      authorized = actorRole === 'owner' && targetRole === 'connection'
+      break
+    case 'blocked':
+      authorized =
+        (actorIsTarget && (targetRole === null || targetRole === 'connection')) ||
+        (isStaffRole(actorRole) && targetRole === 'connection')
+      break
+    default:
+      authorized = false
+  }
+
+  if (!authorized) {
     return null
   }
 
@@ -148,21 +183,111 @@ export const setCommunityRelationship = (
   ]
 }
 
+export const demoteCommunityModerator = (
+  profileId: string,
+  communityId: string,
+  actorProfileId: string,
+  relationships: CommunityRelationship[]
+): CommunityRelationship[] | null => {
+  if (
+    !profileId ||
+    !communityId ||
+    !actorProfileId ||
+    getRole(actorProfileId, communityId, relationships) !== 'owner' ||
+    getRole(profileId, communityId, relationships) !== 'moderator'
+  ) {
+    return null
+  }
+
+  const updatedAt = Date.now()
+  return relationships.map((item) =>
+    samePair(item.profiles, [profileId, communityId])
+      ? {
+          ...item,
+          type: 'connection',
+          requestedBy: null,
+          blockedBy: null,
+          updatedAt
+        }
+      : item
+  )
+}
+
+export const transferCommunityOwnership = (
+  currentOwnerProfileId: string,
+  newOwnerProfileId: string,
+  communityId: string,
+  relationships: CommunityRelationship[]
+): CommunityRelationship[] | null => {
+  if (
+    !currentOwnerProfileId ||
+    !newOwnerProfileId ||
+    !communityId ||
+    currentOwnerProfileId === newOwnerProfileId ||
+    getRole(currentOwnerProfileId, communityId, relationships) !== 'owner' ||
+    getRole(newOwnerProfileId, communityId, relationships) !== 'moderator'
+  ) {
+    return null
+  }
+
+  const updatedAt = Date.now()
+  return relationships.map((item) => {
+    if (samePair(item.profiles, [currentOwnerProfileId, communityId])) {
+      return {
+        ...item,
+        type: 'moderator',
+        requestedBy: null,
+        blockedBy: null,
+        updatedAt
+      }
+    }
+
+    if (samePair(item.profiles, [newOwnerProfileId, communityId])) {
+      return {
+        ...item,
+        type: 'owner',
+        requestedBy: null,
+        blockedBy: null,
+        updatedAt
+      }
+    }
+
+    return item
+  })
+}
+
 export const removeCommunityRelationship = (
   profileId: string,
   communityId: string,
   actorProfileId: string,
   relationships: CommunityRelationship[]
 ): CommunityRelationship[] | null => {
-  const isProfileAction = actorProfileId === profileId
-  const isCommunityOwner = relationships.some(
-    (item) =>
-      item.profiles[0] === actorProfileId &&
-      item.profiles[1] === communityId &&
-      item.type === 'owner'
+  if (!profileId || !communityId || !actorProfileId) {
+    return null
+  }
+
+  const targetRole = getRole(profileId, communityId, relationships)
+  const actorRole = getRole(actorProfileId, communityId, relationships)
+  const actorIsTarget = actorProfileId === profileId
+  const targetRelationship = relationships.find((item) =>
+    samePair(item.profiles, [profileId, communityId])
   )
 
-  if (!profileId || !communityId || (!isProfileAction && !isCommunityOwner)) {
+  const canLeaveOrCancel =
+    actorIsTarget &&
+    (targetRole === 'connection' ||
+      targetRole === 'requested' ||
+      (targetRole === 'blocked' &&
+        (targetRelationship?.blockedBy === actorProfileId ||
+          targetRelationship?.blockedBy === null)))
+
+  const canModerateTarget =
+    isStaffRole(actorRole) &&
+    (targetRole === 'connection' ||
+      targetRole === 'requested' ||
+      targetRole === 'blocked')
+
+  if (!canLeaveOrCancel && !canModerateTarget) {
     return null
   }
 
@@ -171,11 +296,10 @@ export const removeCommunityRelationship = (
   )
 }
 
-
 /**
- * Move the profile-community pairs from the earlier mixed relationship
- * collection into their dedicated storage. Legacy actor IDs remain null
- * because the previous format did not record who initiated the action.
+ * Move profile-community pairs from the older mixed storage into the dedicated
+ * collection. Missing actor IDs remain null because the old format did not
+ * identify who initiated requests or blocks.
  */
 export const migrateLegacyCommunityRelationships = (): void => {
   const communityIds = new Set(getCommunities().map((community) => community.id))
@@ -186,11 +310,8 @@ export const migrateLegacyCommunityRelationships = (): void => {
 
   const legacyRelationships = getRelationships()
   const legacyCommunityPairs = legacyRelationships.filter((item) => {
-    const communityMatches = item.profiles.filter((id) =>
-      communityIds.has(id)
-    )
-
-    return communityMatches.length === 1
+    const matches = item.profiles.filter((id) => communityIds.has(id))
+    return matches.length === 1
   })
 
   if (legacyCommunityPairs.length === 0) {
@@ -212,10 +333,8 @@ export const migrateLegacyCommunityRelationships = (): void => {
       continue
     }
 
-    const alreadyMigrated = migratedRelationships.some(
-      (item) =>
-        item.profiles[0] === profileId &&
-        item.profiles[1] === communityId
+    const alreadyMigrated = migratedRelationships.some((item) =>
+      samePair(item.profiles, [profileId, communityId])
     )
 
     if (!alreadyMigrated) {
@@ -234,8 +353,7 @@ export const migrateLegacyCommunityRelationships = (): void => {
   }
 
   const remainingRelationships = legacyRelationships.filter(
-    (item) =>
-      !item.profiles.some((id) => communityIds.has(id))
+    (item) => !item.profiles.some((id) => communityIds.has(id))
   )
 
   if (!saveRelationships(remainingRelationships)) {

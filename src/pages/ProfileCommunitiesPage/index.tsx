@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
-import type { Community } from '@/Models/Community.model'
+import { Pagination } from '@/Components'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
+import { getPageItems } from '@/Helpers/Math/pagination.helper'
+import type { Community } from '@/Models/Community.model'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunitiesByIds } from '@/Services/Community'
 import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
@@ -26,6 +29,7 @@ export function ProfileCommunitiesPage() {
     (state) => state.relationships
   )
   const [communities, setCommunities] = useState<Community[]>([])
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     if (requestedUrl) {
@@ -41,6 +45,7 @@ export function ProfileCommunitiesPage() {
         ? getCommunitiesByIds(getCommunityIdsForProfile(profile.id))
         : []
     )
+    setPage(1)
   }, [profile, relationships, getCommunityIdsForProfile])
 
   if (loadedUrl !== requestedUrl) {
@@ -50,6 +55,12 @@ export function ProfileCommunitiesPage() {
   if (!profile) {
     return <NotFoundPage />
   }
+
+  const pageCommunities = getPageItems(
+    communities,
+    page,
+    DEFAULT_PAGE_SIZE
+  )
 
   return (
     <main className="account-page">
@@ -64,7 +75,7 @@ export function ProfileCommunitiesPage() {
           </p>
         ) : (
           <div className="account-card__profile-list">
-            {communities.map((community) => (
+            {pageCommunities.map((community) => (
               <div className="account-card__profile-entry" key={community.id}>
                 <Link
                   className="account-card__link"
@@ -76,6 +87,12 @@ export function ProfileCommunitiesPage() {
             ))}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalItems={communities.length}
+          onPageChange={setPage}
+        />
 
         <Link
           className="account-card__link"

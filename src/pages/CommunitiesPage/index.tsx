@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 
-import type { Community } from '@/Models/Community.model'
+import { Pagination } from '@/Components'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
+import { getPageItems } from '@/Helpers/Math/pagination.helper'
+import type { Community } from '@/Models/Community.model'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunities } from '@/Services/Community'
 
@@ -12,10 +14,17 @@ import '../AuthenticatedPage.style.scss'
 export function CommunitiesPage() {
   const { t } = useTranslations()
   const [communities, setCommunities] = useState<Community[]>([])
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     setCommunities(getCommunities())
   }, [])
+
+  const pageCommunities = getPageItems(
+    communities,
+    page,
+    DEFAULT_PAGE_SIZE
+  )
 
   return (
     <main className="account-page">
@@ -33,7 +42,7 @@ export function CommunitiesPage() {
           </p>
         ) : (
           <div className="account-card__profile-list">
-            {communities.map((community) => (
+            {pageCommunities.map((community) => (
               <div className="account-card__profile-entry" key={community.id}>
                 <Link
                   className="account-card__link"
@@ -45,6 +54,12 @@ export function CommunitiesPage() {
             ))}
           </div>
         )}
+
+        <Pagination
+          page={page}
+          totalItems={communities.length}
+          onPageChange={setPage}
+        />
 
         <Link className="account-card__link" to={ROUTES.home}>
           {t('PROFILE_BACK_HOME')}

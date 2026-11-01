@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
-import { CommunityMemberActions } from '@/Components'
-import type { Profile } from '@/Models/Profile.model'
+import { CommunityMemberActions, Pagination } from '@/Components'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
+import { Button } from '@/DesignSystem'
+import { getPageItems } from '@/Helpers/Math/pagination.helper'
 import { useTranslations } from '@/Hooks/Language'
+import type { CommunityRelationshipType } from '@/Models/CommunityRelationship.model'
+import type { Profile } from '@/Models/Profile.model'
 import { getProfilesByIds } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useCommunityStore } from '@/Stores/Community.store'
@@ -12,6 +16,17 @@ import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.st
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
+
+type MemberTab = 'all' | 'staff' | 'banned'
+
+const ROLE_TRANSLATION_KEYS: Record<
+  'owner' | 'moderator' | 'connection',
+  'COMMUNITY_ROLE_OWNER' | 'COMMUNITY_ROLE_MODERATOR' | 'COMMUNITY_ROLE_MEMBER'
+> = {
+  owner: 'COMMUNITY_ROLE_OWNER',
+  moderator: 'COMMUNITY_ROLE_MODERATOR',
+  connection: 'COMMUNITY_ROLE_MEMBER'
+}
 
 export function CommunityMembersPage() {
   const { url } = useParams<{ url: string }>()
@@ -24,30 +39,21 @@ export function CommunityMembersPage() {
   )
   const clearCommunity = useCommunityStore((state) => state.clearCommunity)
   const session = useAuthStore((state) => state.session)
-  const getMemberProfileIds = useCommunityRelationshipStore(
-    (state) => state.getMemberProfileIds
-  )
-  const getPendingProfileIds = useCommunityRelationshipStore(
-    (state) => state.getPendingProfileIds
-  )
-  const getBlockedProfileIds = useCommunityRelationshipStore(
-    (state) => state.getBlockedProfileIds
+  const relationships = useCommunityRelationshipStore(
+    (state) => state.relationships
   )
   const getRelationship = useCommunityRelationshipStore(
     (state) => state.getRelationship
   )
-  const relationships = useCommunityRelationshipStore(
-    (state) => state.relationships
-  )
   const currentProfileId = session?.user.currentProfile ?? null
-  const isOwner = Boolean(
-    community &&
-      currentProfileId &&
-      getRelationship(currentProfileId, community.id)?.type === 'owner'
-  )
-  const [members, setMembers] = useState<Profile[]>([])
-  const [pendingProfiles, setPendingProfiles] = useState<Profile[]>([])
-  const [blockedProfiles, setBlockedProfiles] = useState<Profile[]>([])
+  const currentRole = community && currentProfileId
+    ? getRelationship(currentProfileId, community.id)?.type ?? null
+    : null
+  const isOwner = currentRole === 'owner'
+  const isStaff = isOwner || currentRole === 'moderator'
+  const [activeTab, setActiveTab] = useState<MemberTab>('all')
+  const [page, setPage] = useState(1)
+  const [pendingPage, setPendingPage] = useState(1)
 
   useEffect(() => {
     if (requestedUrl) {
@@ -57,30 +63,61 @@ export function CommunityMembersPage() {
     }
   }, [requestedUrl, loadCommunityByUrl, clearCommunity])
 
+  const lists = useMemo(() => {
+    if (!community) {
+      return {
+        all: [] as Profile[],
+        staff: [] as Profile[],
+        banned: [] as Profile[],
+        pending: [] as Profile[]
+      }
+    }
+
+    const communityRelationships = relationships.filter(
+      (item) => item.profiles[1] === community.id
+    )
+    const getByType = (types: CommunityRelationshipType[]) =>
+      getProfilesByIds(
+        communityRelationships
+          .filter((item) => types.includes(item.type))
+          .map((item) => item.profiles[0])
+      )
+
+    return {
+      all: getByType(['owner', 'moderator', 'connection']),
+      staff: getByType(['owner', 'moderator']),
+      banned: getByType(['blocked']),
+      pending: isStaff ? getByType(['requested']) : []
+    }
+  }, [community, relationships, isStaff])
+
+  const visibleProfiles = lists[activeTab]
+  const pageProfiles = getPageItems(visibleProfiles, page, DEFAULT_PAGE_SIZE)
+  const pendingPageProfiles = getPageItems(
+    lists.pending,
+    pendingPage,
+    DEFAULT_PAGE_SIZE
+  )
+
   useEffect(() => {
-    setMembers(
-      community
-        ? getProfilesByIds(getMemberProfileIds(community.id))
-        : []
+    setPage(1)
+    setPendingPage(1)
+  }, [activeTab, community?.id])
+
+  useEffect(() => {
+    setPage((currentPage) =>
+      Math.min(
+        currentPage,
+        Math.max(1, Math.ceil(visibleProfiles.length / DEFAULT_PAGE_SIZE))
+      )
     )
-    setPendingProfiles(
-      community && isOwner
-        ? getProfilesByIds(getPendingProfileIds(community.id))
-        : []
+    setPendingPage((currentPage) =>
+      Math.min(
+        currentPage,
+        Math.max(1, Math.ceil(lists.pending.length / DEFAULT_PAGE_SIZE))
+      )
     )
-    setBlockedProfiles(
-      community && isOwner
-        ? getProfilesByIds(getBlockedProfileIds(community.id))
-        : []
-    )
-  }, [
-    community,
-    relationships,
-    isOwner,
-    getMemberProfileIds,
-    getPendingProfileIds,
-    getBlockedProfileIds
-  ])
+  }, [visibleProfiles.length, lists.pending.length])
 
   if (loadedUrl !== requestedUrl) {
     return null
@@ -90,105 +127,129 @@ export function CommunityMembersPage() {
     return <NotFoundPage />
   }
 
+  const tabs: Array<{ id: MemberTab; label: string }> = [
+    { id: 'all', label: t('COMMUNITY_TAB_ALL') },
+    { id: 'staff', label: t('COMMUNITY_TAB_STAFF') },
+    { id: 'banned', label: t('COMMUNITY_TAB_BANNED') }
+  ]
+
+  const renderProfileRow = (profile: Profile) => {
+    const role = getRelationship(profile.id, community.id)?.type
+    const roleLabel =
+      role && role in ROLE_TRANSLATION_KEYS
+        ? t(ROLE_TRANSLATION_KEYS[role as keyof typeof ROLE_TRANSLATION_KEYS])
+        : null
+
+    return (
+      <div className="account-card__profile-entry" key={profile.id}>
+        <div className="community-member__identity">
+          <Link
+            className="account-card__link"
+            to={`${ROUTES.profile}/${profile.url}`}
+          >
+            {profile.name}
+          </Link>
+          {roleLabel && (
+            <span className="community-member__role">{roleLabel}</span>
+          )}
+        </div>
+        {isStaff && currentProfileId && role !== 'owner' && (
+          <CommunityMemberActions
+            memberProfileId={profile.id}
+            communityId={community.id}
+            actorProfileId={currentProfileId}
+            actorRole={currentRole as 'owner' | 'moderator'}
+          />
+        )}
+      </div>
+    )
+  }
+
   return (
     <main className="account-page">
       <section className="account-card">
-        <h1 className="account-card__title">
-          {t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}
-        </h1>
+        <header className="account-card__header">
+          <div>
+            <h1 className="account-card__title">
+              {t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}
+            </h1>
+            <p className="account-card__description">
+              {t('COMMUNITY_MEMBERS_DESCRIPTION')}
+            </p>
+          </div>
+          <Link
+            className="account-card__link"
+            to={`${ROUTES.community}/${community.url}`}
+          >
+            {t('COMMUNITY_BACK_TO_PAGE')}
+          </Link>
+        </header>
 
-        {isOwner && (
+        {isStaff && lists.pending.length > 0 && (
           <section className="account-card__profile-list">
             <h2>{t('COMMUNITY_PENDING_REQUESTS')}</h2>
-            {pendingProfiles.length === 0 ? (
-              <p className="account-card__description">
-                {t('COMMUNITY_MEMBERS_PENDING_EMPTY')}
-              </p>
-            ) : (
-              pendingProfiles.map((profile) => (
-                <div className="account-card__profile-entry" key={profile.id}>
-                  <Link
-                    className="account-card__link"
-                    to={`${ROUTES.profile}/${profile.url}`}
-                  >
-                    {profile.name}
-                  </Link>
-                  {currentProfileId && (
-                    <CommunityMemberActions
-                      memberProfileId={profile.id}
-                      communityId={community.id}
-                      ownerProfileId={currentProfileId}
-                    />
-                  )}
-                </div>
-              ))
-            )}
-          </section>
-        )}
-
-        <section className="account-card__profile-list">
-          {members.length === 0 ? (
-            <p className="account-card__description">
-              {t('COMMUNITY_MEMBERS_EMPTY')}
-            </p>
-          ) : (
-            members.map((member) => (
-              <div className="account-card__profile-entry" key={member.id}>
+            {pendingPageProfiles.map((profile) => (
+              <div className="account-card__profile-entry" key={profile.id}>
                 <Link
                   className="account-card__link"
-                  to={`${ROUTES.profile}/${member.url}`}
+                  to={`${ROUTES.profile}/${profile.url}`}
                 >
-                  {member.name}
+                  {profile.name}
                 </Link>
-                {isOwner &&
-                  currentProfileId &&
-                  member.id !== currentProfileId && (
-                    <CommunityMemberActions
-                      memberProfileId={member.id}
-                      communityId={community.id}
-                      ownerProfileId={currentProfileId}
-                    />
-                  )}
+                {currentProfileId && (
+                  <CommunityMemberActions
+                    memberProfileId={profile.id}
+                    communityId={community.id}
+                    actorProfileId={currentProfileId}
+                    actorRole={currentRole as 'owner' | 'moderator'}
+                  />
+                )}
               </div>
-            ))
-          )}
-        </section>
-
-        {isOwner && (
-          <section className="account-card__profile-list">
-            <h2>{t('COMMUNITY_BLOCKED_MEMBERS')}</h2>
-            {blockedProfiles.length === 0 ? (
-              <p className="account-card__description">
-                {t('COMMUNITY_BLOCKED_MEMBERS_EMPTY')}
-              </p>
-            ) : (
-              blockedProfiles.map((profile) => (
-                <div className="account-card__profile-entry" key={profile.id}>
-                  <Link
-                    className="account-card__link"
-                    to={`${ROUTES.profile}/${profile.url}`}
-                  >
-                    {profile.name}
-                  </Link>
-                  {currentProfileId && (
-                    <CommunityMemberActions
-                      memberProfileId={profile.id}
-                      communityId={community.id}
-                      ownerProfileId={currentProfileId}
-                    />
-                  )}
-                </div>
-              ))
-            )}
+            ))}
+            <Pagination
+              page={pendingPage}
+              totalItems={lists.pending.length}
+              onPageChange={setPendingPage}
+            />
           </section>
         )}
 
-        <Link
-          className="account-card__link"
-          to={`${ROUTES.community}/${community.url}`}
-        >
-          {t('COMMUNITY_BACK_TO_PAGE')}
-        </Link>
+        <div className="community-member__tabs" role="tablist">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              variation={activeTab === tab.id ? 'primary' : 'secondary'}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {tab.label}
+            </Button>
+          ))}
+        </div>
+
+        {pageProfiles.length === 0 ? (
+          <p className="account-card__description">
+            {t(
+              activeTab === 'all'
+                ? 'COMMUNITY_MEMBERS_EMPTY'
+                : activeTab === 'staff'
+                  ? 'COMMUNITY_STAFF_EMPTY'
+                  : 'COMMUNITY_BANNED_EMPTY'
+            )}
+          </p>
+        ) : (
+          <div className="account-card__profile-list">
+            {pageProfiles.map(renderProfileRow)}
+          </div>
+        )}
+
+        <Pagination
+          page={page}
+          totalItems={visibleProfiles.length}
+          onPageChange={setPage}
+        />
       </section>
     </main>
   )

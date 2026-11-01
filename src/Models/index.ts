@@ -7,6 +7,9 @@ export type {
   CommunityRelationshipType
 } from './CommunityRelationship.model'
 export type {
+  ProfileMessage
+} from './ProfileMessage.model'
+export type {
   Relationship,
   RelationshipType
 } from './Relationship.model'

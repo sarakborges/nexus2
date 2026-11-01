@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
@@ -5,15 +7,18 @@ import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.st
 type CommunityMemberActionsProps = {
   memberProfileId: string
   communityId: string
-  ownerProfileId: string
+  actorProfileId: string
+  actorRole: 'owner' | 'moderator'
 }
 
 export function CommunityMemberActions({
   memberProfileId,
   communityId,
-  ownerProfileId
+  actorProfileId,
+  actorRole
 }: CommunityMemberActionsProps) {
   const { t } = useTranslations()
+  const [confirmTransfer, setConfirmTransfer] = useState(false)
   const relationship = useCommunityRelationshipStore((state) =>
     state.getRelationship(memberProfileId, communityId)
   )
@@ -23,36 +28,32 @@ export function CommunityMemberActions({
   const removeRelationship = useCommunityRelationshipStore(
     (state) => state.removeRelationship
   )
+  const demoteModerator = useCommunityRelationshipStore(
+    (state) => state.demoteModerator
+  )
+  const transferOwnership = useCommunityRelationshipStore(
+    (state) => state.transferOwnership
+  )
 
   if (!relationship || relationship.type === 'owner') {
     return null
   }
 
   const remove = () =>
-    removeRelationship(memberProfileId, communityId, ownerProfileId)
+    removeRelationship(memberProfileId, communityId, actorProfileId)
 
-  const block = () =>
+  const ban = () =>
     updateRelationship(
       memberProfileId,
       communityId,
       'blocked',
-      ownerProfileId
+      actorProfileId
     )
 
-  const unblock = () => remove()
-
   if (relationship.type === 'blocked') {
-    if (relationship.blockedBy !== ownerProfileId) {
-      return (
-        <span className="account-card__description">
-          {t('RELATIONSHIP_BLOCKED_BY_OTHER')}
-        </span>
-      )
-    }
-
     return (
-      <Button variation="secondary" onClick={unblock}>
-        {t('COMMUNITY_UNBLOCK_MEMBER')}
+      <Button variation="secondary" onClick={remove}>
+        {t('COMMUNITY_UNBAN_MEMBER')}
       </Button>
     )
   }
@@ -66,7 +67,7 @@ export function CommunityMemberActions({
               memberProfileId,
               communityId,
               'connection',
-              ownerProfileId
+              actorProfileId
             )
           }
         >
@@ -75,20 +76,80 @@ export function CommunityMemberActions({
         <Button variation="secondary" onClick={remove}>
           {t('COMMUNITY_REJECT_REQUEST')}
         </Button>
-        <Button variation="cancel" onClick={block}>
-          {t('COMMUNITY_BLOCK_MEMBER')}
+      </div>
+    )
+  }
+
+  if (relationship.type === 'moderator') {
+    if (actorRole !== 'owner') {
+      return null
+    }
+
+    return (
+      <div className="account-card__relationship-actions">
+        <Button
+          variation="secondary"
+          onClick={() =>
+            demoteModerator(memberProfileId, communityId, actorProfileId)
+          }
+        >
+          {t('COMMUNITY_DEMOTE_MODERATOR')}
         </Button>
+        {confirmTransfer ? (
+          <>
+            <Button
+              onClick={() => {
+                if (
+                  transferOwnership(
+                    actorProfileId,
+                    memberProfileId,
+                    communityId
+                  )
+                ) {
+                  setConfirmTransfer(false)
+                }
+              }}
+            >
+              {t('COMMUNITY_CONFIRM_TRANSFER')}
+            </Button>
+            <Button
+              variation="secondary"
+              onClick={() => setConfirmTransfer(false)}
+            >
+              {t('COMMUNITY_CANCEL_TRANSFER')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variation="secondary"
+            onClick={() => setConfirmTransfer(true)}
+          >
+            {t('COMMUNITY_TRANSFER_OWNERSHIP')}
+          </Button>
+        )}
       </div>
     )
   }
 
   return (
     <div className="account-card__relationship-actions">
-      <Button variation="secondary" onClick={remove}>
-        {t('COMMUNITY_REMOVE_MEMBER')}
-      </Button>
-      <Button variation="cancel" onClick={block}>
-        {t('COMMUNITY_BLOCK_MEMBER')}
+      {actorRole === 'owner' && (
+        <Button
+          variation="secondary"
+          onClick={() =>
+            updateRelationship(
+              memberProfileId,
+              communityId,
+              'moderator',
+              actorProfileId
+            )
+          }
+        >
+          {t('COMMUNITY_PROMOTE_MODERATOR')}
+        </Button>
+      )}
+      <Button variation="cancel" onClick={ban}>
+        {t('COMMUNITY_BAN_MEMBER')}
       </Button>
     </div>
   )

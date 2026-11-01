@@ -5,11 +5,13 @@ import type {
   CommunityRelationshipType
 } from '@/Models/CommunityRelationship.model'
 import {
+  demoteCommunityModerator as buildDemotion,
   getCommunityRelationships,
   migrateLegacyCommunityRelationships,
   removeCommunityRelationship as buildRemoval,
   saveCommunityRelationships,
-  setCommunityRelationship as buildUpdate
+  setCommunityRelationship as buildUpdate,
+  transferCommunityOwnership as buildOwnershipTransfer
 } from '@/Services/CommunityRelationship'
 
 type CommunityRelationshipStore = {
@@ -20,8 +22,15 @@ type CommunityRelationshipStore = {
     type: CommunityRelationshipType,
     actorProfileId: string
   ) => boolean
-  addOwnerRelationship: (
+  addOwnerRelationship: (profileId: string, communityId: string) => boolean
+  demoteModerator: (
     profileId: string,
+    communityId: string,
+    actorProfileId: string
+  ) => boolean
+  transferOwnership: (
+    currentOwnerProfileId: string,
+    newOwnerProfileId: string,
     communityId: string
   ) => boolean
   removeRelationship: (
@@ -35,6 +44,7 @@ type CommunityRelationshipStore = {
   ) => CommunityRelationship | null
   getCommunityIdsForProfile: (profileId: string) => string[]
   getMemberProfileIds: (communityId: string) => string[]
+  getStaffProfileIds: (communityId: string) => string[]
   getPendingProfileIds: (communityId: string) => string[]
   getBlockedProfileIds: (communityId: string) => string[]
 }
@@ -62,7 +72,6 @@ export const useCommunityRelationshipStore =
       }
 
       set({ relationships: updatedRelationships })
-
       return true
     },
 
@@ -83,7 +92,48 @@ export const useCommunityRelationshipStore =
       }
 
       set({ relationships: updatedRelationships })
+      return true
+    },
 
+    demoteModerator: (profileId, communityId, actorProfileId) => {
+      const updatedRelationships = buildDemotion(
+        profileId,
+        communityId,
+        actorProfileId,
+        get().relationships
+      )
+
+      if (
+        !updatedRelationships ||
+        !saveCommunityRelationships(updatedRelationships)
+      ) {
+        return false
+      }
+
+      set({ relationships: updatedRelationships })
+      return true
+    },
+
+    transferOwnership: (
+      currentOwnerProfileId,
+      newOwnerProfileId,
+      communityId
+    ) => {
+      const updatedRelationships = buildOwnershipTransfer(
+        currentOwnerProfileId,
+        newOwnerProfileId,
+        communityId,
+        get().relationships
+      )
+
+      if (
+        !updatedRelationships ||
+        !saveCommunityRelationships(updatedRelationships)
+      ) {
+        return false
+      }
+
+      set({ relationships: updatedRelationships })
       return true
     },
 
@@ -113,7 +163,6 @@ export const useCommunityRelationshipStore =
       }
 
       set({ relationships: updatedRelationships })
-
       return true
     },
 
@@ -128,7 +177,9 @@ export const useCommunityRelationshipStore =
         .relationships.filter(
           (item) =>
             item.profiles[0] === profileId &&
-            (item.type === 'owner' || item.type === 'connection')
+            (item.type === 'owner' ||
+              item.type === 'moderator' ||
+              item.type === 'connection')
         )
         .map((item) => item.profiles[1]),
 
@@ -137,7 +188,18 @@ export const useCommunityRelationshipStore =
         .relationships.filter(
           (item) =>
             item.profiles[1] === communityId &&
-            (item.type === 'owner' || item.type === 'connection')
+            (item.type === 'owner' ||
+              item.type === 'moderator' ||
+              item.type === 'connection')
+        )
+        .map((item) => item.profiles[0]),
+
+    getStaffProfileIds: (communityId) =>
+      get()
+        .relationships.filter(
+          (item) =>
+            item.profiles[1] === communityId &&
+            (item.type === 'owner' || item.type === 'moderator')
         )
         .map((item) => item.profiles[0]),
 

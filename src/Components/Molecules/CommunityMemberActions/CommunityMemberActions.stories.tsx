@@ -6,7 +6,7 @@ import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.st
 import { CommunityMemberActions } from './CommunityMemberActions.component'
 
 type RelationshipPreviewProps = {
-  type: 'connection' | 'requested' | 'blocked'
+  type: 'connection' | 'moderator' | 'requested' | 'blocked'
 }
 
 function RelationshipPreview({ type }: RelationshipPreviewProps) {
@@ -21,6 +21,13 @@ function RelationshipPreview({ type }: RelationshipPreviewProps) {
           type,
           requestedBy: type === 'requested' ? 'profile-member' : null,
           blockedBy: type === 'blocked' ? 'profile-owner' : null,
+          updatedAt: 1
+        },
+        {
+          profiles: ['profile-owner', 'community-example'],
+          type: 'owner',
+          requestedBy: null,
+          blockedBy: null,
           updatedAt: 1
         }
       ]
@@ -37,7 +44,8 @@ function RelationshipPreview({ type }: RelationshipPreviewProps) {
     <CommunityMemberActions
       memberProfileId="profile-member"
       communityId="community-example"
-      ownerProfileId="profile-owner"
+      actorProfileId="profile-owner"
+      actorRole="owner"
     />
   )
 }
@@ -48,7 +56,8 @@ const meta = {
   args: {
     memberProfileId: 'profile-member',
     communityId: 'community-example',
-    ownerProfileId: 'profile-owner'
+    actorProfileId: 'profile-owner',
+    actorRole: 'owner'
   }
 } satisfies Meta<typeof CommunityMemberActions>
 
@@ -56,14 +65,18 @@ export default meta
 
 type Story = StoryObj<typeof meta>
 
+export const Member: Story = {
+  render: () => <RelationshipPreview type="connection" />
+}
+
+export const Moderator: Story = {
+  render: () => <RelationshipPreview type="moderator" />
+}
+
 export const PendingRequest: Story = {
   render: () => <RelationshipPreview type="requested" />
 }
 
-export const ConnectedMember: Story = {
-  render: () => <RelationshipPreview type="connection" />
-}
-
-export const BlockedMember: Story = {
+export const BannedMember: Story = {
   render: () => <RelationshipPreview type="blocked" />
 }

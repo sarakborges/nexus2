@@ -1,8 +1,10 @@
 export {
+  demoteCommunityModerator,
   getCommunityRelationship,
   getCommunityRelationships,
   migrateLegacyCommunityRelationships,
   removeCommunityRelationship,
   saveCommunityRelationships,
-  setCommunityRelationship
+  setCommunityRelationship,
+  transferCommunityOwnership
 } from './communityRelationship.service'

@@ -79,6 +79,7 @@ export function RelationshipActions({
   }
 
   const isOwner = relationship?.type === 'owner'
+  const isModerator = relationship?.type === 'moderator'
   const isBlockedByCurrent = relationship?.blockedBy === sourceId
   const isBlockedByOther =
     relationship?.type === 'blocked' &&
@@ -109,10 +110,18 @@ export function RelationshipActions({
 
   const handleBlock = () => update('blocked')
 
-  if (isOwner) {
+  if (isCommunity && isOwner) {
     return (
       <p className="account-card__description">
-        {t('COMMUNITY_OWNER')}
+        {t('COMMUNITY_ROLE_OWNER')}
+      </p>
+    )
+  }
+
+  if (isCommunity && isModerator) {
+    return (
+      <p className="account-card__description">
+        {t('COMMUNITY_ROLE_MODERATOR')}
       </p>
     )
   }
