@@ -13,18 +13,20 @@ import { SupabaseRestRepository } from './supabase-rest.repository'
       inject: [ConfigService],
       useFactory: (config: ConfigService): DataRepository => {
         const projectUrl = config.get<string>('SUPABASE_URL')
-        const serviceRoleKey = config.get<string>('SUPABASE_SERVICE_ROLE_KEY')
+        const publishableKey = config.get<string>('SUPABASE_PUBLISHABLE_KEY')
+        const apiSecret = config.get<string>('SUPABASE_API_SECRET')
 
-        if (projectUrl && serviceRoleKey) {
-          return new SupabaseRestRepository(projectUrl, serviceRoleKey)
+        const configured = [projectUrl, publishableKey, apiSecret].filter(Boolean).length
+        if (configured === 3) {
+          return new SupabaseRestRepository(projectUrl!, publishableKey!, apiSecret!)
         }
 
-        if (projectUrl || serviceRoleKey) {
-          throw new Error('Both SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be configured.')
+        if (configured > 0) {
+          throw new Error('SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and SUPABASE_API_SECRET must be configured together.')
         }
 
         if (config.get<string>('VERCEL')) {
-          throw new Error('Supabase persistence is required on Vercel. Configure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the backend service.')
+          throw new Error('Persistent Supabase storage is required on Vercel. Configure SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and SUPABASE_API_SECRET.')
         }
 
         return new JsonFileRepository()
