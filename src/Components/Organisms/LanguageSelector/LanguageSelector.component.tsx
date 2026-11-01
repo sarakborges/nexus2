@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 import { SUPPORTED_LANGUAGES } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
@@ -7,14 +9,15 @@ import { LanguageOption } from '@/Components/Molecules/LanguageOption'
 import './LanguageSelector.style.scss'
 
 export function LanguageSelector() {
+  const titleId = useId()
   const { t } = useTranslations()
 
   return (
     <section
       className="language-selector"
-      aria-labelledby="language-selector-title"
+      aria-labelledby={titleId}
     >
-      <Text as="h2" id="language-selector-title">
+      <Text as="h2" id={titleId}>
         {t('LANGUAGES_TITLE')}
       </Text>
 
