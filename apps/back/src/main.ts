@@ -8,6 +8,6 @@ async function bootstrap() {
   app.enableCors({ origin: process.env.BFF_ORIGIN ?? 'http://localhost:3001', credentials: true })
   app.setGlobalPrefix('api')
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
-  await app.listen(Number(process.env.BACK_PORT ?? 3002), '0.0.0.0')
+  await app.listen(Number(process.env.PORT ?? process.env.BACK_PORT ?? 3002), '0.0.0.0')
 }
 void bootstrap()
