@@ -33,9 +33,13 @@ src/
     main.css
     reset.css
     vars.css
+  DesignSystem/
+    Atoms/
+    Molecules/
+    Organisms/
   Components/
-    DesignSystem/
-    Settings/
+    Molecules/
+    Organisms/
   Helpers/
     Language/
     Math/
@@ -52,6 +56,8 @@ src/
 public/
   languages/
 ```
+
+Both `DesignSystem` and `Components` follow Atomic Design. The design system contains application-independent visual primitives and compositions; application components compose those primitives into feature-specific controls and interface sections. Each area documents its layer boundaries in its own README.
 
 React Router is configured in declarative mode. Add route definitions in `src/routes/index.tsx`.
 
