@@ -26,13 +26,15 @@ npm run dev
 | `npm run storybook` | Start Storybook on port 6006 |
 | `npm run build-storybook` | Build the static Storybook |
 
-## Authentication prototype
+## User and profile models
 
-The sign-up and sign-in flow is a client-side prototype. Account records and the active session are stored in `sessionStorage`, so they are scoped to the current browser tab and are cleared when that tab's session ends. Passwords are stored as salted PBKDF2 verifiers, not as plain text.
+The `User` model contains `id`, `email` and `password`. The password field stores a PBKDF2-derived verifier and salt rather than the original plain-text password. The authenticated session exposes only the user's `id` and `email`.
 
-This is not production authentication: users can inspect or modify browser storage, and there is no server-side identity or authorization. Replace this prototype with a backend authentication provider before using real accounts or protecting sensitive data.
+The `Profile` model is separate and contains `id`, `name`, `url`, `picture` and `about`. A user can have one profile. The prototype associates it with the user by storing it under a user-scoped `sessionStorage` key, keeping the requested profile model fields unchanged.
 
-The `/home` and `/profile` routes require an active session. Sign-up creates the account and signs the user in; sign-out clears the active session while leaving the temporary account available for another sign-in in the same tab.
+Sign-up creates only a user and starts a session. It then routes to `/getting-started`, which explains the profile setup step and links to `/create-profile`. Once a profile is created, the user is redirected to `/home`. On subsequent sign-ins, users with a profile go directly to home; users without one return to onboarding.
+
+All users, profiles and sessions exist only in the current tab's `sessionStorage`. This is a client-side prototype, not production authentication or authorization. Browser storage can be inspected or modified; use a backend and database before relying on these records or protecting sensitive resources.
 
 ## Component development
 
@@ -72,14 +74,20 @@ src/
   Locales/
     en-US.ts
     pt-BR.ts
+  Models/
+    User.model.ts
+    Profile.model.ts
   Services/
     Auth/
+    Profile/
   Stores/
   Types/
   pages/
     LandingPage/
     SignUpPage/
     SignInPage/
+    GettingStartedPage/
+    CreateProfilePage/
     HomePage/
     ProfilePage/
     NotFoundPage/
@@ -100,7 +108,7 @@ The shared button atom uses the `variation` prop: `primary` (default), `secondar
 
 The modal is a controlled native `dialog`, allowing the browser to handle modal focus and keyboard behavior. Toast notifications dismiss themselves after 5,000 ms by default; the duration is configurable, and `0` disables auto-dismiss.
 
-React Router is configured in declarative mode. Routes are landing (`/`), sign-up (`/sign-up`), sign-in (`/sign-in`), home (`/home`) and profile (`/profile`); unknown paths render `NotFoundPage`.
+React Router is configured in declarative mode. Unknown paths render `NotFoundPage`.
 
 The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Both language and appearance default to the system preferences until the user chooses a value manually. The language hook resolves browser locales; the appearance hook follows `prefers-color-scheme`. Manual choices are persisted, and users can select the system preference again.
 

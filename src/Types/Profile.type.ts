@@ -1,0 +1,4 @@
+export type ProfileErrorCode =
+  | 'PROFILE_ALREADY_EXISTS'
+  | 'INVALID_PROFILE'
+  | 'STORAGE_UNAVAILABLE'

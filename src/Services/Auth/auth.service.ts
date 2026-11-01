@@ -3,21 +3,16 @@ import {
   loadSession,
   saveSession
 } from '@/Helpers/Systems/Data'
+import type { AuthenticatedUser, User } from '@/Models/User.model'
 import type {
   AuthErrorCode,
   AuthSession,
-  AuthUser,
   SignInCredentials,
   SignUpCredentials
 } from '@/Types/Auth.type'
 
-type StoredAccount = AuthUser & {
-  passwordHash: string
-  passwordSalt: string
-}
-
-const ACCOUNTS_KEY = 'auth_accounts_v1'
-const SESSION_KEY = 'auth_session_v1'
+const USERS_KEY = 'users_v2'
+const SESSION_KEY = 'auth_session_v2'
 const PBKDF2_ITERATIONS = 310_000
 
 export class AuthError extends Error {
@@ -78,37 +73,90 @@ const derivePasswordHash = async (
   return encodeBase64(new Uint8Array(derivedBits))
 }
 
-const isStoredAccount = (value: unknown): value is StoredAccount => {
+const isUser = (value: unknown): value is User => {
   if (!value || typeof value !== 'object') {
     return false
   }
 
-  const account = value as Record<string, unknown>
+  const user = value as Record<string, unknown>
+  const password = user.password
 
   return (
-    typeof account.id === 'string' &&
-    typeof account.name === 'string' &&
-    typeof account.email === 'string' &&
-    typeof account.passwordHash === 'string' &&
-    typeof account.passwordSalt === 'string'
+    typeof user.id === 'string' &&
+    typeof user.email === 'string' &&
+    !!password &&
+    typeof password === 'object' &&
+    typeof (password as Record<string, unknown>).hash === 'string' &&
+    typeof (password as Record<string, unknown>).salt === 'string'
   )
 }
 
-const loadAccounts = (): StoredAccount[] => {
-  const storedAccounts = loadSession<unknown>(ACCOUNTS_KEY)
+const loadUsers = (): User[] => {
+  const storedUsers = loadSession<unknown>(USERS_KEY)
 
-  return Array.isArray(storedAccounts)
-    ? storedAccounts.filter(isStoredAccount)
-    : []
+  return Array.isArray(storedUsers) ? storedUsers.filter(isUser) : []
 }
 
-const toAuthUser = (account: StoredAccount): AuthUser => ({
-  id: account.id,
-  name: account.name,
-  email: account.email
+const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
+  id: user.id,
+  email: user.email
 })
 
-export const createAuthSession = (user: AuthUser): AuthSession => {
+export const createUser = async ({
+  email,
+  password
+}: SignUpCredentials): Promise<AuthenticatedUser> => {
+  const normalizedEmail = normalizeEmail(email)
+  const users = loadUsers()
+
+  if (users.some((user) => user.email === normalizedEmail)) {
+    throw new AuthError('EMAIL_ALREADY_EXISTS')
+  }
+
+  const salt = getCrypto().getRandomValues(new Uint8Array(16))
+  const user: User = {
+    id: createId(),
+    email: normalizedEmail,
+    password: {
+      salt: encodeBase64(salt),
+      hash: await derivePasswordHash(password, salt)
+    }
+  }
+
+  if (!saveSession({ key: USERS_KEY, value: [...users, user] })) {
+    throw new AuthError('STORAGE_UNAVAILABLE')
+  }
+
+  return toAuthenticatedUser(user)
+}
+
+export const authenticateUser = async ({
+  email,
+  password
+}: SignInCredentials): Promise<AuthenticatedUser> => {
+  const user = loadUsers().find(
+    (storedUser) => storedUser.email === normalizeEmail(email)
+  )
+
+  if (!user) {
+    throw new AuthError('INVALID_CREDENTIALS')
+  }
+
+  const providedHash = await derivePasswordHash(
+    password,
+    decodeBase64(user.password.salt)
+  )
+
+  if (providedHash !== user.password.hash) {
+    throw new AuthError('INVALID_CREDENTIALS')
+  }
+
+  return toAuthenticatedUser(user)
+}
+
+export const createAuthSession = (
+  user: AuthenticatedUser
+): AuthSession => {
   const session: AuthSession = {
     user,
     authenticatedAt: Date.now()
@@ -119,79 +167,6 @@ export const createAuthSession = (user: AuthUser): AuthSession => {
   }
 
   return session
-}
-
-export const createAccount = async ({
-  name,
-  email,
-  password
-}: SignUpCredentials): Promise<AuthUser> => {
-  const normalizedName = name.trim()
-  const normalizedEmail = normalizeEmail(email)
-
-  if (!normalizedName) {
-    throw new AuthError('INVALID_INPUT')
-  }
-
-  const accounts = loadAccounts()
-
-  if (accounts.some((account) => account.email === normalizedEmail)) {
-    throw new AuthError('EMAIL_ALREADY_EXISTS')
-  }
-
-  const salt = getCrypto().getRandomValues(new Uint8Array(16))
-  const account: StoredAccount = {
-    id: createId(),
-    name: normalizedName,
-    email: normalizedEmail,
-    passwordSalt: encodeBase64(salt),
-    passwordHash: await derivePasswordHash(password, salt)
-  }
-
-  if (
-    !saveSession({
-      key: ACCOUNTS_KEY,
-      value: [...accounts, account]
-    })
-  ) {
-    throw new AuthError('STORAGE_UNAVAILABLE')
-  }
-
-  return toAuthUser(account)
-}
-
-export const authenticate = async ({
-  email,
-  password
-}: SignInCredentials): Promise<AuthUser> => {
-  const account = loadAccounts().find(
-    (storedAccount) => storedAccount.email === normalizeEmail(email)
-  )
-
-  if (!account) {
-    throw new AuthError('INVALID_CREDENTIALS')
-  }
-
-  let providedHash: string
-
-  try {
-    providedHash = await derivePasswordHash(
-      password,
-      decodeBase64(account.passwordSalt)
-    )
-  } catch (error) {
-    if (error instanceof AuthError) {
-      throw error
-    }
-
-    throw new AuthError('INVALID_CREDENTIALS')
-  }
-
-  if (providedHash !== account.passwordHash) {
-    throw new AuthError('INVALID_CREDENTIALS')
-  }
-
-  return toAuthUser(account)
 }
 
 export const getCurrentAuthSession = (): AuthSession | null => {
@@ -216,7 +191,6 @@ export const getCurrentAuthSession = (): AuthSession | null => {
 
   if (
     typeof candidate.id !== 'string' ||
-    typeof candidate.name !== 'string' ||
     typeof candidate.email !== 'string'
   ) {
     return null
@@ -225,7 +199,6 @@ export const getCurrentAuthSession = (): AuthSession | null => {
   return {
     user: {
       id: candidate.id,
-      name: candidate.name,
       email: candidate.email
     },
     authenticatedAt: session.authenticatedAt

@@ -4,9 +4,11 @@ import { Link, useNavigate } from 'react-router'
 import { AUTH_ERROR_TRANSLATION_KEYS } from '@/Constants/auth'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField } from '@/DesignSystem'
-import { AuthError } from '@/Services/Auth'
 import { useTranslations } from '@/Hooks/Language'
+import { AuthError } from '@/Services/Auth'
+import { getUserProfile } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileStore } from '@/Stores/Profile.store'
 
 import '../AuthPage.style.scss'
 
@@ -14,6 +16,7 @@ export function SignInPage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const signIn = useAuthStore((state) => state.signIn)
+  const loadProfile = useProfileStore((state) => state.loadProfile)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -25,8 +28,11 @@ export function SignInPage() {
     setIsSubmitting(true)
 
     try {
-      await signIn({ email, password })
-      navigate(ROUTES.home, { replace: true })
+      const user = await signIn({ email, password })
+      const profile = getUserProfile(user.id)
+
+      loadProfile(user.id)
+      navigate(profile ? ROUTES.home : ROUTES.gettingStarted, { replace: true })
     } catch (error) {
       const translationKey =
         error instanceof AuthError

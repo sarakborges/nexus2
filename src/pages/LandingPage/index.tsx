@@ -3,15 +3,22 @@ import { Navigate, Link } from 'react-router'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileStore } from '@/Stores/Profile.store'
 
 import '../AuthPage.style.scss'
 
 export function LandingPage() {
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
+  const profile = useProfileStore((state) => state.profile)
 
   if (session) {
-    return <Navigate to={ROUTES.home} replace />
+    return (
+      <Navigate
+        to={profile ? ROUTES.home : ROUTES.gettingStarted}
+        replace
+      />
+    )
   }
 
   return (

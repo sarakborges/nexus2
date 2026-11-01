@@ -1,16 +1,11 @@
-export type AuthUser = {
-  id: string
-  name: string
-  email: string
-}
+import type { AuthenticatedUser } from '@/Models/User.model'
 
 export type AuthSession = {
-  user: AuthUser
+  user: AuthenticatedUser
   authenticatedAt: number
 }
 
 export type SignUpCredentials = {
-  name: string
   email: string
   password: string
 }
@@ -23,6 +18,5 @@ export type SignInCredentials = {
 export type AuthErrorCode =
   | 'EMAIL_ALREADY_EXISTS'
   | 'INVALID_CREDENTIALS'
-  | 'INVALID_INPUT'
   | 'STORAGE_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'

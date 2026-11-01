@@ -66,6 +66,45 @@
   overflow-wrap: anywhere;
 }
 
+.account-card__onboarding {
+  display: grid;
+  gap: 10px;
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-card__onboarding h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
+.account-card__onboarding ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.account-card__onboarding li {
+  font-size: 14px;
+}
+
+.account-card__picture {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--color-neutral-weak);
+}
+
+.account-card__profile-link {
+  color: var(--color-primary-weak);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 480px) {
   .account-card {
     padding: 24px;

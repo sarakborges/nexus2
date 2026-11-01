@@ -1,3 +1,5 @@
+export { CreateProfilePage } from './CreateProfilePage'
+export { GettingStartedPage } from './GettingStartedPage'
 export { HomePage } from './HomePage'
 export { LandingPage } from './LandingPage'
 export { NotFoundPage } from './NotFoundPage'

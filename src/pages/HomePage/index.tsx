@@ -4,6 +4,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileStore } from '@/Stores/Profile.store'
 
 import '../AuthenticatedPage.style.scss'
 
@@ -11,6 +12,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
+  const profile = useProfileStore((state) => state.profile)
   const signOut = useAuthStore((state) => state.signOut)
 
   const handleSignOut = () => {
@@ -25,7 +27,7 @@ export function HomePage() {
           <div>
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
             <p className="account-card__description">
-              {t('HOME_WELCOME', { name: session?.user.name ?? '' })}
+              {t('HOME_WELCOME', { name: profile?.name ?? '' })}
             </p>
           </div>
 
@@ -33,6 +35,8 @@ export function HomePage() {
             {t('AUTH_SIGN_OUT')}
           </Button>
         </header>
+
+        <p className="account-card__description">{session?.user.email}</p>
 
         <Link className="account-card__link" to={ROUTES.profile}>
           {t('HOME_PROFILE_LINK')}

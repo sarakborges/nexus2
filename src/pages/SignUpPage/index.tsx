@@ -14,7 +14,6 @@ export function SignUpPage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const signUp = useAuthStore((state) => state.signUp)
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
@@ -33,8 +32,8 @@ export function SignUpPage() {
     setIsSubmitting(true)
 
     try {
-      await signUp({ name, email, password })
-      navigate(ROUTES.home, { replace: true })
+      await signUp({ email, password })
+      navigate(ROUTES.gettingStarted, { replace: true })
     } catch (error) {
       const translationKey =
         error instanceof AuthError
@@ -60,17 +59,6 @@ export function SignUpPage() {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <FormField
-            id="name"
-            label={t('AUTH_NAME_LABEL')}
-            type="text"
-            autoComplete="name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={80}
-            required
-          />
-
           <FormField
             id="email"
             label={t('AUTH_EMAIL_LABEL')}

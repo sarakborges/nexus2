@@ -47,6 +47,13 @@
   min-height: 40px;
 }
 
+.auth-form__textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
 .auth-card__error {
   padding: 10px 12px;
   color: var(--color-error-strong);

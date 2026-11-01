@@ -1,8 +1,8 @@
 export {
-  authenticate,
+  authenticateUser,
   AuthError,
   clearAuthSession,
-  createAccount,
   createAuthSession,
+  createUser,
   getCurrentAuthSession
 } from './auth.service'
