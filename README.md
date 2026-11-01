@@ -48,13 +48,16 @@ Profile-to-profile relationships are persisted in `nexus_relationships`. Each en
 
 Profile-to-community relationships use a separate storage, `nexus_community_relationships`, with entries whose ordered `profiles` pair is `[profileId, communityId]`. Its `type` adds `owner` to `connection`, `requested` and `blocked`; it also stores `requestedBy`, `blockedBy` and `updatedAt`. Creating a community automatically records the active profile as its owner. Owners can review and accept pending membership requests, remove members, and block or unblock profiles from the members page. Community members are available at `/community/:url/members`, and the communities associated with a profile are available at `/profile/:url/communities`. Profile friends remain at `/profile/:url/friends`.
 
-Older relationship entries that do not contain an actor ID are migrated with a null actor. Their status is preserved, but the UI asks the user to clear an ambiguous legacy relationship before creating a new one.
+Older relationship entries that do not contain an actor ID are migrated with a null actor. Their status is preserved, but the UI asks the user to clear an ambiguous legacy relationship before creating a new one. On initialization, legacy profile-community pairs are moved out of `nexus_relationships` into `nexus_community_relationships`; profile-to-profile pairs remain in `nexus_relationships`.
 
 ## Browser storage
 
 Persistent application records use `localStorage`:
 - `nexus_users`: user records, including password verifiers, profile ID arrays and the current profile ID.
 - `nexus_profiles`: the persisted profile records.
+- `nexus_communities`: the persisted community records.
+- `nexus_relationships`: relationships between two profiles.
+- `nexus_community_relationships`: relationships between a profile and a community.
 
 Only the active authenticated session uses `sessionStorage` (`nexus_auth_session_v2`). The account and profiles remain available after closing the tab or browser; the active session is scoped to the current tab.
 

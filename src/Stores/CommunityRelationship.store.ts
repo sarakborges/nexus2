@@ -6,6 +6,7 @@ import type {
 } from '@/Models/CommunityRelationship.model'
 import {
   getCommunityRelationships,
+  migrateLegacyCommunityRelationships,
   removeCommunityRelationship as buildRemoval,
   saveCommunityRelationships,
   setCommunityRelationship as buildUpdate
@@ -37,6 +38,8 @@ type CommunityRelationshipStore = {
   getPendingProfileIds: (communityId: string) => string[]
   getBlockedProfileIds: (communityId: string) => string[]
 }
+
+migrateLegacyCommunityRelationships()
 
 export const useCommunityRelationshipStore =
   create<CommunityRelationshipStore>((set, get) => ({

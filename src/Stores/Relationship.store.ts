@@ -4,6 +4,7 @@ import type {
   Relationship,
   RelationshipType
 } from '@/Models/Relationship.model'
+import { migrateLegacyCommunityRelationships } from '@/Services/CommunityRelationship'
 import {
   getRelationships,
   removeRelationship as buildRelationshipRemoval,
@@ -34,6 +35,8 @@ const getOtherParticipant = (
 
   return relationship.profiles.find((id) => id !== participantId) ?? null
 }
+
+migrateLegacyCommunityRelationships()
 
 export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
   relationships: getRelationships(),

@@ -127,7 +127,6 @@ export function CommunityMembersPage() {
         )}
 
         <section className="account-card__profile-list">
-          <h2>{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h2>
           {members.length === 0 ? (
             <p className="account-card__description">
               {t('COMMUNITY_MEMBERS_EMPTY')}

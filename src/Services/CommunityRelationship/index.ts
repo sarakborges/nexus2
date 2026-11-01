@@ -1,6 +1,7 @@
 export {
   getCommunityRelationship,
   getCommunityRelationships,
+  migrateLegacyCommunityRelationships,
   removeCommunityRelationship,
   saveCommunityRelationships,
   setCommunityRelationship

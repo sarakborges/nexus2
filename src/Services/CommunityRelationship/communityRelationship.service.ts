@@ -3,6 +3,11 @@ import type {
   CommunityRelationship,
   CommunityRelationshipType
 } from '@/Models/CommunityRelationship.model'
+import { getCommunities } from '@/Services/Community'
+import {
+  getRelationships,
+  saveRelationships
+} from '@/Services/Relationship'
 
 const COMMUNITY_RELATIONSHIPS_KEY = 'community_relationships'
 const RELATIONSHIP_TYPES: CommunityRelationshipType[] = [
@@ -164,4 +169,76 @@ export const removeCommunityRelationship = (
   return relationships.filter(
     (item) => !samePair(item.profiles, [profileId, communityId])
   )
+}
+
+
+/**
+ * Move the profile-community pairs from the earlier mixed relationship
+ * collection into their dedicated storage. Legacy actor IDs remain null
+ * because the previous format did not record who initiated the action.
+ */
+export const migrateLegacyCommunityRelationships = (): void => {
+  const communityIds = new Set(getCommunities().map((community) => community.id))
+
+  if (communityIds.size === 0) {
+    return
+  }
+
+  const legacyRelationships = getRelationships()
+  const legacyCommunityPairs = legacyRelationships.filter((item) => {
+    const communityMatches = item.profiles.filter((id) =>
+      communityIds.has(id)
+    )
+
+    return communityMatches.length === 1
+  })
+
+  if (legacyCommunityPairs.length === 0) {
+    return
+  }
+
+  const existingRelationships = getCommunityRelationships()
+  const migratedRelationships = [...existingRelationships]
+
+  for (const relationship of legacyCommunityPairs) {
+    const communityId = relationship.profiles.find((id) =>
+      communityIds.has(id)
+    )
+    const profileId = relationship.profiles.find(
+      (id) => !communityIds.has(id)
+    )
+
+    if (!profileId || !communityId) {
+      continue
+    }
+
+    const alreadyMigrated = migratedRelationships.some(
+      (item) =>
+        item.profiles[0] === profileId &&
+        item.profiles[1] === communityId
+    )
+
+    if (!alreadyMigrated) {
+      migratedRelationships.push({
+        profiles: [profileId, communityId],
+        type: relationship.type,
+        requestedBy: relationship.requestedBy,
+        blockedBy: relationship.blockedBy,
+        updatedAt: relationship.updatedAt
+      })
+    }
+  }
+
+  if (!saveCommunityRelationships(migratedRelationships)) {
+    return
+  }
+
+  const remainingRelationships = legacyRelationships.filter(
+    (item) =>
+      !item.profiles.some((id) => communityIds.has(id))
+  )
+
+  if (!saveRelationships(remainingRelationships)) {
+    saveCommunityRelationships(existingRelationships)
+  }
 }
