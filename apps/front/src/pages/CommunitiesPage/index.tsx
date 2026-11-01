@@ -1,26 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
-import type { Community } from '@nexus/common'
-import { Pagination } from '@/Components'
+import { Pagination, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunities } from '@/Services/Community'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import '../AuthenticatedPage.style.scss'
 
 export function CommunitiesPage() {
   const { t } = useTranslations()
   const { page, pageSize, setPage } = useUrlPagination()
-  const [communities, setCommunities] = useState<Community[]>([])
-  const [totalItems, setTotalItems] = useState(0)
+  const communitiesQuery = useQuery({
+    queryKey: queryKeys.communities.list(page, pageSize),
+    queryFn: () => getCommunities({ page, pageSize })
+  })
+  const communities = communitiesQuery.data?.items ?? []
+  const totalItems = communitiesQuery.data?.totalItems ?? 0
 
   useEffect(() => {
-    let active = true
-    void getCommunities({ page, pageSize }).then(result => {
-      if (active) { setCommunities(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
-    }).catch(() => { if (active) { setCommunities([]); setTotalItems(0) } })
-    return () => { active = false }
-  }, [page, pageSize, setPage])
+    if (communitiesQuery.data && communitiesQuery.data.page !== page) setPage(communitiesQuery.data.page)
+  }, [communitiesQuery.data, page, setPage])
 
   return (
     <main className="account-page">
@@ -29,7 +30,13 @@ export function CommunitiesPage() {
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
           <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
         </header>
-        {totalItems === 0 ? <p className="account-card__description">{t('COMMUNITIES_EMPTY')}</p> : (
+        <RequestState
+          isLoading={communitiesQuery.isLoading}
+          isError={communitiesQuery.isError}
+          isEmpty={communitiesQuery.isSuccess && totalItems === 0}
+          emptyMessage={t('COMMUNITIES_EMPTY')}
+          onRetry={() => void communitiesQuery.refetch()}
+        >
           <div className="account-card__profile-list">
             {communities.map(community => (
               <div className="account-card__profile-entry" key={community.id}>
@@ -37,7 +44,7 @@ export function CommunitiesPage() {
               </div>
             ))}
           </div>
-        )}
+        </RequestState>
         <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
         <Link className="account-card__link" to={ROUTES.home}>{t('PROFILE_BACK_HOME')}</Link>
       </section>

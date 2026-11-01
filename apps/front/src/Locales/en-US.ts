@@ -77,6 +77,7 @@ export const enUSTranslations = {
   HOME_TITLE: 'Home',
   HOME_WELCOME: 'Welcome, {{name}}.',
   HOME_PROFILES_TITLE: 'Your profiles',
+  HOME_PROFILES_EMPTY: 'You have not created any profiles yet.',
   HOME_PROFILE_LINK: 'View profile',
   HOME_CREATE_PROFILE: 'Create another profile',
   HOME_CURRENT_PROFILE: 'Current profile',

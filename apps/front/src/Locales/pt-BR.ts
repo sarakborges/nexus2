@@ -79,6 +79,7 @@ export const ptBRTranslations = {
   HOME_TITLE: 'Início',
   HOME_WELCOME: 'Boas-vindas, {{name}}.',
   HOME_PROFILES_TITLE: 'Seus perfis',
+  HOME_PROFILES_EMPTY: 'Você ainda não criou nenhum perfil.',
   HOME_PROFILE_LINK: 'Ver perfil',
   HOME_CREATE_PROFILE: 'Criar outro perfil',
   HOME_CURRENT_PROFILE: 'Perfil atual',
