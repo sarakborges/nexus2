@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { SettingsModal } from '@/Components'
-import { Button } from '@/DesignSystem'
+import { FloatingNavigationBar, SettingsModal } from '@/Components'
 import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
 import { getCurrentAuthSession } from '@/Services/Auth'
@@ -10,10 +9,9 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { AppRoutes } from '@/routes'
-import './App.style.scss'
 
 export function App() {
-  const { language, t } = useTranslations()
+  const { language } = useTranslations()
   const setSession = useAuthStore(state => state.setSession)
   const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const userId = useAuthStore(state => state.session?.user.id ?? null)
@@ -48,11 +46,11 @@ export function App() {
 
   useLayoutEffect(() => { document.documentElement.lang = language }, [language])
 
+  const hasAuthenticatedSession = isAuthInitialized && Boolean(userId)
+
   return (
     <>
-      <div className="app-settings-control">
-        <Button variation="secondary" onClick={() => setIsSettingsOpen(true)}>{t('SETTINGS_TITLE')}</Button>
-      </div>
+      {hasAuthenticatedSession && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
       <AppRoutes />
       <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
@@ -12,12 +12,10 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import '../AuthenticatedPage.style.scss'
 
 export function HomePage() {
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
   const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
-  const signOut = useAuthStore(state => state.signOut)
   const { page, pageSize, setPage } = useUrlPagination()
   const userId = session?.user.id ?? null
   const profilesQuery = useQuery({
@@ -27,13 +25,6 @@ export function HomePage() {
   })
   const profiles = profilesQuery.data?.items ?? []
   const totalItems = profilesQuery.data?.totalItems ?? 0
-  const signOutMutation = useMutation({
-    mutationFn: signOut,
-    onSuccess: () => {
-      queryClient.clear()
-      navigate(ROUTES.signIn, { replace: true })
-    }
-  })
   const selectProfileMutation = useMutation({
     mutationFn: async (profileId: string) => {
       const success = await setCurrentProfile(profileId)
@@ -59,14 +50,9 @@ export function HomePage() {
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
             <p className="account-card__description">{t('HOME_WELCOME', { name: profiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
           </div>
-          <div className="account-card__header-actions">
-            <Button variation="transparent" disabled={signOutMutation.isPending} onClick={() => signOutMutation.mutate()}>
-              {t('AUTH_SIGN_OUT')}
-            </Button>
-          </div>
         </header>
         <p className="account-card__description">{session?.user.email}</p>
-        {(selectProfileMutation.isError || signOutMutation.isError) && <RequestState isError />}
+        {selectProfileMutation.isError && <RequestState isError />}
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
           <RequestState
@@ -81,7 +67,7 @@ export function HomePage() {
               const current = profile.id === currentProfileId
               return (
                 <div className="account-card__profile-entry" key={profile.id}>
-                  <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name} · /profile/{profile.url}</Link>
+                  <Link className="account-card__link" to={ROUTES.profile + '/' + profile.url}>{profile.name} · /profile/{profile.url}</Link>
                   {current ? <span className="account-card__current-profile">{t('HOME_CURRENT_PROFILE')}</span> : <Button variation="secondary" disabled={selectProfileMutation.isPending} onClick={() => selectProfileMutation.mutate(profile.id)}>{t('HOME_USE_PROFILE')}</Button>}
                 </div>
               )
