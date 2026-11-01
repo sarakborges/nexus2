@@ -54,15 +54,16 @@ export function ProfileMessagesPage() {
     return () => { active = false }
   }, [messages])
 
-  const canSendMessage = Boolean(profile && session && currentProfileId && !session.user.profiles.includes(profile.id))
+  const messageSenderProfileId = currentProfileId ?? (isProfileOwner ? profile?.id ?? null : null)
+  const canSendMessage = Boolean(profile && session && messageSenderProfileId)
   const sendersById = useMemo(() => new Map(senderProfiles.map(sender => [sender.id, sender] as const)), [senderProfiles])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
-    if (!profile || !currentProfileId || !canSendMessage) return
+    if (!profile || !messageSenderProfileId || !canSendMessage) return
     try {
-      await sendMessage(currentProfileId, profile.id, content)
+      await sendMessage(messageSenderProfileId, profile.id, content)
       setContent('')
       setPage(1)
       await loadMessages(profile.id, viewerProfileId, 1, pageSize)

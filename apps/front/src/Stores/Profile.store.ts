@@ -5,6 +5,7 @@ import { createUserProfile, getProfileByUrl } from '@/Services/Profile'
 type ProfileStore = {
   profile: Profile | null
   loadedUrl: string | null
+  loadingUrl: string | null
   loadProfileByUrl: (url: string) => Promise<void>
   createProfile: (userId: string, input: CreateProfileInput) => Promise<Profile>
   clearProfile: () => void
@@ -12,16 +13,24 @@ type ProfileStore = {
 export const useProfileStore = create<ProfileStore>((set, get) => ({
   profile: null,
   loadedUrl: null,
+  loadingUrl: null,
   loadProfileByUrl: async (url) => {
     const normalized = url.trim().replace(/^@/, '').toLowerCase()
-    set({ profile: null, loadedUrl: normalized })
-    const profile = normalized ? await getProfileByUrl(normalized) : null
-    if (get().loadedUrl === normalized) set({ profile })
+    if (!normalized) {
+      set({ profile: null, loadedUrl: null, loadingUrl: null })
+      return
+    }
+
+    set({ profile: null, loadedUrl: null, loadingUrl: normalized })
+    const profile = await getProfileByUrl(normalized)
+    if (get().loadingUrl === normalized) {
+      set({ profile, loadedUrl: normalized, loadingUrl: null })
+    }
   },
   createProfile: async (_userId, input) => {
     const profile = await createUserProfile(input)
-    set({ profile, loadedUrl: profile.url })
+    set({ profile, loadedUrl: profile.url, loadingUrl: null })
     return profile
   },
-  clearProfile: () => set({ profile: null, loadedUrl: null })
+  clearProfile: () => set({ profile: null, loadedUrl: null, loadingUrl: null })
 }))
