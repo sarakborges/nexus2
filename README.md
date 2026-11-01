@@ -22,7 +22,15 @@ Front: http://localhost:5173
 BFF: http://localhost:3001  
 Back: http://localhost:3002
 
-The Vite development server proxies `/api` to the BFF. When deploying the static frontend separately, set `VITE_BFF_URL` to the public BFF base URL at build time.
+The Vite development server proxies `/api` to the BFF.
+
+## Deployment
+
+The Vercel project must keep the repository root as its Root Directory. The root `vercel.json` builds `@nexus/common` and `@nexus/front`, then publishes `apps/front/build`. Vercel hosts only the static frontend; deploy the NestJS BFF and backend separately.
+
+Set `VITE_BFF_URL` in the Vercel project to the public BFF URL **including the `/api` prefix**, for example `https://api.example.com/api`. Configure `FRONTEND_ORIGIN` in the BFF to the deployed frontend origin and `BACKEND_URL` to the backend API origin, including its `/api` prefix.
+
+The Docker image for the frontend includes an Nginx reverse proxy for `/api`. Set `BFF_UPSTREAM` to the BFF service origin, without the `/api` suffix (default: `http://bff:3001`). Nginx preserves the incoming API path and proxies it to the BFF.
 
 ## Persistence
 

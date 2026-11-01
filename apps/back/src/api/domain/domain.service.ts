@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
@@ -125,13 +125,30 @@ export class DomainService {
     await this.data.write('relationships', all.filter(r => r.profiles[0] !== pair[0] || r.profiles[1] !== pair[1]))
   }
 
-  async getCommunityRelationships(communityId: string): Promise<CommunityRelationship[]> {
-    return (await this.data.read<CommunityRelationship>('community_relationships')).filter(r => r.profiles[1] === communityId)
-  }
-  async listCommunityMembers(communityId: string, tab: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
+  async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
     await this.ensureCommunity(communityId)
-    const records = await this.getCommunityRelationships(communityId)
-    if (tab === 'pending') throw new ForbiddenException('PENDING_MEMBERS_REQUIRE_STAFF_ENDPOINT')
+    if (!userId) return []
+    const user = await this.auth.getUser(userId)
+    const ownedProfileIds = new Set(user.profiles)
+    const records = await this.readCommunityRelationships(communityId)
+    return records.filter(record => ownedProfileIds.has(record.profiles[0]))
+  }
+
+  async listCommunityMembers(
+    communityId: string,
+    tab: string,
+    q: PaginationDto,
+    userId: string | null,
+    actorProfileId?: string
+  ): Promise<PaginatedResult<Profile & { role: string }>> {
+    await this.ensureCommunity(communityId)
+    if (!['all', 'staff', 'banned'].includes(tab)) throw new BadRequestException('INVALID_MEMBER_TAB')
+    if (tab !== 'all') {
+      if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+      await this.assertOwns(userId, actorProfileId)
+      await this.assertStaff(actorProfileId, communityId)
+    }
+    const records = await this.readCommunityRelationships(communityId)
     const types = tab === 'staff' ? ['owner', 'moderator'] : tab === 'banned' ? ['blocked'] : ['owner', 'moderator', 'connection']
     const matching = records.filter(r => types.includes(r.type))
     const byId = new Map(matching.map(r => [r.profiles[0], r.type]))
@@ -141,7 +158,7 @@ export class DomainService {
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
     await this.assertOwns(userId, actorProfileId)
     await this.assertStaff(actorProfileId, communityId)
-    const records = (await this.getCommunityRelationships(communityId)).filter(r => r.type === 'requested')
+    const records = (await this.readCommunityRelationships(communityId)).filter(r => r.type === 'requested')
     const ids = new Set(records.map(r => r.profiles[0]))
     const profiles = await this.data.read<Profile>('profiles')
     return paginate(profiles.filter(p => ids.has(p.id)).map(p => ({ ...p, role: 'requested' })), q)
@@ -149,7 +166,7 @@ export class DomainService {
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     await this.assertOwns(userId, actorId)
     await this.ensureCommunity(communityId)
-    const records = await this.getCommunityRelationships(communityId)
+    const records = await this.readCommunityRelationships(communityId)
     const actorRole = this.role(actorId, records)
     const targetRole = this.role(targetId, records)
     const self = actorId === targetId
@@ -223,6 +240,10 @@ export class DomainService {
     return message
   }
 
+  private async readCommunityRelationships(communityId: string): Promise<CommunityRelationship[]> {
+    return (await this.data.read<CommunityRelationship>('community_relationships'))
+      .filter(record => record.profiles[1] === communityId)
+  }
   private async assertOwns(userId: string, profileId: string): Promise<void> {
     if (!await this.auth.ownsProfile(userId, profileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
   }
@@ -230,7 +251,7 @@ export class DomainService {
     if (!(await this.data.read<Community>('communities')).some(c => c.id === id)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
   }
   private async assertStaff(profileId: string, communityId: string): Promise<void> {
-    const records = await this.getCommunityRelationships(communityId)
+    const records = await this.readCommunityRelationships(communityId)
     if (!['owner', 'moderator'].includes(this.role(profileId, records) ?? '')) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
   }
   private role(profileId: string, records: CommunityRelationship[]): CommunityRelationshipType | null {

@@ -18,8 +18,10 @@ export async function demoteCommunityModerator(profileId: string, communityId: s
 export async function transferCommunityOwnership(currentOwnerProfileId: string, newOwnerProfileId: string, communityId: string): Promise<void> {
   await api.post(`/communities/${encodeURIComponent(communityId)}/ownership-transfer`, { actorProfileId: currentOwnerProfileId, newOwnerProfileId })
 }
-export async function getCommunityMembers(communityId: string, tab: string, params: PaginationParams): Promise<PaginatedResult<Profile & { role: string }>> {
-  const { data } = await api.get<PaginatedResult<Profile & { role: string }>>(`/communities/${encodeURIComponent(communityId)}/members`, { params: { ...params, tab } })
+export async function getCommunityMembers(communityId: string, tab: string, params: PaginationParams, actorProfileId?: string): Promise<PaginatedResult<Profile & { role: string }>> {
+  const { data } = await api.get<PaginatedResult<Profile & { role: string }>>(`/communities/${encodeURIComponent(communityId)}/members`, {
+    params: { ...params, tab, ...(actorProfileId ? { actorProfileId } : {}) }
+  })
   return data
 }
 export async function getPendingCommunityMembers(communityId: string, actorProfileId: string, params: PaginationParams): Promise<PaginatedResult<Profile & { role: string }>> {

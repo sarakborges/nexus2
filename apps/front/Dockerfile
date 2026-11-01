@@ -16,7 +16,10 @@ RUN npm run build --workspace @nexus/common
 RUN npm run build --workspace @nexus/front
 
 FROM nginx:alpine
-COPY apps/front/nginx.conf /etc/nginx/conf.d/default.conf
+
+ENV BFF_UPSTREAM=http://bff:3001
+
+COPY apps/front/nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /app/apps/front/build /usr/share/nginx/html
 
 EXPOSE 80

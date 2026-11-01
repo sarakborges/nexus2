@@ -40,16 +40,18 @@ export function CommunityMembersPage() {
   const { page: pendingPage, pageSize: pendingPageSize, setPage: setPendingPage } = useUrlPagination('pendingPage')
 
   useEffect(() => { if (normalized) void loadCommunityByUrl(normalized); else clearCommunity() }, [normalized, loadCommunityByUrl, clearCommunity])
-  useEffect(() => { if (community) void loadRelationships(community.id).catch(() => undefined) }, [community?.id, loadRelationships])
+  useEffect(() => { if (community) void loadRelationships(community.id).catch(() => undefined) }, [community?.id, loadRelationships, session?.user.id])
+
+  const visibleTab: MemberTab = isStaff ? activeTab : 'all'
 
   useEffect(() => {
     if (!community) return
     let active = true
-    void getCommunityMembers(community.id, activeTab, { page, pageSize }).then(result => {
+    void getCommunityMembers(community.id, visibleTab, { page, pageSize }, currentProfileId ?? undefined).then(result => {
       if (active) { setMembers(result.items); setTotalMembers(result.totalItems); if (result.page !== page) setPage(result.page) }
     }).catch(() => { if (active) { setMembers([]); setTotalMembers(0) } })
     return () => { active = false }
-  }, [community?.id, activeTab, page, pageSize, relationships, setPage])
+  }, [community?.id, visibleTab, page, pageSize, currentProfileId, relationships, setPage])
 
   useEffect(() => {
     if (!community || !currentProfileId || !isStaff) { setPending([]); setTotalPending(0); return }
@@ -80,8 +82,10 @@ export function CommunityMembersPage() {
   }
   const tabs: Array<{ id: MemberTab; label: string }> = [
     { id: 'all', label: t('COMMUNITY_TAB_ALL') },
-    { id: 'staff', label: t('COMMUNITY_TAB_STAFF') },
-    { id: 'banned', label: t('COMMUNITY_TAB_BANNED') }
+    ...(isStaff ? [
+      { id: 'staff' as const, label: t('COMMUNITY_TAB_STAFF') },
+      { id: 'banned' as const, label: t('COMMUNITY_TAB_BANNED') }
+    ] : [])
   ]
 
   return (
@@ -98,9 +102,9 @@ export function CommunityMembersPage() {
         </section>
       )}
       <div className="community-member__tabs" role="tablist">
-        {tabs.map(tab => <Button key={tab.id} type="button" role="tab" aria-selected={activeTab === tab.id} variation={activeTab === tab.id ? 'primary' : 'secondary'} onClick={() => setActiveTab(tab.id)}>{tab.label}</Button>)}
+        {tabs.map(tab => <Button key={tab.id} type="button" role="tab" aria-selected={visibleTab === tab.id} variation={activeTab === tab.id ? 'primary' : 'secondary'} onClick={() => setActiveTab(tab.id)}>{tab.label}</Button>)}
       </div>
-      {members.length === 0 ? <p className="account-card__description">{t(activeTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : activeTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}</p> : (
+      {members.length === 0 ? <p className="account-card__description">{t(visibleTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : visibleTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}</p> : (
         <div className="account-card__profile-list">{members.map(renderMember)}</div>
       )}
       <Pagination page={page} pageSize={pageSize} totalItems={totalMembers} onPageChange={setPage} />

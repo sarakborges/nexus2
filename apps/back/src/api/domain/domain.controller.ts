@@ -65,13 +65,22 @@ export class DomainController {
     await this.domain.removeProfileRelationship(u.id, body.sourceProfileId, body.targetProfileId); return { success: true }
   }
 
-  @Get('communities/:communityId/relationships') getCommunityRelationships(@Param('communityId') id: string) { return this.domain.getCommunityRelationships(id) }
+  @Get('communities/:communityId/relationships')
+  @UseGuards(OptionalJwtAccessGuard)
+  getCommunityRelationships(@Param('communityId') id: string, @CurrentUser() u: { id: string } | undefined) {
+    return this.domain.getCommunityRelationships(u?.id ?? null, id)
+  }
+
   @Get('communities/:communityId/members/pending') @UseGuards(JwtAccessGuard) pendingMembers(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Query('actorProfileId') actor: string, @Query() q: PaginationDto) {
     return this.domain.listPendingMembers(u.id, id, actor, q)
   }
-  @Get('communities/:communityId/members') members(@Param('communityId') id: string, @Query('tab') tab: string | undefined, @Query() q: PaginationDto) {
-    return this.domain.listCommunityMembers(id, tab ?? 'all', q)
+
+  @Get('communities/:communityId/members')
+  @UseGuards(OptionalJwtAccessGuard)
+  members(@Param('communityId') id: string, @Query('tab') tab: string | undefined, @CurrentUser() u: { id: string } | undefined, @Query() q: PaginationDto) {
+    return this.domain.listCommunityMembers(id, tab ?? 'all', q, u?.id ?? null, q.actorProfileId)
   }
+
   @Post('communities/:communityId/relationships/:profileId') @UseGuards(JwtAccessGuard) updateCommunityRelationship(@CurrentUser() u: { id: string }, @Param('communityId') cid: string, @Param('profileId') pid: string, @Body() body: CommunityRelationDto) {
     return this.domain.updateCommunityRelationship(u.id, cid, pid, body.actorProfileId, body.type)
   }

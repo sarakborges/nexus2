@@ -1,0 +1,11 @@
+{
+  "installCommand": "npm install --no-audit --no-fund",
+  "buildCommand": "npm run build --workspace @nexus/common && npm run build --workspace @nexus/front",
+  "outputDirectory": "apps/front/build",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

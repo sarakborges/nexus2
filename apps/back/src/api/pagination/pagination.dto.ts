@@ -1,11 +1,11 @@
 import { Type } from 'class-transformer'
-import { Allow, IsInt, Max, Min } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
 
 export class PaginationDto {
   @Type(() => Number) @IsInt() @Min(1) page = 1
   @Type(() => Number) @IsInt() @Min(1) @Max(100) pageSize = 20
-  @Allow() tab?: string
-  @Allow() actorProfileId?: string
+  @IsOptional() @IsIn(['all', 'staff', 'banned']) tab?: string
+  @IsOptional() @IsString() actorProfileId?: string
 }
 export function paginate<T>(items: T[], query: PaginationDto) {
   const totalItems = items.length
