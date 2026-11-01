@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import type { Profile } from '@nexus/common'
-import type { PaginatedResult } from '@nexus/common'
-import { Pagination } from '@/Components'
+import type { Profile, PaginatedResult } from '@nexus/common'
+import { Pagination, SettingsModal } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -17,6 +16,7 @@ export function HomePage() {
   const session = useAuthStore(state => state.session)
   const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
   const signOut = useAuthStore(state => state.signOut)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const { page, pageSize, setPage } = useUrlPagination()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [totalItems, setTotalItems] = useState(0)
@@ -49,7 +49,14 @@ export function HomePage() {
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
             <p className="account-card__description">{t('HOME_WELCOME', { name: visibleProfiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
           </div>
-          <Button variation="transparent" onClick={() => void handleSignOut()}>{t('AUTH_SIGN_OUT')}</Button>
+          <div className="account-card__header-actions">
+            <Button variation="secondary" onClick={() => setIsSettingsOpen(true)}>
+              {t('SETTINGS_TITLE')}
+            </Button>
+            <Button variation="transparent" onClick={() => void handleSignOut()}>
+              {t('AUTH_SIGN_OUT')}
+            </Button>
+          </div>
         </header>
         <p className="account-card__description">{session?.user.email}</p>
         <div className="account-card__profile-list">
@@ -69,9 +76,9 @@ export function HomePage() {
           <Link className="account-card__action" to={ROUTES.createProfile}>{t('HOME_CREATE_PROFILE')}</Link>
           <Link className="account-card__action" to={ROUTES.communities}>{t('COMMUNITIES_TITLE')}</Link>
           <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
-          <Link className="account-card__action account-card__action--secondary" to={ROUTES.settings}>{t('SETTINGS_TITLE')}</Link>
         </div>
       </section>
+      <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </main>
   )
 }

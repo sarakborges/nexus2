@@ -4,7 +4,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import {
   CommunitiesPage, CommunityMembersPage, CommunityPage, CreateCommunityPage, CreateProfilePage,
   GettingStartedPage, HomePage, LandingPage, NotFoundPage, ProfileCommunitiesPage, ProfileFriendsPage,
-  ProfileMessagesPage, ProfilePage, SettingsPage, SignInPage, SignUpPage
+  ProfileMessagesPage, ProfilePage, SignInPage, SignUpPage
 } from '@/pages'
 
 function GuestOnlyRoute() {
@@ -38,7 +38,6 @@ export function AppRoutes() {
         <Route element={<OnboardingRoute />}><Route path={ROUTES.gettingStarted} element={<GettingStartedPage />} /></Route>
         <Route path={ROUTES.createProfile} element={<CreateProfilePage />} />
         <Route path={ROUTES.createCommunity} element={<CreateCommunityPage />} />
-        <Route path={ROUTES.settings} element={<SettingsPage />} />
         <Route element={<ProfileRequiredRoute />}><Route path={ROUTES.home} element={<HomePage />} /></Route>
       </Route>
       <Route path={ROUTES.communities} element={<CommunitiesPage />} />
