@@ -7,11 +7,18 @@ export const generateRandomInteger = ({
   min,
   max
 }: IntegerRange): number => {
-  if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+  const range = max - min + 1
+
+  if (
+    !Number.isSafeInteger(min) ||
+    !Number.isSafeInteger(max) ||
+    !Number.isSafeInteger(range) ||
+    min > max
+  ) {
     throw new RangeError(
-      'The random integer range must contain valid integers.'
+      'The random integer range must contain a valid safe-integer range.'
     )
   }
 
-  return Math.floor(Math.random() * (max - min + 1)) + min
+  return Math.floor(Math.random() * range) + min
 }

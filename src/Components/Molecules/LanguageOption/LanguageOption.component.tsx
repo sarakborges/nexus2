@@ -14,11 +14,8 @@ type LanguageOptionProps = {
 }
 
 export function LanguageOption({ language }: LanguageOptionProps) {
-  const selectedLanguage = useSettingsStore(
-    (state) => state.settings.language
-  )
+  const { language: selectedLanguage, t } = useTranslations()
   const updateSettings = useSettingsStore((state) => state.updateSettings)
-  const { t } = useTranslations()
 
   const isSelected = selectedLanguage === language
   const languageName = t(LANGUAGE_NAME_KEYS[language])
