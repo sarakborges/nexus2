@@ -47,7 +47,7 @@ export function GettingStartedPage() {
         </div>
 
         <Link
-          className="landing-card__link landing-card__link--primary"
+          className="account-card__action"
           to={ROUTES.createProfile}
         >
           {t('GETTING_STARTED_CREATE_PROFILE')}
