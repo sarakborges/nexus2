@@ -7,6 +7,8 @@
 - `apps/back`: NestJS domain API. Owns authentication, authorization, validation, domain services and persistence.
 - `packages/common`: shared domain models, DTO contracts and pagination types.
 
+All three applications live in this repository. They are built and deployed together through the root Docker Compose stack; they do not need separate repositories or public API URLs.
+
 ## Development
 
 Requires Node.js 22.22+ and npm workspaces.
@@ -24,19 +26,42 @@ Back: http://localhost:3002
 
 The Vite development server proxies `/api` to the BFF.
 
-## Deployment
+## Deployment (one stack)
 
-The Vercel project must keep the repository root as its Root Directory. The root `vercel.json` builds `@nexus/common` and `@nexus/front`, then publishes `apps/front/build`. Vercel hosts only the static frontend; deploy the NestJS BFF and backend separately.
+The root `compose.yaml` starts all three applications from this monorepo:
 
-Set `VITE_BFF_URL` in the Vercel project to the public BFF URL **including the `/api` prefix**, for example `https://api.example.com/api`. Configure `FRONTEND_ORIGIN` in the BFF to the deployed frontend origin and `BACKEND_URL` to the backend API origin, including its `/api` prefix.
+- The frontend is the only publicly exposed service.
+- Nginx forwards `/api` to the BFF over the private Compose network.
+- The BFF forwards domain requests to the backend over that same private network.
+- The backend's JSON files are stored in the named `nexus-data` volume.
 
-The Docker image for the frontend includes an Nginx reverse proxy for `/api`. Set `BFF_UPSTREAM` to the BFF service origin, without the `/api` suffix (default: `http://bff:3001`). Nginx preserves the incoming API path and proxies it to the BFF.
+No public `VITE_BFF_URL`, BFF URL, or backend URL is needed for this deployment. The browser uses the same origin for pages and API requests.
 
-## Persistence
+### Start locally or on a Docker host
 
-The backend currently writes JSON collections under `DATA_DIRECTORY` (default: `apps/back/data` when started from that workspace). This is a temporary adapter while a free database is selected. The repository interface isolates persistence from domain services so a database adapter can replace it without changing the API contracts.
+```bash
+cp .env.compose.example .env
+```
 
-The JSON adapter uses atomic file replacement, but it is intended only for development or a single application instance with persistent disk. It does not provide database transactions, multi-process locking, or shared storage for horizontal scaling. Do not deploy it as a multi-instance production database.
+Replace both JWT secrets in `.env` with different, randomly generated values. For example, run `openssl rand -base64 48` twice and use one result for each secret.
+
+Then start the complete stack:
+
+```bash
+docker compose up --build -d
+```
+
+Open `http://localhost:8080` by default. Change `HTTP_PORT` in `.env` to expose another host port.
+
+For a remote deployment, use a host with Docker Engine, the Docker Compose plugin, and persistent volumes. Set `FRONTEND_ORIGIN` to the exact public HTTPS origin, and terminate TLS at the host's reverse proxy or platform ingress. Deploy from the repository root so Compose can build each workspace using the shared lockfile.
+
+The root `vercel.json` is a frontend-only static build configuration. Vercel's static deployment does not run this Compose stack or the long-lived NestJS services. Use the Compose deployment when the frontend, BFF, and backend must run together under one public origin.
+
+### Persistent data
+
+The backend stores JSON collections in `DATA_DIRECTORY`, mounted to the named `nexus-data` volume by Compose. The volume survives container rebuilds and restarts. Do not run multiple backend replicas against this JSON adapter: it does not provide transactions, multi-process locking, or shared-storage coordination. Back up the volume, and do not use `docker compose down -v` unless you intend to delete account data.
+
+The JSON adapter is temporary while a free database is selected. The repository interface isolates persistence from domain services so a database adapter can replace it without changing the API contracts.
 
 ## Authentication
 
