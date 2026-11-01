@@ -44,8 +44,20 @@ jobs:
 
           const config = JSON.parse(readFileSync('vercel.json', 'utf8'))
           const services = config.services ?? {}
-          for (const name of ['front', 'bff', 'back']) {
-            if (!services[name]?.root) throw new Error(`Missing Vercel service: ${name}`)
+          const required = {
+            front: { root: 'apps/front', framework: 'vite' },
+            bff: { root: 'apps/bff', framework: 'nestjs' },
+            back: { root: 'apps/back', framework: 'nestjs' }
+          }
+
+          for (const [name, expected] of Object.entries(required)) {
+            const service = services[name]
+            if (!service) throw new Error(`Missing Vercel service: ${name}`)
+            if (service.root !== expected.root) throw new Error(`Unexpected root for service ${name}`)
+            if (service.framework !== expected.framework) throw new Error(`Unexpected framework for service ${name}`)
+            if (!service.installCommand?.includes('npm ci --prefix ../..')) {
+              throw new Error(`Service ${name} must install from the monorepo root lockfile.`)
+            }
           }
 
           const apiRoute = config.rewrites?.find((rule) =>
@@ -61,7 +73,9 @@ jobs:
             item.format === 'url' && item.env === 'BACKEND_SERVICE_URL'
           )
           if (!binding) throw new Error('The BFF must bind privately to the backend service.')
-          if (apiRoute.destination.service === 'back') throw new Error('The domain backend must not be exposed publicly.')
+          if (config.rewrites.some((rule) => rule.destination?.service === 'back')) {
+            throw new Error('The domain backend must not be exposed publicly.')
+          }
           NODE
 
       - name: Test backend authentication, authorization and Supabase persistence
