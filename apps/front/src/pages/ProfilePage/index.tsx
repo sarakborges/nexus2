@@ -30,7 +30,7 @@ export function ProfilePage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><article className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><article className="account-card">
       {profile.picture && <img className="account-card__picture" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />}
       <div>
         <h1 className="account-card__title">{profile.name}</h1>

@@ -70,6 +70,7 @@ export function HomePage() {
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
           <RequestState
             isLoading={profilesQuery.isLoading}
+            isFetching={profilesQuery.isFetching}
             isError={profilesQuery.isError}
             isEmpty={profilesQuery.isSuccess && totalItems === 0}
             emptyMessage={t('HOME_PROFILES_EMPTY')}

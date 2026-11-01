@@ -32,6 +32,7 @@ export function CommunitiesPage() {
         </header>
         <RequestState
           isLoading={communitiesQuery.isLoading}
+          isFetching={communitiesQuery.isFetching}
           isError={communitiesQuery.isError}
           isEmpty={communitiesQuery.isSuccess && totalItems === 0}
           emptyMessage={t('COMMUNITIES_EMPTY')}

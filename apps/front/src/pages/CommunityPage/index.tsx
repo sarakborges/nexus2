@@ -30,7 +30,7 @@ export function CommunityPage() {
   if (!community) return <NotFoundPage />
 
   return (
-    <main className="account-page"><article className="account-card">
+    <main className="account-page"><RequestState isFetching={communityQuery.isFetching} /><article className="account-card">
       {community.picture && <img className="account-card__picture" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />}
       <div>
         <h1 className="account-card__title">{community.name}</h1>
