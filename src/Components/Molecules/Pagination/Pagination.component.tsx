@@ -1,5 +1,5 @@
-import { Button } from '@/DesignSystem'
 import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
+import { Button } from '@/DesignSystem'
 import { getTotalPages } from '@/Helpers/Math/pagination.helper'
 import { useTranslations } from '@/Hooks/Language'
 
