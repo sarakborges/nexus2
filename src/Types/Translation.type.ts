@@ -1,5 +1,5 @@
-import type { englishTranslations } from '@/Locales/en'
+import type { enUSTranslations } from '@/Locales/en-US'
 
-export type TranslationKey = keyof typeof englishTranslations
+export type TranslationKey = keyof typeof enUSTranslations
 
 export type TranslationReplacements = Readonly<Record<string, string | number>>

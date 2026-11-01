@@ -1,13 +1,15 @@
-import { englishTranslations } from '@/Locales/en'
+import { enUSTranslations } from '@/Locales/en-US'
+import { ptBRTranslations } from '@/Locales/pt-BR'
 import type { Language } from '@/Constants/languages'
 import type {
   TranslationKey,
   TranslationReplacements
 } from '@/Types/Translation.type'
 
-const translations = {
-  en: englishTranslations
-} satisfies Record<Language, typeof englishTranslations>
+const translations: Record<Language, Record<TranslationKey, string>> = {
+  'pt-BR': ptBRTranslations,
+  'en-US': enUSTranslations
+}
 
 export const translate = (
   language: Language,

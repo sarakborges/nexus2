@@ -1,0 +1,6 @@
+export { HomePage } from './HomePage'
+export { LandingPage } from './LandingPage'
+export { NotFoundPage } from './NotFoundPage'
+export { ProfilePage } from './ProfilePage'
+export { SignInPage } from './SignInPage'
+export { SignUpPage } from './SignUpPage'

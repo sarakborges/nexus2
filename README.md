@@ -50,12 +50,17 @@ src/
   Hooks/
     Language/
   Locales/
-    en.ts
+    en-US.ts
+    pt-BR.ts
   Stores/
   Types/
   pages/
+    LandingPage/
+    SignUpPage/
+    SignInPage/
     HomePage/
-      index.tsx
+    ProfilePage/
+    NotFoundPage/
   routes/
     index.tsx
   App.tsx
@@ -66,6 +71,6 @@ public/
 
 Both `DesignSystem` and `Components` follow Atomic Design. The design system contains application-independent visual primitives and compositions; application components compose those primitives into feature-specific controls and interface sections. Each area documents its layer boundaries in its own README.
 
-React Router is configured in declarative mode. Add route definitions in `src/routes/index.tsx`.
+React Router is configured in declarative mode. The initial routes are landing (`/`), sign-up (`/sign-up`), sign-in (`/sign-in`), home (`/home`) and profile (`/profile`); unknown paths render the empty `NotFoundPage`.
 
-Localization strings live in `src/Locales/` and are accessed through the typed `useTranslations` hook. Translation lookup is a pure function. Generic browser persistence helpers use the `nexus_` storage namespace; settings use a dedicated Zustand persistence store.
+The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Brazilian Portuguese is the default language. Localization strings live in `src/Locales/` and are accessed through the typed `useTranslations` hook. Generic browser persistence helpers use the `nexus_` storage namespace; settings use a dedicated Zustand persistence store.
