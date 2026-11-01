@@ -1,3 +1,4 @@
+import axios from 'axios'
 import type { CreateProfileInput, PaginatedResult, PaginationParams, Profile } from '@nexus/common'
 import { api } from '../Http/api'
 
@@ -15,8 +16,13 @@ export async function getProfilesByIds(ids: string[]): Promise<Profile[]> {
   return data
 }
 export async function getProfileByUrl(url: string): Promise<Profile | null> {
-  try { const { data } = await api.get<Profile>(`/profiles/by-url/${encodeURIComponent(url)}`); return data }
-  catch { return null }
+  try {
+    const { data } = await api.get<Profile>(`/profiles/by-url/${encodeURIComponent(url)}`)
+    return data
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) return null
+    throw error
+  }
 }
 export async function createUserProfile(input: CreateProfileInput): Promise<Profile> {
   const { data } = await api.post<Profile>('/profiles', input)
