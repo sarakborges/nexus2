@@ -3,13 +3,14 @@ import { HttpService } from '@nestjs/axios'
 import type { AxiosRequestConfig, Method } from 'axios'
 import type { Request, Response } from 'express'
 import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
+import { getBackendUrl } from '../backend-url.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
 
 @Controller('api')
 export class ApiProxyController {
   private readonly logger = new Logger(ApiProxyController.name)
-  private readonly backUrl = process.env.BACKEND_URL ?? 'http://localhost:3002/api'
+  private readonly backUrl = getBackendUrl()
   constructor(private readonly http: HttpService) {}
 
   @All('{*path}')
@@ -17,8 +18,7 @@ export class ApiProxyController {
     let accessToken = getCookie(req, ACCESS_COOKIE)
     const refreshToken = getCookie(req, REFRESH_COOKIE)
     try {
-      // If the short-lived access cookie has already expired, refresh before
-      // forwarding. This also works for optional-auth endpoints (profile walls).
+      // Refresh the short-lived access cookie before forwarding when possible.
       if (!accessToken && refreshToken) {
         const refreshed = await this.refreshTokens(refreshToken, res)
         accessToken = refreshed?.accessToken ?? null
@@ -27,9 +27,8 @@ export class ApiProxyController {
 
       const headers: Record<string, string> = {}
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`
-      // Axios serializes this structured object; do not manually build a query string.
-      // BACKEND_URL already contains the /api prefix. Strip the BFF route
-      // prefix before appending the incoming path to avoid /api/api/... URLs.
+      // Vercel forwards the original /api path to this service. BACKEND_URL
+      // already contains /api, so only the path after that prefix is appended.
       const backendPath = req.path.replace(/^\/api(?=\/|$)/, '')
       const config: AxiosRequestConfig = {
         url: `${this.backUrl}${backendPath}`,
