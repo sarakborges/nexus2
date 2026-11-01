@@ -174,6 +174,8 @@ export const enUSTranslations = {
   PROFILE_MESSAGES_SIGN_IN: "Sign in to send a message.",
   PROFILE_MESSAGES_EMPTY: "There are no messages to show.",
   PROFILE_MESSAGES_UNKNOWN_SENDER: "Unknown profile",
+  PROFILE_MESSAGES_SENDERS_ERROR: 'Sender profiles could not be loaded.',
+  COMMUNITY_PENDING_EMPTY: 'There are no pending requests.',
   PAGINATION_LABEL: "List pages",
   PAGINATION_PREVIOUS: "Previous",
   PAGINATION_NEXT: "Next",

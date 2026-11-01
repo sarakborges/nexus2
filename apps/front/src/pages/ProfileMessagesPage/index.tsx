@@ -7,6 +7,7 @@ import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds, getProfileByUrl } from '@/Services/Profile'
+import { getProfileMessages } from '@/Services/ProfileMessage'
 import { createProfileMessage, ProfileMessageError } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -29,7 +30,6 @@ export function ProfileMessagesPage() {
   })
   const profile = profileQuery.data
   const isProfileOwner = Boolean(profile && session?.user.profiles.includes(profile.id))
-  const viewerProfileId = isProfileOwner ? profile?.id ?? null : currentProfileId
   const messagesQuery = useQuery({
     queryKey: queryKeys.profileMessages(profile?.id ?? '', session?.user.id ?? null, page, pageSize),
     queryFn: () => getProfileMessages(profile!.id, { page, pageSize }),

@@ -176,6 +176,8 @@ export const ptBRTranslations = {
   PROFILE_MESSAGES_SIGN_IN: "Entre para enviar uma mensagem.",
   PROFILE_MESSAGES_EMPTY: "Não há mensagens para exibir.",
   PROFILE_MESSAGES_UNKNOWN_SENDER: "Perfil desconhecido",
+  PROFILE_MESSAGES_SENDERS_ERROR: 'Não foi possível carregar os perfis de quem enviou as mensagens.',
+  COMMUNITY_PENDING_EMPTY: 'Não há solicitações pendentes.',
   PAGINATION_LABEL: "Páginas da listagem",
   PAGINATION_PREVIOUS: "Anterior",
   PAGINATION_NEXT: "Próxima",
