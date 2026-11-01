@@ -59,15 +59,14 @@ export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
       return false
     }
 
+    const previousRelationships = get().relationships
     const updatedRelationships = buildRelationshipRemoval(
       firstId,
       secondId,
-      get().relationships
+      previousRelationships
     )
 
-    if (
-      updatedRelationships.length === previousRelationships.length
-    ) {
+    if (updatedRelationships.length === previousRelationships.length) {
       return true
     }
 
