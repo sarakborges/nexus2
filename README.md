@@ -28,47 +28,46 @@ The Vite development server proxies `/api` to the BFF. Without Supabase variable
 
 ## Deployment on Vercel
 
-The root `vercel.json` defines three services in one Vercel project:
+The root `vercel.json` defines three container services in one Vercel project:
 
-| Service | Root | Public access |
+| Service | Dockerfile | Public access |
 | --- | --- | --- |
-| `front` | `apps/front` | All non-API routes |
-| `bff` | `apps/bff` | `/api/*` |
-| `back` | `apps/back` | Private; BFF service binding only |
+| `front` | `Dockerfile.front` | All non-API routes |
+| `bff` | `Dockerfile.bff` | `/api/*` |
+| `back` | `Dockerfile.back` | Private; BFF service binding only |
 
-The BFF receives `BACKEND_SERVICE_URL` from the Vercel binding and appends the backend's `/api` prefix. The browser never receives a backend URL or database credential. No public `VITE_BFF_URL` is needed: the frontend calls the same-origin `/api` path.
+All three services use the repository root as their Docker build context so they can access the common npm lockfile and workspace packages. Each Dockerfile builds only its own application. The BFF receives `BACKEND_SERVICE_URL` from its Vercel binding and appends the backend's `/api` prefix. Vercel's top-level rewrites send API requests directly to the BFF; the frontend container only serves the SPA. The browser never receives a backend URL or database credential. No public `VITE_BFF_URL` is needed.
 
 ### Vercel project settings
 
 1. Keep the project's Root Directory at the repository root (`.`).
 2. Set Framework Preset to **Services** in Build & Development Settings. This is required; a `services` object in `vercel.json` alone does not switch the project to Services mode.
-3. Keep project-level Install Command, Build Command and Output Directory overrides disabled. Each service owns its build settings.
-4. Deploy the branch or merge the PR after the environment variables and database schema below are ready.
+3. Keep project-level Install Command, Build Command and Output Directory overrides disabled. Each container builds from its own root Dockerfile.
+4. Deploy the branch or merge the PR after the environment variables and database migration below are ready.
 
-Vercel builds the three service roots separately. Each workspace runs the shared `@nexus/common` build as a `prebuild` step.
+The container images listen on port 80. The BFF and backend honor the `PORT` environment variable and bind to `0.0.0.0`.
 
-### Backend environment variables
+### Vercel environment variables
 
-Configure these only for the backend service, in the Vercel project's environment-variable settings:
+Create the following variables in the Vercel project for Preview and Production:
 
 - `JWT_ACCESS_SECRET`: a long, random secret.
 - `JWT_REFRESH_SECRET`: a different long, random secret.
+- `JWT_ACCESS_TTL_SECONDS=900`.
+- `JWT_REFRESH_TTL_SECONDS=2592000`.
 - `SUPABASE_URL`: Supabase project URL.
-- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service-role key.
+- `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key.
+- `SUPABASE_API_SECRET`: an independent random secret used only by the Nexus database RPCs.
 
-Set `JWT_ACCESS_TTL_SECONDS=900` and `JWT_REFRESH_TTL_SECONDS=2592000` on both backend and BFF so token expiry and cookie lifetime stay aligned.
-
-Do not expose `SUPABASE_SERVICE_ROLE_KEY` through a `VITE_` variable or add it to the frontend/BFF. It has privileged server-side access and must stay on the backend service.
+The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
 
 ### Persistent storage
 
-Vercel Functions do not provide a persistent application filesystem. When `VERCEL` is set, the backend therefore refuses to start without the Supabase variables instead of silently writing account data to temporary disk.
+Vercel container instances are ephemeral, so the backend does not use its JSON file adapter in production. It uses the Supabase REST API to call two narrowly scoped RPC functions, `nexus_read_collection` and `nexus_write_collection`.
 
-The Supabase adapter uses the existing repository contract and stores each current collection as a JSONB array in `public.nexus_collections`. This keeps the current domain services intact while moving persistence out of the function filesystem.
+Run `apps/back/sql/001_nexus_collections.sql` once against the Supabase project. It adds only Nexus-prefixed objects: `public.nexus_collections`, a private credential table and two RPC functions. It does not modify the existing tracker tables or migrations. The collection table has RLS enabled and no direct access for `anon` or `authenticated`; the public RPC functions validate the backend-only secret before reading or writing data. The database stores only the SHA-256 hash of that secret.
 
-To create the table, run the SQL in `apps/back/sql/001_nexus_collections.sql` once in the Supabase SQL Editor. The table has RLS enabled, denies access to the `anon` and `authenticated` roles, and grants access only to `service_role`. The service-role key remains server-only.
-
-This is an initial persistent adapter, not a normalized relational schema. The current repository interface replaces whole collections on write, so concurrent writes to the same collection can overwrite one another. Before substantial traffic or concurrent write workloads, move the domain collections to normalized tables and transactional repository operations.
+The current repository contract replaces whole JSONB collections on write, so concurrent writes to the same collection can overwrite one another. This adapter keeps the current domain services working without filesystem persistence; before substantial traffic, normalize the collections and move write operations to transactional row-level operations.
 
 ## Optional Docker Compose deployment
 
