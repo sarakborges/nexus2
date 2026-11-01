@@ -103,11 +103,15 @@ src/
     Profile.model.ts
   Services/
     Auth/
+    Community/
     Profile/
+    Relationship/
   Stores/
     Auth.store.ts
     User.store.ts
     Profile.store.ts
+    Community.store.ts
+    Relationship.store.ts
     Settings.store.ts
     index.ts
   Types/
