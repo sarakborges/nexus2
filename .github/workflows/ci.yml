@@ -31,8 +31,8 @@ jobs:
           node-version: 22.22.0
           package-manager-cache: false
 
-      - name: Install workspace dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked workspace dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: Build all workspaces
         run: npm run build

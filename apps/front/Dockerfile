@@ -2,14 +2,14 @@ FROM node:22.22-alpine AS build
 
 WORKDIR /app
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY apps/front/package.json apps/front/package.json
 COPY apps/back/package.json apps/back/package.json
 COPY apps/bff/package.json apps/bff/package.json
 COPY packages/common/package.json packages/common/package.json
 COPY packages/common/tsconfig.json packages/common/tsconfig.json
 
-RUN npm install
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 RUN npm run build --workspace @nexus/common
