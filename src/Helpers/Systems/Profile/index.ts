@@ -1,7 +1,0 @@
-export { createNewProfile } from './createNewProfile.helper'
-export { saveProfile } from './saveProfile.helper'
-export { loadProfiles } from './loadProfiles.helper'
-export { generateRandomAvatar } from './generateRandomAvatar.helper'
-export { getSortedProfiles } from './getSortedProfiles.helper'
-export { getChoice } from './getChoice.helper'
-export { getNewId } from './getNewId.helper'

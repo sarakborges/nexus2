@@ -1,7 +1,19 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router'
+import { App } from '@/App'
+import '@/styles/main.scss'
 
-import { Game } from '@/Components/Main/Game'
+const rootElement = document.getElementById('root')
 
-import '@/Assets/main.css'
+if (!rootElement) {
+  throw new Error('Root element not found')
+}
 
-createRoot(document.getElementById('root')!).render(<Game />)
+createRoot(rootElement).render(
+  <StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+)
