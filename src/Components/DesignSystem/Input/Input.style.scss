@@ -1,0 +1,35 @@
+.input-wrapper {
+  display: flex;
+  flex-flow: column;
+  gap: 4px;
+
+  > label {
+    font-size: 12px;
+    color: var(--color-neutral-weak);
+  }
+
+  .input {
+    padding: 2px 4px;
+
+    background-color: var(--color-neutral-weak);
+    border: 2px solid var(--color-neutral-weak);
+    border-radius: 4px;
+
+    color: var(--color-neutral-strong);
+    font-size: 12px;
+
+    transition:
+      border-color 0.3s,
+      opacity 0.3s;
+
+    &:not(:disabled) {
+      &:focus {
+        border-color: var(--color-primary-strong);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.4;
+    }
+  }
+}

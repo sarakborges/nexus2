@@ -28,19 +28,34 @@ npm run dev
 
 ```
 src/
+  Assets/
+    Themes/
+    main.css
+    reset.css
+    vars.css
+  Components/
+    DesignSystem/
+    Settings/
+  Helpers/
+    Language/
+    Math/
+    Systems/
+  Locales/
+    En/
   pages/
     HomePage/
       index.tsx
   routes/
     index.tsx
-  styles/
-    main.scss
   App.tsx
   main.tsx
 public/
+  languages/
 ```
 
-Client-side navigation is configured with React Router in declarative mode. Add route definitions in `src/routes/index.tsx`.
+React Router is configured in declarative mode. Add route definitions in `src/routes/index.tsx`.
+
+Localization strings live in `src/Locales/` and are accessed through `src/Helpers/Language`. Generic browser persistence helpers use the `nexus_` storage namespace.
 
 ## Deployment
 

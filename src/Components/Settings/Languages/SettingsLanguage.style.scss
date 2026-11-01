@@ -1,0 +1,11 @@
+.settings-language {
+  display: flex;
+  flex-flow: column;
+  gap: 4px;
+
+  .languages-list {
+    display: flex;
+    flex-flow: column;
+    gap: 4px;
+  }
+}
