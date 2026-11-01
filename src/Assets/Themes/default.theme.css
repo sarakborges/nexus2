@@ -1,0 +1,11 @@
+:root {
+  --color-primary: #4a5bbf;
+  --color-primary-weak: #687adf;
+  --color-primary-strong: #2c3a88;
+
+  --color-secondary: #3aa4ae;
+  --color-secondary-weak: #67c9d2;
+  --color-secondary-strong: #1f818a;
+
+  --theme-image: url('/digivice_backgrounds/default.webp');
+}

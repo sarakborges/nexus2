@@ -1,0 +1,30 @@
+@media (orientation: portrait) {
+  .main-game {
+    display: none !important;
+  }
+}
+.main-game {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+
+  display: flex;
+  flex-flow: column;
+  place-items: center;
+  place-content: center;
+
+  width: 640px;
+  height: 360px;
+
+  overflow: visible;
+
+  background-color: var(--color-neutral);
+  opacity: var(--is-warping);
+
+  transition: 0.3s;
+
+  transform: translate(-50%, -50%)
+    scale(min(tan(atan2(100dvw, 640px)), tan(atan2(100dvh, 360px))));
+
+  transform-origin: center;
+}

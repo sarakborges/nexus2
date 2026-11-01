@@ -1,0 +1,39 @@
+.settings {
+  display: flex;
+  flex-flow: column;
+  gap: 24px;
+
+  width: 320px;
+
+  .settings-header {
+    padding-top: 24px;
+
+    > .text {
+      font-size: 24px;
+    }
+
+    .button {
+      background-color: transparent;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  > main {
+    display: flex;
+    flex-flow: column;
+    gap: 24px;
+  }
+
+  > footer {
+    padding-bottom: 24px;
+
+    .shadow-button {
+      width: 100%;
+      padding: 8px 0;
+    }
+  }
+}

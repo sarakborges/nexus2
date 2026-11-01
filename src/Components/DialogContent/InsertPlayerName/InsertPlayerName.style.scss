@@ -1,0 +1,15 @@
+.insert-player-name {
+  display: flex;
+
+  place-items: flex-end;
+
+  gap: 8px;
+
+  width: 320px;
+
+  > footer {
+    .button {
+      padding: 4px 8px;
+    }
+  }
+}

@@ -1,0 +1,47 @@
+.avatar-customization {
+  display: flex;
+  flex-flow: column;
+
+  gap: 8px;
+
+  > main {
+    display: flex;
+    place-items: flex-end;
+    place-content: space-between;
+
+    > aside {
+      display: flex;
+      flex-flow: column;
+      gap: 8px;
+
+      width: 400px;
+
+      > main {
+        display: flex;
+        flex-flow: column;
+        gap: 1px;
+
+        .shadow-button {
+          .button-content {
+            place-content: flex-start;
+
+            padding: 2px 20px;
+
+            font-size: 12px;
+          }
+        }
+      }
+    }
+
+    .player-avatar {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+
+      width: 260px;
+      height: 260px;
+
+      filter: drop-shadow(0 0 8px var(--color-neutral-strong));
+    }
+  }
+}
