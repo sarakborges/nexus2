@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 
 import type { Profile } from '@/Models/Profile.model'
+import { RelationshipActions } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
+import { useAuthStore } from '@/Stores/Auth.store'
 import { useProfileStore } from '@/Stores/Profile.store'
 import { useRelationshipStore } from '@/Stores/Relationship.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -19,6 +21,7 @@ export function ProfileFriendsPage() {
   const loadedUrl = useProfileStore((state) => state.loadedUrl)
   const loadProfileByUrl = useProfileStore((state) => state.loadProfileByUrl)
   const clearProfile = useProfileStore((state) => state.clearProfile)
+  const session = useAuthStore((state) => state.session)
   const getRelatedIds = useRelationshipStore((state) => state.getRelatedIds)
   const relationships = useRelationshipStore((state) => state.relationships)
   const [friends, setFriends] = useState<Profile[]>([])
@@ -68,6 +71,9 @@ export function ProfileFriendsPage() {
                 >
                   {friend.name}
                 </Link>
+                {session?.user.currentProfile === profile.id && (
+                  <RelationshipActions targetId={friend.id} />
+                )}
               </div>
             ))}
           </div>

@@ -75,7 +75,7 @@ export const enUSTranslations = {
   RELATIONSHIP_REMOVE: "Remove from friends",
   RELATIONSHIP_BLOCK: "Block",
   RELATIONSHIP_UNBLOCK: "Unblock",
-  RELATIONSHIP_PENDING: "Friend request pending.",
+  RELATIONSHIP_PENDING: "Request pending.",
   RELATIONSHIP_FRIENDS_EMPTY: "There are no connections to show yet.",
   PROFILE_FRIENDS_TITLE: "{{name}}'s friends",
   PROFILE_FRIENDS_LINK: "View friends",

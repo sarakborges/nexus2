@@ -77,7 +77,7 @@ export const ptBRTranslations = {
   RELATIONSHIP_REMOVE: "Remover da lista de amigos",
   RELATIONSHIP_BLOCK: "Bloquear",
   RELATIONSHIP_UNBLOCK: "Desbloquear",
-  RELATIONSHIP_PENDING: "Solicitação de amizade pendente.",
+  RELATIONSHIP_PENDING: "Solicitação pendente.",
   RELATIONSHIP_FRIENDS_EMPTY: "Ainda não há conexões para exibir.",
   PROFILE_FRIENDS_TITLE: "Amigos de {{name}}",
   PROFILE_FRIENDS_LINK: "Ver amigos",
