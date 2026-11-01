@@ -1,8 +1,14 @@
-import { loadSession, saveSession } from '@/Helpers/Systems/Data'
+import {
+  loadData,
+  saveData
+} from '@/Helpers/Systems/Data'
+import { getBrowserStorage } from '@/Helpers/Systems/Storage'
+import { addProfileToUser, getUserById } from '@/Services/Auth'
 import type { CreateProfileInput, Profile } from '@/Models/Profile.model'
 import type { ProfileErrorCode } from '@/Types/Profile.type'
 
-const PROFILE_STORAGE_PREFIX = 'profile_v1_'
+const PROFILES_KEY = 'profiles'
+const LEGACY_PROFILE_PREFIX = 'nexus_profile_v1_'
 
 export class ProfileError extends Error {
   code: ProfileErrorCode
@@ -24,8 +30,11 @@ const createId = (): string => {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
-const getProfileStorageKey = (userId: string): string =>
-  `${PROFILE_STORAGE_PREFIX}${userId}`
+const normalizeProfileUrl = (value: string): string =>
+  value.trim().replace(/^@/, '').toLowerCase()
+
+const isValidProfileUrl = (value: string): boolean =>
+  /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)
 
 const isProfile = (value: unknown): value is Profile => {
   if (!value || typeof value !== 'object') {
@@ -43,42 +52,155 @@ const isProfile = (value: unknown): value is Profile => {
   )
 }
 
-const isHttpUrl = (value: string): boolean => {
-  try {
-    const url = new URL(value)
+const readProfiles = (): Profile[] => {
+  const storedProfiles = loadData<unknown>(PROFILES_KEY)
 
-    return url.protocol === 'https:' || url.protocol === 'http:'
-  } catch {
-    return false
-  }
+  return Array.isArray(storedProfiles)
+    ? storedProfiles.filter(isProfile)
+    : []
 }
 
-export const getUserProfile = (userId: string): Profile | null => {
-  const storedProfile = loadSession<unknown>(getProfileStorageKey(userId))
+const migrateLegacyProfiles = (): Profile[] => {
+  const profiles = readProfiles()
+  const sessionStorage = getBrowserStorage('session')
 
-  return isProfile(storedProfile) ? storedProfile : null
+  if (!sessionStorage) {
+    return profiles
+  }
+
+  const legacyRecords: Array<{ userId: string; profile: Profile; key: string }> =
+    []
+
+  try {
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index)
+
+      if (!key?.startsWith(LEGACY_PROFILE_PREFIX)) {
+        continue
+      }
+
+      const serializedProfile = sessionStorage.getItem(key)
+
+      if (!serializedProfile) {
+        continue
+      }
+
+      const parsedProfile: unknown = JSON.parse(serializedProfile)
+
+      if (!isProfile(parsedProfile)) {
+        continue
+      }
+
+      let migratedUrl = normalizeProfileUrl(parsedProfile.url)
+
+      if (!isValidProfileUrl(migratedUrl)) {
+        try {
+          const previousUrl = new URL(parsedProfile.url)
+          const lastPathSegment = previousUrl.pathname
+            .split('/')
+            .filter(Boolean)
+            .pop()
+          const source = lastPathSegment || previousUrl.hostname.replace(/^www\./, '')
+
+          migratedUrl = source
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '')
+        } catch {
+          migratedUrl = parsedProfile.id.toLowerCase()
+        }
+      }
+
+      legacyRecords.push({
+        userId: key.slice(LEGACY_PROFILE_PREFIX.length),
+        profile: { ...parsedProfile, url: migratedUrl },
+        key
+      })
+    }
+  } catch (error) {
+    console.warn('Unable to read legacy profiles from session storage.', error)
+    return profiles
+  }
+
+  if (legacyRecords.length === 0) {
+    return profiles
+  }
+
+  const migratedProfiles = [...profiles]
+
+  for (const record of legacyRecords) {
+    if (!migratedProfiles.some((profile) => profile.id === record.profile.id)) {
+      migratedProfiles.push(record.profile)
+    }
+  }
+
+  if (!saveData({ key: PROFILES_KEY, value: migratedProfiles })) {
+    return profiles
+  }
+
+  for (const record of legacyRecords) {
+    if (!addProfileToUser(record.userId, record.profile.id)) {
+      return profiles
+    }
+  }
+
+  for (const record of legacyRecords) {
+    sessionStorage.removeItem(record.key)
+  }
+
+  return migratedProfiles
+}
+
+export const getProfiles = (): Profile[] => migrateLegacyProfiles()
+
+export const getProfilesByIds = (profileIds: string[]): Profile[] => {
+  const profileIdSet = new Set(profileIds)
+
+  return getProfiles().filter((profile) => profileIdSet.has(profile.id))
+}
+
+export const getProfileById = (profileId: string): Profile | null =>
+  getProfiles().find((profile) => profile.id === profileId) ?? null
+
+export const getProfileByUrl = (url: string): Profile | null => {
+  const normalizedUrl = normalizeProfileUrl(url)
+
+  return (
+    getProfiles().find(
+      (profile) => normalizeProfileUrl(profile.url) === normalizedUrl
+    ) ?? null
+  )
 }
 
 export const createUserProfile = (
   userId: string,
   input: CreateProfileInput
 ): Profile => {
-  if (getUserProfile(userId)) {
-    throw new ProfileError('PROFILE_ALREADY_EXISTS')
+  if (!getUserById(userId)) {
+    throw new ProfileError('STORAGE_UNAVAILABLE')
   }
 
   const name = input.name.trim()
-  const url = input.url.trim()
+  const url = normalizeProfileUrl(input.url)
   const picture = input.picture.trim()
   const about = input.about.trim()
 
   if (
     !name ||
-    !url ||
-    !isHttpUrl(url) ||
-    (picture.length > 0 && !isHttpUrl(picture))
+    !isValidProfileUrl(url) ||
+    (picture.length > 0 && !/^https?:\/\//i.test(picture))
   ) {
     throw new ProfileError('INVALID_PROFILE')
+  }
+
+  const profiles = getProfiles()
+
+  if (
+    profiles.some(
+      (profile) => normalizeProfileUrl(profile.url) === url
+    )
+  ) {
+    throw new ProfileError('PROFILE_URL_ALREADY_IN_USE')
   }
 
   const profile: Profile = {
@@ -89,7 +211,14 @@ export const createUserProfile = (
     about
   }
 
-  if (!saveSession({ key: getProfileStorageKey(userId), value: profile })) {
+  const updatedProfiles = [...profiles, profile]
+
+  if (!saveData({ key: PROFILES_KEY, value: updatedProfiles })) {
+    throw new ProfileError('STORAGE_UNAVAILABLE')
+  }
+
+  if (!addProfileToUser(userId, profile.id)) {
+    saveData({ key: PROFILES_KEY, value: profiles })
     throw new ProfileError('STORAGE_UNAVAILABLE')
   }
 

@@ -1,37 +1,61 @@
 import { create } from 'zustand'
 
-import { getCurrentAuthSession } from '@/Services/Auth'
-import { createUserProfile, getUserProfile } from '@/Services/Profile'
+import { getCurrentAuthSession, getUserById } from '@/Services/Auth'
+import { createUserProfile, getProfiles, getProfilesByIds } from '@/Services/Profile'
 import type {
   CreateProfileInput,
   Profile
 } from '@/Models/Profile.model'
 
 type ProfileStore = {
+  profiles: Profile[]
   profile: Profile | null
-  loadProfile: (userId: string) => void
+  loadProfiles: (profileIds: string[]) => void
   createProfile: (userId: string, input: CreateProfileInput) => Profile
-  clearProfile: () => void
+  clearProfiles: () => void
 }
 
-const currentSession = getCurrentAuthSession()
+const initializeProfiles = (): Profile[] => {
+  const session = getCurrentAuthSession()
+
+  if (!session) {
+    return []
+  }
+
+  getProfiles()
+
+  const user = getUserById(session.user.id)
+
+  return user ? getProfilesByIds(user.profiles) : []
+}
+
+const initialProfiles = initializeProfiles()
 
 export const useProfileStore = create<ProfileStore>((set) => ({
-  profile: currentSession ? getUserProfile(currentSession.user.id) : null,
+  profiles: initialProfiles,
+  profile: initialProfiles[0] ?? null,
 
-  loadProfile: (userId) => {
-    set({ profile: getUserProfile(userId) })
+  loadProfiles: (profileIds) => {
+    const profiles = getProfilesByIds(profileIds)
+
+    set({
+      profiles,
+      profile: profiles[0] ?? null
+    })
   },
 
   createProfile: (userId, input) => {
     const profile = createUserProfile(userId, input)
 
-    set({ profile })
+    set((state) => ({
+      profiles: [...state.profiles, profile],
+      profile
+    }))
 
     return profile
   },
 
-  clearProfile: () => {
-    set({ profile: null })
+  clearProfiles: () => {
+    set({ profiles: [], profile: null })
   }
 }))

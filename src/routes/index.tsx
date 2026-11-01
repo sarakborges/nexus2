@@ -16,7 +16,7 @@ import {
 
 function GuestOnlyRoute() {
   const session = useAuthStore((state) => state.session)
-  const profile = useProfileStore((state) => state.profile)
+  const profiles = useProfileStore((state) => state.profiles)
 
   if (!session) {
     return <Outlet />
@@ -24,7 +24,7 @@ function GuestOnlyRoute() {
 
   return (
     <Navigate
-      to={profile ? ROUTES.home : ROUTES.gettingStarted}
+      to={profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted}
       replace
     />
   )
@@ -37,15 +37,23 @@ function AuthenticatedRoute() {
 }
 
 function OnboardingRoute() {
-  const profile = useProfileStore((state) => state.profile)
+  const profiles = useProfileStore((state) => state.profiles)
 
-  return profile ? <Navigate to={ROUTES.home} replace /> : <Outlet />
+  return profiles.length > 0 ? (
+    <Navigate to={ROUTES.home} replace />
+  ) : (
+    <Outlet />
+  )
 }
 
 function ProfileRequiredRoute() {
-  const profile = useProfileStore((state) => state.profile)
+  const profiles = useProfileStore((state) => state.profiles)
 
-  return profile ? <Outlet /> : <Navigate to={ROUTES.gettingStarted} replace />
+  return profiles.length > 0 ? (
+    <Outlet />
+  ) : (
+    <Navigate to={ROUTES.gettingStarted} replace />
+  )
 }
 
 export function AppRoutes() {
@@ -64,17 +72,22 @@ export function AppRoutes() {
             path={ROUTES.gettingStarted}
             element={<GettingStartedPage />}
           />
-          <Route
-            path={ROUTES.createProfile}
-            element={<CreateProfilePage />}
-          />
         </Route>
+
+        <Route
+          path={ROUTES.createProfile}
+          element={<CreateProfilePage />}
+        />
 
         <Route element={<ProfileRequiredRoute />}>
           <Route path={ROUTES.home} element={<HomePage />} />
-          <Route path={ROUTES.profile} element={<ProfilePage />} />
         </Route>
       </Route>
+
+      <Route
+        path={`${ROUTES.profile}/:url`}
+        element={<ProfilePage />}
+      />
 
       <Route path={ROUTES.notFound} element={<NotFoundPage />} />
     </Routes>

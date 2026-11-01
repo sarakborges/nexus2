@@ -35,8 +35,8 @@ export function CreateProfilePage() {
     setIsSubmitting(true)
 
     try {
-      createProfile(user.id, { name, url, picture, about })
-      navigate(ROUTES.home, { replace: true })
+      const profile = createProfile(user.id, { name, url, picture, about })
+      navigate(`${ROUTES.profile}/${profile.url}`, { replace: true })
     } catch (error) {
       const translationKey =
         error instanceof ProfileError
@@ -76,8 +76,9 @@ export function CreateProfilePage() {
           <FormField
             id="profile-url"
             label={t('PROFILE_URL_LABEL')}
-            type="url"
-            placeholder="https://example.com/your-profile"
+            type="text"
+            placeholder="sara-borges"
+            pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             required

@@ -1,6 +1,8 @@
 import {
   deleteSession,
+  loadData,
   loadSession,
+  saveData,
   saveSession
 } from '@/Helpers/Systems/Data'
 import type { AuthenticatedUser, User } from '@/Models/User.model'
@@ -11,18 +13,11 @@ import type {
   SignUpCredentials
 } from '@/Types/Auth.type'
 
-const USERS_KEY = 'users_v2'
-const LEGACY_USERS_KEY = 'auth_accounts_v1'
+const USERS_KEY = 'users'
+const LEGACY_USERS_KEYS = ['users_v2', 'auth_accounts_v1'] as const
 const SESSION_KEY = 'auth_session_v2'
 const LEGACY_SESSION_KEY = 'auth_session_v1'
 const PBKDF2_ITERATIONS = 310_000
-
-type LegacyUser = {
-  id: string
-  email: string
-  passwordHash: string
-  passwordSalt: string
-}
 
 export class AuthError extends Error {
   code: AuthErrorCode
@@ -82,74 +77,106 @@ const derivePasswordHash = async (
   return encodeBase64(new Uint8Array(derivedBits))
 }
 
-const isUser = (value: unknown): value is User => {
+const migrateUser = (value: unknown): User | null => {
   if (!value || typeof value !== 'object') {
-    return false
+    return null
   }
 
   const user = value as Record<string, unknown>
   const password = user.password
 
-  return (
-    typeof user.id === 'string' &&
-    typeof user.email === 'string' &&
-    !!password &&
+  if (typeof user.id !== 'string' || typeof user.email !== 'string') {
+    return null
+  }
+
+  if (
+    password &&
     typeof password === 'object' &&
     typeof (password as Record<string, unknown>).hash === 'string' &&
     typeof (password as Record<string, unknown>).salt === 'string'
-  )
-}
+  ) {
+    const storedProfiles = user.profiles
 
-const isLegacyUser = (value: unknown): value is LegacyUser => {
-  if (!value || typeof value !== 'object') {
-    return false
+    return {
+      id: user.id,
+      email: normalizeEmail(user.email),
+      password: {
+        hash: (password as Record<string, string>).hash,
+        salt: (password as Record<string, string>).salt
+      },
+      profiles: Array.isArray(storedProfiles)
+        ? storedProfiles.filter(
+            (profileId): profileId is string =>
+              typeof profileId === 'string'
+          )
+        : []
+    }
   }
 
-  const user = value as Record<string, unknown>
-
-  return (
-    typeof user.id === 'string' &&
-    typeof user.email === 'string' &&
+  if (
     typeof user.passwordHash === 'string' &&
     typeof user.passwordSalt === 'string'
-  )
+  ) {
+    return {
+      id: user.id,
+      email: normalizeEmail(user.email),
+      password: {
+        hash: user.passwordHash,
+        salt: user.passwordSalt
+      },
+      profiles: []
+    }
+  }
+
+  return null
 }
 
 const loadUsers = (): User[] => {
-  const storedUsers = loadSession<unknown>(USERS_KEY)
+  const storedUsers = loadData<unknown>(USERS_KEY)
 
   if (Array.isArray(storedUsers)) {
-    return storedUsers.filter(isUser)
-  }
+    const users = storedUsers
+      .map(migrateUser)
+      .filter((user): user is User => user !== null)
 
-  const legacyUsers = loadSession<unknown>(LEGACY_USERS_KEY)
+    if (
+      users.length !== storedUsers.length ||
+      storedUsers.some((user) => {
+        const candidate = user as Record<string, unknown> | null
 
-  if (!Array.isArray(legacyUsers)) {
-    return []
-  }
-
-  const migratedUsers: User[] = legacyUsers.filter(isLegacyUser).map((user) => ({
-    id: user.id,
-    email: user.email,
-    password: {
-      hash: user.passwordHash,
-      salt: user.passwordSalt
+        return !candidate || !Array.isArray(candidate.profiles)
+      })
+    ) {
+      saveData({ key: USERS_KEY, value: users })
     }
-  }))
 
-  if (
-    migratedUsers.length > 0 &&
-    saveSession({ key: USERS_KEY, value: migratedUsers })
-  ) {
-    deleteSession(LEGACY_USERS_KEY)
+    return users
   }
 
-  return migratedUsers
+  for (const legacyKey of LEGACY_USERS_KEYS) {
+    const legacyUsers = loadSession<unknown>(legacyKey)
+
+    if (!Array.isArray(legacyUsers)) {
+      continue
+    }
+
+    const migratedUsers = legacyUsers
+      .map(migrateUser)
+      .filter((user): user is User => user !== null)
+
+    if (saveData({ key: USERS_KEY, value: migratedUsers })) {
+      deleteSession(legacyKey)
+      return migratedUsers
+    }
+  }
+
+  return []
 }
 
 const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
   id: user.id,
-  email: user.email
+  email: user.email,
+  profiles: [...user.profiles]
 })
 
 const parseSession = (value: unknown): AuthSession | null => {
@@ -180,7 +207,13 @@ const parseSession = (value: unknown): AuthSession | null => {
   return {
     user: {
       id: candidate.id,
-      email: candidate.email
+      email: candidate.email,
+      profiles: Array.isArray(candidate.profiles)
+        ? candidate.profiles.filter(
+            (profileId): profileId is string =>
+              typeof profileId === 'string'
+          )
+        : []
     },
     authenticatedAt: session.authenticatedAt
   }
@@ -204,10 +237,11 @@ export const createUser = async ({
     password: {
       salt: encodeBase64(salt),
       hash: await derivePasswordHash(password, salt)
-    }
+    },
+    profiles: []
   }
 
-  if (!saveSession({ key: USERS_KEY, value: [...users, user] })) {
+  if (!saveData({ key: USERS_KEY, value: [...users, user] })) {
     throw new AuthError('STORAGE_UNAVAILABLE')
   }
 
@@ -277,4 +311,54 @@ export const getCurrentAuthSession = (): AuthSession | null => {
 export const clearAuthSession = (): void => {
   deleteSession(SESSION_KEY)
   deleteSession(LEGACY_SESSION_KEY)
+}
+
+export const addProfileToUser = (
+  userId: string,
+  profileId: string
+): boolean => {
+  const users = loadUsers()
+  const userIndex = users.findIndex((user) => user.id === userId)
+
+  if (userIndex < 0) {
+    return false
+  }
+
+  const user = users[userIndex]
+
+  if (user.profiles.includes(profileId)) {
+    return true
+  }
+
+  const updatedUser: User = {
+    ...user,
+    profiles: [...user.profiles, profileId]
+  }
+  const updatedUsers = users.map((item, index) =>
+    index === userIndex ? updatedUser : item
+  )
+
+  if (!saveData({ key: USERS_KEY, value: updatedUsers })) {
+    return false
+  }
+
+  const session = getCurrentAuthSession()
+
+  if (session?.user.id === userId) {
+    saveSession({
+      key: SESSION_KEY,
+      value: {
+        ...session,
+        user: toAuthenticatedUser(updatedUser)
+      }
+    })
+  }
+
+  return true
+}
+
+export const getUserById = (userId: string): AuthenticatedUser | null => {
+  const user = loadUsers().find((storedUser) => storedUser.id === userId)
+
+  return user ? toAuthenticatedUser(user) : null
 }

@@ -1,22 +1,23 @@
-import { Link } from 'react-router'
+import { useParams } from 'react-router'
 
-import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileStore } from '@/Stores/Profile.store'
+import { getProfileByUrl } from '@/Services/Profile'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
 
 export function ProfilePage() {
+  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const profile = useProfileStore((state) => state.profile)
+  const profile = url ? getProfileByUrl(url) : null
 
   if (!profile) {
-    return null
+    return <NotFoundPage />
   }
 
   return (
     <main className="account-page">
-      <section className="account-card">
+      <article className="account-card">
         {profile.picture && (
           <img
             className="account-card__picture"
@@ -32,19 +33,10 @@ export function ProfilePage() {
           )}
         </div>
 
-        <a
-          className="account-card__profile-link"
-          href={profile.url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {profile.url}
-        </a>
-
-        <Link className="account-card__link" to={ROUTES.home}>
-          {t('PROFILE_BACK_HOME')}
-        </Link>
-      </section>
+        <p className="account-card__profile-link">
+          /profile/{profile.url}
+        </p>
+      </article>
     </main>
   )
 }

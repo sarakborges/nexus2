@@ -1,5 +1,8 @@
 export {
   createUserProfile,
-  getUserProfile,
+  getProfileById,
+  getProfileByUrl,
+  getProfiles,
+  getProfilesByIds,
   ProfileError
 } from './profile.service'

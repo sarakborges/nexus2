@@ -6,9 +6,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { AuthError } from '@/Services/Auth'
-import { getUserProfile } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
-import { useProfileStore } from '@/Stores/Profile.store'
 
 import '../AuthPage.style.scss'
 
@@ -16,7 +14,6 @@ export function SignInPage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const signIn = useAuthStore((state) => state.signIn)
-  const loadProfile = useProfileStore((state) => state.loadProfile)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -29,10 +26,11 @@ export function SignInPage() {
 
     try {
       const user = await signIn({ email, password })
-      const profile = getUserProfile(user.id)
 
-      loadProfile(user.id)
-      navigate(profile ? ROUTES.home : ROUTES.gettingStarted, { replace: true })
+      navigate(
+        user.profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted,
+        { replace: true }
+      )
     } catch (error) {
       const translationKey =
         error instanceof AuthError

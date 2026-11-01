@@ -1,8 +1,10 @@
 export {
+  addProfileToUser,
   authenticateUser,
   AuthError,
   clearAuthSession,
   createAuthSession,
   createUser,
-  getCurrentAuthSession
+  getCurrentAuthSession,
+  getUserById
 } from './auth.service'

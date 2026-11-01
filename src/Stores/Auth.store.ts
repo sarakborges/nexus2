@@ -5,8 +5,10 @@ import {
   clearAuthSession,
   createAuthSession,
   createUser,
-  getCurrentAuthSession
+  getCurrentAuthSession,
+  getUserById
 } from '@/Services/Auth'
+import { getProfiles } from '@/Services/Profile'
 import { useProfileStore } from '@/Stores/Profile.store'
 import type {
   AuthSession,
@@ -26,10 +28,15 @@ export const useAuthStore = create<AuthStore>((set) => ({
   session: getCurrentAuthSession(),
 
   signIn: async (credentials) => {
-    const user = await authenticateUser(credentials)
+    const authenticatedUser = await authenticateUser(credentials)
+
+    // Migrate legacy tab-scoped profiles before resolving the user's profile IDs.
+    getProfiles()
+
+    const user = getUserById(authenticatedUser.id) ?? authenticatedUser
     const session = createAuthSession(user)
 
-    useProfileStore.getState().loadProfile(user.id)
+    useProfileStore.getState().loadProfiles(user.profiles)
     set({ session })
 
     return user
@@ -39,7 +46,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const user = await createUser(credentials)
     const session = createAuthSession(user)
 
-    useProfileStore.getState().clearProfile()
+    useProfileStore.getState().clearProfiles()
     set({ session })
 
     return user
@@ -47,7 +54,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
 
   signOut: () => {
     clearAuthSession()
-    useProfileStore.getState().clearProfile()
+    useProfileStore.getState().clearProfiles()
     set({ session: null })
   }
 }))

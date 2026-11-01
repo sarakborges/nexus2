@@ -62,6 +62,17 @@
   text-decoration: none;
 }
 
+.account-card__profile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.account-card__profile-list h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
 .account-card__details {
   display: grid;
   gap: 12px;
