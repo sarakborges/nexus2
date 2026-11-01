@@ -1,182 +1,121 @@
+import { useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { Link } from 'react-router'
-
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { getCommunityRelationships, removeCommunityRelationship, setCommunityRelationship } from '@/Services/CommunityRelationship'
+import { getRelationships, removeRelationship, setRelationship } from '@/Services/Relationship'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
-import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
-import { useRelationshipStore } from '@/Stores/Relationship.store'
 
 type RelationshipActionsProps = {
   targetId: string
   targetKind?: 'profile' | 'community'
 }
+type Action = { type: 'remove' } | { type: RelationshipType }
 
-export function RelationshipActions({
-  targetId,
-  targetKind = 'profile'
-}: RelationshipActionsProps) {
+export function RelationshipActions({ targetId, targetKind = 'profile' }: RelationshipActionsProps) {
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
+  const queryClient = useQueryClient()
+  const session = useAuthStore(state => state.session)
   const sourceId = session?.user.currentProfile ?? null
   const isCommunity = targetKind === 'community'
-
-  const profileRelationship = useRelationshipStore((state) =>
-    !isCommunity && sourceId
-      ? state.getRelationship(sourceId, targetId)
-      : null
-  )
-  const communityRelationship = useCommunityRelationshipStore((state) =>
-    isCommunity && sourceId
-      ? state.getRelationship(sourceId, targetId)
-      : null
-  )
-  const updateProfileRelationship = useRelationshipStore(
-    (state) => state.updateRelationship
-  )
-  const removeProfileRelationship = useRelationshipStore(
-    (state) => state.removeRelationship
-  )
-  const updateCommunityRelationship = useCommunityRelationshipStore(
-    (state) => state.updateRelationship
-  )
-  const removeCommunityRelationship = useCommunityRelationshipStore(
-    (state) => state.removeRelationship
-  )
+  const canQuery = Boolean(session && sourceId && (isCommunity || !session.user.profiles.includes(targetId)))
+  const relationshipsQuery = useQuery({
+    queryKey: isCommunity
+      ? queryKeys.communityRelationships(targetId, session?.user.id ?? null)
+      : queryKeys.relationships.byProfile(sourceId ?? ''),
+    queryFn: () => isCommunity ? getCommunityRelationships(targetId) : getRelationships(sourceId!),
+    enabled: canQuery
+  })
   const relationship = isCommunity
-    ? communityRelationship
-    : profileRelationship
+    ? relationshipsQuery.data?.find(item => item.profiles[0] === sourceId && item.profiles[1] === targetId) ?? null
+    : relationshipsQuery.data?.find(item => item.profiles.includes(sourceId ?? '') && item.profiles.includes(targetId)) ?? null
+  const [lastAction, setLastAction] = useState<Action | null>(null)
+  const mutation = useMutation({
+    mutationFn: async (action: Action) => {
+      if (!sourceId) throw new Error('SOURCE_PROFILE_REQUIRED')
+      if (action.type === 'remove') {
+        if (isCommunity) await removeCommunityRelationship(sourceId, targetId, sourceId)
+        else await removeRelationship(sourceId, targetId)
+        return
+      }
+      if (isCommunity) {
+        await setCommunityRelationship(sourceId, targetId, action.type as CommunityRelationshipType, sourceId)
+        return
+      }
+      await setRelationship(sourceId, targetId, action.type as RelationshipType)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['relationships'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-relationships'] })
+      ])
+    }
+  })
+  const run = (action: Action) => {
+    setLastAction(action)
+    mutation.mutate(action)
+  }
 
   if (!session) {
-    return (
-      <p className="account-card__description">
-        <Link to="/sign-in">{t('RELATIONSHIP_SIGN_IN')}</Link>
-      </p>
-    )
+    return <p className="account-card__description"><Link to="/sign-in">{t('RELATIONSHIP_SIGN_IN')}</Link></p>
   }
-
-  if (
-    !sourceId ||
-    sourceId === targetId ||
-    (!isCommunity && session.user.profiles.includes(targetId))
-  ) {
-    return null
-  }
-
-  const remove = () => {
-    if (isCommunity) {
-      removeCommunityRelationship(sourceId, targetId, sourceId)
-    } else {
-      removeProfileRelationship(sourceId, targetId)
-    }
-  }
-
-  const update = (type: 'connection' | 'requested' | 'blocked') => {
-    if (isCommunity) {
-      updateCommunityRelationship(sourceId, targetId, type, sourceId)
-    } else {
-      updateProfileRelationship(sourceId, targetId, type, sourceId)
-    }
-  }
+  if (!sourceId || sourceId === targetId || (!isCommunity && session.user.profiles.includes(targetId))) return null
+  if (relationshipsQuery.isLoading) return <RequestState isLoading />
+  if (relationshipsQuery.isError) return <RequestState isError onRetry={() => void relationshipsQuery.refetch()} />
 
   const isOwner = relationship?.type === 'owner'
   const isModerator = relationship?.type === 'moderator'
   const isBlockedByCurrent = relationship?.blockedBy === sourceId
-  const isBlockedByOther =
-    relationship?.type === 'blocked' &&
-    relationship.blockedBy !== null &&
-    !isBlockedByCurrent
-  const isLegacyBlock =
-    relationship?.type === 'blocked' && relationship.blockedBy === null
+  const isBlockedByOther = relationship?.type === 'blocked' && relationship.blockedBy !== null && !isBlockedByCurrent
+  const isLegacyBlock = relationship?.type === 'blocked' && relationship.blockedBy === null
   const isOwnRequest = relationship?.requestedBy === sourceId
-  const isIncomingRequest =
-    relationship?.type === 'requested' &&
-    relationship.requestedBy !== null &&
-    !isOwnRequest
-  const isLegacyRequest =
-    relationship?.type === 'requested' && relationship.requestedBy === null
-
+  const isIncomingRequest = relationship?.type === 'requested' && relationship.requestedBy !== null && !isOwnRequest
+  const isLegacyRequest = relationship?.type === 'requested' && relationship.requestedBy === null
   const handleRequestOrAccept = () => {
     if (relationship?.type === 'requested') {
-      if (isIncomingRequest) {
-        update('connection')
-      } else if (isOwnRequest) {
-        remove()
-      }
+      if (isIncomingRequest) run({ type: 'connection' })
+      else if (isOwnRequest) run({ type: 'remove' })
       return
     }
-
-    update('requested')
+    run({ type: 'requested' })
   }
 
-  const handleBlock = () => update('blocked')
-
-  if (isCommunity && isOwner) {
-    return (
-      <p className="account-card__description">
-        {t('COMMUNITY_ROLE_OWNER')}
-      </p>
-    )
-  }
-
-  if (isCommunity && isModerator) {
-    return (
-      <p className="account-card__description">
-        {t('COMMUNITY_ROLE_MODERATOR')}
-      </p>
-    )
-  }
-
-  if (isBlockedByOther) {
-    return (
-      <p className="account-card__description">
-        {t('RELATIONSHIP_BLOCKED_BY_OTHER')}
-      </p>
-    )
-  }
-
-  if (isLegacyBlock) {
-    return (
-      <div className="account-card__relationship-actions">
-        <span className="account-card__description">
-          {t('RELATIONSHIP_LEGACY_BLOCKED')}
-        </span>
-        <Button variation="secondary" onClick={remove}>
-          {t('RELATIONSHIP_CLEAR_LEGACY')}
-        </Button>
-      </div>
-    )
-  }
+  if (isCommunity && isOwner) return <p className="account-card__description">{t('COMMUNITY_ROLE_OWNER')}</p>
+  if (isCommunity && isModerator) return <p className="account-card__description">{t('COMMUNITY_ROLE_MODERATOR')}</p>
+  if (isBlockedByOther) return <p className="account-card__description">{t('RELATIONSHIP_BLOCKED_BY_OTHER')}</p>
 
   return (
     <div className="account-card__relationship-actions">
-      {relationship?.type === 'connection' ? (
-        <Button variation="secondary" onClick={remove}>
-          {t(isCommunity ? 'COMMUNITY_LEAVE' : 'RELATIONSHIP_REMOVE')}
-        </Button>
-      ) : isBlockedByCurrent ? (
-        <Button variation="secondary" onClick={remove}>
-          {t(isCommunity ? 'COMMUNITY_UNBLOCK' : 'RELATIONSHIP_UNBLOCK')}
-        </Button>
-      ) : isIncomingRequest ? (
-        <Button variation="secondary" onClick={handleRequestOrAccept}>
-          {t(isCommunity ? 'COMMUNITY_ACCEPT' : 'RELATIONSHIP_ACCEPT')}
-        </Button>
-      ) : isOwnRequest ? (
-        <Button variation="secondary" onClick={handleRequestOrAccept}>
-          {t('RELATIONSHIP_CANCEL_REQUEST')}
-        </Button>
-      ) : isLegacyRequest ? (
-        <Button variation="secondary" onClick={remove}>
-          {t('RELATIONSHIP_CLEAR_LEGACY')}
-        </Button>
-      ) : (
-        <Button onClick={handleRequestOrAccept}>
-          {t(isCommunity ? 'COMMUNITY_JOIN' : 'RELATIONSHIP_ADD')}
-        </Button>
+      {mutation.isError && (
+        <RequestState
+          isError
+          onRetry={lastAction ? () => mutation.mutate(lastAction) : undefined}
+        />
       )}
-
+      {isLegacyBlock ? (
+        <>
+          <span className="account-card__description">{t('RELATIONSHIP_LEGACY_BLOCKED')}</span>
+          <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t('RELATIONSHIP_CLEAR_LEGACY')}</Button>
+        </>
+      ) : relationship?.type === 'connection' ? (
+        <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t(isCommunity ? 'COMMUNITY_LEAVE' : 'RELATIONSHIP_REMOVE')}</Button>
+      ) : isBlockedByCurrent ? (
+        <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t(isCommunity ? 'COMMUNITY_UNBLOCK' : 'RELATIONSHIP_UNBLOCK')}</Button>
+      ) : isIncomingRequest ? (
+        <Button variation="secondary" disabled={mutation.isPending} onClick={handleRequestOrAccept}>{t(isCommunity ? 'COMMUNITY_ACCEPT' : 'RELATIONSHIP_ACCEPT')}</Button>
+      ) : isOwnRequest ? (
+        <Button variation="secondary" disabled={mutation.isPending} onClick={handleRequestOrAccept}>{t('RELATIONSHIP_CANCEL_REQUEST')}</Button>
+      ) : isLegacyRequest ? (
+        <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t('RELATIONSHIP_CLEAR_LEGACY')}</Button>
+      ) : (
+        <Button disabled={mutation.isPending} onClick={handleRequestOrAccept}>{t(isCommunity ? 'COMMUNITY_JOIN' : 'RELATIONSHIP_ADD')}</Button>
+      )}
       {relationship?.type !== 'blocked' && (
-        <Button variation="cancel" onClick={handleBlock}>
+        <Button variation="cancel" disabled={mutation.isPending} onClick={() => run({ type: 'blocked' })}>
           {t(isCommunity ? 'COMMUNITY_BLOCK' : 'RELATIONSHIP_BLOCK')}
         </Button>
       )}
