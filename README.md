@@ -36,15 +36,15 @@ Sign-up creates only a user and starts a session. It then routes to `/getting-st
 
 ## State management
 
-Zustand stores are the runtime source of truth for application data. `User.store.ts` and `Profile.store.ts` hydrate their collections from browser storage during initialization; pages and components then read the in-memory state instead of querying storage during render. Store actions persist a successful change and update the corresponding state in the same synchronous operation. Authentication actions also keep the active session synchronized with the user record.
+Zustand stores are the runtime source of truth for application state. `User.store.ts` keeps user records in memory and persists successful user changes to `localStorage`. `Profile.store.ts` holds only the single profile currently being viewed; it never caches the global profile collection. Profile lookup and creation use the profile service for targeted reads and writes. The Home page loads the signed-in user's profile summaries for that screen without promoting the complete profile collection to a global store.
 
-`Settings.store.ts` continues to use Zustand persistence for language and theme preferences. Services handle credential validation, profile validation and legacy-data migration; they are not used as a substitute for the stores during normal page rendering.
+`Auth.store.ts` coordinates the authenticated session with user-store mutations and persists the active session to `sessionStorage`. `Settings.store.ts` uses Zustand persistence for language and theme preferences. Services handle credential validation, profile validation and legacy-data migration; components consume store state rather than reading browser storage directly.
 
 ## Browser storage
 
 Persistent application records use `localStorage`:
 - `nexus_users`: user records, including password verifiers, profile ID arrays and the current profile ID.
-- `nexus_profiles`: the global array of profile records.
+- `nexus_profiles`: the persisted profile records.
 
 Only the active authenticated session uses `sessionStorage` (`nexus_auth_session_v2`). The account and profiles remain available after closing the tab or browser; the active session is scoped to the current tab.
 

@@ -1,10 +1,12 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 
+import type { Profile } from '@/Models/Profile.model'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { getProfilesByIds } from '@/Services/Profile'
 import { useAuthStore } from '@/Stores/Auth.store'
-import { useProfileStore } from '@/Stores/Profile.store'
 
 import '../AuthenticatedPage.style.scss'
 
@@ -13,8 +15,19 @@ export function HomePage() {
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
   const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
-  const profiles = useProfileStore((state) => state.profiles)
   const signOut = useAuthStore((state) => state.signOut)
+  const [profiles, setProfiles] = useState<Profile[]>([])
+  const userId = session?.user.id
+  const profileIds = session?.user.profiles ?? []
+  const profileIdsKey = profileIds.join(',')
+
+  useEffect(() => {
+    setProfiles(
+      userId
+        ? getProfilesByIds(profileIdsKey ? profileIdsKey.split(',') : [])
+        : []
+    )
+  }, [userId, profileIdsKey])
 
   const handleSignOut = () => {
     signOut()

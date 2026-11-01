@@ -2,7 +2,6 @@ import { Navigate, Outlet, Route, Routes } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
 import { useAuthStore } from '@/Stores/Auth.store'
-import { useProfileStore } from '@/Stores/Profile.store'
 import {
   CreateProfilePage,
   GettingStartedPage,
@@ -16,7 +15,6 @@ import {
 
 function GuestOnlyRoute() {
   const session = useAuthStore((state) => state.session)
-  const profiles = useProfileStore((state) => state.profiles)
 
   if (!session) {
     return <Outlet />
@@ -24,7 +22,11 @@ function GuestOnlyRoute() {
 
   return (
     <Navigate
-      to={profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted}
+      to={
+        session.user.profiles.length > 0
+          ? ROUTES.home
+          : ROUTES.gettingStarted
+      }
       replace
     />
   )
@@ -37,9 +39,9 @@ function AuthenticatedRoute() {
 }
 
 function OnboardingRoute() {
-  const profiles = useProfileStore((state) => state.profiles)
+  const session = useAuthStore((state) => state.session)
 
-  return profiles.length > 0 ? (
+  return (session?.user.profiles.length ?? 0) > 0 ? (
     <Navigate to={ROUTES.home} replace />
   ) : (
     <Outlet />
@@ -47,9 +49,9 @@ function OnboardingRoute() {
 }
 
 function ProfileRequiredRoute() {
-  const profiles = useProfileStore((state) => state.profiles)
+  const session = useAuthStore((state) => state.session)
 
-  return profiles.length > 0 ? (
+  return (session?.user.profiles.length ?? 0) > 0 ? (
     <Outlet />
   ) : (
     <Navigate to={ROUTES.gettingStarted} replace />

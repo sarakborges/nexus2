@@ -33,7 +33,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const user = await useUserStore.getState().authenticateUser(credentials)
     const session = createAuthSession(user)
 
-    useProfileStore.getState().loadProfiles(user)
+    useProfileStore.getState().clearProfile()
     set({ session })
 
     return user
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const session = createAuthSession(user)
 
-      useProfileStore.getState().clearProfiles()
+      useProfileStore.getState().clearProfile()
       set({ session })
 
       return user
@@ -86,7 +86,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return false
     }
 
-    useProfileStore.getState().loadProfiles(user)
     set({ session: updatedSession })
 
     return true
@@ -117,7 +116,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return false
     }
 
-    useProfileStore.getState().loadProfiles(user)
     set({ session: updatedSession })
 
     return true
@@ -125,7 +123,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
   signOut: () => {
     clearAuthSession()
-    useProfileStore.getState().clearProfiles()
+    useProfileStore.getState().clearProfile()
     set({ session: null })
   }
 }))

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
 import type { ProfileType } from '@/Models/Profile.model'
@@ -19,10 +20,23 @@ const PROFILE_TYPE_TRANSLATION_KEYS: Record<
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const normalizedUrl = url?.trim().replace(/^@/, '').toLowerCase()
-  const profile = useProfileStore((state) =>
-    state.allProfiles.find((item) => item.url === normalizedUrl) ?? null
-  )
+  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const profile = useProfileStore((state) => state.profile)
+  const loadedUrl = useProfileStore((state) => state.loadedUrl)
+  const loadProfileByUrl = useProfileStore((state) => state.loadProfileByUrl)
+  const clearProfile = useProfileStore((state) => state.clearProfile)
+
+  useEffect(() => {
+    if (requestedUrl) {
+      loadProfileByUrl(requestedUrl)
+    } else {
+      clearProfile()
+    }
+  }, [requestedUrl, loadProfileByUrl, clearProfile])
+
+  if (loadedUrl !== requestedUrl) {
+    return null
+  }
 
   if (!profile) {
     return <NotFoundPage />
