@@ -1,6 +1,6 @@
 import type { DataRepository } from './repository.interface'
 
-type CollectionResult = unknown
+type CollectionRow = { records?: unknown }
 
 export class SupabaseRestRepository implements DataRepository {
   private readonly endpoint: string
@@ -10,22 +10,32 @@ export class SupabaseRestRepository implements DataRepository {
     private readonly publishableKey: string,
     private readonly apiSecret: string
   ) {
-    this.endpoint = `${projectUrl.replace(/\/+$/, '')}/rest/v1/rpc`
+    this.endpoint = `${projectUrl.replace(/\/+$/, '')}/rest/v1/nexus_collections`
   }
 
   async read<T>(collection: string): Promise<T[]> {
     this.assertCollectionName(collection)
 
-    const result = await this.call<CollectionResult>('nexus_read_collection', {
-      p_collection: collection,
-      p_secret: this.apiSecret
-    })
+    const url = new URL(this.endpoint)
+    url.searchParams.set('select', 'records')
+    url.searchParams.set('collection', `eq.${collection}`)
+    url.searchParams.set('limit', '1')
 
-    if (!Array.isArray(result)) {
-      throw new Error(`Supabase collection "${collection}" returned an invalid records payload.`)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.headers()
+    })
+    await this.assertSuccess(response)
+
+    const rows = await response.json() as CollectionRow[]
+    if (!Array.isArray(rows) || rows.length === 0) return []
+
+    const records = rows[0]?.records
+    if (!Array.isArray(records)) {
+      throw new Error(`Supabase collection "${collection}" contains an invalid records payload.`)
     }
 
-    return result as T[]
+    return records as T[]
   }
 
   async write<T>(collection: string, records: T[]): Promise<void> {
@@ -35,38 +45,39 @@ export class SupabaseRestRepository implements DataRepository {
       throw new Error('Collection records must be an array.')
     }
 
-    const result = await this.call<unknown>('nexus_write_collection', {
-      p_collection: collection,
-      p_records: records,
-      p_secret: this.apiSecret
-    })
-
-    if (result !== true) {
-      throw new Error(`Supabase collection "${collection}" was not saved.`)
-    }
-  }
-
-  private async call<T>(functionName: string, body: Record<string, unknown>): Promise<T> {
-    const response = await fetch(`${this.endpoint}/${functionName}`, {
+    const response = await fetch(`${this.endpoint}?on_conflict=collection`, {
       method: 'POST',
       headers: {
-        apikey: this.publishableKey,
-        'Content-Type': 'application/json'
+        ...this.headers(),
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal'
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        collection,
+        records,
+        updated_at: new Date().toISOString()
+      })
     })
+    await this.assertSuccess(response)
+  }
 
-    if (!response.ok) {
-      const details = await response.text()
-      throw new Error(`Supabase RPC request failed (${response.status}): ${details}`)
+  private headers(): Record<string, string> {
+    return {
+      apikey: this.publishableKey,
+      'x-nexus-api-secret': this.apiSecret
     }
-
-    return await response.json() as T
   }
 
   private assertCollectionName(collection: string): void {
     if (!/^[a-z0-9_-]+$/i.test(collection)) {
       throw new Error('Invalid collection name')
     }
+  }
+
+  private async assertSuccess(response: Response): Promise<void> {
+    if (response.ok) return
+
+    const details = await response.text()
+    throw new Error(`Supabase storage request failed (${response.status}): ${details}`)
   }
 }
