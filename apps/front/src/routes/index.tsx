@@ -7,12 +7,6 @@ import {
   ProfileMessagesPage, ProfilePage, SignInPage, SignUpPage
 } from '@/pages'
 
-function GuestOnlyRoute() {
-  const session = useAuthStore(state => state.session)
-  const isInitialized = useAuthStore(state => state.isInitialized)
-  if (!isInitialized || !session) return <Outlet />
-  return <Navigate to={session.user.profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted} replace />
-}
 function AuthenticatedRoute() {
   const session = useAuthStore(state => state.session)
   const isInitialized = useAuthStore(state => state.isInitialized)
@@ -31,10 +25,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path={ROUTES.landing} element={<LandingPage />} />
-      <Route element={<GuestOnlyRoute />}>
-        <Route path={ROUTES.signUp} element={<SignUpPage />} />
-        <Route path={ROUTES.signIn} element={<SignInPage />} />
-      </Route>
+      <Route path={ROUTES.signUp} element={<SignUpPage />} />
+      <Route path={ROUTES.signIn} element={<SignInPage />} />
       <Route element={<AuthenticatedRoute />}>
         <Route element={<OnboardingRoute />}><Route path={ROUTES.gettingStarted} element={<GettingStartedPage />} /></Route>
         <Route path={ROUTES.createProfile} element={<CreateProfilePage />} />
