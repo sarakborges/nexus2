@@ -63,9 +63,16 @@ The TTL values must match on the BFF and backend because they control token vali
 
 ### Persistent storage
 
-Vercel container instances are ephemeral, so the backend does not use its JSON file adapter in production. It uses the Supabase REST API to call two narrowly scoped RPC functions, `nexus_read_collection` and `nexus_write_collection`.
+Vercel container instances are ephemeral, so the backend does not use its JSON file adapter in production. It uses the Supabase REST API to read and upsert the Nexus collection table.
 
-Run `apps/back/sql/001_nexus_collections.sql` once against the Supabase project. It adds only Nexus-prefixed objects: `public.nexus_collections`, a private credential table and two RPC functions. It does not modify the existing tracker tables or migrations. The collection table has RLS enabled and no direct access for `anon` or `authenticated`; the public RPC functions validate the backend-only secret before reading or writing data. The database stores only the SHA-256 hash of that secret.
+Apply the SQL files in order against the Supabase project:
+
+1. `apps/back/sql/001_nexus_collections.sql` creates only Nexus-prefixed storage objects and the backend credential hash.
+2. `apps/back/sql/002_nexus_collection_private_rls.sql` removes the initial public RPC functions, adds a private header-validation helper, and enables narrowly scoped RLS policies.
+
+The migrations do not modify the existing tracker tables or migrations. The `public.nexus_collections` table has RLS enabled. The `anon` role can reach only the collection operations that pass the RLS helper check, which reads the backend-only `x-nexus-api-secret` HTTP header. The helper lives in the unexposed `private` schema; no public `SECURITY DEFINER` RPC is left for the application. The database stores only the SHA-256 hash of the API secret.
+
+Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_API_SECRET` on the backend service in Vercel. The publishable key identifies the Supabase project; the API secret and JWT secrets must remain sensitive backend environment variables and must never be bundled into the frontend.
 
 The current repository contract replaces whole JSONB collections on write, so concurrent writes to the same collection can overwrite one another. This adapter keeps the current domain services working without filesystem persistence; before substantial traffic, normalize the collections and move write operations to transactional row-level operations.
 
