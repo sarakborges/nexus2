@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UserPreferences } from '@nexus/common'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { saveUserPreferences } from '@/Services/Settings'
@@ -18,6 +18,7 @@ export function useUpdateSettings() {
   const setSettings = useSettingsStore(state => state.setSettings)
   const setUpdateError = useSettingsStore(state => state.setUpdateError)
   const queryKey = queryKeys.auth.preferences(userId ?? '')
+  const isUpdating = useIsMutating({ mutationKey: ['auth', 'preferences', userId] }) > 0
 
   const mutation = useMutation<UserPreferences, unknown, Partial<UserPreferences>, UpdateContext>({
     mutationKey: ['auth', 'preferences', userId],
@@ -54,6 +55,7 @@ export function useUpdateSettings() {
 
   return {
     updateSettings: (patch: Partial<UserPreferences>) => mutation.mutate(patch),
-    mutation
+    mutation,
+    isUpdating
   }
 }

@@ -7,10 +7,10 @@ import type { TranslationKey, TranslationReplacements } from '@/Types/Translatio
 
 export function useTranslations() {
   const languagePreference = useSettingsStore(state => state.settings.language)
-  const { updateSettings, mutation } = useUpdateSettings()
+  const { updateSettings, isUpdating } = useUpdateSettings()
   const { language: systemLanguage } = useSystemPreferences()
   const language = languagePreference === 'system' ? systemLanguage : languagePreference
   const setLanguage = (nextLanguage: LanguagePreference) => updateSettings({ language: nextLanguage })
   const t = (key: TranslationKey, replacements?: TranslationReplacements): string => translate(language, key, replacements)
-  return { language, languagePreference, setLanguage, t, isUpdating: mutation.isPending }
+  return { language, languagePreference, setLanguage, t, isUpdating }
 }
