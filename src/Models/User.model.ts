@@ -8,6 +8,10 @@ export type User = {
   email: string
   password: UserPassword
   profiles: string[]
+  currentProfile: string | null
 }
 
-export type AuthenticatedUser = Pick<User, 'id' | 'email' | 'profiles'>
+export type AuthenticatedUser = Pick<
+  User,
+  'id' | 'email' | 'profiles' | 'currentProfile'
+>

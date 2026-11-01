@@ -1,10 +1,20 @@
 import { useParams } from 'react-router'
 
+import type { ProfileType } from '@/Models/Profile.model'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfileByUrl } from '@/Services/Profile'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
+
+const PROFILE_TYPE_TRANSLATION_KEYS: Record<
+  ProfileType,
+  'PROFILE_TYPE_SOCIAL' | 'PROFILE_TYPE_RP' | 'PROFILE_TYPE_BUSINESS'
+> = {
+  social: 'PROFILE_TYPE_SOCIAL',
+  rp: 'PROFILE_TYPE_RP',
+  business: 'PROFILE_TYPE_BUSINESS'
+}
 
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
@@ -28,6 +38,9 @@ export function ProfilePage() {
 
         <div>
           <h1 className="account-card__title">{profile.name}</h1>
+          <p className="account-card__description">
+            {t(PROFILE_TYPE_TRANSLATION_KEYS[profile.type])}
+          </p>
           {profile.about && (
             <p className="account-card__description">{profile.about}</p>
           )}

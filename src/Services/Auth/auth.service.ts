@@ -89,46 +89,50 @@ const migrateUser = (value: unknown): User | null => {
     return null
   }
 
+  let passwordHash: string | null = null
+  let passwordSalt: string | null = null
+
   if (
     password &&
     typeof password === 'object' &&
     typeof (password as Record<string, unknown>).hash === 'string' &&
     typeof (password as Record<string, unknown>).salt === 'string'
   ) {
-    const storedProfiles = user.profiles
-
-    return {
-      id: user.id,
-      email: normalizeEmail(user.email),
-      password: {
-        hash: (password as Record<string, string>).hash,
-        salt: (password as Record<string, string>).salt
-      },
-      profiles: Array.isArray(storedProfiles)
-        ? storedProfiles.filter(
-            (profileId): profileId is string =>
-              typeof profileId === 'string'
-          )
-        : []
-    }
-  }
-
-  if (
+    passwordHash = (password as Record<string, string>).hash
+    passwordSalt = (password as Record<string, string>).salt
+  } else if (
     typeof user.passwordHash === 'string' &&
     typeof user.passwordSalt === 'string'
   ) {
-    return {
-      id: user.id,
-      email: normalizeEmail(user.email),
-      password: {
-        hash: user.passwordHash,
-        salt: user.passwordSalt
-      },
-      profiles: []
-    }
+    passwordHash = user.passwordHash
+    passwordSalt = user.passwordSalt
   }
 
-  return null
+  if (!passwordHash || !passwordSalt) {
+    return null
+  }
+
+  const profiles = Array.isArray(user.profiles)
+    ? user.profiles.filter(
+        (profileId): profileId is string => typeof profileId === 'string'
+      )
+    : []
+  const requestedCurrentProfile =
+    typeof user.currentProfile === 'string' ? user.currentProfile : null
+
+  return {
+    id: user.id,
+    email: normalizeEmail(user.email),
+    password: {
+      hash: passwordHash,
+      salt: passwordSalt
+    },
+    profiles,
+    currentProfile:
+      requestedCurrentProfile && profiles.includes(requestedCurrentProfile)
+        ? requestedCurrentProfile
+        : profiles[0] ?? null
+  }
 }
 
 const loadUsers = (): User[] => {
@@ -139,14 +143,22 @@ const loadUsers = (): User[] => {
       .map(migrateUser)
       .filter((user): user is User => user !== null)
 
-    if (
+    const requiresMigration =
       users.length !== storedUsers.length ||
-      storedUsers.some((user) => {
-        const candidate = user as Record<string, unknown> | null
+      storedUsers.some((value) => {
+        if (!value || typeof value !== 'object') {
+          return true
+        }
 
-        return !candidate || !Array.isArray(candidate.profiles)
+        const user = value as Record<string, unknown>
+
+        return (
+          !Array.isArray(user.profiles) ||
+          !Object.prototype.hasOwnProperty.call(user, 'currentProfile')
+        )
       })
-    ) {
+
+    if (requiresMigration) {
       saveData({ key: USERS_KEY, value: users })
     }
 
@@ -176,7 +188,8 @@ const loadUsers = (): User[] => {
 const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
   id: user.id,
   email: user.email,
-  profiles: [...user.profiles]
+  profiles: [...user.profiles],
+  currentProfile: user.currentProfile
 })
 
 const parseSession = (value: unknown): AuthSession | null => {
@@ -204,16 +217,25 @@ const parseSession = (value: unknown): AuthSession | null => {
     return null
   }
 
+  const profiles = Array.isArray(candidate.profiles)
+    ? candidate.profiles.filter(
+        (profileId): profileId is string => typeof profileId === 'string'
+      )
+    : []
+  const requestedCurrentProfile =
+    typeof candidate.currentProfile === 'string'
+      ? candidate.currentProfile
+      : null
+
   return {
     user: {
       id: candidate.id,
       email: candidate.email,
-      profiles: Array.isArray(candidate.profiles)
-        ? candidate.profiles.filter(
-            (profileId): profileId is string =>
-              typeof profileId === 'string'
-          )
-        : []
+      profiles,
+      currentProfile:
+        requestedCurrentProfile && profiles.includes(requestedCurrentProfile)
+          ? requestedCurrentProfile
+          : profiles[0] ?? null
     },
     authenticatedAt: session.authenticatedAt
   }
@@ -238,7 +260,8 @@ export const createUser = async ({
       salt: encodeBase64(salt),
       hash: await derivePasswordHash(password, salt)
     },
-    profiles: []
+    profiles: [],
+    currentProfile: null
   }
 
   if (!saveData({ key: USERS_KEY, value: [...users, user] })) {
@@ -288,24 +311,42 @@ export const createAuthSession = (
 }
 
 export const getCurrentAuthSession = (): AuthSession | null => {
-  const currentSession = parseSession(loadSession<unknown>(SESSION_KEY))
+  let session = parseSession(loadSession<unknown>(SESSION_KEY))
 
-  if (currentSession) {
-    return currentSession
+  if (!session) {
+    session = parseSession(loadSession<unknown>(LEGACY_SESSION_KEY))
+
+    if (
+      session &&
+      saveSession({ key: SESSION_KEY, value: session })
+    ) {
+      deleteSession(LEGACY_SESSION_KEY)
+    }
   }
 
-  const legacySession = parseSession(
-    loadSession<unknown>(LEGACY_SESSION_KEY)
-  )
+  if (!session) {
+    return null
+  }
+
+  const user = loadUsers().find((item) => item.id === session?.user.id)
+
+  if (!user) {
+    return session
+  }
+
+  const refreshedSession: AuthSession = {
+    ...session,
+    user: toAuthenticatedUser(user)
+  }
 
   if (
-    legacySession &&
-    saveSession({ key: SESSION_KEY, value: legacySession })
+    refreshedSession.user.currentProfile !== session.user.currentProfile ||
+    refreshedSession.user.profiles.length !== session.user.profiles.length
   ) {
-    deleteSession(LEGACY_SESSION_KEY)
+    saveSession({ key: SESSION_KEY, value: refreshedSession })
   }
 
-  return legacySession
+  return refreshedSession
 }
 
 export const clearAuthSession = (): void => {
@@ -313,48 +354,84 @@ export const clearAuthSession = (): void => {
   deleteSession(LEGACY_SESSION_KEY)
 }
 
+const persistUserUpdate = (
+  previousUsers: User[],
+  updatedUsers: User[],
+  updatedUser: User
+): boolean => {
+  if (!saveData({ key: USERS_KEY, value: updatedUsers })) {
+    return false
+  }
+
+  const session = parseSession(loadSession<unknown>(SESSION_KEY))
+
+  if (session?.user.id === updatedUser.id) {
+    if (
+      !saveSession({
+        key: SESSION_KEY,
+        value: {
+          ...session,
+          user: toAuthenticatedUser(updatedUser)
+        }
+      })
+    ) {
+      saveData({ key: USERS_KEY, value: previousUsers })
+      return false
+    }
+  }
+
+  return true
+}
+
 export const addProfileToUser = (
   userId: string,
   profileId: string
 ): boolean => {
   const users = loadUsers()
-  const userIndex = users.findIndex((user) => user.id === userId)
+  const user = users.find((item) => item.id === userId)
 
-  if (userIndex < 0) {
+  if (!user) {
     return false
-  }
-
-  const user = users[userIndex]
-
-  if (user.profiles.includes(profileId)) {
-    return true
   }
 
   const updatedUser: User = {
     ...user,
-    profiles: [...user.profiles, profileId]
+    profiles: user.profiles.includes(profileId)
+      ? user.profiles
+      : [...user.profiles, profileId],
+    currentProfile: user.currentProfile ?? profileId
   }
-  const updatedUsers = users.map((item, index) =>
-    index === userIndex ? updatedUser : item
+  const updatedUsers = users.map((item) =>
+    item.id === userId ? updatedUser : item
   )
 
-  if (!saveData({ key: USERS_KEY, value: updatedUsers })) {
-    return false
+  return persistUserUpdate(users, updatedUsers, updatedUser)
+}
+
+export const setUserCurrentProfile = (
+  userId: string,
+  profileId: string
+): AuthenticatedUser | null => {
+  const users = loadUsers()
+  const user = users.find((item) => item.id === userId)
+
+  if (!user || !user.profiles.includes(profileId)) {
+    return null
   }
 
-  const session = getCurrentAuthSession()
+  const updatedUser: User = {
+    ...user,
+    currentProfile: profileId
+  }
+  const updatedUsers = users.map((item) =>
+    item.id === userId ? updatedUser : item
+  )
 
-  if (session?.user.id === userId) {
-    saveSession({
-      key: SESSION_KEY,
-      value: {
-        ...session,
-        user: toAuthenticatedUser(updatedUser)
-      }
-    })
+  if (!persistUserUpdate(users, updatedUsers, updatedUser)) {
+    return null
   }
 
-  return true
+  return toAuthenticatedUser(updatedUser)
 }
 
 export const getUserById = (userId: string): AuthenticatedUser | null => {

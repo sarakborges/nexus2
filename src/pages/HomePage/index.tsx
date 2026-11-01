@@ -12,6 +12,7 @@ export function HomePage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
+  const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
   const profiles = useProfileStore((state) => state.profiles)
   const signOut = useAuthStore((state) => state.signOut)
 
@@ -20,6 +21,12 @@ export function HomePage() {
     navigate(ROUTES.signIn, { replace: true })
   }
 
+  const handleSelectProfile = (profileId: string) => {
+    setCurrentProfile(profileId)
+  }
+
+  const currentProfileId = session?.user.currentProfile
+
   return (
     <main className="account-page">
       <section className="account-card">
@@ -27,7 +34,11 @@ export function HomePage() {
           <div>
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
             <p className="account-card__description">
-              {t('HOME_WELCOME', { name: profiles[0]?.name ?? '' })}
+              {t('HOME_WELCOME', {
+                name:
+                  profiles.find((profile) => profile.id === currentProfileId)
+                    ?.name ?? ''
+              })}
             </p>
           </div>
 
@@ -40,15 +51,33 @@ export function HomePage() {
 
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
-          {profiles.map((profile) => (
-            <Link
-              className="account-card__link"
-              key={profile.id}
-              to={`${ROUTES.profile}/${profile.url}`}
-            >
-              {profile.name} · /profile/{profile.url}
-            </Link>
-          ))}
+          {profiles.map((profile) => {
+            const isCurrentProfile = profile.id === currentProfileId
+
+            return (
+              <div className="account-card__profile-entry" key={profile.id}>
+                <Link
+                  className="account-card__link"
+                  to={`${ROUTES.profile}/${profile.url}`}
+                >
+                  {profile.name} · /profile/{profile.url}
+                </Link>
+
+                {isCurrentProfile ? (
+                  <span className="account-card__current-profile">
+                    {t('HOME_CURRENT_PROFILE')}
+                  </span>
+                ) : (
+                  <Button
+                    variation="secondary"
+                    onClick={() => handleSelectProfile(profile.id)}
+                  >
+                    {t('HOME_USE_PROFILE')}
+                  </Button>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         <Link

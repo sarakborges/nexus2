@@ -6,21 +6,23 @@ import {
   createAuthSession,
   createUser,
   getCurrentAuthSession,
-  getUserById
+  getUserById,
+  setUserCurrentProfile
 } from '@/Services/Auth'
 import { getProfiles } from '@/Services/Profile'
 import { useProfileStore } from '@/Stores/Profile.store'
+import type { AuthenticatedUser } from '@/Models/User.model'
 import type {
   AuthSession,
   SignInCredentials,
   SignUpCredentials
 } from '@/Types/Auth.type'
-import type { AuthenticatedUser } from '@/Models/User.model'
 
 type AuthStore = {
   session: AuthSession | null
   signIn: (credentials: SignInCredentials) => Promise<AuthenticatedUser>
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
+  setCurrentProfile: (profileId: string) => boolean
   signOut: () => void
 }
 
@@ -30,13 +32,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   signIn: async (credentials) => {
     const authenticatedUser = await authenticateUser(credentials)
 
-    // Migrate legacy tab-scoped profiles before resolving the user's profile IDs.
     getProfiles()
 
     const user = getUserById(authenticatedUser.id) ?? authenticatedUser
     const session = createAuthSession(user)
 
-    useProfileStore.getState().loadProfiles(user.profiles)
+    useProfileStore.getState().loadProfiles(user)
     set({ session })
 
     return user
@@ -50,6 +51,25 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ session })
 
     return user
+  },
+
+  setCurrentProfile: (profileId) => {
+    const session = getCurrentAuthSession()
+
+    if (!session) {
+      return false
+    }
+
+    const user = setUserCurrentProfile(session.user.id, profileId)
+
+    if (!user) {
+      return false
+    }
+
+    useProfileStore.getState().loadProfiles(user)
+    set({ session: getCurrentAuthSession() })
+
+    return true
   },
 
   signOut: () => {

@@ -28,21 +28,21 @@ npm run dev
 
 ## User and profile models
 
-The `User` model contains `id`, `email`, `password` and `profiles`. The password field stores a PBKDF2-derived verifier and salt rather than the original plain-text password. The `profiles` field is an array of profile IDs owned by that user. The current session stores only the authenticated user's public identity and profile IDs.
+The `User` model contains `id`, `email`, `password`, `profiles` and `currentProfile`. The password field stores a PBKDF2-derived verifier and salt rather than the original plain-text password. The `profiles` field is an array of profile IDs owned by that user. `currentProfile` is the ID of the profile currently selected by the user, or `null` when the user has not created a profile.
 
-The `Profile` model contains `id`, `name`, `url`, `picture` and `about`. The `url` field is a unique URL-safe profile slug, used by the public route `/profile/:url`.
+The `Profile` model contains `id`, `name`, `url`, `picture`, `about` and `type`. The profile type is one of `social`, `rp` or `business`. The `url` field is a unique URL-safe profile slug, used by the public route `/profile/:url`.
 
-Sign-up creates only a user and starts a session. It then routes to `/getting-started`, which explains profile setup and links to `/create-profile`. Creating a profile stores it in the global profile collection and adds its ID to the owner's `User.profiles` array. The home page lists the current user's profiles. Public profile pages can be viewed without signing in.
+Sign-up creates only a user and starts a session. It then routes to `/getting-started`, which explains profile setup and links to `/create-profile`. Creating a profile stores it in the global profile collection and adds its ID to the owner's `User.profiles` array. The first created profile becomes current automatically. Users can switch their current profile from Home; this updates `User.currentProfile` and the active session. Public profile pages can be viewed without signing in.
 
 ## Browser storage
 
 Persistent application records use `localStorage`:
-- `nexus_users`: user records, including password verifiers and profile ID arrays.
+- `nexus_users`: user records, including password verifiers, profile ID arrays and the current profile ID.
 - `nexus_profiles`: the global array of profile records.
 
 Only the active authenticated session uses `sessionStorage` (`nexus_auth_session_v2`). The account and profiles remain available after closing the tab or browser; the active session is scoped to the current tab.
 
-The migration reads user and profile records created by the earlier session-only prototype and moves them to the new local storage format. Legacy profile URLs are normalized to URL-safe slugs.
+The migration reads user and profile records created by the earlier session-only prototype and moves them to the new local storage format. Legacy users with profiles but no current profile are assigned their first associated profile. Profiles without a type are migrated as `social`.
 
 This is still a client-side prototype, not production authentication or authorization. Browser storage can be inspected or modified; use a backend and database before relying on these records or protecting sensitive resources.
 

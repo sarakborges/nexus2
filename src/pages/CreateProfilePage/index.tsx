@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
+import type { ProfileType } from '@/Models/Profile.model'
 import { PROFILE_ERROR_TRANSLATION_KEYS } from '@/Constants/profile'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
@@ -15,11 +16,13 @@ export function CreateProfilePage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const user = useAuthStore((state) => state.session?.user)
+  const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
   const createProfile = useProfileStore((state) => state.createProfile)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [picture, setPicture] = useState('')
   const [about, setAbout] = useState('')
+  const [type, setType] = useState<ProfileType>('social')
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -35,7 +38,18 @@ export function CreateProfilePage() {
     setIsSubmitting(true)
 
     try {
-      const profile = createProfile(user.id, { name, url, picture, about })
+      const profile = createProfile(user.id, {
+        name,
+        url,
+        picture,
+        about,
+        type
+      })
+
+      if (!setCurrentProfile(profile.id)) {
+        throw new Error('Unable to select the newly created profile.')
+      }
+
       navigate(`${ROUTES.profile}/${profile.url}`, { replace: true })
     } catch (error) {
       const translationKey =
@@ -83,6 +97,21 @@ export function CreateProfilePage() {
             onChange={(event) => setUrl(event.target.value)}
             required
           />
+
+          <div className="form-field">
+            <Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label>
+            <select
+              className="input"
+              id="profile-type"
+              value={type}
+              onChange={(event) => setType(event.target.value as ProfileType)}
+              required
+            >
+              <option value="social">{t('PROFILE_TYPE_SOCIAL')}</option>
+              <option value="rp">{t('PROFILE_TYPE_RP')}</option>
+              <option value="business">{t('PROFILE_TYPE_BUSINESS')}</option>
+            </select>
+          </div>
 
           <FormField
             id="profile-picture"

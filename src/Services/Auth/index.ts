@@ -6,5 +6,6 @@ export {
   createAuthSession,
   createUser,
   getCurrentAuthSession,
-  getUserById
+  getUserById,
+  setUserCurrentProfile
 } from './auth.service'
