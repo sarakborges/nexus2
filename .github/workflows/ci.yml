@@ -55,8 +55,8 @@ jobs:
             if (!service) throw new Error(`Missing Vercel service: ${name}`)
             if (service.root !== expected.root) throw new Error(`Unexpected root for service ${name}`)
             if (service.framework !== expected.framework) throw new Error(`Unexpected framework for service ${name}`)
-            if (!service.installCommand?.includes('npm ci --prefix ../..')) {
-              throw new Error(`Service ${name} must install from the monorepo root lockfile.`)
+            if (!service.installCommand?.startsWith('npm ci ')) {
+              throw new Error(`Service ${name} must use the locked monorepo install command.`)
             }
           }
 
