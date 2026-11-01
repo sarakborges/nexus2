@@ -50,6 +50,8 @@ export const useProfileStore = create<ProfileStore>((set) => ({
       throw new ProfileError('STORAGE_UNAVAILABLE')
     }
 
+    set({ profile: createdProfile, loadedUrl: createdProfile.url })
+
     return createdProfile
   },
 
