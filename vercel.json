@@ -4,12 +4,12 @@
     "front": {
       "root": ".",
       "runtime": "container",
-      "entrypoint": "apps/front/Dockerfile"
+      "entrypoint": "Dockerfile.front"
     },
     "bff": {
       "root": ".",
       "runtime": "container",
-      "entrypoint": "apps/bff/Dockerfile",
+      "entrypoint": "Dockerfile.bff",
       "bindings": [
         {
           "type": "service",
@@ -22,7 +22,7 @@
     "back": {
       "root": ".",
       "runtime": "container",
-      "entrypoint": "apps/back/Dockerfile"
+      "entrypoint": "Dockerfile.back"
     }
   },
   "rewrites": [
