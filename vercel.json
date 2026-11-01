@@ -4,7 +4,7 @@
     "front": {
       "root": "apps/front",
       "framework": "vite",
-      "installCommand": "npm ci --prefix ../.. --no-audit --no-fund",
+      "installCommand": "npm ci --no-audit --no-fund",
       "outputDirectory": "build",
       "rewrites": [
         {
@@ -17,7 +17,7 @@
       "root": "apps/bff",
       "framework": "nestjs",
       "entrypoint": "src/main.ts",
-      "installCommand": "npm ci --prefix ../.. --no-audit --no-fund",
+      "installCommand": "npm ci --no-audit --no-fund",
       "bindings": [
         {
           "type": "service",
@@ -31,7 +31,7 @@
       "root": "apps/back",
       "framework": "nestjs",
       "entrypoint": "src/main.ts",
-      "installCommand": "npm ci --prefix ../.. --no-audit --no-fund"
+      "installCommand": "npm ci --no-audit --no-fund"
     }
   },
   "rewrites": [
