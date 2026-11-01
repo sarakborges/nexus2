@@ -48,6 +48,7 @@ export const enUSTranslations = {
   AUTH_ERROR_INVALID_CREDENTIALS: 'The email or password is incorrect.',
   AUTH_ERROR_STORAGE: 'Browser storage is unavailable. Check your browser settings and try again.',
   AUTH_ERROR_CRYPTO: 'This browser context does not support secure password processing.',
+  AUTH_ERROR_NETWORK: 'Could not connect to the authentication service. Check that the API is available and try again.',
   AUTH_ERROR_GENERIC: 'Something went wrong. Please try again.',
   GETTING_STARTED_TITLE: 'Your account is ready',
   GETTING_STARTED_DESCRIPTION: 'The account is created. Next, set up a profile so other people can identify you.',
