@@ -1,7 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { isLanguage, SUPPORTED_LANGUAGES } from '@/Constants/languages'
+import {
+  isLanguagePreference,
+  SUPPORTED_LANGUAGES
+} from '@/Constants/languages'
+import { isThemePreference } from '@/Constants/themes'
 import type { SettingsType } from '@/Types/Settings.type'
 
 type SettingsStore = {
@@ -13,7 +17,8 @@ export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
       settings: {
-        language: SUPPORTED_LANGUAGES[0]
+        language: 'system',
+        theme: 'system'
       },
 
       updateSettings: (settings) => {
@@ -26,21 +31,23 @@ export const useSettingsStore = create<SettingsStore>()(
       }
     }),
     {
-      name: 'nexus_settings_v1',
+      name: 'nexus_preferences_v2',
+      version: 2,
       partialize: (state) => ({ settings: state.settings }),
       merge: (persistedState, currentState) => {
         const persistedSettings = (
           persistedState as { settings?: Partial<SettingsType> } | undefined
         )?.settings
-        const persistedLanguage = persistedSettings?.language
 
         return {
           ...currentState,
           settings: {
-            ...currentState.settings,
-            language: isLanguage(persistedLanguage)
-              ? persistedLanguage
-              : currentState.settings.language
+            language: isLanguagePreference(persistedSettings?.language)
+              ? persistedSettings.language
+              : 'system',
+            theme: isThemePreference(persistedSettings?.theme)
+              ? persistedSettings.theme
+              : 'system'
           }
         }
       }

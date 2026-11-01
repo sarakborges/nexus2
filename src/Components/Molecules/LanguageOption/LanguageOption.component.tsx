@@ -2,7 +2,6 @@ import { FaCheck } from 'react-icons/fa'
 
 import { LANGUAGE_NAME_KEYS, type Language } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
-import { useSettingsStore } from '@/Stores/Settings.store'
 
 import { ShadowButton, Text } from '@/DesignSystem'
 import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
@@ -14,14 +13,17 @@ type LanguageOptionProps = {
 }
 
 export function LanguageOption({ language }: LanguageOptionProps) {
-  const { language: selectedLanguage, t } = useTranslations()
-  const updateSettings = useSettingsStore((state) => state.updateSettings)
+  const {
+    language: selectedLanguage,
+    setLanguage,
+    t
+  } = useTranslations()
 
   const isSelected = selectedLanguage === language
   const languageName = t(LANGUAGE_NAME_KEYS[language])
 
   const handleSelect = () => {
-    updateSettings({ language })
+    setLanguage(language)
   }
 
   return (

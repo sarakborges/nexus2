@@ -1,5 +1,7 @@
-import type { Language } from '@/Constants/languages'
+import type { LanguagePreference } from '@/Constants/languages'
+import type { ThemePreference } from '@/Constants/themes'
 
 export type SettingsType = {
-  language: Language
+  language: LanguagePreference
+  theme: ThemePreference
 }

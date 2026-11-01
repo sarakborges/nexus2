@@ -30,6 +30,9 @@ npm run dev
 src/
   Assets/
     Themes/
+      main.theme.css
+      light.theme.css
+      dark.theme.css
     main.css
     reset.css
     vars.css
@@ -49,6 +52,8 @@ src/
       Storage/
   Hooks/
     Language/
+    System/
+    Theme/
   Locales/
     en-US.ts
     pt-BR.ts
@@ -73,4 +78,8 @@ Both `DesignSystem` and `Components` follow Atomic Design. The design system con
 
 React Router is configured in declarative mode. The initial routes are landing (`/`), sign-up (`/sign-up`), sign-in (`/sign-in`), home (`/home`) and profile (`/profile`); unknown paths render the empty `NotFoundPage`.
 
-The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Brazilian Portuguese is the default language. Localization strings live in `src/Locales/` and are accessed through the typed `useTranslations` hook. Generic browser persistence helpers use the `nexus_` storage namespace; settings use a dedicated Zustand persistence store.
+The application supports Brazilian Portuguese (`pt-BR`) and US English (`en-US`). Both language and appearance default to the system preferences until the user chooses a value manually. The language hook resolves the browser's preferred locales against the supported languages; the appearance hook follows `prefers-color-scheme`. Manual choices are persisted in Zustand and take precedence over system changes.
+
+Theme tokens are split by responsibility: `main.theme.css` defines primary, secondary and semantic success/warning/error colors; `light.theme.css` and `dark.theme.css` override only appearance-dependent neutral, text and surface tokens. Status and brand colors remain stable across appearances.
+
+Localization strings live in `src/Locales/` and are accessed through the typed `useTranslations` hook. Generic browser persistence helpers use the `nexus_` storage namespace; app preferences use a dedicated Zustand persistence store.

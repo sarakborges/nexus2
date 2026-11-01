@@ -3,12 +3,17 @@
 @import url('./vars.css');
 @import url('./reset.css');
 
-@import url('./Themes/default.theme.css');
+@import url('./Themes/main.theme.css');
+@import url('./Themes/light.theme.css');
+@import url('./Themes/dark.theme.css');
 
 body {
   display: flex;
   place-content: center;
   place-items: center;
+  min-height: 100dvh;
+  background-color: var(--color-background);
+  color: var(--text-color);
 }
 
 #root {
@@ -24,5 +29,6 @@ body {
   font-family: var(--font-family);
   line-height: 1;
 
-  background-color: var(--color-neutral-strong);
+  background-color: var(--color-background);
+  color: var(--text-color);
 }

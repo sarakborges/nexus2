@@ -3,6 +3,7 @@ import type { TranslationKey } from '@/Types/Translation.type'
 export const SUPPORTED_LANGUAGES = ['pt-BR', 'en-US'] as const
 
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
+export type LanguagePreference = Language | 'system'
 
 export const LANGUAGE_NAME_KEYS = {
   'pt-BR': 'LANGUAGE_PT_BR',
@@ -16,3 +17,7 @@ export const LANGUAGE_FLAG_PATHS = {
 
 export const isLanguage = (value: unknown): value is Language =>
   SUPPORTED_LANGUAGES.some((language) => language === value)
+
+export const isLanguagePreference = (
+  value: unknown
+): value is LanguagePreference => value === 'system' || isLanguage(value)
