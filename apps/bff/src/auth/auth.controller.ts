@@ -10,8 +10,9 @@ class CredentialsDto {
   @IsEmail() email!: string
   @IsString() @MinLength(1) password!: string
 }
-class SignUpDto extends CredentialsDto {
-  @IsString() @MinLength(8) override password!: string
+class SignUpDto {
+  @IsEmail() email!: string
+  @IsString() @MinLength(8) password!: string
 }
 type AuthResponse = { user: AuthTokenPair['user']; authenticated: true }
 
@@ -59,7 +60,7 @@ export class AuthController {
       throw error
     }
   }
-  private async authenticate(route: 'sign-in' | 'sign-up', body: CredentialsDto, res: Response): Promise<AuthResponse> {
+  private async authenticate(route: 'sign-in' | 'sign-up', body: CredentialsDto | SignUpDto, res: Response): Promise<AuthResponse> {
     const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/${route}`, body)
     writeAuthCookies(res, data.accessToken, data.refreshToken)
     return { user: data.user, authenticated: true }

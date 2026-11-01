@@ -9,7 +9,10 @@ class CredentialsDto {
   @IsEmail() email!: string
   @IsString() @MinLength(1) password!: string
 }
-class SignUpDto extends CredentialsDto { @IsString() @MinLength(8) override password!: string }
+class SignUpDto {
+  @IsEmail() email!: string
+  @IsString() @MinLength(8) password!: string
+}
 class RefreshDto { @IsString() refreshToken!: string }
 class CurrentProfileDto { @IsString() profileId!: string }
 class PreferencesDto implements Partial<UserPreferences> {
