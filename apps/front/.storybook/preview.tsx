@@ -1,7 +1,9 @@
+import { QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import type { Preview } from '@storybook/react-vite'
 
+import { queryClient } from '../src/Services/Query/queryClient'
 import '../src/Assets/main.css'
 
 type StorybookTheme = 'light' | 'dark'
@@ -54,9 +56,11 @@ const preview: Preview = {
   },
   decorators: [
     (Story, context) => (
-      <ThemeWrapper theme={context.globals.theme as StorybookTheme}>
-        <Story />
-      </ThemeWrapper>
+      <QueryClientProvider client={queryClient}>
+        <ThemeWrapper theme={context.globals.theme as StorybookTheme}>
+          <Story />
+        </ThemeWrapper>
+      </QueryClientProvider>
     )
   ],
   parameters: {

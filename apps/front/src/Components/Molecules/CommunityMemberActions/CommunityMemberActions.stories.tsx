@@ -1,8 +1,5 @@
-import { useEffect } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-
-import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
-
+import type { CommunityRelationship } from '@nexus/common'
 import { CommunityMemberActions } from './CommunityMemberActions.component'
 
 type RelationshipPreviewProps = {
@@ -10,35 +7,13 @@ type RelationshipPreviewProps = {
 }
 
 function RelationshipPreview({ type }: RelationshipPreviewProps) {
-  useEffect(() => {
-    const previousRelationships =
-      useCommunityRelationshipStore.getState().relationships
-
-    useCommunityRelationshipStore.setState({
-      relationships: [
-        {
-          profiles: ['profile-member', 'community-example'],
-          type,
-          requestedBy: type === 'requested' ? 'profile-member' : null,
-          blockedBy: type === 'blocked' ? 'profile-owner' : null,
-          updatedAt: 1
-        },
-        {
-          profiles: ['profile-owner', 'community-example'],
-          type: 'owner',
-          requestedBy: null,
-          blockedBy: null,
-          updatedAt: 1
-        }
-      ]
-    })
-
-    return () => {
-      useCommunityRelationshipStore.setState({
-        relationships: previousRelationships
-      })
-    }
-  }, [type])
+  const relationship: CommunityRelationship = {
+    profiles: ['profile-member', 'community-example'],
+    type,
+    requestedBy: type === 'requested' ? 'profile-member' : null,
+    blockedBy: type === 'blocked' ? 'profile-owner' : null,
+    updatedAt: 1
+  }
 
   return (
     <CommunityMemberActions
@@ -46,6 +21,7 @@ function RelationshipPreview({ type }: RelationshipPreviewProps) {
       communityId="community-example"
       actorProfileId="profile-owner"
       actorRole="owner"
+      relationship={relationship}
     />
   )
 }
@@ -57,7 +33,14 @@ const meta = {
     memberProfileId: 'profile-member',
     communityId: 'community-example',
     actorProfileId: 'profile-owner',
-    actorRole: 'owner'
+    actorRole: 'owner' as const,
+    relationship: {
+      profiles: ['profile-member', 'community-example'],
+      type: 'connection' as const,
+      requestedBy: null,
+      blockedBy: null,
+      updatedAt: 1
+    }
   }
 } satisfies Meta<typeof CommunityMemberActions>
 

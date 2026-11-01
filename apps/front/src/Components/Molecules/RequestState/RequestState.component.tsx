@@ -1,0 +1,64 @@
+import type { ReactNode } from 'react'
+import { Button } from '@/DesignSystem'
+import { useTranslations } from '@/Hooks/Language'
+
+import './RequestState.style.scss'
+
+type RequestStateProps = {
+  isLoading?: boolean
+  isFetching?: boolean
+  isError?: boolean
+  isEmpty?: boolean
+  emptyMessage?: string
+  errorMessage?: string
+  onRetry?: () => void
+  children?: ReactNode
+}
+
+export function RequestState({
+  isLoading = false,
+  isFetching = false,
+  isError = false,
+  isEmpty = false,
+  emptyMessage,
+  errorMessage,
+  onRetry,
+  children
+}: RequestStateProps) {
+  const { t } = useTranslations()
+
+  if (isLoading) {
+    return (
+      <div className="request-state" role="status" aria-live="polite">
+        <span className="request-state__spinner" aria-hidden="true" />
+        <span>{t('REQUEST_LOADING')}</span>
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="request-state" role="alert">
+        <p className="account-card__description">{errorMessage ?? t('REQUEST_FAILED')}</p>
+        {onRetry && (
+          <Button type="button" variation="secondary" onClick={onRetry}>
+            {t('REQUEST_RETRY')}
+          </Button>
+        )}
+      </div>
+    )
+  }
+
+  const refreshingIndicator = isFetching ? (
+    <div className="request-state request-state--inline" role="status" aria-live="polite">
+      <span className="request-state__spinner" aria-hidden="true" />
+      <span>{t('REQUEST_UPDATING')}</span>
+    </div>
+  ) : null
+
+  if (isEmpty) {
+    return <>{refreshingIndicator}<p className="account-card__description">{emptyMessage}</p></>
+  }
+
+  return <>{refreshingIndicator}{children}</>
+}

@@ -232,7 +232,7 @@ export class DomainService {
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     await this.assertOwns(userId, fromProfileId)
     const normalized = content.trim()
-    if (!normalized || normalized.length > 4000 || fromProfileId === toProfileId) throw new ConflictException('INVALID_MESSAGE')
+    if (!normalized || normalized.length > 4000) throw new ConflictException('INVALID_MESSAGE')
     if (!(await this.data.read<Profile>('profiles')).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
     const all = await this.data.read<ProfileMessage>('profile_messages')
     const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }

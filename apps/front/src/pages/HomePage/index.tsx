@@ -1,45 +1,55 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router'
-import type { Profile, PaginatedResult } from '@nexus/common'
-import { Pagination, SettingsModal } from '@/Components'
+import { Pagination, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getOwnedProfiles } from '@/Services/Profile'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useAuthStore } from '@/Stores/Auth.store'
 import '../AuthenticatedPage.style.scss'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
   const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
   const signOut = useAuthStore(state => state.signOut)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const { page, pageSize, setPage } = useUrlPagination()
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [totalItems, setTotalItems] = useState(0)
-  const userId = session?.user.id
+  const userId = session?.user.id ?? null
+  const profilesQuery = useQuery({
+    queryKey: queryKeys.profiles.owned(userId ?? '', page, pageSize),
+    queryFn: () => getOwnedProfiles({ page, pageSize }),
+    enabled: Boolean(userId)
+  })
+  const profiles = profilesQuery.data?.items ?? []
+  const totalItems = profilesQuery.data?.totalItems ?? 0
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      queryClient.clear()
+      navigate(ROUTES.signIn, { replace: true })
+    }
+  })
+  const selectProfileMutation = useMutation({
+    mutationFn: async (profileId: string) => {
+      const success = await setCurrentProfile(profileId)
+      if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
+    },
+    onSuccess: async () => {
+      queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
+      await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned'] })
+    }
+  })
 
   useEffect(() => {
-    let active = true
-    if (userId) {
-      void getOwnedProfiles({ page, pageSize }).then((result: PaginatedResult<Profile>) => {
-        if (active) { setProfiles(result.items); setTotalItems(result.totalItems); if (result.page !== page) setPage(result.page) }
-      }).catch(() => { if (active) { setProfiles([]); setTotalItems(0) } })
-    }
-    return () => { active = false }
-  }, [userId, page, pageSize, setPage])
+    if (profilesQuery.data && profilesQuery.data.page !== page) setPage(profilesQuery.data.page)
+  }, [profilesQuery.data, page, setPage])
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate(ROUTES.signIn, { replace: true })
-  }
-  const handleSelectProfile = async (profileId: string) => { await setCurrentProfile(profileId) }
   const currentProfileId = session?.user.currentProfile
-  const visibleProfiles = userId ? profiles : []
-  const visibleTotalItems = userId ? totalItems : 0
 
   return (
     <main className="account-page">
@@ -47,30 +57,37 @@ export function HomePage() {
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
-            <p className="account-card__description">{t('HOME_WELCOME', { name: visibleProfiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
+            <p className="account-card__description">{t('HOME_WELCOME', { name: profiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
           </div>
           <div className="account-card__header-actions">
-            <Button variation="secondary" onClick={() => setIsSettingsOpen(true)}>
-              {t('SETTINGS_TITLE')}
-            </Button>
-            <Button variation="transparent" onClick={() => void handleSignOut()}>
+            <Button variation="transparent" disabled={signOutMutation.isPending} onClick={() => signOutMutation.mutate()}>
               {t('AUTH_SIGN_OUT')}
             </Button>
           </div>
         </header>
         <p className="account-card__description">{session?.user.email}</p>
+        {(selectProfileMutation.isError || signOutMutation.isError) && <RequestState isError />}
         <div className="account-card__profile-list">
           <h2>{t('HOME_PROFILES_TITLE')}</h2>
-          {visibleProfiles.map(profile => {
-            const current = profile.id === currentProfileId
-            return (
-              <div className="account-card__profile-entry" key={profile.id}>
-                <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name} · /profile/{profile.url}</Link>
-                {current ? <span className="account-card__current-profile">{t('HOME_CURRENT_PROFILE')}</span> : <Button variation="secondary" onClick={() => void handleSelectProfile(profile.id)}>{t('HOME_USE_PROFILE')}</Button>}
-              </div>
-            )
-          })}
-          <Pagination page={page} pageSize={pageSize} totalItems={visibleTotalItems} onPageChange={setPage} />
+          <RequestState
+            isLoading={profilesQuery.isLoading}
+            isFetching={profilesQuery.isFetching}
+            isError={profilesQuery.isError}
+            isEmpty={profilesQuery.isSuccess && totalItems === 0}
+            emptyMessage={t('HOME_PROFILES_EMPTY')}
+            onRetry={() => void profilesQuery.refetch()}
+          >
+            {profiles.map(profile => {
+              const current = profile.id === currentProfileId
+              return (
+                <div className="account-card__profile-entry" key={profile.id}>
+                  <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name} · /profile/{profile.url}</Link>
+                  {current ? <span className="account-card__current-profile">{t('HOME_CURRENT_PROFILE')}</span> : <Button variation="secondary" disabled={selectProfileMutation.isPending} onClick={() => selectProfileMutation.mutate(profile.id)}>{t('HOME_USE_PROFILE')}</Button>}
+                </div>
+              )
+            })}
+          </RequestState>
+          <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
         </div>
         <div className="account-card__actions">
           <Link className="account-card__action" to={ROUTES.createProfile}>{t('HOME_CREATE_PROFILE')}</Link>
@@ -78,7 +95,6 @@ export function HomePage() {
           <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
         </div>
       </section>
-      <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </main>
   )
 }
