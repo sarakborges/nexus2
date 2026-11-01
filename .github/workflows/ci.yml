@@ -46,5 +46,8 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook --workspace @nexus/front
 
-      - name: Build frontend Docker image
-        run: docker build --file apps/front/Dockerfile --tag nexus-front:ci .
+      - name: Validate full-stack Docker Compose
+        run: docker compose --env-file .env.compose.example config --quiet
+
+      - name: Build full-stack Docker images
+        run: docker compose --env-file .env.compose.example build
