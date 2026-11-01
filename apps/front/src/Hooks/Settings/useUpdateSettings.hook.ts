@@ -20,6 +20,7 @@ export function useUpdateSettings() {
   const queryKey = queryKeys.auth.preferences(userId ?? '')
 
   const mutation = useMutation<UserPreferences, unknown, Partial<UserPreferences>, UpdateContext>({
+    mutationKey: ['auth', 'preferences', userId],
     mutationFn: patch => userId
       ? saveUserPreferences(patch)
       : Promise.resolve({ ...useSettingsStore.getState().settings, ...patch }),

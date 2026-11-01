@@ -19,7 +19,8 @@ export function LanguageOption({ language }: LanguageOptionProps) {
   const {
     languagePreference: selectedPreference,
     setLanguage,
-    t
+    t,
+    isUpdating
   } = useTranslations()
 
   const isSelected = selectedPreference === language
@@ -35,6 +36,7 @@ export function LanguageOption({ language }: LanguageOptionProps) {
       type="button"
       variation="transparent"
       onClick={handleSelect}
+      disabled={isUpdating}
       aria-pressed={isSelected}
     >
       {language !== 'system' && <LanguageFlag language={language} />}

@@ -19,7 +19,7 @@ type SettingsModalProps = {
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
-  const { themePreference, setTheme } = useThemePreference()
+  const { themePreference, setTheme, isUpdating } = useThemePreference()
   const userId = useAuthStore(state => state.session?.user.id ?? null)
   const updateError = useSettingsStore(state => state.updateError)
   const preferencesQuery = useQuery({
@@ -53,6 +53,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
                 variation={themePreference === preference ? 'primary' : 'secondary'}
                 aria-pressed={themePreference === preference}
                 onClick={() => setTheme(preference)}
+                disabled={isUpdating}
               >
                 {t(THEME_PREFERENCE_NAME_KEYS[preference])}
               </Button>

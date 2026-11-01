@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AuthenticatedUser, AuthSession, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
+import type { AuthenticatedUser, AuthSession, SignInCredentials, SignUpCredentials } from '@nexus/common'
 import { api, getApiErrorCode } from '../Http/api'
 
 export type AuthErrorCode = 'EMAIL_ALREADY_EXISTS' | 'INVALID_CREDENTIALS' | 'STORAGE_UNAVAILABLE' | 'CRYPTO_UNAVAILABLE' | 'NETWORK_ERROR'
@@ -53,12 +53,4 @@ export async function setCurrentProfile(profileId: string): Promise<Authenticate
 }
 export async function signOutUser(): Promise<void> {
   try { await api.post('/auth/sign-out') } catch { /* Session cookies are cleared by the BFF even when the API is unavailable. */ }
-}
-export async function getUserPreferences(): Promise<UserPreferences> {
-  const { data } = await api.get<UserPreferences>('/auth/preferences')
-  return data
-}
-export async function saveUserPreferences(patch: Partial<UserPreferences>): Promise<UserPreferences> {
-  const { data } = await api.post<UserPreferences>('/auth/preferences', patch)
-  return data
 }

@@ -6,7 +6,7 @@ import type { ThemePreference } from '@/Constants/themes'
 
 export function useThemePreference() {
   const themePreference = useSettingsStore(state => state.settings.theme)
-  const { updateSettings } = useUpdateSettings()
+  const { updateSettings, mutation } = useUpdateSettings()
   const { theme: systemTheme } = useSystemPreferences()
   const theme = themePreference === 'system' ? systemTheme : themePreference
 
@@ -17,5 +17,5 @@ export function useThemePreference() {
   }, [theme])
 
   const setTheme = (nextTheme: ThemePreference) => updateSettings({ theme: nextTheme })
-  return { theme, themePreference, setTheme }
+  return { theme, themePreference, setTheme, isUpdating: mutation.isPending }
 }

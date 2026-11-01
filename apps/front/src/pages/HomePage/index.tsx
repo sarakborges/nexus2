@@ -39,7 +39,10 @@ export function HomePage() {
       const success = await setCurrentProfile(profileId)
       if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles', 'owned'] })
+    onSuccess: async () => {
+      queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
+      await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned'] })
+    }
   })
 
   useEffect(() => {
