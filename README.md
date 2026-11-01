@@ -26,6 +26,14 @@ npm run dev
 | `npm run storybook` | Start Storybook on port 6006 |
 | `npm run build-storybook` | Build the static Storybook |
 
+## Authentication prototype
+
+The sign-up and sign-in flow is a client-side prototype. Account records and the active session are stored in `sessionStorage`, so they are scoped to the current browser tab and are cleared when that tab's session ends. Passwords are stored as salted PBKDF2 verifiers, not as plain text.
+
+This is not production authentication: users can inspect or modify browser storage, and there is no server-side identity or authorization. Replace this prototype with a backend authentication provider before using real accounts or protecting sensitive data.
+
+The `/home` and `/profile` routes require an active session. Sign-up creates the account and signs the user in; sign-out clears the active session while leaving the temporary account available for another sign-in in the same tab.
+
 ## Component development
 
 Story files live beside their components in `*.stories.tsx` files. The Storybook catalog includes every Design System and application component. Use the Appearance toolbar to inspect stories with the light and dark themes; the accessibility addon checks rendered stories.
@@ -64,6 +72,8 @@ src/
   Locales/
     en-US.ts
     pt-BR.ts
+  Services/
+    Auth/
   Stores/
   Types/
   pages/
