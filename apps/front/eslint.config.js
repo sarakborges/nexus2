@@ -24,5 +24,12 @@ export default tseslint.config(
         { allowConstantExport: true }
       ]
     }
+  },
+  {
+    // Storybook preview files export configuration objects, not HMR components.
+    files: ['.storybook/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off'
+    }
   }
 )
