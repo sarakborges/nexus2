@@ -32,7 +32,7 @@ test('access guard rejects unsupported authorization schemes', async () => {
   const guard = new JwtAccessGuard(jwtReturning({ sub: 'user', email: 'user@example.com', type: 'access' }))
   await assert.rejects(
     guard.canActivate(contextFor({ headers: { authorization: 'Basic invalid' } })),
-    error => unauthorized(error, 'ACCESS_TOKEN_INVALID_OR_EXPIRED')
+    error => unauthorized(error, 'ACCESS_TOKEN_MISSING')
   )
 })
 
