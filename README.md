@@ -12,7 +12,7 @@
 Requires Node.js 22.22+ and npm workspaces.
 
 ```bash
-npm install
+npm ci
 cp apps/back/.env.example apps/back/.env
 cp apps/bff/.env.example apps/bff/.env
 npm run dev

@@ -43,5 +43,8 @@ jobs:
       - name: Lint frontend
         run: npm run lint --workspace @nexus/front
 
+      - name: Build Storybook
+        run: npm run build-storybook --workspace @nexus/front
+
       - name: Build frontend Docker image
         run: docker build --file apps/front/Dockerfile --tag nexus-front:ci .

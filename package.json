@@ -3,7 +3,10 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "predev": "npm run build --workspace @nexus/common",
     "dev": "concurrently -n FRONT,BFF,BACK -c blue,magenta,green \"npm run dev --workspace @nexus/front\" \"npm run dev --workspace @nexus/bff\" \"npm run dev --workspace @nexus/back\"",
@@ -13,9 +16,13 @@
     "build": "npm run build --workspace @nexus/common && npm run build --workspace @nexus/back && npm run build --workspace @nexus/bff && npm run build --workspace @nexus/front",
     "lint": "npm run lint --workspace @nexus/front",
     "storybook": "npm run storybook --workspace @nexus/front",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "npm test --workspace @nexus/back",
+    "build-storybook": "npm run build-storybook --workspace @nexus/front"
   },
-  "engines": { "node": ">=22.22.0" },
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "devDependencies": {
     "concurrently": "^9.1.2",
     "prettier": "^3.9.4"
