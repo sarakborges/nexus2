@@ -1,1 +1,1 @@
-export { generateRandomNumber } from './generateRandomNumber.helper'
+export { generateRandomInteger } from './generateRandomInteger.helper'

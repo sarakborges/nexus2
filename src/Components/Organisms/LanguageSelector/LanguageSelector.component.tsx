@@ -13,10 +13,7 @@ export function LanguageSelector() {
   const { t } = useTranslations()
 
   return (
-    <section
-      className="language-selector"
-      aria-labelledby={titleId}
-    >
+    <section className="language-selector" aria-labelledby={titleId}>
       <Text as="h2" id={titleId}>
         {t('LANGUAGES_TITLE')}
       </Text>
