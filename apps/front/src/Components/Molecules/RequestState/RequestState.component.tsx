@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
+import './RequestState.style.scss'
+
 type RequestStateProps = {
   isLoading?: boolean
   isError?: boolean
