@@ -23,14 +23,30 @@ function isAuthenticatedUser(value: unknown): value is AuthenticatedUser {
     && user.profiles.every(profileId => typeof profileId === 'string')
     && (typeof user.currentProfile === 'string' || user.currentProfile === null)
 }
+function isAuthResponse(value: unknown): value is AuthResponse {
+  if (typeof value !== 'object' || value === null) return false
+
+  const response = value as Record<string, unknown>
+  return response.authenticated === true && isAuthenticatedUser(response.user)
+}
 
 export async function signInUser(credentials: SignInCredentials): Promise<AuthenticatedUser> {
-  try { const { data } = await api.post<AuthResponse>('/auth/sign-in', credentials); return data.user }
-  catch (error) { throw toAuthError(error, 'INVALID_CREDENTIALS') }
+  try {
+    const { data } = await api.post<unknown>('/auth/sign-in', credentials)
+    if (!isAuthResponse(data)) throw new AuthError('NETWORK_ERROR')
+    return data.user
+  } catch (error) {
+    throw toAuthError(error, 'INVALID_CREDENTIALS')
+  }
 }
 export async function signUpUser(credentials: SignUpCredentials): Promise<AuthenticatedUser> {
-  try { const { data } = await api.post<AuthResponse>('/auth/sign-up', credentials); return data.user }
-  catch (error) { throw toAuthError(error, 'NETWORK_ERROR') }
+  try {
+    const { data } = await api.post<unknown>('/auth/sign-up', credentials)
+    if (!isAuthResponse(data)) throw new AuthError('NETWORK_ERROR')
+    return data.user
+  } catch (error) {
+    throw toAuthError(error, 'NETWORK_ERROR')
+  }
 }
 export async function getCurrentAuthSession(): Promise<AuthSession | null> {
   try {
@@ -44,8 +60,13 @@ export async function getCurrentAuthSession(): Promise<AuthSession | null> {
   }
 }
 export async function refreshAuthSession(): Promise<AuthenticatedUser> {
-  try { const { data } = await api.post<AuthResponse>('/auth/refresh'); return data.user }
-  catch (error) { throw toAuthError(error, 'INVALID_CREDENTIALS') }
+  try {
+    const { data } = await api.post<AuthResponse>('/auth/refresh')
+    if (!isAuthResponse(data)) throw new AuthError('NETWORK_ERROR')
+    return data.user
+  } catch (error) {
+    throw toAuthError(error, 'INVALID_CREDENTIALS')
+  }
 }
 export async function setCurrentProfile(profileId: string): Promise<AuthenticatedUser> {
   try { const { data } = await api.post<{ user: AuthenticatedUser }>('/auth/current-profile', { profileId }); return data.user }
