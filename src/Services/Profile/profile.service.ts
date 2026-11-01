@@ -1,9 +1,6 @@
-import {
-  loadData,
-  saveData
-} from '@/Helpers/Systems/Data'
+import { loadData, saveData } from '@/Helpers/Systems/Data'
 import { getBrowserStorage } from '@/Helpers/Systems/Storage'
-import { addProfileToUser, getUserById } from '@/Services/Auth'
+import { addProfileToUser } from '@/Services/Auth'
 import type {
   CreateProfileInput,
   Profile,
@@ -174,7 +171,7 @@ const migrateLegacyProfiles = (): Profile[] => {
     }
   }
 
-  if (!saveData({ key: PROFILES_KEY, value: migratedProfiles })) {
+  if (!saveProfiles(migratedProfiles)) {
     return profiles
   }
 
@@ -192,6 +189,9 @@ const migrateLegacyProfiles = (): Profile[] => {
 }
 
 export const getProfiles = (): Profile[] => migrateLegacyProfiles()
+
+export const saveProfiles = (profiles: Profile[]): boolean =>
+  saveData({ key: PROFILES_KEY, value: profiles })
 
 export const getProfilesByIds = (profileIds: string[]): Profile[] => {
   const profileIdSet = new Set(profileIds)
@@ -213,13 +213,9 @@ export const getProfileByUrl = (url: string): Profile | null => {
 }
 
 export const createUserProfile = (
-  userId: string,
-  input: CreateProfileInput
+  input: CreateProfileInput,
+  existingProfiles: Profile[]
 ): Profile => {
-  if (!getUserById(userId)) {
-    throw new ProfileError('STORAGE_UNAVAILABLE')
-  }
-
   const name = input.name.trim()
   const url = normalizeProfileUrl(input.url)
   const picture = input.picture.trim()
@@ -235,17 +231,15 @@ export const createUserProfile = (
     throw new ProfileError('INVALID_PROFILE')
   }
 
-  const profiles = getProfiles()
-
   if (
-    profiles.some(
+    existingProfiles.some(
       (profile) => normalizeProfileUrl(profile.url) === url
     )
   ) {
     throw new ProfileError('PROFILE_URL_ALREADY_IN_USE')
   }
 
-  const profile: Profile = {
+  return {
     id: createId(),
     name,
     url,
@@ -253,17 +247,4 @@ export const createUserProfile = (
     about,
     type
   }
-
-  const updatedProfiles = [...profiles, profile]
-
-  if (!saveData({ key: PROFILES_KEY, value: updatedProfiles })) {
-    throw new ProfileError('STORAGE_UNAVAILABLE')
-  }
-
-  if (!addProfileToUser(userId, profile.id)) {
-    saveData({ key: PROFILES_KEY, value: profiles })
-    throw new ProfileError('STORAGE_UNAVAILABLE')
-  }
-
-  return profile
 }

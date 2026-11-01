@@ -1,55 +1,51 @@
 import { create } from 'zustand'
 
-import type { AuthenticatedUser } from '@/Models/User.model'
-import type {
-  CreateProfileInput,
-  Profile
-} from '@/Models/Profile.model'
-import { getCurrentAuthSession, getUserById } from '@/Services/Auth'
+import { getCurrentAuthSession } from '@/Services/Auth'
 import {
   createUserProfile,
   getProfiles,
-  getProfilesByIds
+  ProfileError,
+  saveProfiles
 } from '@/Services/Profile'
+import type { AuthenticatedUser } from '@/Models/User.model'
+import type { CreateProfileInput, Profile } from '@/Models/Profile.model'
+import { useUserStore } from '@/Stores/User.store'
 
 type ProfileStore = {
+  allProfiles: Profile[]
   profiles: Profile[]
   profile: Profile | null
   loadProfiles: (user: AuthenticatedUser) => void
   createProfile: (userId: string, input: CreateProfileInput) => Profile
+  deleteProfile: (profileId: string) => boolean
   clearProfiles: () => void
 }
 
-const initializeProfiles = (): Profile[] => {
-  const session = getCurrentAuthSession()
-
-  if (!session) {
-    return []
-  }
-
-  getProfiles()
-
-  const user = getUserById(session.user.id)
-
-  return user ? getProfilesByIds(user.profiles) : []
-}
-
-const initialProfiles = initializeProfiles()
-const initialSession = getCurrentAuthSession()
+const initialAllProfiles = getProfiles()
+const initialUsers = useUserStore.getState().reloadUsers()
+const initialSession = getCurrentAuthSession(initialUsers)
 const initialUser = initialSession
-  ? getUserById(initialSession.user.id)
+  ? initialUsers.find((user) => user.id === initialSession.user.id)
   : null
+const initialUserProfileIds = new Set(initialUser?.profiles ?? [])
+const initialProfiles = initialAllProfiles.filter((profile) =>
+  initialUserProfileIds.has(profile.id)
+)
 const initialProfile =
   initialProfiles.find(
     (profile) => profile.id === initialUser?.currentProfile
   ) ?? initialProfiles[0] ?? null
 
-export const useProfileStore = create<ProfileStore>((set) => ({
+export const useProfileStore = create<ProfileStore>((set, get) => ({
+  allProfiles: initialAllProfiles,
   profiles: initialProfiles,
   profile: initialProfile,
 
   loadProfiles: (user) => {
-    const profiles = getProfilesByIds(user.profiles)
+    const profileIds = new Set(user.profiles)
+    const profiles = get().allProfiles.filter((item) =>
+      profileIds.has(item.id)
+    )
     const profile =
       profiles.find((item) => item.id === user.currentProfile) ??
       profiles[0] ??
@@ -59,18 +55,47 @@ export const useProfileStore = create<ProfileStore>((set) => ({
   },
 
   createProfile: (userId, input) => {
-    const createdProfile = createUserProfile(userId, input)
-    const user = getUserById(userId)
-    const profiles = user ? getProfilesByIds(user.profiles) : []
+    if (!useUserStore.getState().getUserById(userId)) {
+      throw new ProfileError('STORAGE_UNAVAILABLE')
+    }
 
-    set({
-      profiles,
-      profile:
-        profiles.find((item) => item.id === user?.currentProfile) ??
-        createdProfile
-    })
+    const currentProfiles = get().allProfiles
+    const createdProfile = createUserProfile(input, currentProfiles)
+    const updatedProfiles = [...currentProfiles, createdProfile]
+
+    if (!saveProfiles(updatedProfiles)) {
+      throw new ProfileError('STORAGE_UNAVAILABLE')
+    }
+
+    set({ allProfiles: updatedProfiles })
 
     return createdProfile
+  },
+
+  deleteProfile: (profileId) => {
+    const { allProfiles } = get()
+    const updatedProfiles = allProfiles.filter(
+      (profile) => profile.id !== profileId
+    )
+
+    if (updatedProfiles.length === allProfiles.length) {
+      return true
+    }
+
+    if (!saveProfiles(updatedProfiles)) {
+      return false
+    }
+
+    set((state) => ({
+      allProfiles: updatedProfiles,
+      profiles: state.profiles.filter((profile) => profile.id !== profileId),
+      profile:
+        state.profile?.id === profileId
+          ? state.profiles.find((profile) => profile.id !== profileId) ?? null
+          : state.profile
+    }))
+
+    return true
   },
 
   clearProfiles: () => {

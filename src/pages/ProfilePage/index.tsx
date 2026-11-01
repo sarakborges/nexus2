@@ -2,7 +2,7 @@ import { useParams } from 'react-router'
 
 import type { ProfileType } from '@/Models/Profile.model'
 import { useTranslations } from '@/Hooks/Language'
-import { getProfileByUrl } from '@/Services/Profile'
+import { useProfileStore } from '@/Stores/Profile.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
@@ -19,7 +19,9 @@ const PROFILE_TYPE_TRANSLATION_KEYS: Record<
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const profile = url ? getProfileByUrl(url) : null
+  const profile = useProfileStore((state) =>
+    state.allProfiles.find((item) => item.url === url) ?? null
+  )
 
   if (!profile) {
     return <NotFoundPage />

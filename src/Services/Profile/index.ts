@@ -4,5 +4,6 @@ export {
   getProfileByUrl,
   getProfiles,
   getProfilesByIds,
-  ProfileError
+  ProfileError,
+  saveProfiles
 } from './profile.service'

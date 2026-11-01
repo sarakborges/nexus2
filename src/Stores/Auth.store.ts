@@ -1,17 +1,14 @@
 import { create } from 'zustand'
 
+import type { AuthenticatedUser } from '@/Models/User.model'
 import {
-  authenticateUser,
   clearAuthSession,
   createAuthSession,
-  createUser,
   getCurrentAuthSession,
-  getUserById,
-  setUserCurrentProfile
+  saveAuthSession
 } from '@/Services/Auth'
-import { getProfiles } from '@/Services/Profile'
 import { useProfileStore } from '@/Stores/Profile.store'
-import type { AuthenticatedUser } from '@/Models/User.model'
+import { useUserStore } from '@/Stores/User.store'
 import type {
   AuthSession,
   SignInCredentials,
@@ -22,19 +19,18 @@ type AuthStore = {
   session: AuthSession | null
   signIn: (credentials: SignInCredentials) => Promise<AuthenticatedUser>
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
+  addProfileToUser: (profileId: string, makeCurrent?: boolean) => boolean
   setCurrentProfile: (profileId: string) => boolean
   signOut: () => void
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  session: getCurrentAuthSession(),
+const initialUsers = useUserStore.getState().users
+
+export const useAuthStore = create<AuthStore>((set, get) => ({
+  session: getCurrentAuthSession(initialUsers),
 
   signIn: async (credentials) => {
-    const authenticatedUser = await authenticateUser(credentials)
-
-    getProfiles()
-
-    const user = getUserById(authenticatedUser.id) ?? authenticatedUser
+    const user = await useUserStore.getState().authenticateUser(credentials)
     const session = createAuthSession(user)
 
     useProfileStore.getState().loadProfiles(user)
@@ -44,30 +40,85 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   signUp: async (credentials) => {
-    const user = await createUser(credentials)
-    const session = createAuthSession(user)
+    const userStore = useUserStore.getState()
+    const previousUsers = userStore.users
+    const user = await userStore.createUser(credentials)
 
-    useProfileStore.getState().clearProfiles()
-    set({ session })
+    try {
+      const session = createAuthSession(user)
 
-    return user
+      useProfileStore.getState().clearProfiles()
+      set({ session })
+
+      return user
+    } catch (error) {
+      useUserStore.getState().replaceUsers(previousUsers)
+      throw error
+    }
   },
 
-  setCurrentProfile: (profileId) => {
-    const session = getCurrentAuthSession()
+  addProfileToUser: (profileId, makeCurrent = false) => {
+    const session = get().session
 
     if (!session) {
       return false
     }
 
-    const user = setUserCurrentProfile(session.user.id, profileId)
+    const userStore = useUserStore.getState()
+    const previousUsers = userStore.users
+    const user = userStore.addProfileToUser(
+      session.user.id,
+      profileId,
+      makeCurrent
+    )
 
     if (!user) {
       return false
     }
 
+    const updatedSession: AuthSession = {
+      ...session,
+      user
+    }
+
+    if (!saveAuthSession(updatedSession)) {
+      userStore.replaceUsers(previousUsers)
+      return false
+    }
+
     useProfileStore.getState().loadProfiles(user)
-    set({ session: getCurrentAuthSession() })
+    set({ session: updatedSession })
+
+    return true
+  },
+
+  setCurrentProfile: (profileId) => {
+    const session = get().session
+
+    if (!session) {
+      return false
+    }
+
+    const userStore = useUserStore.getState()
+    const previousUsers = userStore.users
+    const user = userStore.setCurrentProfile(session.user.id, profileId)
+
+    if (!user) {
+      return false
+    }
+
+    const updatedSession: AuthSession = {
+      ...session,
+      user
+    }
+
+    if (!saveAuthSession(updatedSession)) {
+      userStore.replaceUsers(previousUsers)
+      return false
+    }
+
+    useProfileStore.getState().loadProfiles(user)
+    set({ session: updatedSession })
 
     return true
   },

@@ -135,7 +135,7 @@ const migrateUser = (value: unknown): User | null => {
   }
 }
 
-const loadUsers = (): User[] => {
+export const loadUsers = (): User[] => {
   const storedUsers = loadData<unknown>(USERS_KEY)
 
   if (Array.isArray(storedUsers)) {
@@ -185,7 +185,10 @@ const loadUsers = (): User[] => {
   return []
 }
 
-const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
+export const saveUsers = (users: User[]): boolean =>
+  saveData({ key: USERS_KEY, value: users })
+
+export const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
   id: user.id,
   email: user.email,
   profiles: [...user.profiles],
@@ -241,19 +244,19 @@ const parseSession = (value: unknown): AuthSession | null => {
   }
 }
 
-export const createUser = async ({
-  email,
-  password
-}: SignUpCredentials): Promise<AuthenticatedUser> => {
+export const createUser = async (
+  { email, password }: SignUpCredentials,
+  existingUsers: User[]
+): Promise<User> => {
   const normalizedEmail = normalizeEmail(email)
-  const users = loadUsers()
 
-  if (users.some((user) => user.email === normalizedEmail)) {
+  if (existingUsers.some((user) => user.email === normalizedEmail)) {
     throw new AuthError('EMAIL_ALREADY_EXISTS')
   }
 
   const salt = getCrypto().getRandomValues(new Uint8Array(16))
-  const user: User = {
+
+  return {
     id: createId(),
     email: normalizedEmail,
     password: {
@@ -263,19 +266,13 @@ export const createUser = async ({
     profiles: [],
     currentProfile: null
   }
-
-  if (!saveData({ key: USERS_KEY, value: [...users, user] })) {
-    throw new AuthError('STORAGE_UNAVAILABLE')
-  }
-
-  return toAuthenticatedUser(user)
 }
 
-export const authenticateUser = async ({
-  email,
-  password
-}: SignInCredentials): Promise<AuthenticatedUser> => {
-  const user = loadUsers().find(
+export const authenticateUser = async (
+  { email, password }: SignInCredentials,
+  users: User[]
+): Promise<AuthenticatedUser> => {
+  const user = users.find(
     (storedUser) => storedUser.email === normalizeEmail(email)
   )
 
@@ -295,6 +292,9 @@ export const authenticateUser = async ({
   return toAuthenticatedUser(user)
 }
 
+export const saveAuthSession = (session: AuthSession): boolean =>
+  saveSession({ key: SESSION_KEY, value: session })
+
 export const createAuthSession = (
   user: AuthenticatedUser
 ): AuthSession => {
@@ -303,23 +303,22 @@ export const createAuthSession = (
     authenticatedAt: Date.now()
   }
 
-  if (!saveSession({ key: SESSION_KEY, value: session })) {
+  if (!saveAuthSession(session)) {
     throw new AuthError('STORAGE_UNAVAILABLE')
   }
 
   return session
 }
 
-export const getCurrentAuthSession = (): AuthSession | null => {
+export const getCurrentAuthSession = (
+  cachedUsers?: User[]
+): AuthSession | null => {
   let session = parseSession(loadSession<unknown>(SESSION_KEY))
 
   if (!session) {
     session = parseSession(loadSession<unknown>(LEGACY_SESSION_KEY))
 
-    if (
-      session &&
-      saveSession({ key: SESSION_KEY, value: session })
-    ) {
+    if (session && saveAuthSession(session)) {
       deleteSession(LEGACY_SESSION_KEY)
     }
   }
@@ -328,7 +327,8 @@ export const getCurrentAuthSession = (): AuthSession | null => {
     return null
   }
 
-  const user = loadUsers().find((item) => item.id === session?.user.id)
+  const users = cachedUsers ?? loadUsers()
+  const user = users.find((item) => item.id === session?.user.id)
 
   if (!user) {
     return session
@@ -341,9 +341,12 @@ export const getCurrentAuthSession = (): AuthSession | null => {
 
   if (
     refreshedSession.user.currentProfile !== session.user.currentProfile ||
-    refreshedSession.user.profiles.length !== session.user.profiles.length
+    refreshedSession.user.profiles.length !== session.user.profiles.length ||
+    refreshedSession.user.profiles.some(
+      (profileId, index) => profileId !== session.user.profiles[index]
+    )
   ) {
-    saveSession({ key: SESSION_KEY, value: refreshedSession })
+    saveAuthSession(refreshedSession)
   }
 
   return refreshedSession
@@ -359,7 +362,7 @@ const persistUserUpdate = (
   updatedUsers: User[],
   updatedUser: User
 ): boolean => {
-  if (!saveData({ key: USERS_KEY, value: updatedUsers })) {
+  if (!saveUsers(updatedUsers)) {
     return false
   }
 
@@ -367,15 +370,12 @@ const persistUserUpdate = (
 
   if (session?.user.id === updatedUser.id) {
     if (
-      !saveSession({
-        key: SESSION_KEY,
-        value: {
-          ...session,
-          user: toAuthenticatedUser(updatedUser)
-        }
+      !saveAuthSession({
+        ...session,
+        user: toAuthenticatedUser(updatedUser)
       })
     ) {
-      saveData({ key: USERS_KEY, value: previousUsers })
+      saveUsers(previousUsers)
       return false
     }
   }
@@ -434,8 +434,11 @@ export const setUserCurrentProfile = (
   return toAuthenticatedUser(updatedUser)
 }
 
-export const getUserById = (userId: string): AuthenticatedUser | null => {
-  const user = loadUsers().find((storedUser) => storedUser.id === userId)
+export const getUserById = (
+  userId: string,
+  users: User[] = loadUsers()
+): AuthenticatedUser | null => {
+  const user = users.find((storedUser) => storedUser.id === userId)
 
   return user ? toAuthenticatedUser(user) : null
 }

@@ -16,8 +16,9 @@ export function CreateProfilePage() {
   const navigate = useNavigate()
   const { t } = useTranslations()
   const user = useAuthStore((state) => state.session?.user)
-  const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
+  const addProfileToUser = useAuthStore((state) => state.addProfileToUser)
   const createProfile = useProfileStore((state) => state.createProfile)
+  const deleteProfile = useProfileStore((state) => state.deleteProfile)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [picture, setPicture] = useState('')
@@ -46,8 +47,9 @@ export function CreateProfilePage() {
         type
       })
 
-      if (!setCurrentProfile(profile.id)) {
-        throw new Error('Unable to select the newly created profile.')
+      if (!addProfileToUser(profile.id, true)) {
+        deleteProfile(profile.id)
+        throw new Error('Unable to link the newly created profile.')
       }
 
       navigate(`${ROUTES.profile}/${profile.url}`, { replace: true })
