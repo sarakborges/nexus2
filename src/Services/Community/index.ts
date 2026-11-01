@@ -2,6 +2,7 @@ export {
   CommunityError,
   createCommunity,
   getCommunities,
+  getCommunitiesByIds,
   getCommunityById,
   getCommunityByUrl,
   saveCommunities

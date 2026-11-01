@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
 import { useRelationshipStore } from '@/Stores/Relationship.store'
 
 type RelationshipActionsProps = {
@@ -17,21 +18,33 @@ export function RelationshipActions({
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
   const sourceId = session?.user.currentProfile ?? null
-  const relationship = useRelationshipStore((state) =>
-    sourceId
-      ? state.relationships.find(
-          (item) =>
-            item.profiles.includes(sourceId) &&
-            item.profiles.includes(targetId)
-        ) ?? null
+  const isCommunity = targetKind === 'community'
+
+  const profileRelationship = useRelationshipStore((state) =>
+    !isCommunity && sourceId
+      ? state.getRelationship(sourceId, targetId)
       : null
   )
-  const updateRelationship = useRelationshipStore(
+  const communityRelationship = useCommunityRelationshipStore((state) =>
+    isCommunity && sourceId
+      ? state.getRelationship(sourceId, targetId)
+      : null
+  )
+  const updateProfileRelationship = useRelationshipStore(
     (state) => state.updateRelationship
   )
-  const removeRelationship = useRelationshipStore(
+  const removeProfileRelationship = useRelationshipStore(
     (state) => state.removeRelationship
   )
+  const updateCommunityRelationship = useCommunityRelationshipStore(
+    (state) => state.updateRelationship
+  )
+  const removeCommunityRelationship = useCommunityRelationshipStore(
+    (state) => state.removeRelationship
+  )
+  const relationship = isCommunity
+    ? communityRelationship
+    : profileRelationship
 
   if (!session) {
     return (
@@ -44,45 +57,111 @@ export function RelationshipActions({
   if (
     !sourceId ||
     sourceId === targetId ||
-    session.user.profiles.includes(targetId)
+    (!isCommunity && session.user.profiles.includes(targetId))
   ) {
     return null
   }
 
-  const handleAddOrAccept = () => {
-    updateRelationship(
-      sourceId,
-      targetId,
-      relationship?.type === 'requested' ? 'connection' : 'requested'
+  const remove = () => {
+    if (isCommunity) {
+      removeCommunityRelationship(sourceId, targetId, sourceId)
+    } else {
+      removeProfileRelationship(sourceId, targetId)
+    }
+  }
+
+  const update = (type: 'connection' | 'requested' | 'blocked') => {
+    if (isCommunity) {
+      updateCommunityRelationship(sourceId, targetId, type, sourceId)
+    } else {
+      updateProfileRelationship(sourceId, targetId, type, sourceId)
+    }
+  }
+
+  const isOwner = relationship?.type === 'owner'
+  const isBlockedByCurrent = relationship?.blockedBy === sourceId
+  const isBlockedByOther =
+    relationship?.type === 'blocked' &&
+    relationship.blockedBy !== null &&
+    !isBlockedByCurrent
+  const isLegacyBlock =
+    relationship?.type === 'blocked' && relationship.blockedBy === null
+  const isOwnRequest = relationship?.requestedBy === sourceId
+  const isIncomingRequest =
+    relationship?.type === 'requested' &&
+    relationship.requestedBy !== null &&
+    !isOwnRequest
+  const isLegacyRequest =
+    relationship?.type === 'requested' && relationship.requestedBy === null
+
+  const handleRequestOrAccept = () => {
+    if (relationship?.type === 'requested') {
+      if (isIncomingRequest) {
+        update('connection')
+      } else if (isOwnRequest) {
+        remove()
+      }
+      return
+    }
+
+    update('requested')
+  }
+
+  const handleBlock = () => update('blocked')
+
+  if (isOwner) {
+    return (
+      <p className="account-card__description">
+        {t('COMMUNITY_OWNER')}
+      </p>
     )
   }
 
-  const handleBlock = () => {
-    updateRelationship(sourceId, targetId, 'blocked')
+  if (isBlockedByOther) {
+    return (
+      <p className="account-card__description">
+        {t('RELATIONSHIP_BLOCKED_BY_OTHER')}
+      </p>
+    )
   }
 
-  const handleRemoveOrUnblock = () => {
-    removeRelationship(sourceId, targetId)
+  if (isLegacyBlock) {
+    return (
+      <div className="account-card__relationship-actions">
+        <span className="account-card__description">
+          {t('RELATIONSHIP_LEGACY_BLOCKED')}
+        </span>
+        <Button variation="secondary" onClick={remove}>
+          {t('RELATIONSHIP_CLEAR_LEGACY')}
+        </Button>
+      </div>
+    )
   }
-
-  const isCommunity = targetKind === 'community'
 
   return (
     <div className="account-card__relationship-actions">
       {relationship?.type === 'connection' ? (
-        <Button variation="secondary" onClick={handleRemoveOrUnblock}>
+        <Button variation="secondary" onClick={remove}>
           {t(isCommunity ? 'COMMUNITY_LEAVE' : 'RELATIONSHIP_REMOVE')}
         </Button>
-      ) : relationship?.type === 'requested' ? (
-        <Button variation="secondary" onClick={handleAddOrAccept}>
-          {t(isCommunity ? 'COMMUNITY_ACCEPT' : 'RELATIONSHIP_ACCEPT')}
-        </Button>
-      ) : relationship?.type === 'blocked' ? (
-        <Button variation="secondary" onClick={handleRemoveOrUnblock}>
+      ) : isBlockedByCurrent ? (
+        <Button variation="secondary" onClick={remove}>
           {t(isCommunity ? 'COMMUNITY_UNBLOCK' : 'RELATIONSHIP_UNBLOCK')}
         </Button>
+      ) : isIncomingRequest ? (
+        <Button variation="secondary" onClick={handleRequestOrAccept}>
+          {t(isCommunity ? 'COMMUNITY_ACCEPT' : 'RELATIONSHIP_ACCEPT')}
+        </Button>
+      ) : isOwnRequest ? (
+        <Button variation="secondary" onClick={handleRequestOrAccept}>
+          {t('RELATIONSHIP_CANCEL_REQUEST')}
+        </Button>
+      ) : isLegacyRequest ? (
+        <Button variation="secondary" onClick={remove}>
+          {t('RELATIONSHIP_CLEAR_LEGACY')}
+        </Button>
       ) : (
-        <Button onClick={handleAddOrAccept}>
+        <Button onClick={handleRequestOrAccept}>
           {t(isCommunity ? 'COMMUNITY_JOIN' : 'RELATIONSHIP_ADD')}
         </Button>
       )}
@@ -91,12 +170,6 @@ export function RelationshipActions({
         <Button variation="cancel" onClick={handleBlock}>
           {t(isCommunity ? 'COMMUNITY_BLOCK' : 'RELATIONSHIP_BLOCK')}
         </Button>
-      )}
-
-      {relationship?.type === 'requested' && (
-        <span className="account-card__description">
-          {t('RELATIONSHIP_PENDING')}
-        </span>
       )}
     </div>
   )

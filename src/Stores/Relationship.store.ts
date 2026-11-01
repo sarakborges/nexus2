@@ -16,7 +16,8 @@ type RelationshipStore = {
   updateRelationship: (
     firstId: string,
     secondId: string,
-    type: RelationshipType
+    type: RelationshipType,
+    actorId: string
   ) => boolean
   removeRelationship: (firstId: string, secondId: string) => boolean
   getRelationship: (firstId: string, secondId: string) => Relationship | null
@@ -37,11 +38,12 @@ const getOtherParticipant = (
 export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
   relationships: getRelationships(),
 
-  updateRelationship: (firstId, secondId, type) => {
+  updateRelationship: (firstId, secondId, type, actorId) => {
     const updatedRelationships = buildRelationshipUpdate(
       firstId,
       secondId,
       type,
+      actorId,
       get().relationships
     )
 

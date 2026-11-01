@@ -44,9 +44,11 @@ Zustand stores are the runtime source of truth for application state. `User.stor
 
 Communities have their own model with the same public fields as profiles: `id`, `name`, `url`, `picture`, `about` and `type`. They are persisted in `nexus_communities` and have public pages at `/community/:url`; `/communities` lists existing communities and authenticated users can create one at `/create-community`. The community store holds only the community currently being viewed.
 
-Relationships are persisted independently in `nexus_relationships`. Each entry contains a normalized two-ID pair in `profiles`, a `type` (`connection`, `requested` or `blocked`) and an `updatedAt` timestamp. For profile-to-community interactions, the pair contains the profile ID and the community ID. A connection is shown as a profile friend or community member. Profile friends are available at `/profile/:url/friends`; community members are available at `/community/:url/friends`.
+Profile-to-profile relationships are persisted in `nexus_relationships`. Each entry contains the normalized pair in `profiles`, a `type` (`connection`, `requested` or `blocked`), `requestedBy`, `blockedBy` and an `updatedAt` timestamp. The actor fields store the profile ID that initiated the pending request or applied the block. A request sent by the current profile can be cancelled; a request sent by the other profile can be accepted. Only the profile that applied a block can remove it.
 
-The relationship prototype does not yet record which participant initiated a request, so a `requested` relationship is visible to both participants and either side can accept it. Blocking is also represented as a shared pair status.
+Profile-to-community relationships use a separate storage, `nexus_community_relationships`, with entries whose ordered `profiles` pair is `[profileId, communityId]`. Its `type` adds `owner` to `connection`, `requested` and `blocked`; it also stores `requestedBy`, `blockedBy` and `updatedAt`. Creating a community automatically records the active profile as its owner. Owners can review and accept pending membership requests, remove members, and block or unblock profiles from the members page. Community members are available at `/community/:url/members`, and the communities associated with a profile are available at `/profile/:url/communities`. Profile friends remain at `/profile/:url/friends`.
+
+Older relationship entries that do not contain an actor ID are migrated with a null actor. Their status is preserved, but the UI asks the user to clear an ambiguous legacy relationship before creating a new one.
 
 ## Browser storage
 
@@ -101,9 +103,13 @@ src/
   Models/
     User.model.ts
     Profile.model.ts
+    Community.model.ts
+    Relationship.model.ts
+    CommunityRelationship.model.ts
   Services/
     Auth/
     Community/
+    CommunityRelationship/
     Profile/
     Relationship/
   Stores/
@@ -111,6 +117,7 @@ src/
     User.store.ts
     Profile.store.ts
     Community.store.ts
+    CommunityRelationship.store.ts
     Relationship.store.ts
     Settings.store.ts
     index.ts
@@ -123,6 +130,10 @@ src/
     CreateProfilePage/
     HomePage/
     ProfilePage/
+    ProfileFriendsPage/
+    ProfileCommunitiesPage/
+    CommunityPage/
+    CommunityMembersPage/
     NotFoundPage/
   routes/
     index.tsx

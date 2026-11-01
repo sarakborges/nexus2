@@ -3,6 +3,10 @@ export type {
   CreateCommunityInput
 } from './Community.model'
 export type {
+  CommunityRelationship,
+  CommunityRelationshipType
+} from './CommunityRelationship.model'
+export type {
   Relationship,
   RelationshipType
 } from './Relationship.model'

@@ -28,21 +28,31 @@ export function CreateCommunityPage() {
     event.preventDefault()
     setErrorMessage('')
 
+    const ownerProfileId = session?.user.currentProfile
+
     if (!session) {
       navigate(ROUTES.signIn, { replace: true })
+      return
+    }
+
+    if (!ownerProfileId) {
+      navigate(ROUTES.createProfile, { replace: true })
       return
     }
 
     setIsSubmitting(true)
 
     try {
-      const community = createCommunity({
-        name,
-        url,
-        picture,
-        about,
-        type
-      })
+      const community = createCommunity(
+        {
+          name,
+          url,
+          picture,
+          about,
+          type
+        },
+        ownerProfileId
+      )
 
       navigate(`${ROUTES.community}/${community.url}`, { replace: true })
     } catch (error) {
@@ -52,9 +62,11 @@ export function CreateCommunityPage() {
           ? 'COMMUNITY_ERROR_URL_TAKEN'
           : code === 'INVALID_COMMUNITY'
             ? 'COMMUNITY_ERROR_INVALID'
-            : code === 'STORAGE_UNAVAILABLE'
-              ? 'COMMUNITY_ERROR_STORAGE'
-              : 'COMMUNITY_ERROR_GENERIC'
+            : code === 'OWNER_PROFILE_REQUIRED'
+              ? 'COMMUNITY_ERROR_OWNER_REQUIRED'
+              : code === 'STORAGE_UNAVAILABLE'
+                ? 'COMMUNITY_ERROR_STORAGE'
+                : 'COMMUNITY_ERROR_GENERIC'
 
       setErrorMessage(t(translationKey))
     } finally {

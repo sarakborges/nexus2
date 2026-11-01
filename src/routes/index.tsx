@@ -4,7 +4,7 @@ import { ROUTES } from '@/Constants/routes'
 import { useAuthStore } from '@/Stores/Auth.store'
 import {
   CommunitiesPage,
-  CommunityFriendsPage,
+  CommunityMembersPage,
   CommunityPage,
   CreateCommunityPage,
   CreateProfilePage,
@@ -12,6 +12,7 @@ import {
   HomePage,
   LandingPage,
   NotFoundPage,
+  ProfileCommunitiesPage,
   ProfileFriendsPage,
   ProfilePage,
   SignInPage,
@@ -96,9 +97,10 @@ export function AppRoutes() {
       </Route>
 
       <Route path={ROUTES.communities} element={<CommunitiesPage />} />
+
       <Route
-        path={`${ROUTES.community}/:url/friends`}
-        element={<CommunityFriendsPage />}
+        path={`${ROUTES.community}/:url/members`}
+        element={<CommunityMembersPage />}
       />
       <Route
         path={`${ROUTES.community}/:url`}
@@ -108,6 +110,10 @@ export function AppRoutes() {
       <Route
         path={`${ROUTES.profile}/:url/friends`}
         element={<ProfileFriendsPage />}
+      />
+      <Route
+        path={`${ROUTES.profile}/:url/communities`}
+        element={<ProfileCommunitiesPage />}
       />
       <Route
         path={`${ROUTES.profile}/:url`}

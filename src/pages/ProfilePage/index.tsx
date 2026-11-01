@@ -67,12 +67,20 @@ export function ProfilePage() {
 
         <RelationshipActions targetId={profile.id} />
 
-        <Link
-          className="account-card__link"
-          to={`${ROUTES.profile}/${profile.url}/friends`}
-        >
-          {t('PROFILE_FRIENDS_LINK')}
-        </Link>
+        <div className="account-card__actions">
+          <Link
+            className="account-card__link"
+            to={`${ROUTES.profile}/${profile.url}/friends`}
+          >
+            {t('PROFILE_FRIENDS_LINK')}
+          </Link>
+          <Link
+            className="account-card__link"
+            to={`${ROUTES.profile}/${profile.url}/communities`}
+          >
+            {t('PROFILE_COMMUNITIES_LINK')}
+          </Link>
+        </div>
 
         <p className="account-card__profile-link">
           /profile/{profile.url}

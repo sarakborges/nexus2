@@ -71,7 +71,7 @@ export function CommunityPage() {
 
         <Link
           className="account-card__link"
-          to={`${ROUTES.community}/${community.url}/friends`}
+          to={`${ROUTES.community}/${community.url}/members`}
         >
           {t('COMMUNITY_MEMBERS_LINK')}
         </Link>

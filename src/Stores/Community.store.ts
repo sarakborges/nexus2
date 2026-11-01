@@ -11,12 +11,16 @@ import {
   getCommunities,
   saveCommunities
 } from '@/Services/Community'
+import { useCommunityRelationshipStore } from '@/Stores/CommunityRelationship.store'
 
 type CommunityStore = {
   community: Community | null
   loadedUrl: string | null
   loadCommunityByUrl: (url: string) => void
-  createCommunity: (input: CreateCommunityInput) => Community
+  createCommunity: (
+    input: CreateCommunityInput,
+    ownerProfileId: string
+  ) => Community
   clearCommunity: () => void
 }
 
@@ -33,12 +37,25 @@ export const useCommunityStore = create<CommunityStore>((set) => ({
     })
   },
 
-  createCommunity: (input) => {
+  createCommunity: (input, ownerProfileId) => {
+    if (!ownerProfileId) {
+      throw new CommunityError('OWNER_PROFILE_REQUIRED')
+    }
+
     const existingCommunities = getCommunities()
     const community = createCommunity(input, existingCommunities)
     const updatedCommunities = [...existingCommunities, community]
 
     if (!saveCommunities(updatedCommunities)) {
+      throw new CommunityError('STORAGE_UNAVAILABLE')
+    }
+
+    if (
+      !useCommunityRelationshipStore
+        .getState()
+        .addOwnerRelationship(ownerProfileId, community.id)
+    ) {
+      saveCommunities(existingCommunities)
       throw new CommunityError('STORAGE_UNAVAILABLE')
     }
 

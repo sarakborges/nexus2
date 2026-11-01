@@ -11,6 +11,7 @@ const PROFILE_TYPES: ProfileType[] = ['social', 'rp', 'business']
 export type CommunityErrorCode =
   | 'INVALID_COMMUNITY'
   | 'COMMUNITY_URL_ALREADY_IN_USE'
+  | 'OWNER_PROFILE_REQUIRED'
   | 'STORAGE_UNAVAILABLE'
 
 export class CommunityError extends Error {
@@ -86,6 +87,12 @@ export const getCommunities = (): Community[] => {
   }
 
   return communities
+}
+
+export const getCommunitiesByIds = (ids: string[]): Community[] => {
+  const idSet = new Set(ids)
+
+  return getCommunities().filter((community) => idSet.has(community.id))
 }
 
 export const saveCommunities = (communities: Community[]): boolean =>

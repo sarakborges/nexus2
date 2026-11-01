@@ -1,4 +1,5 @@
 export { useAuthStore } from './Auth.store'
+export { useCommunityRelationshipStore } from './CommunityRelationship.store'
 export { useCommunityStore } from './Community.store'
 export { useProfileStore } from './Profile.store'
 export { useRelationshipStore } from './Relationship.store'

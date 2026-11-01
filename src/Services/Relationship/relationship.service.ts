@@ -43,6 +43,14 @@ const parseRelationship = (value: unknown): Relationship | null => {
   return {
     profiles: normalizePair(profiles[0], profiles[1]),
     type: relationship.type as RelationshipType,
+    requestedBy:
+      typeof relationship.requestedBy === 'string'
+        ? relationship.requestedBy
+        : null,
+    blockedBy:
+      typeof relationship.blockedBy === 'string'
+        ? relationship.blockedBy
+        : null,
     updatedAt: relationship.updatedAt
   }
 }
@@ -58,7 +66,16 @@ export const getRelationships = (): Relationship[] => {
     .map(parseRelationship)
     .filter((relationship): relationship is Relationship => relationship !== null)
 
-  if (relationships.length !== storedRelationships.length) {
+  if (
+    relationships.length !== storedRelationships.length ||
+    storedRelationships.some(
+      (item) =>
+        !item ||
+        typeof item !== 'object' ||
+        !Object.prototype.hasOwnProperty.call(item, 'requestedBy') ||
+        !Object.prototype.hasOwnProperty.call(item, 'blockedBy')
+    )
+  ) {
     saveRelationships(relationships)
   }
 
@@ -87,9 +104,15 @@ export const setRelationship = (
   firstId: string,
   secondId: string,
   type: RelationshipType,
+  actorId: string,
   relationships: Relationship[]
 ): Relationship[] | null => {
-  if (!firstId || !secondId || firstId === secondId) {
+  if (
+    !firstId ||
+    !secondId ||
+    firstId === secondId ||
+    (actorId !== firstId && actorId !== secondId)
+  ) {
     return null
   }
 
@@ -97,6 +120,8 @@ export const setRelationship = (
   const relationship: Relationship = {
     profiles: pair,
     type,
+    requestedBy: type === 'requested' ? actorId : null,
+    blockedBy: type === 'blocked' ? actorId : null,
     updatedAt: Date.now()
   }
 
