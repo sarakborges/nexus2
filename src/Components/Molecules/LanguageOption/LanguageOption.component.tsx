@@ -1,39 +1,43 @@
 import { FaCheck } from 'react-icons/fa'
 
-import { LANGUAGE_NAME_KEYS, type Language } from '@/Constants/languages'
+import {
+  LANGUAGE_PREFERENCE_NAME_KEYS,
+  type LanguagePreference
+} from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
-import { ShadowButton, Text } from '@/DesignSystem'
+import { Button, Text } from '@/DesignSystem'
 import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
 
 import './LanguageOption.style.scss'
 
 type LanguageOptionProps = {
-  language: Language
+  language: LanguagePreference
 }
 
 export function LanguageOption({ language }: LanguageOptionProps) {
   const {
-    language: selectedLanguage,
+    languagePreference: selectedPreference,
     setLanguage,
     t
   } = useTranslations()
 
-  const isSelected = selectedLanguage === language
-  const languageName = t(LANGUAGE_NAME_KEYS[language])
+  const isSelected = selectedPreference === language
+  const languageName = t(LANGUAGE_PREFERENCE_NAME_KEYS[language])
 
   const handleSelect = () => {
     setLanguage(language)
   }
 
   return (
-    <ShadowButton
+    <Button
       className="language-option"
       type="button"
+      variation="transparent"
       onClick={handleSelect}
       aria-pressed={isSelected}
     >
-      <LanguageFlag language={language} />
+      {language !== 'system' && <LanguageFlag language={language} />}
 
       <Text className="language-option__label">{languageName}</Text>
 
@@ -43,6 +47,6 @@ export function LanguageOption({ language }: LanguageOptionProps) {
           aria-hidden="true"
         />
       )}
-    </ShadowButton>
+    </Button>
   )
 }

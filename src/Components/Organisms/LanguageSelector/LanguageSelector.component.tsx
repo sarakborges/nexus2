@@ -1,6 +1,6 @@
 import { useId } from 'react'
 
-import { SUPPORTED_LANGUAGES } from '@/Constants/languages'
+import { SUPPORTED_LANGUAGE_PREFERENCES } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
 import { Text } from '@/DesignSystem'
@@ -19,7 +19,7 @@ export function LanguageSelector() {
       </Text>
 
       <div className="language-selector__options">
-        {SUPPORTED_LANGUAGES.map((language) => (
+        {SUPPORTED_LANGUAGE_PREFERENCES.map((language) => (
           <LanguageOption key={language} language={language} />
         ))}
       </div>

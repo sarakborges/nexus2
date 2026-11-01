@@ -2,19 +2,23 @@ import type { ButtonHTMLAttributes } from 'react'
 
 import './Button.style.scss'
 
-type ButtonVariant = 'primary' | 'secondary' | 'cancel' | 'ghost'
+export type ButtonVariation =
+  | 'primary'
+  | 'secondary'
+  | 'cancel'
+  | 'transparent'
 
 type ButtonProps = {
-  variant?: ButtonVariant
+  variation?: ButtonVariation
 } & ButtonHTMLAttributes<HTMLButtonElement>
 
 export function Button({
   children,
   className,
-  variant = 'primary',
+  variation = 'primary',
   ...props
 }: ButtonProps) {
-  const classNames = ['button', variant, className]
+  const classNames = ['button', `button--${variation}`, className]
     .filter(Boolean)
     .join(' ')
 

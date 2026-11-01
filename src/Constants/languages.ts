@@ -5,10 +5,16 @@ export const SUPPORTED_LANGUAGES = ['pt-BR', 'en-US'] as const
 export type Language = (typeof SUPPORTED_LANGUAGES)[number]
 export type LanguagePreference = Language | 'system'
 
-export const LANGUAGE_NAME_KEYS = {
+export const SUPPORTED_LANGUAGE_PREFERENCES = [
+  'system',
+  ...SUPPORTED_LANGUAGES
+] as const
+
+export const LANGUAGE_PREFERENCE_NAME_KEYS = {
+  system: 'LANGUAGE_SYSTEM',
   'pt-BR': 'LANGUAGE_PT_BR',
   'en-US': 'LANGUAGE_EN_US'
-} as const satisfies Record<Language, TranslationKey>
+} as const satisfies Record<LanguagePreference, TranslationKey>
 
 export const LANGUAGE_FLAG_PATHS = {
   'pt-BR': '/languages/pt-BR.svg',

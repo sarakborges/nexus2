@@ -1,23 +1,18 @@
 .language-option {
   display: flex;
   place-items: center;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 8px;
 
   width: 100%;
-
-  .button-content {
-    gap: 8px;
-    width: 100%;
-    padding: 0 24px;
-  }
+  padding: 8px 24px;
 
   &__label {
     flex: 1;
-    padding: 12px 0;
+    padding: 4px 0;
 
     font-size: 12px;
     text-align: left;
-    text-shadow: 0 0 2px var(--color-neutral-strong);
   }
 
   &__selected-icon {

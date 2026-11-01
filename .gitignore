@@ -13,6 +13,7 @@ scripts/
 # Build
 build/
 dist/
+storybook-static/
 
 # Vercel
 .vercel/
