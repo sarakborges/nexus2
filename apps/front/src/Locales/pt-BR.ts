@@ -28,7 +28,7 @@ export const ptBRTranslations = {
   LANDING_FEATURE_COMMUNITIES_DESCRIPTION: 'Crie comunidades, participe de outras e organize membros com ferramentas de moderação.',
   LANDING_FEATURE_CONNECTIONS_TITLE: 'Conexões e conversas',
   LANDING_FEATURE_CONNECTIONS_DESCRIPTION: 'Envie solicitações, gerencie suas conexões e deixe mensagens nos perfis.',
-  LANDING_FOOTER_TEXT: 'Comece criando sua conta. Você pode configurar seus perfis depois.'
+  LANDING_FOOTER_TEXT: 'Comece criando sua conta. Você pode configurar seus perfis depois.',
 
   AUTH_SIGN_IN_TITLE: 'Entrar',
   AUTH_SIGN_IN_DESCRIPTION: 'Informe os dados da sua conta para continuar.',

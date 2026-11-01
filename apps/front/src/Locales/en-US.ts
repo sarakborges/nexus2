@@ -26,7 +26,7 @@ export const enUSTranslations = {
   LANDING_FEATURE_COMMUNITIES_DESCRIPTION: 'Create communities, join others, and manage members with moderation tools.',
   LANDING_FEATURE_CONNECTIONS_TITLE: 'Connections and conversations',
   LANDING_FEATURE_CONNECTIONS_DESCRIPTION: 'Send requests, manage your connections, and leave messages on profiles.',
-  LANDING_FOOTER_TEXT: 'Start by creating your account. You can set up your profiles later.'
+  LANDING_FOOTER_TEXT: 'Start by creating your account. You can set up your profiles later.',
 
   AUTH_SIGN_IN_TITLE: 'Sign in',
   AUTH_SIGN_IN_DESCRIPTION: 'Enter your account details to continue.',
