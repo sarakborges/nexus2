@@ -11,7 +11,7 @@ type RequestStateProps = {
   emptyMessage?: string
   errorMessage?: string
   onRetry?: () => void
-  children: ReactNode
+  children?: ReactNode
 }
 
 export function RequestState({
