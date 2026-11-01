@@ -70,7 +70,7 @@ export const ptBRTranslations = {
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Página não encontrada',
   NOT_FOUND_DESCRIPTION: 'O endereço pode estar incorreto ou a página pode ter sido movida.',
-  NOT_FOUND_HOME_LINK: 'Voltar para a página inicial'
+  NOT_FOUND_HOME_LINK: 'Voltar para a página inicial',
   RELATIONSHIP_SIGN_IN: "Entre para interagir com esta página.",
   RELATIONSHIP_ADD: "Adicionar como amigo",
   RELATIONSHIP_ACCEPT: "Aceitar solicitação",

@@ -68,7 +68,7 @@ export const enUSTranslations = {
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Page not found',
   NOT_FOUND_DESCRIPTION: 'The address may be incorrect or the page may have moved.',
-  NOT_FOUND_HOME_LINK: 'Return to the start page'
+  NOT_FOUND_HOME_LINK: 'Return to the start page',
   RELATIONSHIP_SIGN_IN: "Sign in to interact with this page.",
   RELATIONSHIP_ADD: "Add as friend",
   RELATIONSHIP_ACCEPT: "Accept request",

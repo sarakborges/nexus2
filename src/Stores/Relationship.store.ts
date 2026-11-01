@@ -6,6 +6,7 @@ import type {
 } from '@/Models/Relationship.model'
 import {
   getRelationships,
+  removeRelationship as buildRelationshipRemoval,
   saveRelationships,
   setRelationship as buildRelationshipUpdate
 } from '@/Services/Relationship'
@@ -58,11 +59,10 @@ export const useRelationshipStore = create<RelationshipStore>((set, get) => ({
       return false
     }
 
-    const previousRelationships = get().relationships
-    const updatedRelationships = previousRelationships.filter(
-      (relationship) =>
-        getOtherParticipant(relationship, firstId) !== secondId ||
-        !relationship.profiles.includes(firstId)
+    const updatedRelationships = buildRelationshipRemoval(
+      firstId,
+      secondId,
+      get().relationships
     )
 
     if (

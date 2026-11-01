@@ -5,6 +5,7 @@ import type {
   CreateCommunityInput
 } from '@/Models/Community.model'
 import {
+  CommunityError,
   createCommunity,
   getCommunityByUrl,
   getCommunities,
@@ -38,7 +39,7 @@ export const useCommunityStore = create<CommunityStore>((set) => ({
     const updatedCommunities = [...existingCommunities, community]
 
     if (!saveCommunities(updatedCommunities)) {
-      throw new Error('STORAGE_UNAVAILABLE')
+      throw new CommunityError('STORAGE_UNAVAILABLE')
     }
 
     set({ community, loadedUrl: community.url })
