@@ -15,6 +15,7 @@
     },
     "bff": {
       "root": "apps/bff",
+      "framework": "nestjs",
       "entrypoint": "src/main.ts",
       "installCommand": "npm ci --prefix ../.. --no-audit --no-fund",
       "bindings": [
@@ -28,6 +29,7 @@
     },
     "back": {
       "root": "apps/back",
+      "framework": "nestjs",
       "entrypoint": "src/main.ts",
       "installCommand": "npm ci --prefix ../.. --no-audit --no-fund"
     }
