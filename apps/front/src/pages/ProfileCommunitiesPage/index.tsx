@@ -40,10 +40,11 @@ export function ProfileCommunitiesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><section className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
       <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h1>
       <RequestState
         isLoading={communitiesQuery.isLoading}
+        isFetching={communitiesQuery.isFetching}
         isError={communitiesQuery.isError}
         isEmpty={communitiesQuery.isSuccess && totalItems === 0}
         emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}

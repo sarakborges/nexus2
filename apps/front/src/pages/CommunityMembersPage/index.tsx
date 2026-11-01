@@ -100,7 +100,7 @@ export function CommunityMembersPage() {
   ]
 
   return (
-    <main className="account-page"><section className="account-card">
+    <main className="account-page"><RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} /><section className="account-card">
       <header className="account-card__header">
         <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
         <Link className="account-card__link" to={`${ROUTES.community}/${community.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
@@ -110,6 +110,7 @@ export function CommunityMembersPage() {
           <h2>{t('COMMUNITY_PENDING_REQUESTS')}</h2>
           <RequestState
             isLoading={pendingQuery.isLoading}
+            isFetching={pendingQuery.isFetching}
             isError={pendingQuery.isError}
             isEmpty={pendingQuery.isSuccess && totalPending === 0}
             emptyMessage={t('COMMUNITY_PENDING_EMPTY')}
@@ -125,6 +126,7 @@ export function CommunityMembersPage() {
       </div>
       <RequestState
         isLoading={membersQuery.isLoading}
+        isFetching={membersQuery.isFetching}
         isError={membersQuery.isError}
         isEmpty={membersQuery.isSuccess && totalMembers === 0}
         emptyMessage={t(visibleTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : visibleTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}

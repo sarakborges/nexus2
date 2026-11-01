@@ -70,7 +70,7 @@ export function ProfileMessagesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><section className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
       <header className="account-card__header">
         <div><h1 className="account-card__title">{t('PROFILE_MESSAGES_TITLE', { name: profile.name })}</h1><p className="account-card__description">{t(isProfileOwner ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION' : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}</p></div>
         <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
@@ -96,12 +96,15 @@ export function ProfileMessagesPage() {
       )}
       <RequestState
         isLoading={messagesQuery.isLoading}
+        isFetching={messagesQuery.isFetching}
         isError={messagesQuery.isError}
         isEmpty={messagesQuery.isSuccess && totalItems === 0}
         emptyMessage={t('PROFILE_MESSAGES_EMPTY')}
         onRetry={() => void messagesQuery.refetch()}
       >
         <RequestState
+          isLoading={senderProfilesQuery.isLoading}
+          isFetching={senderProfilesQuery.isFetching}
           isError={senderProfilesQuery.isError}
           errorMessage={t('PROFILE_MESSAGES_SENDERS_ERROR')}
           onRetry={() => void senderProfilesQuery.refetch()}

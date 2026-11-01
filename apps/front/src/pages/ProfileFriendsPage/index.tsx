@@ -40,10 +40,11 @@ export function ProfileFriendsPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><section className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
       <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
       <RequestState
         isLoading={friendsQuery.isLoading}
+        isFetching={friendsQuery.isFetching}
         isError={friendsQuery.isError}
         isEmpty={friendsQuery.isSuccess && totalItems === 0}
         emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
