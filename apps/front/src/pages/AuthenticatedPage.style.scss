@@ -239,3 +239,36 @@
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }
+
+
+.account-card__section-title {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
+.settings-page__section {
+  display: grid;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-page__section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.settings-page__options,
+.settings-page__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-card__action--secondary {
+  color: var(--text-color);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+}

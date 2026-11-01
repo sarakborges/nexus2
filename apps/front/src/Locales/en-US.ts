@@ -1,4 +1,10 @@
 export const enUSTranslations = {
+  SETTINGS_DESCRIPTION: 'Manage your language, appearance, and account shortcuts.',
+  APPEARANCE_TITLE: 'Appearance',
+  APPEARANCE_DESCRIPTION: 'Follow your system preferences or choose a theme.',
+  SETTINGS_NAVIGATION_TITLE: 'Shortcuts',
+  SETTINGS_NAVIGATION_DESCRIPTION: 'Open the main areas of Nexus.',
+  SETTINGS_ACCOUNT_TITLE: 'Account',
   SETTINGS_TITLE: 'Settings',
   LANGUAGES_TITLE: 'Preferred language',
   LANGUAGE_SYSTEM: 'Use system language',

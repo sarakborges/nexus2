@@ -69,6 +69,7 @@ export function HomePage() {
           <Link className="account-card__action" to={ROUTES.createProfile}>{t('HOME_CREATE_PROFILE')}</Link>
           <Link className="account-card__action" to={ROUTES.communities}>{t('COMMUNITIES_TITLE')}</Link>
           <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
+          <Link className="account-card__action account-card__action--secondary" to={ROUTES.settings}>{t('SETTINGS_TITLE')}</Link>
         </div>
       </section>
     </main>

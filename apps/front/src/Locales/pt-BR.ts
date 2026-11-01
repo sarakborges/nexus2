@@ -1,6 +1,12 @@
 import type { enUSTranslations } from './en-US'
 
 export const ptBRTranslations = {
+  SETTINGS_DESCRIPTION: 'Gerencie o idioma, a aparência e os atalhos da sua conta.',
+  APPEARANCE_TITLE: 'Aparência',
+  APPEARANCE_DESCRIPTION: 'Escolha entre acompanhar as preferências do sistema ou definir um tema.',
+  SETTINGS_NAVIGATION_TITLE: 'Atalhos',
+  SETTINGS_NAVIGATION_DESCRIPTION: 'Acesse as principais áreas do Nexus.',
+  SETTINGS_ACCOUNT_TITLE: 'Conta',
   SETTINGS_TITLE: 'Configurações',
   LANGUAGES_TITLE: 'Idioma preferido',
   LANGUAGE_SYSTEM: 'Usar idioma do sistema',
