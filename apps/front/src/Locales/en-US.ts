@@ -88,6 +88,7 @@ export const enUSTranslations = {
   REQUEST_LOADING: 'Loading information...',
   REQUEST_FAILED: 'These details could not be loaded.',
   REQUEST_RETRY: 'Try again',
+  REQUEST_UPDATING: 'Updating information...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Page not found',
   NOT_FOUND_DESCRIPTION: 'The address may be incorrect or the page may have moved.',

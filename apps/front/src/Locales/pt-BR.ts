@@ -90,6 +90,7 @@ export const ptBRTranslations = {
   REQUEST_LOADING: 'Carregando informações...',
   REQUEST_FAILED: 'Não foi possível carregar estas informações.',
   REQUEST_RETRY: 'Tentar novamente',
+  REQUEST_UPDATING: 'Atualizando informações...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Página não encontrada',
   NOT_FOUND_DESCRIPTION: 'O endereço pode estar incorreto ou a página pode ter sido movida.',

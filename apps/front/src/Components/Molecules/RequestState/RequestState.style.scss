@@ -25,3 +25,10 @@
 @media (prefers-reduced-motion: reduce) {
   .request-state__spinner { animation: none; }
 }
+
+.request-state--inline {
+  justify-content: flex-start;
+  min-height: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}

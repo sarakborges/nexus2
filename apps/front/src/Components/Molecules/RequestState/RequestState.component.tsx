@@ -6,6 +6,7 @@ import './RequestState.style.scss'
 
 type RequestStateProps = {
   isLoading?: boolean
+  isFetching?: boolean
   isError?: boolean
   isEmpty?: boolean
   emptyMessage?: string
@@ -16,6 +17,7 @@ type RequestStateProps = {
 
 export function RequestState({
   isLoading = false,
+  isFetching = false,
   isError = false,
   isEmpty = false,
   emptyMessage,
@@ -47,9 +49,16 @@ export function RequestState({
     )
   }
 
+  const refreshingIndicator = isFetching ? (
+    <div className="request-state request-state--inline" role="status" aria-live="polite">
+      <span className="request-state__spinner" aria-hidden="true" />
+      <span>{t('REQUEST_UPDATING')}</span>
+    </div>
+  ) : null
+
   if (isEmpty) {
-    return <p className="account-card__description">{emptyMessage}</p>
+    return <>{refreshingIndicator}<p className="account-card__description">{emptyMessage}</p></>
   }
 
-  return <>{children}</>
+  return <>{refreshingIndicator}{children}</>
 }
