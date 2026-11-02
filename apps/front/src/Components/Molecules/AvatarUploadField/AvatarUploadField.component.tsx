@@ -1,10 +1,9 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import {
   deleteUploadedFile,
   uploadFile,
   updateCommunityAvatar,
   updateProfileAvatar,
-  type UploadPurpose
 } from '@/Services/Uploads'
 import './AvatarUploadField.style.scss'
 
@@ -43,7 +42,7 @@ export function AvatarUploadField({
   const [error, setError] = useState('')
   const [pendingUploadId, setPendingUploadId] = useState<string | null>(null)
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
     if (!file) return
@@ -51,7 +50,7 @@ export function AvatarUploadField({
     setError('')
     setIsUploading(true)
     try {
-      const uploaded = await uploadFile(file, purpose as UploadPurpose, targetId, actorProfileId)
+      const uploaded = await uploadFile(file, purpose, targetId, actorProfileId)
       if (targetId) {
         const result = purpose === 'profile-avatar'
           ? await updateProfileAvatar(targetId, uploaded.id)
@@ -59,6 +58,7 @@ export function AvatarUploadField({
         setPendingUploadId(null)
         onChange(result.picture)
       } else {
+        if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
         setPendingUploadId(uploaded.id)
         onChange(uploaded.url)
       }

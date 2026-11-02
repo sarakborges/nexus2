@@ -41,7 +41,7 @@ export type CreateUploadInput = {
   actorProfileId?: string
 }
 
-type SignedUploadResponse = { token?: string }
+type SignedUploadResponse = { url?: string }
 
 const AVATAR_BUCKET = 'nexus-avatars'
 const EDITOR_BUCKET = 'nexus-editor-images'
@@ -104,7 +104,7 @@ export class UploadsService {
       { method: 'POST', body: JSON.stringify({}) }
     )
     const signedData = await this.readJson<SignedUploadResponse>(signedResponse)
-    if (!signedData.token) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
+    if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
 
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record: UploadedFileRecord = {
@@ -127,8 +127,9 @@ export class UploadsService {
     }
     await this.data.write('media_files', [...records, record])
 
-    const uploadUrl = this.supabaseUrl + '/storage/v1/object/upload/sign/' +
-      bucket + '/' + encodedPath + '?token=' + encodeURIComponent(signedData.token)
+    const uploadUrl = signedData.url.startsWith('http')
+      ? signedData.url
+      : this.supabaseUrl + '/storage/v1' + signedData.url
     return { id, uploadUrl }
   }
 
