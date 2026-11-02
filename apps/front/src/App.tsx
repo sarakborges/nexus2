@@ -54,7 +54,7 @@ export function App() {
 
   return (
     <>
-      {hasAuthenticatedSession && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
+      {hasAuthenticatedSession && location.pathname !== ROUTES.landing && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
       <AppRoutes />
       <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
