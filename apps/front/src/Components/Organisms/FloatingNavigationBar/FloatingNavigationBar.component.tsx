@@ -118,6 +118,39 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   return createPortal(
     <div className="floating-navigation" ref={navigationRef}>
       <div className="floating-navigation__bar">
+        <nav className="floating-navigation__desktop-links" aria-label={t('NAVIGATION_LABEL')}>
+          <Link className="floating-navigation__desktop-link" to={ROUTES.home} aria-current={location.pathname === ROUTES.home ? 'page' : undefined} onClick={closePanels}>
+            <FiHome aria-hidden="true" />
+            <span>{t('HOME_TITLE')}</span>
+          </Link>
+          {profileRoute && (
+            <Link className="floating-navigation__desktop-link" to={profileRoute} aria-current={location.pathname === profileRoute ? 'page' : undefined} onClick={closePanels}>
+              <FiUsers aria-hidden="true" />
+              <span>{t('NAVIGATION_PROFILE')}</span>
+            </Link>
+          )}
+          {messagesRoute && (
+            <Link className="floating-navigation__desktop-link" to={messagesRoute} aria-current={location.pathname === messagesRoute ? 'page' : undefined} onClick={closePanels}>
+              <FiMessageCircle aria-hidden="true" />
+              <span>{t('NAVIGATION_MESSAGES')}</span>
+            </Link>
+          )}
+          <Link className="floating-navigation__desktop-link" to={ROUTES.communities} aria-current={location.pathname === ROUTES.communities ? 'page' : undefined} onClick={closePanels}>
+            <FiUsers aria-hidden="true" />
+            <span>{t('COMMUNITIES_TITLE')}</span>
+          </Link>
+          <Link className="floating-navigation__desktop-link" to={ROUTES.createProfile} aria-current={location.pathname === ROUTES.createProfile ? 'page' : undefined} onClick={closePanels}>
+            <FiUserPlus aria-hidden="true" />
+            <span>{t('HOME_CREATE_PROFILE')}</span>
+          </Link>
+          {currentProfile && (
+            <Link className="floating-navigation__desktop-link" to={ROUTES.createCommunity} aria-current={location.pathname === ROUTES.createCommunity ? 'page' : undefined} onClick={closePanels}>
+              <FiPlusCircle aria-hidden="true" />
+              <span>{t('COMMUNITIES_CREATE')}</span>
+            </Link>
+          )}
+        </nav>
+
         <button
           className="floating-navigation__icon-button"
           type="button"
