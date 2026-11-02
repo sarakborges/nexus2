@@ -136,6 +136,7 @@ export function CommunityPage() {
               <h2>{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h2>
               <div className="social-preview-panel__header-actions">
                 <span>{memberCount ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
                   </div>
             </header>
             <RequestState
