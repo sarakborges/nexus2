@@ -44,7 +44,9 @@ export function AvatarUploadField({
   const { t } = useTranslations()
   const inputRef = useRef<HTMLInputElement>(null)
   const showToast = useToastStore(state => state.showToast)
-  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const isFetching = useIsFetching() > 0
+  const isMutating = useIsMutating() > 0
+  const isRequestPending = isFetching || isMutating
   const [isUploading, setIsUploading] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [error, setError] = useState('')

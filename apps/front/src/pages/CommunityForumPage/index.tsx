@@ -54,7 +54,7 @@ export function CommunityForumPage() {
     enabled: Boolean(community?.id)
   })
   const topics = topicsQuery.data?.items ?? []
-  const authorIds = useMemo(() => [...new Set(topics.map(topic => topic.profileId))].sort(), [topics])
+  const authorIds = useMemo(() => [...new Set((topicsQuery.data?.items ?? []).map(topic => topic.profileId))].sort(), [topicsQuery.data?.items])
   const authorsQuery = useQuery({
     queryKey: queryKeys.profiles.byIds(authorIds),
     queryFn: () => getProfilesByIds(authorIds),

@@ -50,7 +50,7 @@ export function ProfileMessagesPage() {
   })
   const messages = messagesQuery.data?.items ?? []
   const totalItems = messagesQuery.data?.totalItems ?? 0
-  const senderIds = useMemo(() => [...new Set(messages.map(message => message.fromProfileId))].sort(), [messages])
+  const senderIds = useMemo(() => [...new Set((messagesQuery.data?.items ?? []).map(message => message.fromProfileId))].sort(), [messagesQuery.data?.items])
   const senderProfilesQuery = useQuery({
     queryKey: queryKeys.profiles.byIds(senderIds),
     queryFn: () => getProfilesByIds(senderIds),

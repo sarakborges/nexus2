@@ -30,7 +30,9 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const location = useLocation()
   const queryClient = useQueryClient()
   const navigationRef = useRef<HTMLDivElement>(null)
-  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const isFetching = useIsFetching() > 0
+  const isMutating = useIsMutating() > 0
+  const isRequestPending = isFetching || isMutating
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
   const activePanel = openPanel?.pathname === location.pathname ? openPanel.panel : null

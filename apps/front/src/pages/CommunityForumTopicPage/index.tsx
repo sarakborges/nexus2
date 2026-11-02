@@ -56,7 +56,7 @@ export function CommunityForumTopicPage() {
   const detail = topicQuery.data
   const topic = detail?.topic
   const replies = detail?.replies.items ?? []
-  const authorIds = useMemo(() => [...new Set([topic?.profileId, ...replies.map(reply => reply.profileId)].filter((id): id is string => Boolean(id)))].sort(), [topic?.profileId, replies])
+  const authorIds = useMemo(() => [...new Set([topic?.profileId, ...(detail?.replies.items ?? []).map(reply => reply.profileId)].filter((id): id is string => Boolean(id)))].sort(), [topic?.profileId, detail?.replies.items])
   const authorsQuery = useQuery({
     queryKey: queryKeys.profiles.byIds(authorIds),
     queryFn: () => getProfilesByIds(authorIds),
