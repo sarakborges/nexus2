@@ -52,6 +52,7 @@ export function sanitizeRichText(value: string): string {
 export function getRichTextPlainText(value: string): string {
   return sanitizeHtml(value, { allowedTags: [], allowedAttributes: {} })
     .replace(/&nbsp;|&#160;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
