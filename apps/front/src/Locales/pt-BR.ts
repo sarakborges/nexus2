@@ -93,6 +93,7 @@ export const ptBRTranslations = {
   PROFILE_TYPE_BUSINESS: 'Negócios',
   PROFILE_PICTURE_LABEL: 'URL da imagem (opcional)',
   PROFILE_ABOUT_LABEL: 'Sobre',
+  PROFILE_ABOUT_EMPTY: 'Este perfil ainda não adicionou uma apresentação.',
   PROFILE_PICTURE_ALT: 'Foto de perfil de {{name}}',
   PROFILE_ERROR_URL_TAKEN: 'Este endereço de perfil já está em uso.',
   PROFILE_ERROR_INVALID: 'Informe um nome e um endereço válido para o perfil. A URL da imagem também deve ser válida quando preenchida.',
