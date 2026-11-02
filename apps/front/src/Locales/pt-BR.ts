@@ -173,8 +173,6 @@ export const ptBRTranslations = {
   COMMUNITY_JOIN: "Participar da comunidade",
   COMMUNITY_ACCEPT: "Aceitar solicitação para participar",
   COMMUNITY_LEAVE: "Sair da comunidade",
-  COMMUNITY_BLOCK: "Bloquear comunidade",
-  COMMUNITY_UNBLOCK: "Desbloquear comunidade",
   COMMUNITY_CLEAR_BLOCK: "Remover bloqueio antigo",
   RELATIONSHIP_CANCEL_REQUEST: "Cancelar solicitação",
   RELATIONSHIP_LEGACY_PENDING: "Esta solicitação antiga não registra quem a enviou. Limpe-a para começar novamente.",
