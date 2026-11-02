@@ -133,7 +133,7 @@ export function ProfileMessagesPage() {
                     {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
                     <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
                   </header>
-                  <p className="profile-message__content">{message.content}</p>
+                  <div className="profile-message__content rich-text-content" dangerouslySetInnerHTML={{ __html: message.content }} />
                 </article>
               )
             })}
