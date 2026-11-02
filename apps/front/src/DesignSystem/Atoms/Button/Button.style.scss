@@ -23,12 +23,12 @@
   &:disabled,
   &[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; }
 
-  &:not(:disabled):hover {
+  &:not(:disabled):not([aria-disabled='true']):hover {
     transform: translateY(-1px);
     box-shadow: 0 3px 10px rgb(0 0 0 / 10%);
   }
 
-  &:not(:disabled):active {
+  &:not(:disabled):not([aria-disabled='true']):active {
     transform: translateY(0) scale(0.98);
     box-shadow: none;
   }
