@@ -86,7 +86,7 @@ export function ProfileMessagesPage() {
       {canSendMessage ? (
         <form className="profile-message-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <Label htmlFor="profile-message-content">{t('PROFILE_MESSAGES_COMPOSE_LABEL')}</Label>
+            <Label id="profile-message-content-label" htmlFor="profile-message-content">{t('PROFILE_MESSAGES_COMPOSE_LABEL')}</Label>
             <RichTextEditor
               id="profile-message-content"
               value={content}
