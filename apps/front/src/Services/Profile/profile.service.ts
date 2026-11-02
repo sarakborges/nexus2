@@ -28,7 +28,7 @@ export async function createUserProfile(input: CreateProfileInput): Promise<Prof
   const { data } = await api.post<Profile>('/profiles', input)
   return data
 }
-export async function updateUserProfile(profileId: string, input: CreateProfileInput): Promise<Profile> {
+export async function updateUserProfile(profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {
   const { data } = await api.put<Profile>(`/profiles/${encodeURIComponent(profileId)}`, input)
   return data
 }

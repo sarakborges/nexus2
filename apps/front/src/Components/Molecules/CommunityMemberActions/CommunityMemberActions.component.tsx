@@ -4,6 +4,7 @@ import type { CommunityRelationship, CommunityRelationshipType } from '@nexus/co
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { useToastStore } from '@/Stores/Toast.store'
 import {
   demoteCommunityModerator, removeCommunityRelationship, setCommunityRelationship,
   transferCommunityOwnership
@@ -25,6 +26,7 @@ type Operation =
 export function CommunityMemberActions({ memberProfileId, communityId, actorProfileId, actorRole, relationship }: Props) {
   const { t } = useTranslations()
   const queryClient = useQueryClient()
+  const showToast = useToastStore(state => state.showToast)
   const [confirmTransfer, setConfirmTransfer] = useState(false)
   const [lastOperation, setLastOperation] = useState<Operation | null>(null)
   const mutation = useMutation({
@@ -34,7 +36,8 @@ export function CommunityMemberActions({ memberProfileId, communityId, actorProf
       if (operation.type === 'transfer') return transferCommunityOwnership(actorProfileId, memberProfileId, communityId)
       return setCommunityRelationship(memberProfileId, communityId, operation.relationshipType, actorProfileId)
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, operation) => {
+      showToast(t('TOAST_COMMUNITY_MODERATION'))
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['community-relationships', communityId] }),
         queryClient.invalidateQueries({ queryKey: ['community-members', communityId] })

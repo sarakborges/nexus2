@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
+import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { useEditorState } from 'react-simple-wysiwyg'
 import Editor, {
   BtnBold,
@@ -21,13 +22,16 @@ type InsertImageButtonProps = {
   label: string
   uploadErrorLabel: string
   onUploadImage: (file: File) => Promise<string>
+  onUploadingChange: (isUploading: boolean) => void
 }
 
-function InsertImageButton({ label, uploadErrorLabel, onUploadImage }: InsertImageButtonProps) {
+function InsertImageButton({ label, uploadErrorLabel, onUploadImage, onUploadingChange }: InsertImageButtonProps) {
   const editorState = useEditorState()
   const inputRef = useRef<HTMLInputElement>(null)
   const selectionRef = useRef<Range | null>(null)
   const [error, setError] = useState('')
+  const [isUploading, setIsUploading] = useState(false)
+  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
 
   const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -45,6 +49,8 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage }: InsertIma
     if (!file) return
 
     setError('')
+    setIsUploading(true)
+    onUploadingChange(true)
     try {
       const imageUrl = await onUploadImage(file)
       editorState.$el?.focus()
@@ -57,6 +63,9 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage }: InsertIma
       selectionRef.current = null
     } catch {
       setError(uploadErrorLabel)
+    } finally {
+      setIsUploading(false)
+      onUploadingChange(false)
     }
   }
 
@@ -68,6 +77,7 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage }: InsertIma
         title={label}
         aria-label={label}
         tabIndex={-1}
+        disabled={isRequestPending || isUploading}
         onMouseDown={handleMouseDown}
       >
         <FiImage aria-hidden="true" />
@@ -106,6 +116,8 @@ export function RichTextEditor({
   maxTextLength,
   placeholder
 }: RichTextEditorProps) {
+  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const [isImageUploading, setIsImageUploading] = useState(false)
   const handleChange = (nextValue: string) => {
     if (maxTextLength !== undefined) {
       const text = nextValue
@@ -123,6 +135,7 @@ export function RichTextEditor({
   }
   return (
     <div className="rich-text-editor" data-editor-id={id}>
+      <fieldset className="rich-text-editor__fieldset" disabled={isRequestPending || isImageUploading}>
       <Editor
         id={id}
         role="textbox"
@@ -149,11 +162,13 @@ export function RichTextEditor({
             label={imageButtonLabel}
             uploadErrorLabel={imageUploadErrorLabel}
             onUploadImage={onUploadImage}
+            onUploadingChange={setIsImageUploading}
           />
           <BtnClearFormatting />
           <HtmlButton />
         </Toolbar>
       </Editor>
+      </fieldset>
     </div>
   )
 }

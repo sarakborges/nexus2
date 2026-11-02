@@ -8,6 +8,7 @@ export const ROUTES = {
   home: '/home',
   profile: '/profile',
   community: '/community',
+  communityForum: '/forum',
   communities: '/communities',
   notFound: '*'
 } as const

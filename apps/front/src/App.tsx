@@ -11,6 +11,8 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { AppRoutes } from '@/routes'
+import { ToastViewport } from '@/Components/Organisms/Toast/ToastViewport.component'
+import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 
 export function App() {
   const { language } = useTranslations()
@@ -57,6 +59,7 @@ export function App() {
     <>
       {hasAuthenticatedSession && shouldInitializeAuth && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
       <AppRoutes />
+      <ToastViewport />
       <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>
   )

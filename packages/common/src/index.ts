@@ -7,11 +7,16 @@ export type ProfileType = 'social' | 'rp' | 'business'
 export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType }
 export type CreateProfileInput = Omit<Profile, 'id'>
 export type Community = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType }
-export type CreateCommunityInput = Omit<Community, 'id'>
+export type CreateCommunityInput = Omit<Community, 'id' | 'type'>
 export type RelationshipType = 'connection' | 'requested' | 'blocked'
 export type Relationship = { profiles: [string, string]; type: RelationshipType; requestedBy: string | null; blockedBy: string | null; updatedAt: number }
 export type CommunityRelationshipType = 'owner' | 'moderator' | 'connection' | 'requested' | 'blocked'
 export type CommunityRelationship = { profiles: [string, string]; type: CommunityRelationshipType; requestedBy: string | null; blockedBy: string | null; updatedAt: number }
+
+export type CommunityForumTopic = { id: string; communityId: string; profileId: string; title: string; content: string; createdAt: number; updatedAt: number; isPinned: boolean; isLocked: boolean }
+export type CommunityForumTopicSummary = CommunityForumTopic & { replyCount: number }
+export type CommunityForumReply = { id: string; topicId: string; communityId: string; profileId: string; content: string; createdAt: number; updatedAt: number }
+export type CommunityForumTopicDetail = { topic: CommunityForumTopicSummary; replies: PaginatedResult<CommunityForumReply> }
 export type ProfileMessage = { id: string; fromProfileId: string; toProfileId: string; content: string; createdAt: number }
 export type AuthenticatedUser = { id: string; email: string; profiles: string[]; currentProfile: string | null }
 export type AuthTokenPair = { accessToken: string; refreshToken: string; expiresIn: number; user: AuthenticatedUser }

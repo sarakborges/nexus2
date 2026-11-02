@@ -10,6 +10,8 @@ import { getProfilesByIds, getProfileByUrl } from '@/Services/Profile'
 import { createProfileMessage, getProfileMessages, ProfileMessageError } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { uploadFile } from '@/Services/Uploads'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
@@ -29,6 +31,7 @@ export function ProfileMessagesPage() {
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const session = useAuthStore(state => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
+  const showToast = useToastStore(state => state.showToast)
   const { page, pageSize, setPage } = useUrlPagination()
   const [content, setContent] = useState('')
   const profileQuery = useQuery({
@@ -37,6 +40,8 @@ export function ProfileMessagesPage() {
     enabled: Boolean(requestedUrl)
   })
   const profile = profileQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(profile?.type ?? 'social')
+  const canInteract = typeCompatibility.isCompatible && !typeCompatibility.isChecking
   const isProfileOwner = Boolean(profile && session?.user.profiles.includes(profile.id))
   const messagesQuery = useQuery({
     queryKey: queryKeys.profileMessages(profile?.id ?? '', session?.user.id ?? null, page, pageSize),
@@ -56,12 +61,13 @@ export function ProfileMessagesPage() {
     [senderProfilesQuery.data]
   )
   const messageSenderProfileId = currentProfileId ?? (isProfileOwner ? profile?.id ?? null : null)
-  const canSendMessage = Boolean(profile && session && messageSenderProfileId)
+  const canSendMessage = Boolean(profile && session && messageSenderProfileId && canInteract)
   const sendMessageMutation = useMutation({
     mutationFn: () => createProfileMessage(messageSenderProfileId!, profile!.id, content),
     onSuccess: async () => {
       setContent('')
       if (page !== 1) setPage(1)
+      showToast(t('TOAST_MESSAGE_SENT'))
       await queryClient.invalidateQueries({ queryKey: ['profile-messages', profile?.id] })
     }
   })
@@ -79,6 +85,7 @@ export function ProfileMessagesPage() {
 
   return (
     <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
+      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <header className="account-card__header">
         <div><h1 className="account-card__title">{t('PROFILE_MESSAGES_TITLE', { name: profile.name })}</h1><p className="account-card__description">{t(isProfileOwner ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION' : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}</p></div>
         <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>

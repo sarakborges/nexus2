@@ -151,3 +151,10 @@
   color: var(--color-danger, #c33);
   font-size: 12px;
 }
+
+.rich-text-editor__fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}

@@ -9,6 +9,7 @@ import { getCommunityRelationships, removeCommunityRelationship, setCommunityRel
 import { getRelationships, removeRelationship, setRelationship } from '@/Services/Relationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
 
 type RelationshipActionsProps = {
   targetId: string
@@ -21,6 +22,7 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
   const queryClient = useQueryClient()
   const session = useAuthStore(state => state.session)
   const sourceId = session?.user.currentProfile ?? null
+  const showToast = useToastStore(state => state.showToast)
   const isCommunity = targetKind === 'community'
   const canQuery = Boolean(session && sourceId && (isCommunity || !session.user.profiles.includes(targetId)))
   const relationshipsQuery = useQuery({
@@ -48,7 +50,17 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
       }
       await setRelationship(sourceId, targetId, action.type as RelationshipType)
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, action) => {
+      const toastKey = action.type === 'remove'
+        ? (isCommunity ? 'TOAST_COMMUNITY_LEFT' : 'TOAST_RELATIONSHIP_REMOVED')
+        : action.type === 'requested'
+          ? (isCommunity ? 'TOAST_COMMUNITY_JOINED' : 'TOAST_RELATIONSHIP_REQUESTED')
+          : action.type === 'blocked'
+            ? 'TOAST_RELATIONSHIP_BLOCKED'
+            : action.type === 'connection'
+              ? (isCommunity ? 'TOAST_COMMUNITY_ACCEPTED' : 'TOAST_RELATIONSHIP_CONNECTED')
+              : 'TOAST_COMMUNITY_MODERATION'
+      showToast(t(toastKey))
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['relationships'] }),
         queryClient.invalidateQueries({ queryKey: ['community-relationships'] })

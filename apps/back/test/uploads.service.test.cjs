@@ -7,20 +7,22 @@ const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
 
-function createHarness(initial = {}) {
+function createHarness(initial = {}, activeProfileId = null) {
   const collections = new Map(Object.entries(initial))
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async write(name, records) { collections.set(name, structuredClone(records)) }
   }
   const auth = {
-    async ownsProfile(_userId, profileId) { return profileId === 'profile-1' },
+    async ownsProfile(_userId, profileId) { return profileId === 'profile-1' || profileId === activeProfileId },
     async getUser(id) {
       const profiles = id === 'sender-user'
         ? ['sender-profile']
         : id === 'recipient-user'
           ? ['recipient-profile']
-          : []
+          : activeProfileId
+            ? [activeProfileId]
+            : []
       return {
         id,
         email: 'user@example.test',
@@ -241,4 +243,44 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
   assert.deepEqual(deleted.find(item => item.url.endsWith('/nexus-avatars')).body.prefixes, ['profiles/user-1/draft.png'])
   assert.deepEqual(deleted.find(item => item.url.endsWith('/nexus-editor-images')).body.prefixes, ['editor/user-1/old.png'])
   assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('community avatar uploads reject staff profiles with a different type', async () => {
+  const { service } = createHarness({
+    community_relationships: [
+      { profiles: ['owner-profile', 'community-1'], type: 'owner' },
+      { profiles: ['profile-1', 'community-1'], type: 'moderator' }
+    ],
+    profiles: [{ id: 'owner-profile', type: 'social' }, { id: 'profile-1', type: 'rp' }],
+    communities: [{ id: 'community-1', type: 'social' }]
+  })
+
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'community-avatar',
+      targetId: 'community-1',
+      actorProfileId: 'profile-1',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_TYPE_MISMATCH'
+  )
+})
+
+test('profile avatar upload cannot target a profile of another type than the active profile', async () => {
+  const { service } = createHarness({
+    profiles: [
+      { id: 'profile-1', type: 'rp' },
+      { id: 'profile-2', type: 'social' }
+    ]
+  }, 'profile-2')
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'profile-avatar',
+      targetId: 'profile-1',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_TYPE_MISMATCH'
+  )
 })

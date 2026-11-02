@@ -9,6 +9,7 @@ import { getProfileFriends } from '@/Services/Relationship'
 import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import '../AuthenticatedPage.style.scss'
 
 export function ProfileFriendsPage() {
@@ -21,6 +22,8 @@ export function ProfileFriendsPage() {
     enabled: Boolean(normalized)
   })
   const profile = profileQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(profile?.type ?? 'social')
+  const canInteract = typeCompatibility.isCompatible && !typeCompatibility.isChecking
   const { page, pageSize, setPage } = useUrlPagination()
   const friendsQuery = useQuery({
     queryKey: queryKeys.relationships.friends(profile?.id ?? '', page, pageSize),
@@ -40,7 +43,7 @@ export function ProfileFriendsPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
       <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
       <RequestState
         isLoading={friendsQuery.isLoading}
@@ -53,7 +56,7 @@ export function ProfileFriendsPage() {
         <div className="account-card__profile-list">{friends.map(friend => (
           <div className="account-card__profile-entry" key={friend.id}>
             <Link className="account-card__link" to={`${ROUTES.profile}/${friend.url}`}>{friend.name}</Link>
-            <RelationshipActions targetId={friend.id} />
+            {canInteract && <RelationshipActions targetId={friend.id} />}
           </div>
         ))}</div>
       </RequestState>

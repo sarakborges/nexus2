@@ -8,6 +8,7 @@ import { getProfileByUrl } from '@/Services/Profile'
 import { getProfileFriends } from '@/Services/Relationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './ProfilePage.style.scss'
@@ -39,6 +40,8 @@ export function ProfilePage() {
     enabled: Boolean(requestedUrl)
   })
   const profile = profileQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(profile?.type ?? 'social')
+  const canInteract = !session || (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
 
   const friendsQuery = useQuery({
     queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 16),
@@ -67,6 +70,7 @@ export function ProfilePage() {
   return (
     <main className="social-page social-page--profile">
       <RequestState isFetching={profileQuery.isFetching} />
+      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <div className="social-page__layout">
         <aside className="social-page__left-column">
           <div className="social-sidebar-card">
@@ -75,7 +79,7 @@ export function ProfilePage() {
               ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{profile.name}</h1>
-            {session?.user.profiles.includes(profile.id) && (
+            {canInteract && session?.user.profiles.includes(profile.id) && (
               <AvatarUploadField
                 label={t('PROFILE_PICTURE_LABEL')}
                 value={profile.picture}
@@ -91,7 +95,7 @@ export function ProfilePage() {
                 emptyLabel={t('UPLOAD_EMPTY')}
               />
             )}
-            <RelationshipActions targetId={profile.id} />
+            {canInteract && <RelationshipActions targetId={profile.id} />}
           </section>
 
           <nav className="social-side-menu" aria-label={t('PROFILE_TITLE')}>
@@ -100,7 +104,7 @@ export function ProfilePage() {
             <Link to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
             <Link to={ROUTES.profile + '/' + profile.url + '/messages'}>{t('PROFILE_MESSAGES_LINK')}</Link>
           </nav>
-          {isOwner && (
+          {isOwner && canInteract && (
             <Link className="social-sidebar-card__edit" to={ROUTES.profile + '/' + profile.url + '/edit'}>
               {t('PROFILE_EDIT')}
             </Link>

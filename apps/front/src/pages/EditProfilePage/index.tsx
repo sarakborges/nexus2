@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { Profile, ProfileType } from '@nexus/common'
+import type { Profile } from '@nexus/common'
 import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
@@ -12,13 +12,13 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import '../AuthPage.style.scss'
 
 type ProfileForm = {
   name: string
   url: string
   about: string
-  type: ProfileType
 }
 
 export function EditProfilePage() {
@@ -34,6 +34,7 @@ export function EditProfilePage() {
     enabled: Boolean(requestedUrl)
   })
   const profile = profileQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(profile?.type ?? 'social')
   const initializedProfileId = useRef<string | null>(null)
   const [form, setForm] = useState<ProfileForm | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -41,7 +42,7 @@ export function EditProfilePage() {
   useEffect(() => {
     if (!profile || initializedProfileId.current === profile.id) return
     initializedProfileId.current = profile.id
-    setForm({ name: profile.name, url: profile.url, about: profile.about, type: profile.type })
+    setForm({ name: profile.name, url: profile.url, about: profile.about })
   }, [profile])
 
   const updateMutation = useMutation({
@@ -51,8 +52,7 @@ export function EditProfilePage() {
         name: form.name,
         url: form.url,
         picture: profile.picture,
-        about: form.about,
-        type: form.type
+        about: form.about
       })
     },
     onSuccess: async updated => {
@@ -71,6 +71,8 @@ export function EditProfilePage() {
   }
   if (!profile) return <NotFoundPage />
   if (!session?.user.profiles.includes(profile.id)) return <NotFoundPage />
+  if (typeCompatibility.isChecking) return <main className="auth-page"><section className="auth-card"><RequestState isLoading /></section></main>
+  if (!typeCompatibility.isCompatible) return <main className="auth-page"><section className="auth-card"><p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p></section></main>
   if (!form) return <main className="auth-page"><section className="auth-card"><RequestState isLoading /></section></main>
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -113,14 +115,6 @@ export function EditProfilePage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
           <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="sara-borges" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
-          <div className="form-field">
-            <Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label>
-            <select className="input" id="profile-type" value={form.type} onChange={event => setForm(current => current ? { ...current, type: event.target.value as ProfileType } : current)} required>
-              <option value="social">{t('PROFILE_TYPE_SOCIAL')}</option>
-              <option value="rp">{t('PROFILE_TYPE_RP')}</option>
-              <option value="business">{t('PROFILE_TYPE_BUSINESS')}</option>
-            </select>
-          </div>
           <div className="form-field">
             <Label id="profile-about-label" htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
             <RichTextEditor

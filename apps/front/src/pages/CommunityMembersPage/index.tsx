@@ -11,6 +11,7 @@ import { getCommunityMembers, getCommunityRelationships, getPendingCommunityMemb
 import { getCommunityByUrl } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 
@@ -33,6 +34,8 @@ export function CommunityMembersPage() {
     enabled: Boolean(normalized)
   })
   const community = communityQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
+  const canInteract = typeCompatibility.isCompatible && !typeCompatibility.isChecking
   const communityId = community?.id
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(communityId ?? '', session?.user.id ?? null),
@@ -53,7 +56,7 @@ export function CommunityMembersPage() {
   const pendingQuery = useQuery({
     queryKey: queryKeys.pendingCommunityMembers(communityId ?? '', currentProfileId ?? '', pendingPage, pendingPageSize),
     queryFn: () => getPendingCommunityMembers(communityId!, currentProfileId!, { page: pendingPage, pageSize: pendingPageSize }),
-    enabled: Boolean(communityId && currentProfileId && isStaff && relationshipsQuery.isSuccess)
+    enabled: Boolean(communityId && currentProfileId && isStaff && relationshipsQuery.isSuccess && canInteract)
   })
   const members: Member[] = membersQuery.data?.items ?? []
   const totalMembers = membersQuery.data?.totalItems ?? 0
@@ -84,7 +87,7 @@ export function CommunityMembersPage() {
           <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name}</Link>
           {roleKey && <span className="community-member__role">{t(roleKey)}</span>}
         </div>
-        {isStaff && currentProfileId && profile.role !== 'owner' && (
+        {isStaff && canInteract && currentProfileId && profile.role !== 'owner' && (
           <CommunityMemberActions memberProfileId={profile.id} communityId={community.id} actorProfileId={currentProfileId} actorRole={currentRole as 'owner' | 'moderator'} relationship={relationship} />
         )}
       </div>
@@ -100,7 +103,7 @@ export function CommunityMembersPage() {
   ]
 
   return (
-    <main className="account-page"><RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} /><section className="account-card">
+    <main className="account-page"><RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
       <header className="account-card__header">
         <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
         <Link className="account-card__link" to={`${ROUTES.community}/${community.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>

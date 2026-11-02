@@ -27,5 +27,7 @@ export const queryKeys = {
   pendingCommunityMembers: (communityId: string, actorProfileId: string, page: number, pageSize: number) =>
     ['community-members', communityId, 'pending', actorProfileId, page, pageSize] as const,
   profileMessages: (profileId: string, viewerUserId: string | null, page: number, pageSize: number) =>
-    ['profile-messages', profileId, viewerUserId, page, pageSize] as const
+    ['profile-messages', profileId, viewerUserId, page, pageSize] as const,
+  communityForumTopics: (communityId: string, page: number, pageSize: number) => ['community-forum', communityId, 'topics', page, pageSize] as const,
+  communityForumTopic: (communityId: string, topicId: string, page: number, pageSize: number) => ['community-forum', communityId, 'topic', topicId, page, pageSize] as const
 }

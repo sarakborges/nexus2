@@ -11,6 +11,7 @@ import { createUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
 import '../AuthPage.style.scss'
 
 export function CreateProfilePage() {
@@ -19,6 +20,7 @@ export function CreateProfilePage() {
   const { t } = useTranslations()
   const user = useAuthStore(state => state.session?.user)
   const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
+  const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [picture, setPicture] = useState('')
@@ -36,6 +38,7 @@ export function CreateProfilePage() {
       queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
       await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned', user?.id] })
+      showToast(t('TOAST_PROFILE_CREATED'))
     }
   })
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

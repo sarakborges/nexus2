@@ -1,4 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { useToastStore } from '@/Stores/Toast.store'
+import { useTranslations } from '@/Hooks/Language'
+import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import {
   deleteUploadedFile,
   uploadFile,
@@ -38,7 +41,10 @@ export function AvatarUploadField({
   errorLabel,
   emptyLabel
 }: AvatarUploadFieldProps) {
+  const { t } = useTranslations()
   const inputRef = useRef<HTMLInputElement>(null)
+  const showToast = useToastStore(state => state.showToast)
+  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
   const [isUploading, setIsUploading] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [error, setError] = useState('')
@@ -59,10 +65,12 @@ export function AvatarUploadField({
           : await updateCommunityAvatar(targetId, actorProfileId!, uploaded.id)
         setPendingUploadId(null)
         onChange(result.picture)
+        showToast(t('TOAST_AVATAR_UPDATED'))
       } else {
         if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
         setPendingUploadId(uploaded.id)
         onChange(uploaded.url)
+        showToast(t('TOAST_AVATAR_UPDATED'))
       }
     } catch {
       setError(errorLabel)
@@ -80,10 +88,12 @@ export function AvatarUploadField({
           ? await updateProfileAvatar(targetId, null)
           : await updateCommunityAvatar(targetId, actorProfileId!, null)
         onChange(result.picture)
+        showToast(t('TOAST_AVATAR_REMOVED'))
       } else {
         if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
         setPendingUploadId(null)
         onChange('')
+        showToast(t('TOAST_AVATAR_REMOVED'))
       }
     } catch {
       setError(errorLabel)
@@ -92,7 +102,7 @@ export function AvatarUploadField({
     }
   }
 
-  const busy = isUploading || isRemoving
+  const busy = isUploading || isRemoving || isRequestPending
 
   return (
     <div className="avatar-upload-field">

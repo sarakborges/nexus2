@@ -1,6 +1,8 @@
 export { CommunitiesPage } from './CommunitiesPage'
 export { CommunityMembersPage } from './CommunityMembersPage'
 export { CommunityPage } from './CommunityPage'
+export { CommunityForumPage } from './CommunityForumPage'
+export { CommunityForumTopicPage } from './CommunityForumTopicPage'
 export { CreateCommunityPage } from './CreateCommunityPage'
 export { CreateProfilePage } from './CreateProfilePage'
 export { EditCommunityPage } from './EditCommunityPage'

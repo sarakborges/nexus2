@@ -7,6 +7,7 @@ import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityMembers, getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityPage.style.scss'
@@ -40,6 +41,8 @@ export function CommunityPage() {
     enabled: Boolean(requestedUrl)
   })
   const community = communityQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
+  const canInteract = !session || (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
     queryFn: () => getCommunityRelationships(community!.id),
@@ -68,12 +71,13 @@ export function CommunityPage() {
 
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
-  const avatarManager = relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator')
-  const ownerRelationship = relationshipsQuery.data?.find(record => record.type === 'owner') ?? null
+  const avatarManager = canInteract ? relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator') : undefined
+  const ownerRelationship = canInteract ? relationshipsQuery.data?.find(record => record.type === 'owner') ?? null : null
 
   return (
     <main className="social-page social-page--community">
       <RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />
+      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <div className="social-page__layout">
         <aside className="social-page__left-column">
           <div className="social-sidebar-card">
@@ -99,12 +103,13 @@ export function CommunityPage() {
                 emptyLabel={t('UPLOAD_EMPTY')}
               />
             )}
-            <RelationshipActions targetId={community.id} targetKind="community" />
+            {canInteract && <RelationshipActions targetId={community.id} targetKind="community" />}
           </section>
 
           <nav className="social-side-menu" aria-label={t('COMMUNITY_CREATE_TITLE')}>
             <Link to={ROUTES.community + '/' + community.url} aria-current="page">{t('COMMUNITY_ABOUT_LABEL')}</Link>
             <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
+            <Link to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_TITLE')}</Link>
           </nav>
           {ownerRelationship && (
             <Link className="social-sidebar-card__edit" to={ROUTES.community + '/' + community.url + '/edit'}>

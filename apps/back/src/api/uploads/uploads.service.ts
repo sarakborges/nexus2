@@ -396,14 +396,29 @@ export class UploadsService {
     if (!await this.auth.ownsProfile(userId, profileId)) {
       throw new ForbiddenException('PROFILE_NOT_OWNED')
     }
+    const user = await this.auth.getUser(userId)
+    if (!user.currentProfile) return
+    const profiles = await this.data.read<{ id: string; type: string }>('profiles')
+    const currentProfile = profiles.find(profile => profile.id === user.currentProfile)
+    const targetProfile = profiles.find(profile => profile.id === profileId)
+    if (currentProfile && targetProfile && currentProfile.type !== targetProfile.type) {
+      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    }
   }
 
   private async assertCommunityStaff(userId: string, communityId: string, actorProfileId: string): Promise<void> {
     await this.assertOwnsProfile(userId, actorProfileId)
-    const relationships = await this.data.read<{
-      profiles: [string, string]
-      type: string
-    }>('community_relationships')
+    const [relationships, profiles, communities] = await Promise.all([
+      this.data.read<{ profiles: [string, string]; type: string }>('community_relationships'),
+      this.data.read<{ id: string; type: string }>('profiles'),
+      this.data.read<{ id: string }>('communities')
+    ])
+    const actor = profiles.find(item => item.id === actorProfileId)
+    const community = communities.find(item => item.id === communityId)
+    const ownerProfileId = relationships.find(item => item.profiles[1] === communityId && item.type === 'owner')?.profiles[0]
+    const owner = ownerProfileId ? profiles.find(item => item.id === ownerProfileId) : undefined
+    if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
     const role = relationships.find(item =>
       item.profiles[0] === actorProfileId && item.profiles[1] === communityId
     )?.type

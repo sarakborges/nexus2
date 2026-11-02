@@ -9,6 +9,7 @@ import { getProfileCommunities } from '@/Services/Community'
 import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import '../AuthenticatedPage.style.scss'
 
 export function ProfileCommunitiesPage() {
@@ -21,6 +22,7 @@ export function ProfileCommunitiesPage() {
     enabled: Boolean(normalized)
   })
   const profile = profileQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(profile?.type ?? 'social')
   const { page, pageSize, setPage } = useUrlPagination()
   const communitiesQuery = useQuery({
     queryKey: queryKeys.communities.byProfile(profile?.id ?? '', page, pageSize),
@@ -40,7 +42,7 @@ export function ProfileCommunitiesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} /><section className="account-card">
+    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
       <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h1>
       <RequestState
         isLoading={communitiesQuery.isLoading}

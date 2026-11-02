@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
-import { IsIn, IsString, MaxLength, MinLength } from 'class-validator'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
 import type { CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
@@ -13,20 +13,24 @@ class CreateProfileDto implements CreateProfileInput {
   @IsString() @MaxLength(12000) about!: string
   @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
 }
+class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
+  @IsString() @MaxLength(80) name!: string
+  @IsString() url!: string
+  @IsString() picture!: string
+  @IsString() @MaxLength(12000) about!: string
+}
 class CreateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(80) name!: string
   @IsString() url!: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
-  @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
   @IsString() ownerProfileId!: string
 }
-class UpdateCommunityDto implements Omit<CreateCommunityInput, 'ownerProfileId'> {
+class UpdateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(80) name!: string
   @IsString() url!: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
-  @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
 }
 class ProfileRelationDto {
   @IsString() sourceProfileId!: string
@@ -43,6 +47,10 @@ class MessageDto {
   @IsString() fromProfileId!: string
   @IsString() @MinLength(1) @MaxLength(12000) content!: string
 }
+class CreateForumTopicDto { @IsString() profileId!: string; @IsString() @MinLength(1) @MaxLength(140) title!: string; @IsString() @MinLength(1) @MaxLength(12000) content!: string }
+class CreateForumReplyDto { @IsString() profileId!: string; @IsString() @MinLength(1) @MaxLength(12000) content!: string }
+class ForumActorDto { @IsString() profileId!: string }
+class ForumModerationDto extends ForumActorDto { @IsOptional() @IsBoolean() isPinned?: boolean; @IsOptional() @IsBoolean() isLocked?: boolean }
 
 @Controller()
 export class DomainController {
@@ -55,7 +63,7 @@ export class DomainController {
   @Get('profiles/by-url/:url') getProfile(@Param('url') url: string) { return this.domain.getProfile(url) }
   @Get('profiles/ids') getProfiles(@Query('ids') ids: string | string[]) { return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Post('profiles') @UseGuards(JwtAccessGuard) createProfile(@CurrentUser() u: { id: string }, @Body() body: CreateProfileDto) { return this.domain.createProfile(u.id, body) }
-  @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: { id: string }, @Param('profileId') id: string, @Body() body: CreateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
+  @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: { id: string }, @Param('profileId') id: string, @Body() body: UpdateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
   @Get('communities/by-url/:url') getCommunity(@Param('url') url: string) { return this.domain.getCommunity(url) }
@@ -68,6 +76,22 @@ export class DomainController {
   @Put('communities/:communityId') @UseGuards(JwtAccessGuard) updateCommunity(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Body() body: UpdateCommunityDto) {
     return this.domain.updateCommunity(u.id, id, body)
   }
+
+
+  @Get('communities/:communityId/forum/topics')
+  forumTopics(@Param('communityId') id: string, @Query() q: PaginationDto) { return this.domain.listCommunityForumTopics(id, q) }
+  @Get('communities/:communityId/forum/topics/:topicId')
+  forumTopic(@Param('communityId') id: string, @Param('topicId') topicId: string, @Query() q: PaginationDto) { return this.domain.getCommunityForumTopic(id, topicId, q) }
+  @Post('communities/:communityId/forum/topics') @UseGuards(JwtAccessGuard)
+  createForumTopic(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Body() body: CreateForumTopicDto) { return this.domain.createCommunityForumTopic(u.id, id, body.profileId, body.title, body.content) }
+  @Post('communities/:communityId/forum/topics/:topicId/replies') @UseGuards(JwtAccessGuard)
+  createForumReply(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Param('topicId') topicId: string, @Body() body: CreateForumReplyDto) { return this.domain.createCommunityForumReply(u.id, id, topicId, body.profileId, body.content) }
+  @Put('communities/:communityId/forum/topics/:topicId/moderation') @UseGuards(JwtAccessGuard)
+  moderateForumTopic(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Param('topicId') topicId: string, @Body() body: ForumModerationDto) { const { profileId, ...changes } = body; return this.domain.moderateCommunityForumTopic(u.id, id, topicId, profileId, changes) }
+  @Delete('communities/:communityId/forum/topics/:topicId') @UseGuards(JwtAccessGuard)
+  async deleteForumTopic(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Param('topicId') topicId: string, @Body() body: ForumActorDto) { await this.domain.deleteCommunityForumTopic(u.id, id, topicId, body.profileId); return { success: true } }
+  @Delete('communities/:communityId/forum/replies/:replyId') @UseGuards(JwtAccessGuard)
+  async deleteForumReply(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Param('replyId') replyId: string, @Body() body: ForumActorDto) { await this.domain.deleteCommunityForumReply(u.id, id, replyId, body.profileId); return { success: true } }
 
   @Get('relationships') @UseGuards(JwtAccessGuard) getRelationships(@CurrentUser() u: { id: string }, @Query('profileId') id: string) { return this.domain.getProfileRelationships(u.id, id) }
   @Get('relationships/friends/:profileId') getFriends(@Param('profileId') id: string, @Query() q: PaginationDto) { return this.domain.getProfileFriends(id, q) }

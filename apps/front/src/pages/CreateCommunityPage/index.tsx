@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
-import type { ProfileType } from '@/Models/Profile.model'
 import { AvatarUploadField, RichTextEditor } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
@@ -11,6 +10,7 @@ import { createCommunity } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
 import '../AuthPage.style.scss'
 
 export function CreateCommunityPage() {
@@ -19,16 +19,17 @@ export function CreateCommunityPage() {
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
   const ownerProfileId = session?.user.currentProfile ?? null
+  const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [picture, setPicture] = useState('')
   const [about, setAbout] = useState('')
-  const [type, setType] = useState<ProfileType>('social')
   const [errorMessage, setErrorMessage] = useState('')
   const createCommunityMutation = useMutation({
-    mutationFn: () => createCommunity({ name, url, picture, about, type }, ownerProfileId!),
+    mutationFn: () => createCommunity({ name, url, picture, about }, ownerProfileId!),
     onSuccess: async community => {
       queryClient.setQueryData(queryKeys.communities.byUrl(community.url), community)
+      showToast(t('TOAST_COMMUNITY_CREATED'))
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['communities', 'list'] }),
         ...(ownerProfileId ? [queryClient.invalidateQueries({ queryKey: ['communities', 'by-profile', ownerProfileId] })] : [])
@@ -55,7 +56,6 @@ export function CreateCommunityPage() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
         <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
-        <div className="form-field"><Label htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="community-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
         <AvatarUploadField
           label={t('COMMUNITY_PICTURE_LABEL')}
           value={picture}

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsFetching, useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FiCheck, FiChevronDown, FiHome, FiLogOut, FiMenu, FiMessageCircle,
   FiPlusCircle, FiSettings, FiUserPlus, FiUsers, FiX
@@ -11,6 +11,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
 
 import './FloatingNavigationBar.style.scss'
 
@@ -29,11 +30,13 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const location = useLocation()
   const queryClient = useQueryClient()
   const navigationRef = useRef<HTMLDivElement>(null)
+  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
   const activePanel = openPanel?.pathname === location.pathname ? openPanel.panel : null
   const session = useAuthStore(state => state.session)
   const signOut = useAuthStore(state => state.signOut)
+  const showToast = useToastStore(state => state.showToast)
   const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
   const profileIds = session?.user.profiles ?? []
 
@@ -81,6 +84,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
     },
     onSuccess: () => {
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
+      showToast(t('TOAST_PROFILE_SWITCHED'))
       closePanels()
     }
   })
@@ -144,6 +148,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
         <button
           className="floating-navigation__icon-button"
           type="button"
+          disabled={isRequestPending}
           aria-label={t('NAVIGATION_MENU')}
           aria-expanded={activePanel === 'navigation'}
           aria-controls="floating-navigation-menu"
@@ -155,6 +160,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
         <button
           className="floating-navigation__account-trigger"
           type="button"
+          disabled={isRequestPending}
           aria-label={t('NAVIGATION_ACCOUNT_MENU')}
           aria-expanded={activePanel === 'account'}
           aria-controls="floating-account-menu"
@@ -216,6 +222,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
             <button
               className="floating-navigation__menu-item floating-navigation__profile-toggle"
               type="button"
+              disabled={isRequestPending}
               role="menuitem"
               aria-expanded={isProfileSwitcherOpen}
               aria-controls="floating-profile-switcher"
@@ -237,7 +244,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
                 {profilesQuery.isError && (
                   <div className="floating-navigation__profile-status" role="alert">
                     <span>{t('NAVIGATION_PROFILES_ERROR')}</span>
-                    <button type="button" onClick={() => void profilesQuery.refetch()}>{t('NAVIGATION_PROFILES_RETRY')}</button>
+                    <button type="button" disabled={isRequestPending} onClick={() => void profilesQuery.refetch()}>{t('NAVIGATION_PROFILES_RETRY')}</button>
                   </div>
                 )}
                 {profilesQuery.isSuccess && profiles.length === 0 && (
@@ -252,7 +259,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
                       type="button"
                       role="menuitemradio"
                       aria-checked={isCurrent}
-                      disabled={profileSelectionMutation.isPending}
+                      disabled={isRequestPending || profileSelectionMutation.isPending}
                       onClick={() => profileSelectionMutation.mutate(profile.id)}
                     >
                       <span className="floating-navigation__profile-avatar">
@@ -290,6 +297,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           <button
             className="floating-navigation__menu-item"
             type="button"
+            disabled={isRequestPending}
             role="menuitem"
             onClick={handleOpenSettings}
           >
@@ -299,8 +307,9 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           <button
             className="floating-navigation__menu-item floating-navigation__menu-item--danger"
             type="button"
+            disabled={isRequestPending}
             role="menuitem"
-            disabled={signOutMutation.isPending}
+            disabled={isRequestPending || signOutMutation.isPending}
             onClick={() => {
               closePanels()
               signOutMutation.mutate()
