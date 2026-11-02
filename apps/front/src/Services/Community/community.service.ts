@@ -20,6 +20,13 @@ export async function getCommunityByUrl(url: string): Promise<Community | null> 
     throw error
   }
 }
+export async function updateCommunity(communityId: string, input: CreateCommunityInput, ownerProfileId: string): Promise<Community> {
+  const { data } = await api.patch<Community>(
+    '/communities/' + encodeURIComponent(communityId),
+    { ...input, ownerProfileId }
+  )
+  return data
+}
 export async function createCommunity(input: CreateCommunityInput, ownerProfileId: string): Promise<Community> {
   const { data } = await api.post<Community>('/communities', { ...input, ownerProfileId })
   return data
