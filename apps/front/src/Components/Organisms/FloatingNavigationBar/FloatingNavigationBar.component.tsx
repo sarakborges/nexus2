@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FiCheck, FiChevronDown, FiHome, FiLogOut, FiMenu, FiMessageCircle,
@@ -114,7 +115,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
     onOpenSettings()
   }
 
-  return (
+  return createPortal(
     <div className="floating-navigation" ref={navigationRef}>
       <div className="floating-navigation__bar">
         <button
@@ -288,6 +289,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           </button>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
