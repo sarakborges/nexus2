@@ -59,7 +59,7 @@ export function CreateProfilePage() {
       <div><h1 className="auth-card__title" id="create-profile-title">{t('CREATE_PROFILE_TITLE')}</h1><p className="auth-card__description">{t('CREATE_PROFILE_DESCRIPTION')}</p></div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
-        <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="sara-borges" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
+        <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="profile-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
         <div className="form-field"><Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="profile-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
         <AvatarUploadField
           label={t('PROFILE_PICTURE_LABEL')}

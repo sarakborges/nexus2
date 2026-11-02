@@ -15,7 +15,7 @@ const defaultSettings: SettingsType = { language: 'system', theme: 'system' }
 export const useSettingsStore = create<SettingsStore>((set) => ({
   settings: defaultSettings,
   updateError: false,
-  setSettings: settings => set({ settings }),
+  setSettings: settings => set(state => ({ settings: { ...state.settings, ...settings } })),
   setUpdateError: updateError => set({ updateError }),
   resetSettings: () => set({ settings: defaultSettings, updateError: false }),
   updateSettings: patch => set(state => ({ settings: { ...state.settings, ...patch } }))

@@ -36,6 +36,13 @@ export function EditCommunityPage() {
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
+  const communityTypeLabel = community?.type === 'business'
+    ? t('PROFILE_TYPE_BUSINESS')
+    : community?.type === 'rp'
+      ? t('PROFILE_TYPE_RP')
+      : community?.type === 'social'
+        ? t('PROFILE_TYPE_SOCIAL')
+        : ''
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
     queryFn: () => getCommunityRelationships(community!.id),
@@ -125,6 +132,10 @@ export function EditCommunityPage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
           <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
+          <div className="form-field">
+            <Label id="community-type-label" htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label>
+            <input className="input" id="community-type" type="text" value={communityTypeLabel} readOnly aria-readonly="true" />
+          </div>
           <div className="form-field">
             <Label id="community-about-label" htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
             <RichTextEditor

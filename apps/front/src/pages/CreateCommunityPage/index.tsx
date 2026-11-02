@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { AvatarUploadField, RichTextEditor } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
@@ -7,6 +7,7 @@ import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { createCommunity } from '@/Services/Community'
+import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -19,6 +20,20 @@ export function CreateCommunityPage() {
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
   const ownerProfileId = session?.user.currentProfile ?? null
+  const activeProfileQuery = useQuery({
+    queryKey: queryKeys.profiles.byIds(ownerProfileId ? [ownerProfileId] : []),
+    queryFn: () => getProfilesByIds([ownerProfileId!]),
+    enabled: Boolean(ownerProfileId),
+    staleTime: 5 * 60 * 1000
+  })
+  const activeProfileType = activeProfileQuery.data?.[0]?.type
+  const activeProfileTypeLabel = activeProfileType === 'business'
+    ? t('PROFILE_TYPE_BUSINESS')
+    : activeProfileType === 'rp'
+      ? t('PROFILE_TYPE_RP')
+      : activeProfileType === 'social'
+        ? t('PROFILE_TYPE_SOCIAL')
+        : ''
   const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -56,6 +71,12 @@ export function CreateCommunityPage() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
         <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
+        {activeProfileTypeLabel && (
+          <div className="form-field">
+            <Label id="community-type-label" htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label>
+            <input className="input" id="community-type" type="text" value={activeProfileTypeLabel} readOnly aria-readonly="true" />
+          </div>
+        )}
         <AvatarUploadField
           label={t('COMMUNITY_PICTURE_LABEL')}
           value={picture}

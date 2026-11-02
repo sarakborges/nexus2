@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
+import { Button, ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
 import '../AuthenticatedPage.style.scss'
@@ -42,7 +42,7 @@ export function GettingStartedPage() {
             <li>{t('GETTING_STARTED_PROFILE_ABOUT')}</li>
           </ul>
         </div>
-        <Link className="account-card__action" to={ROUTES.createProfile}>{t('GETTING_STARTED_CREATE_PROFILE')}</Link>
+        <ButtonLink className="account-card__action" variation="primary" to={ROUTES.createProfile}>{t('GETTING_STARTED_CREATE_PROFILE')}</ButtonLink>
       </section>
     </main>
   )

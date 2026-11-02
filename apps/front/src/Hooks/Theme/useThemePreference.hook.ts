@@ -8,7 +8,9 @@ export function useThemePreference() {
   const themePreference = useSettingsStore(state => state.settings.theme)
   const { updateSettings, isUpdating } = useUpdateSettings()
   const { theme: systemTheme } = useSystemPreferences()
-  const theme = themePreference === 'system' ? systemTheme : themePreference
+  const theme = themePreference === 'light' || themePreference === 'dark'
+    ? themePreference
+    : systemTheme
 
   useLayoutEffect(() => {
     const root = document.documentElement

@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { ButtonLink } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import '../AuthPage.style.scss'
@@ -16,9 +17,9 @@ export function LandingPage() {
           <Link className="landing-header__sign-in" to={ROUTES.signIn}>
             {t('AUTH_SIGN_IN_LINK')}
           </Link>
-          <Link className="landing-header__sign-up" to={ROUTES.signUp}>
+          <ButtonLink className="landing-header__sign-up" variation="primary" to={ROUTES.signUp}>
             {t('LANDING_SIGNUP_CTA')}
-          </Link>
+          </ButtonLink>
         </nav>
       </header>
 
@@ -32,12 +33,12 @@ export function LandingPage() {
             {t('LANDING_DESCRIPTION')}
           </p>
           <div className="landing-hero__actions">
-            <Link className="landing-hero__primary-action" to={ROUTES.signUp}>
+            <ButtonLink className="landing-hero__primary-action" variation="primary" to={ROUTES.signUp}>
               {t('LANDING_SIGNUP_CTA')}
-            </Link>
-            <Link className="landing-hero__secondary-action" to={ROUTES.signIn}>
+            </ButtonLink>
+            <ButtonLink className="landing-hero__secondary-action" variation="secondary" to={ROUTES.signIn}>
               {t('AUTH_SIGN_IN_LINK')}
-            </Link>
+            </ButtonLink>
           </div>
         </div>
         <aside className="landing-hero__summary" aria-label={t('LANDING_FEATURES_TITLE')}>
