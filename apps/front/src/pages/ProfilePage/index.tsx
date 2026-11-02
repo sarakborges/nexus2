@@ -39,12 +39,12 @@ export function ProfilePage() {
 
   const friendsQuery = useQuery({
     queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 8),
-    queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 8 }),
+    queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
   const communitiesQuery = useQuery({
     queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 8),
-    queryFn: () => getProfileCommunities(profile!.id, { page: 1, pageSize: 8 }),
+    queryFn: () => getProfileCommunities(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
 
@@ -88,7 +88,9 @@ export function ProfilePage() {
                 <h2 className="social-panel__title">{t('PROFILE_ABOUT_LABEL')}</h2>
               </div>
             </header>
-            <p className="social-panel__body">{profile.about || t('PROFILE_ABOUT_EMPTY')}</p>
+            {profile.about
+              ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: profile.about }} />
+              : <p className="social-panel__body">{t('PROFILE_ABOUT_EMPTY')}</p>}
             <dl className="social-profile-details">
               <div>
                 <dt>{t('PROFILE_NAME_LABEL')}</dt>

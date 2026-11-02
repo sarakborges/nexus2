@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import type { ProfileType } from '@/Models/Profile.model'
+import { RichTextEditor } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -57,7 +58,19 @@ export function CreateProfilePage() {
         <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="sara-borges" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
         <div className="form-field"><Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="profile-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
         <FormField id="profile-picture" label={t('PROFILE_PICTURE_LABEL')} type="url" placeholder="https://example.com/image.jpg" value={picture} onChange={event => setPicture(event.target.value)} />
-        <div className="form-field"><Label htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label><textarea className="input auth-form__textarea" id="profile-about" name="about" rows={5} maxLength={500} value={about} onChange={event => setAbout(event.target.value)} /></div>
+        <div className="form-field">
+          <Label id="profile-about-label" htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
+          <RichTextEditor
+            id="profile-about"
+            value={about}
+            onChange={setAbout}
+            maxTextLength={500}
+            imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+            imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
+            placeholder={t('RICH_TEXT_PLACEHOLDER')}
+          />
+          <p className="account-card__description">{t('PROFILE_ABOUT_MAX_LENGTH')}</p>
+        </div>
         {errorMessage && <p className="auth-card__error" role="alert">{errorMessage}</p>}
         <Button type="submit" disabled={createProfileMutation.isPending}>{createProfileMutation.isPending ? t('AUTH_SUBMITTING') : t('CREATE_PROFILE_ACTION')}</Button>
       </form>

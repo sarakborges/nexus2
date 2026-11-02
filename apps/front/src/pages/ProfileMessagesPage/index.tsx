@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { Pagination, RequestState } from '@/Components'
+import { Pagination, RequestState, RichTextEditor } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -13,6 +13,14 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
+
+function hasRichTextContent(value: string): boolean {
+  const text = value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;|&#160;/gi, ' ')
+    .trim()
+  return Boolean(text || /<img\b/i.test(value))
+}
 
 export function ProfileMessagesPage() {
   const { url } = useParams<{ url: string }>()
@@ -60,7 +68,7 @@ export function ProfileMessagesPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!content.trim() || !canSendMessage) return
+    if (!hasRichTextContent(content) || !canSendMessage) return
     await sendMessageMutation.mutateAsync()
   }
 
@@ -78,8 +86,16 @@ export function ProfileMessagesPage() {
       {canSendMessage ? (
         <form className="profile-message-form" onSubmit={handleSubmit}>
           <div className="form-field">
-            <Label htmlFor="profile-message-content">{t('PROFILE_MESSAGES_COMPOSE_LABEL')}</Label>
-            <textarea className="input auth-form__textarea" id="profile-message-content" rows={4} maxLength={4000} value={content} onChange={event => setContent(event.target.value)} required />
+            <Label id="profile-message-content-label" htmlFor="profile-message-content">{t('PROFILE_MESSAGES_COMPOSE_LABEL')}</Label>
+            <RichTextEditor
+              id="profile-message-content"
+              value={content}
+              onChange={setContent}
+              maxTextLength={4000}
+              imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+              imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
+              placeholder={t('RICH_TEXT_PLACEHOLDER')}
+            />
             <p className="account-card__description">{t('PROFILE_MESSAGES_MAX_LENGTH')}</p>
           </div>
           {sendMessageMutation.isError && (
@@ -87,7 +103,7 @@ export function ProfileMessagesPage() {
               {t(sendMessageMutation.error instanceof ProfileMessageError && sendMessageMutation.error.code === 'INVALID_MESSAGE' ? 'PROFILE_MESSAGES_ERROR_INVALID' : 'PROFILE_MESSAGES_ERROR_STORAGE')}
             </p>
           )}
-          <Button type="submit" disabled={!content.trim() || sendMessageMutation.isPending}>
+          <Button type="submit" disabled={!hasRichTextContent(content) || sendMessageMutation.isPending}>
             {sendMessageMutation.isPending ? t('AUTH_SUBMITTING') : t('PROFILE_MESSAGES_SEND')}
           </Button>
         </form>
@@ -118,7 +134,7 @@ export function ProfileMessagesPage() {
                     {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
                     <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
                   </header>
-                  <p className="profile-message__content">{message.content}</p>
+                  <div className="profile-message__content rich-text-content" dangerouslySetInnerHTML={{ __html: message.content }} />
                 </article>
               )
             })}

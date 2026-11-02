@@ -10,14 +10,14 @@ class CreateProfileDto implements CreateProfileInput {
   @IsString() @MaxLength(80) name!: string
   @IsString() url!: string
   @IsString() picture!: string
-  @IsString() @MaxLength(500) about!: string
+  @IsString() @MaxLength(12000) about!: string
   @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
 }
 class CreateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(80) name!: string
   @IsString() url!: string
   @IsString() picture!: string
-  @IsString() @MaxLength(500) about!: string
+  @IsString() @MaxLength(12000) about!: string
   @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
   @IsString() ownerProfileId!: string
 }
@@ -34,7 +34,7 @@ class ActorDto { @IsString() actorProfileId!: string }
 class OwnershipDto extends ActorDto { @IsString() newOwnerProfileId!: string }
 class MessageDto {
   @IsString() fromProfileId!: string
-  @IsString() @MinLength(1) @MaxLength(4000) content!: string
+  @IsString() @MinLength(1) @MaxLength(12000) content!: string
 }
 
 @Controller()

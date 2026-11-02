@@ -46,7 +46,7 @@ export function CommunityPage() {
   })
   const membersQuery = useQuery({
     queryKey: queryKeys.communityMembers(community?.id ?? '', 'all', 1, 12, currentProfileId ?? undefined),
-    queryFn: () => getCommunityMembers(community!.id, 'all', { page: 1, pageSize: 12 }, currentProfileId ?? undefined),
+    queryFn: () => getCommunityMembers(community!.id, 'all', { page: 1, pageSize: 16 }, currentProfileId ?? undefined),
     enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
   })
 
@@ -98,7 +98,9 @@ export function CommunityPage() {
                 <span>{t('COMMUNITY_MEMBER_COUNT')}</span>
               </div>
             </header>
-            <p className="social-panel__body">{community.about || t('COMMUNITY_ABOUT_EMPTY')}</p>
+            {community.about
+              ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: community.about }} />
+              : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
           </article>
         </section>
 
