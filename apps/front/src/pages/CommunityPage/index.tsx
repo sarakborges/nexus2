@@ -90,23 +90,7 @@ export function CommunityPage() {
                 {t('COMMUNITY_EDIT')}
               </ButtonLink>
             )}
-            {avatarManager && (
-              <AvatarUploadField
-                label={t('COMMUNITY_PICTURE_LABEL')}
-                value={community.picture}
-                fallbackName={community.name}
-                purpose="community-avatar"
-                targetId={community.id}
-                actorProfileId={avatarManager.profiles[0]}
-                onChange={picture => queryClient.setQueryData(queryKeys.communities.byUrl(community.url), { ...community, picture })}
-                selectLabel={t('UPLOAD_SELECT_IMAGE')}
-                changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-                removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-                uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-                errorLabel={t('UPLOAD_FAILED')}
-                emptyLabel={t('UPLOAD_EMPTY')}
-              />
-            )}
+
             {canInteract && <RelationshipActions targetId={community.id} targetKind="community" />}
           </section>
 

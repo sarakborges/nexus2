@@ -84,22 +84,7 @@ export function ProfilePage() {
                 {t('PROFILE_EDIT')}
               </ButtonLink>
             )}
-            {canInteract && session?.user.profiles.includes(profile.id) && (
-              <AvatarUploadField
-                label={t('PROFILE_PICTURE_LABEL')}
-                value={profile.picture}
-                fallbackName={profile.name}
-                purpose="profile-avatar"
-                targetId={profile.id}
-                onChange={picture => queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), { ...profile, picture })}
-                selectLabel={t('UPLOAD_SELECT_IMAGE')}
-                changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-                removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-                uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-                errorLabel={t('UPLOAD_FAILED')}
-                emptyLabel={t('UPLOAD_EMPTY')}
-              />
-            )}
+
             {canInteract && <RelationshipActions targetId={profile.id} />}
           </section>
 
