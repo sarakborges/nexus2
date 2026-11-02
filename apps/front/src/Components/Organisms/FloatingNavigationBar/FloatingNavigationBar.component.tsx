@@ -17,7 +17,10 @@ type FloatingNavigationBarProps = {
   onOpenSettings: () => void
 }
 
-type OpenPanel = 'navigation' | 'account' | null
+type OpenPanel = {
+  panel: 'navigation' | 'account'
+  pathname: string
+} | null
 
 export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarProps) {
   const { t } = useTranslations()
@@ -26,6 +29,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const queryClient = useQueryClient()
   const navigationRef = useRef<HTMLDivElement>(null)
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
+  const activePanel = openPanel?.pathname === location.pathname ? openPanel.panel : null
   const session = useAuthStore(state => state.session)
   const signOut = useAuthStore(state => state.signOut)
   const currentProfileId = session?.user.currentProfile ?? null
@@ -68,10 +72,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
     }
   }, [])
 
-  useEffect(() => {
-    setOpenPanel(null)
-  }, [location.pathname])
-
   if (!session) return null
 
   const closePanels = () => setOpenPanel(null)
@@ -87,11 +87,15 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           className="floating-navigation__icon-button"
           type="button"
           aria-label={t('NAVIGATION_MENU')}
-          aria-expanded={openPanel === 'navigation'}
+          aria-expanded={activePanel === 'navigation'}
           aria-controls="floating-navigation-menu"
-          onClick={() => setOpenPanel(current => current === 'navigation' ? null : 'navigation')}
+          onClick={() => setOpenPanel(current =>
+            current?.pathname === location.pathname && current.panel === 'navigation'
+              ? null
+              : { panel: 'navigation', pathname: location.pathname }
+          )}
         >
-          {openPanel === 'navigation' ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
+          {activePanel === 'navigation' ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
         </button>
 
         <Link className="floating-navigation__brand" to={ROUTES.home} onClick={closePanels}>
@@ -103,9 +107,13 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           className="floating-navigation__account-trigger"
           type="button"
           aria-label={t('NAVIGATION_ACCOUNT_MENU')}
-          aria-expanded={openPanel === 'account'}
+          aria-expanded={activePanel === 'account'}
           aria-controls="floating-account-menu"
-          onClick={() => setOpenPanel(current => current === 'account' ? null : 'account')}
+          onClick={() => setOpenPanel(current =>
+            current?.pathname === location.pathname && current.panel === 'account'
+              ? null
+              : { panel: 'account', pathname: location.pathname }
+          )}
         >
           <span className="floating-navigation__avatar">
             {currentProfile?.picture
@@ -120,7 +128,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
         </button>
       </div>
 
-      {openPanel === 'navigation' && (
+      {activePanel === 'navigation' && (
         <nav
           className="floating-navigation__menu floating-navigation__menu--navigation"
           id="floating-navigation-menu"
@@ -147,7 +155,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
         </nav>
       )}
 
-      {openPanel === 'account' && (
+      {activePanel === 'account' && (
         <div
           className="floating-navigation__menu floating-navigation__menu--account"
           id="floating-account-menu"
