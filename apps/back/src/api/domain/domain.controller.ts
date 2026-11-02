@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { IsIn, IsString, MaxLength, MinLength } from 'class-validator'
 import type { CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -47,12 +47,17 @@ export class DomainController {
   @Get('profiles/owned') @UseGuards(JwtAccessGuard) ownedProfiles(@CurrentUser() u: { id: string }, @Query() q: PaginationDto) { return this.domain.listOwnedProfiles(u.id, q) }
   @Get('profiles/by-url/:url') getProfile(@Param('url') url: string) { return this.domain.getProfile(url) }
   @Get('profiles/ids') getProfiles(@Query('ids') ids: string | string[]) { return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
+  @Patch('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: { id: string }, @Param('profileId') id: string, @Body() body: CreateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
   @Post('profiles') @UseGuards(JwtAccessGuard) createProfile(@CurrentUser() u: { id: string }, @Body() body: CreateProfileDto) { return this.domain.createProfile(u.id, body) }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
   @Get('communities/by-url/:url') getCommunity(@Param('url') url: string) { return this.domain.getCommunity(url) }
   @Get('communities/ids') getCommunities(@Query('ids') ids: string | string[]) { return this.domain.getCommunitiesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Get('communities/profile/:profileId') profileCommunities(@Param('profileId') id: string, @Query() q: PaginationDto) { return this.domain.listProfileCommunities(id, q) }
+  @Patch('communities/:communityId') @UseGuards(JwtAccessGuard) updateCommunity(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Body() body: CreateCommunityDto) {
+    const { ownerProfileId, ...community } = body
+    return this.domain.updateCommunity(u.id, id, ownerProfileId, community)
+  }
   @Post('communities') @UseGuards(JwtAccessGuard) createCommunity(@CurrentUser() u: { id: string }, @Body() body: CreateCommunityDto) {
     const { ownerProfileId, ...community } = body
     return this.domain.createCommunity(u.id, ownerProfileId, community)
