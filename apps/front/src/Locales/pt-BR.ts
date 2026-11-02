@@ -135,6 +135,8 @@ export const ptBRTranslations = {
   COMMUNITY_URL_LABEL: "Endereço da comunidade",
   COMMUNITY_PICTURE_LABEL: "URL da imagem (opcional)",
   COMMUNITY_ABOUT_LABEL: "Sobre a comunidade",
+  COMMUNITY_ABOUT_EMPTY: "Esta comunidade ainda não adicionou uma descrição.",
+  COMMUNITY_MEMBER_COUNT: "Membros",
   COMMUNITY_ERROR_URL_TAKEN: "Este endereço de comunidade já está em uso.",
   COMMUNITY_ERROR_INVALID: "Informe um nome e um endereço válido. A URL da imagem também deve ser válida quando preenchida.",
   COMMUNITY_ERROR_STORAGE: "Não foi possível salvar a comunidade no armazenamento do navegador.",
