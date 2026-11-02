@@ -256,8 +256,6 @@ export class DomainService {
     if (!source || !target || source === target) throw new ForbiddenException('INVALID_RELATIONSHIP_PARTICIPANTS')
     const profiles = await this.readProfiles()
     this.assertSameType(profiles.find(profile => profile.id === source), profiles.find(profile => profile.id === target))
-    const profiles = await this.readProfiles()
-    this.assertSameType(profiles.find(profile => profile.id === source), profiles.find(profile => profile.id === target))
     const all = await this.data.read<Relationship>('relationships')
     const pair = [source, target].sort() as [string, string]
     const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
@@ -274,6 +272,8 @@ export class DomainService {
   }
   async removeProfileRelationship(userId: string, source: string, target: string): Promise<void> {
     await this.assertOwns(userId, source)
+    const profiles = await this.readProfiles()
+    this.assertSameType(profiles.find(profile => profile.id === source), profiles.find(profile => profile.id === target))
     const all = await this.data.read<Relationship>('relationships')
     const pair = [source, target].sort()
     const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
@@ -426,9 +426,6 @@ export class DomainService {
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto): Promise<CommunityForumTopicDetail> {
     await this.ensureCommunity(communityId)
-    await this.ensureCommunity(communityId)
-    const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
-    this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
     const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
@@ -480,6 +477,9 @@ export class DomainService {
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
     await this.assertOwns(userId, actorProfileId)
+    await this.ensureCommunity(communityId)
+    const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
+    this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
     const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
@@ -619,7 +619,9 @@ export class DomainService {
     if (!(await this.readCommunities()).some(c => c.id === id)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
   }
   private async assertStaff(profileId: string, communityId: string): Promise<void> {
-    const records = await this.readCommunityRelationships(communityId)
+    await this.ensureCommunity(communityId)
+    const [profiles, communities, records] = await Promise.all([this.readProfiles(), this.readCommunities(), this.readCommunityRelationships(communityId)])
+    this.assertSameType(profiles.find(profile => profile.id === profileId), communities.find(community => community.id === communityId))
     if (!['owner', 'moderator'].includes(this.role(profileId, records) ?? '')) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
   }
   private role(profileId: string, records: CommunityRelationship[]): CommunityRelationshipType | null {
