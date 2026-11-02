@@ -98,6 +98,7 @@ export function RichTextEditor({
         id={id}
         role="textbox"
         aria-multiline="true"
+        aria-labelledby={`${id}-label`}
         value={value}
         onChange={event => handleChange(event.target.value)}
         placeholder={placeholder}
