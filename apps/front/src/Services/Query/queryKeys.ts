@@ -1,4 +1,7 @@
 export const queryKeys = {
+  activity: {
+    recent: (userId: string) => ['activity', 'recent', userId] as const
+  },
   auth: {
     session: ['auth', 'session'] as const,
     preferences: (userId: string) => ['auth', 'preferences', userId] as const

@@ -20,3 +20,14 @@ export type SignInCredentials = { email: string; password: string }
 export type SignUpCredentials = SignInCredentials
 export type UserPreferences = { language: 'system' | 'pt-BR' | 'en-US'; theme: 'system' | 'light' | 'dark' }
 export type ApiErrorResponse = { statusCode: number; message: string | string[]; error?: string }
+
+export type RecentActivity =
+  | { id: string; type: 'friend_connected'; updatedAt: number; profile: Profile; friend: Profile }
+  | {
+      id: string
+      type: 'community_membership'
+      updatedAt: number
+      profile: Profile
+      community: Community
+      role: Extract<CommunityRelationshipType, 'owner' | 'moderator' | 'connection'>
+    }
