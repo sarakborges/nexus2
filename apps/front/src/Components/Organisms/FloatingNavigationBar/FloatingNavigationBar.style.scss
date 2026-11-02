@@ -36,6 +36,7 @@
   }
 
   &__icon-button {
+    display: none;
     width: 44px;
     flex: 0 0 44px;
     font-size: 21px;
@@ -47,6 +48,42 @@
     height: 22px;
     flex: 0 0 22px;
     font-size: 22px;
+  }
+
+  &__desktop-links {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  &__desktop-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    padding: 0 10px;
+    border-radius: 10px;
+    color: var(--text-color);
+    font-size: 13px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+
+  &__desktop-link svg {
+    flex: 0 0 16px;
+    font-size: 16px;
+  }
+
+  &__desktop-link:hover,
+  &__desktop-link[aria-current='page'] {
+    background: var(--color-background);
+    color: var(--color-primary-weak);
+  }
+
+  &__desktop-link:hover {
+    transform: translateY(-1px);
   }
 
   &__account-trigger {
@@ -62,6 +99,7 @@
   }
 
   &__icon-button:focus-visible,
+  &__desktop-link:focus-visible,
   &__account-trigger:focus-visible,
   &__menu-item:focus-visible {
     outline: 2px solid var(--color-primary-strong);
@@ -172,7 +210,10 @@
     font-size: 18px;
   }
 
-  &__menu-item:hover:not(:disabled) { background: var(--color-background); }
+  &__menu-item:hover:not(:disabled) {
+    background: var(--color-background);
+    transform: translateY(-1px);
+  }
   &__menu-item:disabled { cursor: wait; opacity: 0.6; }
 
   &__menu-item--danger,
@@ -277,6 +318,14 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 1024px) {
+  .floating-navigation {
+    &__desktop-links { display: none; }
+
+    &__icon-button { display: inline-flex; }
+  }
+}
+
 @media (max-width: 560px) {
   .floating-navigation {
     top: 10px;
@@ -300,6 +349,7 @@
   .floating-navigation__profile-chevron { animation: none; transition: none; }
 
   .floating-navigation__icon-button,
+  .floating-navigation__desktop-link,
   .floating-navigation__account-trigger,
   .floating-navigation__menu-item,
   .floating-navigation__profile-option { transition: none; }
