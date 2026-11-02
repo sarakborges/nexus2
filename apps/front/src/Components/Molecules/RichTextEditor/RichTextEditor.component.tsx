@@ -64,6 +64,7 @@ type RichTextEditorProps = {
   onChange: (value: string) => void
   imageButtonLabel: string
   imageUrlPrompt: string
+  maxTextLength?: number
   placeholder?: string
 }
 
@@ -73,8 +74,24 @@ export function RichTextEditor({
   onChange,
   imageButtonLabel,
   imageUrlPrompt,
+  maxTextLength,
   placeholder
 }: RichTextEditorProps) {
+  const handleChange = (nextValue: string) => {
+    if (maxTextLength !== undefined) {
+      const text = nextValue
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/&nbsp;|&#160;/gi, ' ')
+        .replace(/&amp;/gi, '&')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;|&apos;/gi, "'")
+        .trim()
+      if (text.length > maxTextLength) return
+    }
+    onChange(nextValue)
+  }
   return (
     <div className="rich-text-editor" data-editor-id={id}>
       <Editor
@@ -82,7 +99,7 @@ export function RichTextEditor({
         role="textbox"
         aria-multiline="true"
         value={value}
-        onChange={event => onChange(event.target.value)}
+        onChange={event => handleChange(event.target.value)}
         placeholder={placeholder}
         containerProps={{ className: 'rich-text-editor__container' }}
       >
