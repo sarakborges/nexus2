@@ -63,6 +63,7 @@
 .social-identity__picture--fallback {
   display: grid;
   place-items: center;
+  aspect-ratio: 1;
   color: var(--color-neutral-strong);
   font-size: 56px;
   font-weight: var(--font-weight-bold);
