@@ -170,7 +170,6 @@ export function ProfilePage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
           </section>
         </aside>
       </div>
