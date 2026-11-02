@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { AvatarUploadField, RelationshipActions, RequestState } from '@/Components'
+import { RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
+import { ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfileCommunities } from '@/Services/Community'
 import { getProfileByUrl } from '@/Services/Profile'
@@ -31,7 +32,6 @@ function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const queryClient = useQueryClient()
   const session = useAuthStore(state => state.session)
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const profileQuery = useQuery({
@@ -79,6 +79,11 @@ export function ProfilePage() {
               ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{profile.name}</h1>
+            {isOwner && canInteract && (
+              <ButtonLink className="social-sidebar-card__edit" variation="secondary" to={ROUTES.profile + '/' + profile.url + '/edit'}>
+                {t('PROFILE_EDIT')}
+              </ButtonLink>
+            )}
             {canInteract && session?.user.profiles.includes(profile.id) && (
               <AvatarUploadField
                 label={t('PROFILE_PICTURE_LABEL')}
@@ -104,11 +109,6 @@ export function ProfilePage() {
             <Link to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
             <Link to={ROUTES.profile + '/' + profile.url + '/messages'}>{t('PROFILE_MESSAGES_LINK')}</Link>
           </nav>
-          {isOwner && canInteract && (
-            <Link className="social-sidebar-card__edit" to={ROUTES.profile + '/' + profile.url + '/edit'}>
-              {t('PROFILE_EDIT')}
-            </Link>
-          )}
           </div>
         </aside>
 

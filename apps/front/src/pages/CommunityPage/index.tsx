@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { AvatarUploadField, RelationshipActions, RequestState } from '@/Components'
+import { RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
+import { ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityMembers, getCommunityRelationships } from '@/Services/CommunityRelationship'
@@ -31,7 +32,6 @@ export function CommunityPage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
-  const queryClient = useQueryClient()
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
 
@@ -71,7 +71,6 @@ export function CommunityPage() {
 
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
-  const avatarManager = canInteract ? relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator') : undefined
   const ownerRelationship = canInteract ? relationshipsQuery.data?.find(record => record.type === 'owner') ?? null : null
 
   return (
@@ -86,6 +85,11 @@ export function CommunityPage() {
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{community.name}</h1>
+            {ownerRelationship && (
+              <ButtonLink className="social-sidebar-card__edit" variation="secondary" to={ROUTES.community + '/' + community.url + '/edit'}>
+                {t('COMMUNITY_EDIT')}
+              </ButtonLink>
+            )}
             {avatarManager && (
               <AvatarUploadField
                 label={t('COMMUNITY_PICTURE_LABEL')}
@@ -111,11 +115,6 @@ export function CommunityPage() {
             <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
             <Link to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_TITLE')}</Link>
           </nav>
-          {ownerRelationship && (
-            <Link className="social-sidebar-card__edit" to={ROUTES.community + '/' + community.url + '/edit'}>
-              {t('COMMUNITY_EDIT')}
-            </Link>
-          )}
           </div>
         </aside>
 

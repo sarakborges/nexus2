@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
+import { FiImage } from 'react-icons/fi'
 import { useToastStore } from '@/Stores/Toast.store'
 import { useTranslations } from '@/Hooks/Language'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
@@ -112,8 +113,8 @@ export function AvatarUploadField({
       <div className="avatar-upload-field__preview">
         {value
           ? <img src={value} alt="" />
-          : <span className="avatar-upload-field__fallback" aria-hidden="true">
-              {fallbackName.trim().charAt(0).toUpperCase() || emptyLabel}
+          : <span className="avatar-upload-field__fallback" aria-hidden="true" title={emptyLabel}>
+              {fallbackName.trim().charAt(0).toUpperCase() || <FiImage />}
             </span>}
       </div>
       <div className="avatar-upload-field__actions">

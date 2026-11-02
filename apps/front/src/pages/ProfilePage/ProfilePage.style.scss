@@ -11,7 +11,7 @@
   grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(380px, 420px);
   align-items: start;
   gap: 24px;
-  width: min(100%, var(--main-content-max-width));
+  width: min(100%, calc(var(--main-content-max-width) * 0.85));
   margin: 0 auto;
 }
 
@@ -366,11 +366,4 @@
     padding: 16px;
   }
 
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .social-side-menu a,
-  .social-sidebar-card__edit,
-  .social-preview-link,
-  .social-preview-avatar img { transition: none; }
 }
