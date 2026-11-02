@@ -201,7 +201,7 @@
     text-align: left;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 150ms ease;
+    transition: background-color 150ms ease, transform 150ms ease;
   }
 
   &__menu-item svg {
