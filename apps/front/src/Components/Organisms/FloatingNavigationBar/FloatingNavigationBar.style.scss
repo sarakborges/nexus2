@@ -1,9 +1,9 @@
 .floating-navigation {
   position: fixed;
   z-index: 120;
-  top: 16px;
+  top: 18px;
   left: 50%;
-  width: min(var(--main-content-max-width), calc(100vw - 32px));
+  width: min(960px, calc(100vw - 40px));
   transform: translateX(-50%);
 
   &__bar {
@@ -11,12 +11,12 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    min-height: 64px;
-    padding: 8px 12px;
+    min-height: 60px;
+    padding: 6px;
     border: 1px solid var(--color-border);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-    box-shadow: 0 12px 36px rgb(0 0 0 / 12%);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    box-shadow: 0 14px 38px rgb(0 0 0 / 16%);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
   }
@@ -62,7 +62,7 @@
     align-items: center;
     gap: 7px;
     min-height: 44px;
-    padding: 0 10px;
+    padding: 0 14px;
     border-radius: 10px;
     color: var(--text-color);
     font-size: 13px;
@@ -161,7 +161,8 @@
 
   &__menu {
     position: absolute;
-    top: calc(100% + 10px);
+    z-index: 121;
+    top: calc(100% + 12px);
     display: grid;
     gap: 4px;
     width: min(320px, calc(100vw - 32px));
@@ -175,12 +176,8 @@
     animation: floating-navigation-enter 140ms ease-out both;
   }
 
-  &__menu--navigation {
-    left: max(16px, calc((100vw - var(--main-content-max-width)) / 2));
-  }
-  &__menu--account {
-    right: max(16px, calc((100vw - var(--main-content-max-width)) / 2));
-  }
+  &__menu--navigation { left: 0; }
+  &__menu--account { right: 0; left: auto; }
 
   &__menu-heading {
     display: grid;
@@ -333,7 +330,7 @@
 @media (max-width: 560px) {
   .floating-navigation {
     top: 10px;
-    width: min(var(--main-content-max-width), calc(100vw - 32px));
+    width: min(960px, calc(100vw - 32px));
 
     &__bar {
       min-height: 58px;
@@ -341,22 +338,11 @@
       border-radius: 16px;
     }
 
-    &__menu--navigation { left: 16px; }
-    &__menu--account { right: 16px; }
+    &__menu--navigation { left: 0; }
+    &__menu--account { right: 0; }
     &__account-trigger { gap: 0; padding: 4px; }
     &__account-label,
     &__account-chevron { display: none; }
     &__avatar { width: 36px; height: 36px; }
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .floating-navigation__menu,
-  .floating-navigation__profile-chevron { animation: none; transition: none; }
-
-  .floating-navigation__icon-button,
-  .floating-navigation__desktop-link,
-  .floating-navigation__account-trigger,
-  .floating-navigation__menu-item,
-  .floating-navigation__profile-option { transition: none; }
 }

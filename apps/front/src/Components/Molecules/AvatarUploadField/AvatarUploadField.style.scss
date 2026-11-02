@@ -87,9 +87,7 @@
   font-size: 12px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .avatar-upload-field__button,
-  .avatar-upload-field__remove {
-    transition: none;
-  }
+.avatar-upload-field__fallback svg {
+  width: 24px;
+  height: 24px;
 }

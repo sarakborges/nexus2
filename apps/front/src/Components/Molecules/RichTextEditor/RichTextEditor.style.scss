@@ -64,6 +64,7 @@
 }
 
 .rich-text-editor .rsw-ce {
+  display: block;
   width: 100%;
   min-height: 150px;
   padding: 12px;
@@ -135,12 +136,6 @@
   text-underline-offset: 2px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .rich-text-editor .rsw-btn {
-    transition: none;
-  }
-}
-
 .rich-text-editor__file-input {
   display: none;
 }
@@ -157,4 +152,29 @@
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.rich-text-editor .rsw-html,
+.rich-text-editor textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 150px;
+  padding: 12px;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0 0 8px 8px;
+  background: var(--color-surface);
+  color: var(--text-color);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+.rich-text-editor .rsw-html:focus,
+.rich-text-editor textarea:focus {
+  outline: 2px solid var(--color-primary-weak);
+  outline-offset: -2px;
 }

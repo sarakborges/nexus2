@@ -1,12 +1,12 @@
 :root {
   /* Brand palette: stable across light and dark appearance. */
-  --color-primary: #4a5bbf;
-  --color-primary-weak: #687adf;
-  --color-primary-strong: #2c3a88;
+  --color-primary: #8665bd;
+  --color-primary-weak: #7651ad;
+  --color-primary-strong: #56377f;
 
-  --color-secondary: #3aa4ae;
-  --color-secondary-weak: #67c9d2;
-  --color-secondary-strong: #1f818a;
+  --color-secondary: #39a69a;
+  --color-secondary-weak: #287e75;
+  --color-secondary-strong: #216a62;
 
   /* Semantic status palette: never overridden by appearance themes. */
   --color-success: #249b62;

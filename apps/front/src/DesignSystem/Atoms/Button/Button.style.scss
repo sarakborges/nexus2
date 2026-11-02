@@ -8,6 +8,8 @@
   border-radius: 6px;
   color: var(--text-color);
   font-size: 14px;
+  line-height: 1.2;
+  text-decoration: none;
   font-weight: 400;
   transition:
     background-color 180ms ease,
@@ -55,13 +57,5 @@
       border-color: var(--color-border);
       background-color: var(--color-surface-raised);
     }
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button {
-    transition: none;
-    &:not(:disabled):hover,
-    &:not(:disabled):active { transform: none; }
   }
 }

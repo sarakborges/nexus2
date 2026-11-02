@@ -19,6 +19,13 @@
   }
 }
 
+html,
+body {
+  min-width: 320px;
+  background-color: var(--color-background);
+  color: var(--text-color);
+}
+
 body {
   display: flex;
   place-content: center;
@@ -49,12 +56,6 @@ main {
   animation: route-enter 220ms ease-out both;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  main {
-    animation: none;
-  }
-}
-
 button,
 input[type='button'],
 input[type='submit'],
@@ -67,14 +68,4 @@ input[type='reset'],
     box-shadow 160ms ease,
     transform 160ms ease,
     opacity 160ms ease;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  button,
-  input[type='button'],
-  input[type='submit'],
-  input[type='reset'],
-  [role='button'] {
-    transition: none;
-  }
 }

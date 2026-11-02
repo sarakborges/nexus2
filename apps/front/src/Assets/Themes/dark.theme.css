@@ -9,5 +9,12 @@
   --color-background: #0e141d;
   --color-surface: #151e2a;
   --color-surface-raised: #202c3b;
-  --color-border: #354456;
+  --color-border: #40364f;
+
+  --color-primary: #a88ad7;
+  --color-primary-weak: #c1a8eb;
+  --color-primary-strong: #8863bd;
+  --color-secondary: #65bdb0;
+  --color-secondary-weak: #84d5c9;
+  --color-secondary-strong: #3a9187;
 }
