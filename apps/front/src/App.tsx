@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useLocation } from 'react-router'
 import { FloatingNavigationBar, SettingsModal } from '@/Components'
 import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
@@ -12,6 +13,8 @@ import { AppRoutes } from '@/routes'
 
 export function App() {
   const { language } = useTranslations()
+  const location = useLocation()
+  const shouldInitializeAuth = location.pathname !== ROUTES.landing
   const setSession = useAuthStore(state => state.setSession)
   const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const userId = useAuthStore(state => state.session?.user.id ?? null)
@@ -21,12 +24,13 @@ export function App() {
   const authQuery = useQuery({
     queryKey: queryKeys.auth.session,
     queryFn: getCurrentAuthSession,
-    retry: false
+    retry: false,
+    enabled: shouldInitializeAuth
   })
   const preferencesQuery = useQuery({
     queryKey: queryKeys.auth.preferences(userId ?? ''),
     queryFn: getUserPreferences,
-    enabled: Boolean(userId)
+    enabled: shouldInitializeAuth && Boolean(userId)
   })
 
   useThemePreference()
@@ -50,7 +54,7 @@ export function App() {
 
   return (
     <>
-      {hasAuthenticatedSession && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
+      {hasAuthenticatedSession && shouldInitializeAuth && <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />}
       <AppRoutes />
       <SettingsModal open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </>

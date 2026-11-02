@@ -24,6 +24,10 @@ export async function createCommunity(input: CreateCommunityInput, ownerProfileI
   const { data } = await api.post<Community>('/communities', { ...input, ownerProfileId })
   return data
 }
+export async function updateCommunity(communityId: string, input: CreateCommunityInput): Promise<Community> {
+  const { data } = await api.put<Community>(`/communities/${encodeURIComponent(communityId)}`, input)
+  return data
+}
 export async function getProfileCommunities(profileId: string, params: PaginationParams = {}) {
   const { data } = await api.get<PaginatedResult<Community>>(`/communities/profile/${encodeURIComponent(profileId)}`, { params })
   return data

@@ -62,6 +62,40 @@ export class DomainService {
     return profile
   }
 
+  async updateProfile(userId: string, profileId: string, input: CreateProfileInput): Promise<Profile> {
+    await this.assertOwns(userId, profileId)
+    const profiles = await this.readProfiles()
+    const current = profiles.find(profile => profile.id === profileId)
+    if (!current) throw new NotFoundException('PROFILE_NOT_FOUND')
+
+    const name = input.name.trim()
+    const url = this.normalize(input.url)
+    const picture = input.picture.trim()
+    const about = sanitizeRichText(input.about)
+    const aboutText = getRichTextPlainText(about)
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['social', 'rp', 'business'].includes(input.type) ||
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+    if (profiles.some(profile => profile.id !== profileId && profile.url === url)) {
+      throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+    }
+
+    if (picture !== current.picture) await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
+    const newEditorImages = this.getNewEditorImages(about, current.about)
+    await this.uploads?.validateEditorImages(userId, newEditorImages)
+
+    const updated: Profile = { ...current, name, url, picture, about, type: input.type }
+    await this.data.write('profiles', profiles.map(profile => profile.id === profileId ? updated : profile))
+    if (picture !== current.picture) {
+      await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profileId)
+    }
+    if (newEditorImages) {
+      await this.uploads?.attachEditorImages(userId, newEditorImages, 'profile', profileId)
+    }
+    return updated
+  }
+
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
     return paginate(await this.readCommunities(), q)
   }
@@ -106,6 +140,45 @@ export class DomainService {
     await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
     await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
     return community
+  }
+
+  async updateCommunity(userId: string, communityId: string, input: CreateCommunityInput): Promise<Community> {
+    await this.ensureCommunity(communityId)
+    const relationships = await this.readCommunityRelationships(communityId)
+    const ownerProfileId = relationships.find(record => record.type === 'owner')?.profiles[0]
+    if (!ownerProfileId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    await this.assertOwns(userId, ownerProfileId)
+
+    const communities = await this.readCommunities()
+    const current = communities.find(community => community.id === communityId)
+    if (!current) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+
+    const name = input.name.trim()
+    const url = this.normalize(input.url)
+    const picture = input.picture.trim()
+    const about = sanitizeRichText(input.about)
+    const aboutText = getRichTextPlainText(about)
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['social', 'rp', 'business'].includes(input.type) ||
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+    if (communities.some(community => community.id !== communityId && community.url === url)) {
+      throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+    }
+
+    if (picture !== current.picture) await this.uploads?.validateAvatarUrl(userId, picture, 'community-avatar')
+    const newEditorImages = this.getNewEditorImages(about, current.about)
+    await this.uploads?.validateEditorImages(userId, newEditorImages)
+
+    const updated: Community = { ...current, name, url, picture, about, type: input.type }
+    await this.data.write('communities', communities.map(community => community.id === communityId ? updated : community))
+    if (picture !== current.picture) {
+      await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', communityId)
+    }
+    if (newEditorImages) {
+      await this.uploads?.attachEditorImages(userId, newEditorImages, 'community', communityId)
+    }
+    return updated
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
@@ -249,7 +322,7 @@ export class DomainService {
     if (type === 'requested') allowed = self && targetRole === null
     if (type === 'connection') allowed = (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'requested'
     if (type === 'moderator') allowed = actorRole === 'owner' && targetRole === 'connection'
-    if (type === 'blocked') allowed = (self && (targetRole === null || targetRole === 'connection')) || ((actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'connection')
+    if (type === 'blocked') allowed = !self && (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'connection'
     if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
     const record: CommunityRelationship = {
       profiles: [targetId, communityId], type,
@@ -319,6 +392,15 @@ export class DomainService {
     await this.data.write('profile_messages', [...all, message])
     await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
     return message
+  }
+
+  private getNewEditorImages(html: string, previousHtml: string): string {
+    const pattern = /<img\b[^>]*\bsrc=(["'])\/api\/uploads\/([0-9a-f-]{36})\/content\1/gi
+    const previousIds = new Set([...previousHtml.matchAll(pattern)].map(match => match[2]))
+    const newIds = [...html.matchAll(pattern)]
+      .map(match => match[2])
+      .filter((id, index, ids) => !previousIds.has(id) && ids.indexOf(id) === index)
+    return newIds.map(id => '<img src="/api/uploads/' + id + '/content">').join('')
   }
 
   private async readProfiles(): Promise<Profile[]> {

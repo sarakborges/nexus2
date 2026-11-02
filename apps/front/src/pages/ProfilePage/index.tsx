@@ -62,12 +62,14 @@ export function ProfilePage() {
 
   const friends = friendsQuery.data?.items ?? []
   const communities = communitiesQuery.data?.items ?? []
+  const isOwner = session?.user.profiles.includes(profile.id) ?? false
 
   return (
     <main className="social-page social-page--profile">
       <RequestState isFetching={profileQuery.isFetching} />
       <div className="social-page__layout">
         <aside className="social-page__left-column">
+          <div className="social-sidebar-card">
           <section className="social-identity">
             {profile.picture
               ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
@@ -97,6 +99,12 @@ export function ProfilePage() {
             <Link to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
             <Link to={ROUTES.profile + '/' + profile.url + '/messages'}>{t('PROFILE_MESSAGES_LINK')}</Link>
           </nav>
+          {isOwner && (
+            <Link className="social-sidebar-card__edit" to={ROUTES.profile + '/' + profile.url + '/edit'}>
+              {t('PROFILE_EDIT')}
+            </Link>
+          )}
+          </div>
         </aside>
 
         <section className="social-page__main-column">
@@ -109,16 +117,6 @@ export function ProfilePage() {
             {profile.about
               ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: profile.about }} />
               : <p className="social-panel__body">{t('PROFILE_ABOUT_EMPTY')}</p>}
-            <dl className="social-profile-details">
-              <div>
-                <dt>{t('PROFILE_NAME_LABEL')}</dt>
-                <dd>{profile.name}</dd>
-              </div>
-              <div>
-                <dt>{t('PROFILE_URL_LABEL')}</dt>
-                <dd>@{profile.url}</dd>
-              </div>
-            </dl>
           </article>
         </section>
 
@@ -126,7 +124,10 @@ export function ProfilePage() {
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h2>
-              <span>{friendsQuery.data?.totalItems ?? '—'}</span>
+              <div className="social-preview-panel__header-actions">
+                <span>{friendsQuery.data?.totalItems ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
+              </div>
             </header>
             <RequestState
               isLoading={friendsQuery.isLoading}
@@ -144,13 +145,15 @@ export function ProfilePage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
           </section>
 
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h2>
-              <span>{communitiesQuery.data?.totalItems ?? '—'}</span>
+              <div className="social-preview-panel__header-actions">
+                <span>{communitiesQuery.data?.totalItems ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
+              </div>
             </header>
             <RequestState
               isLoading={communitiesQuery.isLoading}
@@ -168,7 +171,6 @@ export function ProfilePage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
           </section>
         </aside>
       </div>

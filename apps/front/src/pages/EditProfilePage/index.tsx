@@ -1,0 +1,144 @@
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useNavigate, useParams } from 'react-router'
+import type { Profile, ProfileType } from '@nexus/common'
+import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
+import { ROUTES } from '@/Constants/routes'
+import { Button, FormField, Label } from '@/DesignSystem'
+import { useTranslations } from '@/Hooks/Language'
+import { getApiErrorCode } from '@/Services/Http/api'
+import { getProfileByUrl, updateUserProfile } from '@/Services/Profile'
+import { queryKeys } from '@/Services/Query/queryKeys'
+import { uploadFile } from '@/Services/Uploads'
+import { useAuthStore } from '@/Stores/Auth.store'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import '../AuthPage.style.scss'
+
+type ProfileForm = {
+  name: string
+  url: string
+  about: string
+  type: ProfileType
+}
+
+export function EditProfilePage() {
+  const { url } = useParams<{ url: string }>()
+  const { t } = useTranslations()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const session = useAuthStore(state => state.session)
+  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const profileQuery = useQuery({
+    queryKey: queryKeys.profiles.byUrl(requestedUrl),
+    queryFn: () => getProfileByUrl(requestedUrl),
+    enabled: Boolean(requestedUrl)
+  })
+  const profile = profileQuery.data
+  const initializedProfileId = useRef<string | null>(null)
+  const [form, setForm] = useState<ProfileForm | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (!profile || initializedProfileId.current === profile.id) return
+    initializedProfileId.current = profile.id
+    setForm({ name: profile.name, url: profile.url, about: profile.about, type: profile.type })
+  }, [profile])
+
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!profile || !form) throw new Error('PROFILE_NOT_READY')
+      return updateUserProfile(profile.id, {
+        name: form.name,
+        url: form.url,
+        picture: profile.picture,
+        about: form.about,
+        type: form.type
+      })
+    },
+    onSuccess: async updated => {
+      queryClient.setQueryData(queryKeys.profiles.byUrl(updated.url), updated)
+      await queryClient.invalidateQueries({ queryKey: ['profiles'] })
+      navigate(ROUTES.profile + '/' + updated.url, { replace: true })
+    }
+  })
+
+  if (!requestedUrl) return <NotFoundPage />
+  if (profileQuery.isLoading) {
+    return <main className="auth-page"><section className="auth-card"><RequestState isLoading /></section></main>
+  }
+  if (profileQuery.isError) {
+    return <main className="auth-page"><section className="auth-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
+  }
+  if (!profile) return <NotFoundPage />
+  if (!session?.user.profiles.includes(profile.id)) return <NotFoundPage />
+  if (!form) return <main className="auth-page"><section className="auth-card"><RequestState isLoading /></section></main>
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage('')
+    try {
+      await updateMutation.mutateAsync()
+    } catch (error) {
+      const code = getApiErrorCode(error)
+      const key = code === 'PROFILE_URL_ALREADY_IN_USE'
+        ? 'PROFILE_ERROR_URL_TAKEN'
+        : code === 'INVALID_PROFILE'
+          ? 'PROFILE_ERROR_INVALID'
+          : 'PROFILE_UPDATE_ERROR'
+      setErrorMessage(t(key))
+    }
+  }
+
+  return (
+    <main className="auth-page">
+      <section className="auth-card" aria-labelledby="edit-profile-title">
+        <div>
+          <h1 className="auth-card__title" id="edit-profile-title">{t('PROFILE_EDIT')}</h1>
+          <p className="auth-card__description">{t('PROFILE_EDIT_DESCRIPTION')}</p>
+        </div>
+        <AvatarUploadField
+          label={t('PROFILE_PICTURE_LABEL')}
+          value={profile.picture}
+          purpose="profile-avatar"
+          targetId={profile.id}
+          onChange={picture => queryClient.setQueryData<Profile>(queryKeys.profiles.byUrl(profile.url), current => current ? { ...current, picture } : current)}
+          selectLabel={t('UPLOAD_SELECT_IMAGE')}
+          changeLabel={t('UPLOAD_CHANGE_IMAGE')}
+          removeLabel={t('UPLOAD_REMOVE_IMAGE')}
+          uploadingLabel={t('UPLOAD_IN_PROGRESS')}
+          errorLabel={t('UPLOAD_FAILED')}
+          emptyLabel={t('UPLOAD_EMPTY')}
+        />
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
+          <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="sara-borges" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
+          <div className="form-field">
+            <Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label>
+            <select className="input" id="profile-type" value={form.type} onChange={event => setForm(current => current ? { ...current, type: event.target.value as ProfileType } : current)} required>
+              <option value="social">{t('PROFILE_TYPE_SOCIAL')}</option>
+              <option value="rp">{t('PROFILE_TYPE_RP')}</option>
+              <option value="business">{t('PROFILE_TYPE_BUSINESS')}</option>
+            </select>
+          </div>
+          <div className="form-field">
+            <Label id="profile-about-label" htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
+            <RichTextEditor
+              id="profile-about"
+              value={form.about}
+              onChange={about => setForm(current => current ? { ...current, about } : current)}
+              maxTextLength={500}
+              imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+              imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+              onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
+              placeholder={t('RICH_TEXT_PLACEHOLDER')}
+            />
+            <p className="account-card__description">{t('PROFILE_ABOUT_MAX_LENGTH')}</p>
+          </div>
+          {errorMessage && <p className="auth-card__error" role="alert">{errorMessage}</p>}
+          <Button type="submit" disabled={updateMutation.isPending}>{updateMutation.isPending ? t('AUTH_SUBMITTING') : t('PROFILE_UPDATE_ACTION')}</Button>
+          <p className="auth-card__footer"><Link to={ROUTES.profile + '/' + profile.url}>{t('COMMUNITY_BACK_TO_PAGE')}</Link></p>
+        </form>
+      </section>
+    </main>
+  )
+}

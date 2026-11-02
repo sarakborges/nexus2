@@ -69,12 +69,14 @@ export function CommunityPage() {
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
   const avatarManager = relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator')
+  const ownerRelationship = relationshipsQuery.data?.find(record => record.type === 'owner') ?? null
 
   return (
     <main className="social-page social-page--community">
       <RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />
       <div className="social-page__layout">
         <aside className="social-page__left-column">
+          <div className="social-sidebar-card">
           <section className="social-identity">
             {community.picture
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
@@ -103,6 +105,12 @@ export function CommunityPage() {
             <Link to={ROUTES.community + '/' + community.url} aria-current="page">{t('COMMUNITY_ABOUT_LABEL')}</Link>
             <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
           </nav>
+          {ownerRelationship && (
+            <Link className="social-sidebar-card__edit" to={ROUTES.community + '/' + community.url + '/edit'}>
+              {t('COMMUNITY_EDIT')}
+            </Link>
+          )}
+          </div>
         </aside>
 
         <section className="social-page__main-column">
@@ -126,7 +134,10 @@ export function CommunityPage() {
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h2>
-              <span>{memberCount ?? '—'}</span>
+              <div className="social-preview-panel__header-actions">
+                <span>{memberCount ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
+              </div>
             </header>
             <RequestState
               isLoading={membersQuery.isLoading}
@@ -144,7 +155,6 @@ export function CommunityPage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
           </section>
         </aside>
       </div>

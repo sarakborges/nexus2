@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { IsIn, IsString, MaxLength, MinLength } from 'class-validator'
 import type { CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { CurrentUser } from '../auth/current-user.decorator'
@@ -20,6 +20,13 @@ class CreateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(12000) about!: string
   @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
   @IsString() ownerProfileId!: string
+}
+class UpdateCommunityDto implements Omit<CreateCommunityInput, 'ownerProfileId'> {
+  @IsString() @MaxLength(80) name!: string
+  @IsString() url!: string
+  @IsString() picture!: string
+  @IsString() @MaxLength(12000) about!: string
+  @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
 }
 class ProfileRelationDto {
   @IsString() sourceProfileId!: string
@@ -48,6 +55,7 @@ export class DomainController {
   @Get('profiles/by-url/:url') getProfile(@Param('url') url: string) { return this.domain.getProfile(url) }
   @Get('profiles/ids') getProfiles(@Query('ids') ids: string | string[]) { return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Post('profiles') @UseGuards(JwtAccessGuard) createProfile(@CurrentUser() u: { id: string }, @Body() body: CreateProfileDto) { return this.domain.createProfile(u.id, body) }
+  @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: { id: string }, @Param('profileId') id: string, @Body() body: CreateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
   @Get('communities/by-url/:url') getCommunity(@Param('url') url: string) { return this.domain.getCommunity(url) }
@@ -56,6 +64,9 @@ export class DomainController {
   @Post('communities') @UseGuards(JwtAccessGuard) createCommunity(@CurrentUser() u: { id: string }, @Body() body: CreateCommunityDto) {
     const { ownerProfileId, ...community } = body
     return this.domain.createCommunity(u.id, ownerProfileId, community)
+  }
+  @Put('communities/:communityId') @UseGuards(JwtAccessGuard) updateCommunity(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Body() body: UpdateCommunityDto) {
+    return this.domain.updateCommunity(u.id, id, body)
   }
 
   @Get('relationships') @UseGuards(JwtAccessGuard) getRelationships(@CurrentUser() u: { id: string }, @Query('profileId') id: string) { return this.domain.getProfileRelationships(u.id, id) }

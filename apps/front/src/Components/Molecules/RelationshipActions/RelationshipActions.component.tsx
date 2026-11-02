@@ -105,7 +105,12 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
       ) : relationship?.type === 'connection' ? (
         <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t(isCommunity ? 'COMMUNITY_LEAVE' : 'RELATIONSHIP_REMOVE')}</Button>
       ) : isBlockedByCurrent ? (
-        <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t(isCommunity ? 'COMMUNITY_UNBLOCK' : 'RELATIONSHIP_UNBLOCK')}</Button>
+        isCommunity
+          ? <>
+              <span className="account-card__description">{t('RELATIONSHIP_LEGACY_BLOCKED')}</span>
+              <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t('RELATIONSHIP_CLEAR_LEGACY')}</Button>
+            </>
+          : <Button variation="secondary" disabled={mutation.isPending} onClick={() => run({ type: 'remove' })}>{t('RELATIONSHIP_UNBLOCK')}</Button>
       ) : isIncomingRequest ? (
         <Button variation="secondary" disabled={mutation.isPending} onClick={handleRequestOrAccept}>{t(isCommunity ? 'COMMUNITY_ACCEPT' : 'RELATIONSHIP_ACCEPT')}</Button>
       ) : isOwnRequest ? (
@@ -115,9 +120,9 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
       ) : (
         <Button disabled={mutation.isPending} onClick={handleRequestOrAccept}>{t(isCommunity ? 'COMMUNITY_JOIN' : 'RELATIONSHIP_ADD')}</Button>
       )}
-      {relationship?.type !== 'blocked' && (
+      {!isCommunity && relationship?.type !== 'blocked' && (
         <Button variation="cancel" disabled={mutation.isPending} onClick={() => run({ type: 'blocked' })}>
-          {t(isCommunity ? 'COMMUNITY_BLOCK' : 'RELATIONSHIP_BLOCK')}
+          {t('RELATIONSHIP_BLOCK')}
         </Button>
       )}
     </div>
