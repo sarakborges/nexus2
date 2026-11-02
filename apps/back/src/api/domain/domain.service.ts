@@ -437,7 +437,7 @@ export class DomainService {
 
   async createCommunityForumTopic(userId: string, communityId: string, profileId: string, rawTitle: string, rawContent: string): Promise<CommunityForumTopic> {
     await this.assertForumMember(userId, profileId, communityId)
-    const title = rawTitle.trim().replace(/\\s+/g, ' ')
+    const title = rawTitle.trim().replace(/\s+/g, ' ')
     const content = sanitizeRichText(rawContent)
     const plainText = getRichTextPlainText(content)
     if (!title || title.length > 140 || !plainText || plainText.length > 8000 || content.length > 12000) throw new BadRequestException('INVALID_FORUM_TOPIC')
