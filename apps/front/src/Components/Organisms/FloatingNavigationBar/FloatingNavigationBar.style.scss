@@ -3,7 +3,7 @@
   z-index: 120;
   top: 16px;
   left: 50%;
-  width: min(920px, calc(100vw - 32px));
+  width: min(var(--main-content-max-width), calc(100vw - 32px));
   transform: translateX(-50%);
 
   &__bar {
@@ -39,6 +39,14 @@
     width: 44px;
     flex: 0 0 44px;
     font-size: 21px;
+  }
+
+  &__icon-button svg {
+    display: block;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    font-size: 22px;
   }
 
   &__account-trigger {
@@ -272,7 +280,7 @@
 @media (max-width: 560px) {
   .floating-navigation {
     top: 10px;
-    width: calc(100vw - 20px);
+    width: min(var(--main-content-max-width), calc(100vw - 32px));
 
     &__bar {
       min-height: 58px;
