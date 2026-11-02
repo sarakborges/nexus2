@@ -73,7 +73,6 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const privacy = input.privacy ?? current.privacy ?? 'public'
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
