@@ -126,6 +126,7 @@ export function ProfilePage() {
               <h2>{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h2>
               <div className="social-preview-panel__header-actions">
                 <span>{friendsQuery.data?.totalItems ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
                   </div>
             </header>
             <RequestState
@@ -144,7 +145,6 @@ export function ProfilePage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
           </section>
 
           <section className="social-preview-panel">
@@ -152,6 +152,7 @@ export function ProfilePage() {
               <h2>{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h2>
               <div className="social-preview-panel__header-actions">
                 <span>{communitiesQuery.data?.totalItems ?? '—'}</span>
+                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
                   </div>
             </header>
             <RequestState
