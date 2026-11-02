@@ -46,7 +46,7 @@ export function CommunityPage() {
     enabled: Boolean(community?.id)
   })
   const membersQuery = useQuery({
-    queryKey: queryKeys.communityMembers(community?.id ?? '', 'all', 1, 12, currentProfileId ?? undefined),
+    queryKey: queryKeys.communityMembers(community?.id ?? '', 'all', 1, 16, currentProfileId ?? undefined),
     queryFn: () => getCommunityMembers(community!.id, 'all', { page: 1, pageSize: 16 }, currentProfileId ?? undefined),
     enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
   })

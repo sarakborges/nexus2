@@ -3,7 +3,7 @@ import {
   deleteUploadedFile,
   uploadFile,
   updateCommunityAvatar,
-  updateProfileAvatar,
+  updateProfileAvatar
 } from '@/Services/Uploads'
 import './AvatarUploadField.style.scss'
 

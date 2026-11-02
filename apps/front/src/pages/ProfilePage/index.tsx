@@ -41,12 +41,12 @@ export function ProfilePage() {
   const profile = profileQuery.data
 
   const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 8),
+    queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 16),
     queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
   const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 8),
+    queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 16),
     queryFn: () => getProfileCommunities(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })

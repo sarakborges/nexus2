@@ -240,7 +240,8 @@ export class UploadsService {
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
-      record.status !== 'ready' || record.resourceType) {
+      record.status !== 'ready' || record.resourceType ||
+      (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
       throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     }
     await this.data.write('media_files', records.map(item => item.id === record.id
