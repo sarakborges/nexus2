@@ -91,6 +91,7 @@ export const enUSTranslations = {
   PROFILE_TYPE_BUSINESS: 'Business',
   PROFILE_PICTURE_LABEL: 'Picture URL (optional)',
   PROFILE_ABOUT_LABEL: 'About',
+  PROFILE_ABOUT_EMPTY: 'This profile has not added an introduction yet.',
   PROFILE_PICTURE_ALT: '{{name}} profile picture',
   PROFILE_ERROR_URL_TAKEN: 'This profile address is already in use.',
   PROFILE_ERROR_INVALID: 'Enter a name and a valid profile address. The picture URL must be valid when provided.',
