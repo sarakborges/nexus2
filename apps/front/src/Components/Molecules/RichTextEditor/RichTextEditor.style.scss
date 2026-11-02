@@ -1,0 +1,120 @@
+.rich-text-editor {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.rich-text-editor .rsw-editor {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+.rich-text-editor .rsw-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 6px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+
+.rich-text-editor .rsw-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.rich-text-editor .rsw-btn:hover,
+.rich-text-editor .rsw-btn[data-active='true'] {
+  background: var(--color-surface-raised);
+  color: var(--color-primary-weak);
+}
+
+.rich-text-editor .rsw-btn svg {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.rich-text-editor .rsw-separator {
+  width: 1px;
+  height: 22px;
+  margin: 0 3px;
+  background: var(--color-border);
+}
+
+.rich-text-editor .rsw-ce {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  overflow-wrap: anywhere;
+  outline: none;
+  color: var(--text-color);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: normal;
+}
+
+.rich-text-editor .rsw-ce:empty::before {
+  color: var(--color-neutral);
+  content: attr(placeholder);
+  pointer-events: none;
+}
+
+.rich-text-editor .rsw-ce p,
+.rich-text-editor .rsw-ce div,
+.rich-text-editor .rsw-ce li,
+.rich-text-editor .rsw-ce blockquote {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.rich-text-editor .rsw-ce ul {
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.rich-text-editor .rsw-ce ol {
+  padding-left: 24px;
+  list-style: decimal;
+}
+
+.rich-text-editor .rsw-ce img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.rich-text-editor .rsw-ce a {
+  color: var(--color-primary-weak);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rich-text-editor .rsw-btn {
+    transition: none;
+  }
+}
