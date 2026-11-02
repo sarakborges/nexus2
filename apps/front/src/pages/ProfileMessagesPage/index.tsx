@@ -19,7 +19,7 @@ function hasRichTextContent(value: string): boolean {
     .replace(/<[^>]*>/g, ' ')
     .replace(/&nbsp;|&#160;/gi, ' ')
     .trim()
-  return Boolean(text || /<img\\b/i.test(value))
+  return Boolean(text || /<img\b/i.test(value))
 }
 
 export function ProfileMessagesPage() {
