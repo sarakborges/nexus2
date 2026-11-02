@@ -13,7 +13,7 @@ import Editor, {
   HtmlButton,
   Toolbar
 } from 'react-simple-wysiwyg'
-import { FiImage, FiLink } from 'react-icons/fi'
+import { FiImage } from 'react-icons/fi'
 
 import './RichTextEditor.style.scss'
 
