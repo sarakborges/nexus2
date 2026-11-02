@@ -62,6 +62,35 @@ export class DomainService {
     return profile
   }
 
+  async updateProfile(userId: string, profileId: string, input: CreateProfileInput): Promise<Profile> {
+    await this.assertOwns(userId, profileId)
+    const profiles = await this.data.read<Profile>('profiles')
+    const current = profiles.find(profile => profile.id === profileId)
+    if (!current) throw new NotFoundException('PROFILE_NOT_FOUND')
+
+    const name = input.name.trim()
+    const url = this.normalize(input.url)
+    const picture = input.picture.trim()
+    const about = sanitizeRichText(input.about)
+    await this.uploads?.validateEditorImagesForResource(userId, about, 'profile', profileId)
+    const aboutText = getRichTextPlainText(about)
+
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['social', 'rp', 'business'].includes(input.type) ||
+      picture !== current.picture) {
+      throw new ConflictException('INVALID_PROFILE')
+    }
+    if (profiles.some(profile => profile.id !== profileId && profile.url === url)) {
+      throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+    }
+
+    const updated: Profile = { ...current, name, url, about, type: input.type }
+    await this.data.write('profiles', profiles.map(profile => profile.id === profileId ? updated : profile))
+    await this.uploads?.attachEditorImagesForResource(userId, about, 'profile', profileId)
+    return updated
+  }
+
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
     return paginate(await this.readCommunities(), q)
   }
@@ -106,6 +135,45 @@ export class DomainService {
     await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
     await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
     return community
+  }
+
+  async updateCommunity(
+    userId: string,
+    communityId: string,
+    ownerProfileId: string,
+    input: CreateCommunityInput
+  ): Promise<Community> {
+    await this.assertOwns(userId, ownerProfileId)
+    const communities = await this.readCommunities()
+    const current = communities.find(community => community.id === communityId)
+    if (!current) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+
+    const relationships = await this.readCommunityRelationships(communityId)
+    if (this.role(ownerProfileId, relationships) !== 'owner') {
+      throw new ForbiddenException('COMMUNITY_OWNER_REQUIRED')
+    }
+
+    const name = input.name.trim()
+    const url = this.normalize(input.url)
+    const picture = input.picture.trim()
+    const about = sanitizeRichText(input.about)
+    await this.uploads?.validateEditorImagesForResource(userId, about, 'community', communityId)
+    const aboutText = getRichTextPlainText(about)
+
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['social', 'rp', 'business'].includes(input.type) ||
+      picture !== current.picture) {
+      throw new ConflictException('INVALID_COMMUNITY')
+    }
+    if (communities.some(community => community.id !== communityId && community.url === url)) {
+      throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+    }
+
+    const updated: Community = { ...current, name, url, about, type: input.type }
+    await this.data.write('communities', communities.map(community => community.id === communityId ? updated : community))
+    await this.uploads?.attachEditorImagesForResource(userId, about, 'community', communityId)
+    return updated
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
