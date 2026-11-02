@@ -86,6 +86,7 @@ export function CommunityPage() {
               <AvatarUploadField
                 label={t('COMMUNITY_PICTURE_LABEL')}
                 value={community.picture}
+                fallbackName={community.name}
                 purpose="community-avatar"
                 targetId={community.id}
                 actorProfileId={avatarManager.profiles[0]}

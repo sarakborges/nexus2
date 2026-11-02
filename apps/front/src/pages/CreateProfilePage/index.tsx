@@ -61,6 +61,7 @@ export function CreateProfilePage() {
         <AvatarUploadField
           label={t('PROFILE_PICTURE_LABEL')}
           value={picture}
+          fallbackName={name}
           purpose="profile-avatar"
           onChange={setPicture}
           selectLabel={t('UPLOAD_SELECT_IMAGE')}

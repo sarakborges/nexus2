@@ -79,6 +79,7 @@ export function ProfilePage() {
               <AvatarUploadField
                 label={t('PROFILE_PICTURE_LABEL')}
                 value={profile.picture}
+                fallbackName={profile.name}
                 purpose="profile-avatar"
                 targetId={profile.id}
                 onChange={picture => queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), { ...profile, picture })}

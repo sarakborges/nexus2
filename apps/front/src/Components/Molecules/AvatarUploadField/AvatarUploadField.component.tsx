@@ -10,6 +10,7 @@ import './AvatarUploadField.style.scss'
 type AvatarUploadFieldProps = {
   label: string
   value: string
+  fallbackName: string
   purpose: 'profile-avatar' | 'community-avatar'
   onChange: (value: string) => void
   targetId?: string
@@ -25,6 +26,7 @@ type AvatarUploadFieldProps = {
 export function AvatarUploadField({
   label,
   value,
+  fallbackName,
   purpose,
   onChange,
   targetId,
@@ -98,7 +100,9 @@ export function AvatarUploadField({
       <div className="avatar-upload-field__preview">
         {value
           ? <img src={value} alt="" />
-          : <span>{emptyLabel}</span>}
+          : <span className="avatar-upload-field__fallback" aria-hidden="true">
+              {fallbackName.trim().charAt(0).toUpperCase() || emptyLabel}
+            </span>}
       </div>
       <div className="avatar-upload-field__actions">
         <button

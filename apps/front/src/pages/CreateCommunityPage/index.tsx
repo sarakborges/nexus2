@@ -59,6 +59,7 @@ export function CreateCommunityPage() {
         <AvatarUploadField
           label={t('COMMUNITY_PICTURE_LABEL')}
           value={picture}
+          fallbackName={name}
           purpose="community-avatar"
           onChange={setPicture}
           selectLabel={t('UPLOAD_SELECT_IMAGE')}

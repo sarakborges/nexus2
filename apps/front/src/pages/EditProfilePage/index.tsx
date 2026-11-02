@@ -99,6 +99,7 @@ export function EditProfilePage() {
         <AvatarUploadField
           label={t('PROFILE_PICTURE_LABEL')}
           value={profile.picture}
+          fallbackName={form.name}
           purpose="profile-avatar"
           targetId={profile.id}
           onChange={picture => queryClient.setQueryData<Profile>(queryKeys.profiles.byUrl(profile.url), current => current ? { ...current, picture } : current)}
