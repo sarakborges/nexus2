@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_BFF_URL ?? '/api',
+  baseURL: import.meta.env.DEV ? '/api' : import.meta.env.VITE_BFF_URL ?? '/api',
   withCredentials: true,
   headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
   paramsSerializer: { indexes: null }
