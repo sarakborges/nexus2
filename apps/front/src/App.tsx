@@ -9,8 +9,11 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { AppRoutes } from '@/routes'
+import { useLocation } from 'react-router'
+import { ROUTES } from '@/Constants/routes'
 
 export function App() {
+  const location = useLocation()
   const { language } = useTranslations()
   const setSession = useAuthStore(state => state.setSession)
   const isAuthInitialized = useAuthStore(state => state.isInitialized)
@@ -21,7 +24,8 @@ export function App() {
   const authQuery = useQuery({
     queryKey: queryKeys.auth.session,
     queryFn: getCurrentAuthSession,
-    retry: false
+    retry: false,
+    enabled: location.pathname !== ROUTES.landing
   })
   const preferencesQuery = useQuery({
     queryKey: queryKeys.auth.preferences(userId ?? ''),
