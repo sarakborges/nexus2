@@ -109,8 +109,8 @@ export class DomainService {
       this.data.read<Relationship>('relationships'),
       this.data.read<CommunityRelationship>('community_relationships')
     ])
-    const profilesById = new Map(profiles.map(profile => [profile.id, profile]))
-    const communitiesById = new Map(communities.map(community => [community.id, community]))
+    const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
+    const communitiesById = new Map(communities.map(community => [community.id, community] as const))
     const activities: RecentActivity[] = []
 
     for (const relationship of relationships) {
