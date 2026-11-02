@@ -24,7 +24,21 @@ npm run dev
 - BFF: http://localhost:3001
 - Back: http://localhost:3002
 
-The Vite development server proxies `/api` to the BFF. Without Supabase variables, the backend uses the JSON file adapter locally.
+The default Vite development server proxies `/api` to the local BFF. Without Supabase variables, the backend uses the JSON file adapter locally.
+
+### Use the production BFF with the local frontend
+
+To run only the frontend while sending API requests to the production BFF:
+
+```bash
+npm run dev:front:prod-bff
+```
+
+Open http://localhost:5173. The Vite server proxies `/api` to `https://nexus2-yoggsaras-projects.vercel.app`; browser requests remain same-origin with localhost, so the BFF's HttpOnly session cookies are stored for the local development host instead of requiring a direct cross-origin request. This mode does not start the local BFF or backend and does not require their `.env` files.
+
+**This mode uses production accounts and data.** Sign-ups, profile changes, messages, relationship actions and other writes affect the production environment. Use it only when you intend to work against production data.
+
+The target can be overridden with `BFF_PROXY_TARGET` in the Vite mode's environment.
 
 ## Deployment on Vercel
 

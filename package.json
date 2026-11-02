@@ -18,7 +18,8 @@
     "storybook": "npm run storybook --workspace @nexus/front",
     "format": "prettier --write .",
     "test": "npm test --workspace @nexus/back",
-    "build-storybook": "npm run build-storybook --workspace @nexus/front"
+    "build-storybook": "npm run build-storybook --workspace @nexus/front",
+    "dev:front:prod-bff": "npm run build --workspace @nexus/common && npm run dev:prod-bff --workspace @nexus/front"
   },
   "engines": {
     "node": ">=22.22.0"
