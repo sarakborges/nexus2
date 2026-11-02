@@ -49,7 +49,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const currentProfile = profiles.find(profile => profile.id === currentProfileId)
   const profileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url : null
   const messagesRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/messages' : null
-  const accountName = currentProfile?.name ?? session?.user.email ?? t('NAVIGATION_ACCOUNT')
+  const accountName = currentProfile?.name ?? t('NAVIGATION_ACCOUNT')
   const accountInitial = accountName.trim().charAt(0).toUpperCase()
 
   const closePanels = () => {
@@ -139,16 +139,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
             <FiUsers aria-hidden="true" />
             <span>{t('COMMUNITIES_TITLE')}</span>
           </Link>
-          <Link className="floating-navigation__desktop-link" to={ROUTES.createProfile} aria-current={location.pathname === ROUTES.createProfile ? 'page' : undefined} onClick={closePanels}>
-            <FiUserPlus aria-hidden="true" />
-            <span>{t('HOME_CREATE_PROFILE')}</span>
-          </Link>
-          {currentProfile && (
-            <Link className="floating-navigation__desktop-link" to={ROUTES.createCommunity} aria-current={location.pathname === ROUTES.createCommunity ? 'page' : undefined} onClick={closePanels}>
-              <FiPlusCircle aria-hidden="true" />
-              <span>{t('COMMUNITIES_CREATE')}</span>
-            </Link>
-          )}
         </nav>
 
         <button
@@ -177,7 +167,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           </span>
           <span className="floating-navigation__account-label">
             <span>{accountName}</span>
-            <small>{session.user.email}</small>
           </span>
           <FiChevronDown className="floating-navigation__account-chevron" aria-hidden="true" />
         </button>
@@ -209,16 +198,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
             <FiUsers aria-hidden="true" />
             <span>{t('COMMUNITIES_TITLE')}</span>
           </Link>
-          <Link className="floating-navigation__menu-item" to={ROUTES.createProfile} onClick={closePanels}>
-            <FiUserPlus aria-hidden="true" />
-            <span>{t('HOME_CREATE_PROFILE')}</span>
-          </Link>
-          {currentProfile && (
-            <Link className="floating-navigation__menu-item" to={ROUTES.createCommunity} onClick={closePanels}>
-              <FiPlusCircle aria-hidden="true" />
-              <span>{t('COMMUNITIES_CREATE')}</span>
-            </Link>
-          )}
         </nav>
       )}
 
@@ -231,7 +210,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
         >
           <div className="floating-navigation__menu-heading">
             <span>{accountName}</span>
-            <small>{session.user.email}</small>
           </div>
 
           <div className="floating-navigation__profile-switcher">
@@ -295,6 +273,17 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
               </div>
             )}
           </div>
+
+          <Link className="floating-navigation__menu-item" to={ROUTES.createProfile} role="menuitem" onClick={closePanels}>
+            <FiUserPlus aria-hidden="true" />
+            <span>{t('HOME_CREATE_PROFILE')}</span>
+          </Link>
+          {currentProfile && (
+            <Link className="floating-navigation__menu-item" to={ROUTES.createCommunity} role="menuitem" onClick={closePanels}>
+              <FiPlusCircle aria-hidden="true" />
+              <span>{t('COMMUNITIES_CREATE')}</span>
+            </Link>
+          )}
 
           <div className="floating-navigation__menu-divider" />
 
