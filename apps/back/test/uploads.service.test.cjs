@@ -242,3 +242,59 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
   assert.deepEqual(deleted.find(item => item.url.endsWith('/nexus-editor-images')).body.prefixes, ['editor/user-1/old.png'])
   assert.deepEqual(collections.get('media_files'), [])
 })
+test('editing a resource may retain old editor-image references after their metadata has expired', async () => {
+  const retainedId = '123e4567-e89b-42d3-a456-426614174000'
+  const newId = '223e4567-e89b-42d3-a456-426614174000'
+  const oldFile = {
+    id: retainedId,
+    ownerUserId: 'previous-owner',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/previous-owner/old.png',
+    contentType: 'image/png',
+    expectedSize: 8,
+    size: 8,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 48 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 24 * 60 * 60 * 1000,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const newFile = {
+    id: newId,
+    ownerUserId: 'current-owner',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/current-owner/new.png',
+    contentType: 'image/png',
+    expectedSize: 8,
+    size: 8,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [oldFile, newFile] })
+  const html = '<p>Updated</p>' +
+    '<img src="/api/uploads/' + retainedId + '/content">' +
+    '<img src="/api/uploads/' + newId + '/content">'
+
+  await service.validateEditorImagesForResource(
+    'current-owner', html, 'profile', 'profile-1', [retainedId]
+  )
+  await service.attachEditorImagesForResource(
+    'current-owner', html, 'profile', 'profile-1', [retainedId]
+  )
+
+  const records = collections.get('media_files')
+  assert.equal(records.find(item => item.id === retainedId).resourceId, 'profile-1')
+  assert.equal(records.find(item => item.id === newId).resourceType, 'profile')
+  assert.equal(records.find(item => item.id === newId).resourceId, 'profile-1')
+})
