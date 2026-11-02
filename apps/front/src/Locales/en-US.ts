@@ -133,6 +133,8 @@ export const enUSTranslations = {
   COMMUNITY_URL_LABEL: "Community address",
   COMMUNITY_PICTURE_LABEL: "Picture URL (optional)",
   COMMUNITY_ABOUT_LABEL: "About this community",
+  COMMUNITY_ABOUT_EMPTY: "This community has not added a description yet.",
+  COMMUNITY_MEMBER_COUNT: "Members",
   COMMUNITY_ERROR_URL_TAKEN: "This community address is already in use.",
   COMMUNITY_ERROR_INVALID: "Enter a name and a valid address. The picture URL must be valid when provided.",
   COMMUNITY_ERROR_STORAGE: "The community could not be saved to browser storage.",
