@@ -24,6 +24,10 @@ export async function getProfileByUrl(url: string): Promise<Profile | null> {
     throw error
   }
 }
+export async function updateUserProfile(profileId: string, input: CreateProfileInput): Promise<Profile> {
+  const { data } = await api.patch<Profile>('/profiles/' + encodeURIComponent(profileId), input)
+  return data
+}
 export async function createUserProfile(input: CreateProfileInput): Promise<Profile> {
   const { data } = await api.post<Profile>('/profiles', input)
   return data
