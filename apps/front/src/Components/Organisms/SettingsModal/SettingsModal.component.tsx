@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { LanguageSelector } from '@/Components/Organisms/LanguageSelector'
+import { ThemeSelector } from '@/Components/Organisms/ThemeSelector'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button, Modal } from '@/DesignSystem'
-import { SUPPORTED_THEME_PREFERENCES, THEME_PREFERENCE_NAME_KEYS } from '@/Constants/themes'
 import { useTranslations } from '@/Hooks/Language'
-import { useThemePreference } from '@/Hooks/Theme'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { getUserPreferences } from '@/Services/Settings'
@@ -19,7 +18,6 @@ type SettingsModalProps = {
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
-  const { themePreference, setTheme, isUpdating } = useThemePreference()
   const userId = useAuthStore(state => state.session?.user.id ?? null)
   const updateError = useSettingsStore(state => state.updateError)
   const preferencesQuery = useQuery({
@@ -38,29 +36,10 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
         isError={Boolean(userId && preferencesQuery.isError)}
         onRetry={() => void preferencesQuery.refetch()}
       >
-        <section className="settings-modal__section" aria-labelledby="settings-language-title">
+        <div className="settings-modal__preferences">
           <LanguageSelector />
-        </section>
-        <section className="settings-modal__section" aria-labelledby="settings-appearance-title">
-          <div>
-            <h3 className="settings-modal__section-title" id="settings-appearance-title">{t('APPEARANCE_TITLE')}</h3>
-            <p className="settings-modal__description">{t('APPEARANCE_DESCRIPTION')}</p>
-          </div>
-          <div className="settings-modal__options" role="group" aria-label={t('APPEARANCE_TITLE')}>
-            {SUPPORTED_THEME_PREFERENCES.map(preference => (
-              <Button
-                key={preference}
-                type="button"
-                variation={themePreference === preference ? 'primary' : 'secondary'}
-                aria-pressed={themePreference === preference}
-                onClick={() => setTheme(preference)}
-                disabled={isUpdating}
-              >
-                {t(THEME_PREFERENCE_NAME_KEYS[preference])}
-              </Button>
-            ))}
-          </div>
-        </section>
+          <ThemeSelector />
+        </div>
       </RequestState>
       <div className="settings-modal__actions">
         <Button type="button" variation="secondary" onClick={onClose}>{t('SETTINGS_CLOSE')}</Button>
