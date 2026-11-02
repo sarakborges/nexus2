@@ -78,6 +78,9 @@ export function RichTextEditor({
   return (
     <div className="rich-text-editor" data-editor-id={id}>
       <Editor
+        id={id}
+        role="textbox"
+        aria-multiline="true"
         value={value}
         onChange={event => onChange(event.target.value)}
         placeholder={placeholder}
