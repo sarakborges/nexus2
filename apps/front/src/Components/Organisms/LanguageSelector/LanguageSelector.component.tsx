@@ -1,28 +1,16 @@
-import { useId } from 'react'
-
 import { SUPPORTED_LANGUAGE_PREFERENCES } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
-
-import { Text } from '@/DesignSystem'
 import { LanguageOption } from '@/Components/Molecules/LanguageOption'
-
-import './LanguageSelector.style.scss'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 
 export function LanguageSelector() {
-  const titleId = useId()
   const { t } = useTranslations()
 
   return (
-    <section className="language-selector" aria-labelledby={titleId}>
-      <Text as="h2" id={titleId}>
-        {t('LANGUAGES_TITLE')}
-      </Text>
-
-      <div className="language-selector__options">
-        {SUPPORTED_LANGUAGE_PREFERENCES.map((language) => (
-          <LanguageOption key={language} language={language} />
-        ))}
-      </div>
-    </section>
+    <PreferenceSelector title={t('LANGUAGES_TITLE')}>
+      {SUPPORTED_LANGUAGE_PREFERENCES.map(language => (
+        <LanguageOption key={language} language={language} />
+      ))}
+    </PreferenceSelector>
   )
 }

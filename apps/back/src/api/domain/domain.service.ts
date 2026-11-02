@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
-  CreateProfileInput, PaginatedResult, Profile, ProfileMessage, Relationship, RelationshipType
+  CreateProfileInput, PaginatedResult, Profile, ProfileMessage, RecentActivity, Relationship, RelationshipType
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
@@ -97,6 +97,60 @@ export class DomainService {
       .map(r => r.profiles.find(id => id !== profileId)!)
     return paginate(await this.getProfilesByIds(ids), q)
   }
+
+  async getRecentActivity(userId: string): Promise<RecentActivity[]> {
+    const user = await this.auth.getUser(userId)
+    const ownedProfileIds = new Set(user.profiles)
+    if (!ownedProfileIds.size) return []
+
+    const [profiles, communities, relationships, communityRelationships] = await Promise.all([
+      this.data.read<Profile>('profiles'),
+      this.data.read<Community>('communities'),
+      this.data.read<Relationship>('relationships'),
+      this.data.read<CommunityRelationship>('community_relationships')
+    ])
+    const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
+    const communitiesById = new Map(communities.map(community => [community.id, community] as const))
+    const activities: RecentActivity[] = []
+
+    for (const relationship of relationships) {
+      if (relationship.type !== 'connection') continue
+      const ownedParticipants = relationship.profiles.filter(id => ownedProfileIds.has(id))
+      if (ownedParticipants.length !== 1) continue
+      const profile = profilesById.get(ownedParticipants[0])
+      const friendId = relationship.profiles.find(id => id !== ownedParticipants[0])
+      const friend = friendId ? profilesById.get(friendId) : undefined
+      if (!profile || !friend) continue
+      activities.push({
+        id: `friend:${relationship.profiles[0]}:${relationship.profiles[1]}`,
+        type: 'friend_connected',
+        updatedAt: relationship.updatedAt,
+        profile,
+        friend
+      })
+    }
+
+    for (const relationship of communityRelationships) {
+      if (!ownedProfileIds.has(relationship.profiles[0])) continue
+      if (relationship.type !== 'owner' && relationship.type !== 'moderator' && relationship.type !== 'connection') continue
+      const profile = profilesById.get(relationship.profiles[0])
+      const community = communitiesById.get(relationship.profiles[1])
+      if (!profile || !community) continue
+      activities.push({
+        id: `community:${profile.id}:${community.id}`,
+        type: 'community_membership',
+        updatedAt: relationship.updatedAt,
+        profile,
+        community,
+        role: relationship.type
+      })
+    }
+
+    return activities
+      .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
+      .slice(0, 10)
+  }
+
   async updateProfileRelationship(userId: string, source: string, target: string, type: RelationshipType): Promise<Relationship> {
     await this.assertOwns(userId, source)
     if (!source || !target || source === target) throw new ForbiddenException('INVALID_RELATIONSHIP_PARTICIPANTS')

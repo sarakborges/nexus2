@@ -5,23 +5,9 @@
     line-height: 1.5;
   }
 
-  &__section {
+  &__preferences {
     display: grid;
-    gap: 12px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  &__section-title {
-    color: var(--text-color);
-    font-size: 16px;
-    font-weight: var(--font-weight-bold);
-  }
-
-  &__options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    gap: 20px;
   }
 
   &__actions {

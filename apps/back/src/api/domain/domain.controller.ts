@@ -41,6 +41,8 @@ class MessageDto {
 export class DomainController {
   constructor(private readonly domain: DomainService) {}
 
+  @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: { id: string }) { return this.domain.getRecentActivity(u.id) }
+
   @Get('profiles') listProfiles(@Query() q: PaginationDto) { return this.domain.listProfiles(q) }
   @Get('profiles/owned') @UseGuards(JwtAccessGuard) ownedProfiles(@CurrentUser() u: { id: string }, @Query() q: PaginationDto) { return this.domain.listOwnedProfiles(u.id, q) }
   @Get('profiles/by-url/:url') getProfile(@Param('url') url: string) { return this.domain.getProfile(url) }

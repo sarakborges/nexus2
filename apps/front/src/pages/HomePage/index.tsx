@@ -1,99 +1,83 @@
-import { useEffect } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate } from 'react-router'
-import { Pagination, RequestState } from '@/Components'
+import { useQuery } from '@tanstack/react-query'
+import { Link } from 'react-router'
+import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { getOwnedProfiles } from '@/Services/Profile'
+import { getRecentActivity } from '@/Services/Activity'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useAuthStore } from '@/Stores/Auth.store'
 import '../AuthenticatedPage.style.scss'
+import './HomePage.style.scss'
 
 export function HomePage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const session = useAuthStore(state => state.session)
-  const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
-  const signOut = useAuthStore(state => state.signOut)
-  const { page, pageSize, setPage } = useUrlPagination()
-  const userId = session?.user.id ?? null
-  const profilesQuery = useQuery({
-    queryKey: queryKeys.profiles.owned(userId ?? '', page, pageSize),
-    queryFn: () => getOwnedProfiles({ page, pageSize }),
-    enabled: Boolean(userId)
+  const userId = useAuthStore(state => state.session?.user.id ?? null)
+  const activityQuery = useQuery({
+    queryKey: queryKeys.activity.recent(userId ?? ''),
+    queryFn: getRecentActivity,
+    enabled: Boolean(userId),
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true
   })
-  const profiles = profilesQuery.data?.items ?? []
-  const totalItems = profilesQuery.data?.totalItems ?? 0
-  const signOutMutation = useMutation({
-    mutationFn: signOut,
-    onSuccess: () => {
-      queryClient.clear()
-      navigate(ROUTES.signIn, { replace: true })
-    }
-  })
-  const selectProfileMutation = useMutation({
-    mutationFn: async (profileId: string) => {
-      const success = await setCurrentProfile(profileId)
-      if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
-    },
-    onSuccess: async () => {
-      queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
-      await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned'] })
-    }
-  })
-
-  useEffect(() => {
-    if (profilesQuery.data && profilesQuery.data.page !== page) setPage(profilesQuery.data.page)
-  }, [profilesQuery.data, page, setPage])
-
-  const currentProfileId = session?.user.currentProfile
+  const activities = activityQuery.data ?? []
+  const formatDate = (timestamp: number) => new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(timestamp)
 
   return (
-    <main className="account-page">
-      <section className="account-card">
+    <main className="account-page home-page">
+      <section className="account-card home-page__card">
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
-            <p className="account-card__description">{t('HOME_WELCOME', { name: profiles.find(profile => profile.id === currentProfileId)?.name ?? '' })}</p>
-          </div>
-          <div className="account-card__header-actions">
-            <Button variation="transparent" disabled={signOutMutation.isPending} onClick={() => signOutMutation.mutate()}>
-              {t('AUTH_SIGN_OUT')}
-            </Button>
+            <p className="account-card__description">{t('HOME_ACTIVITY_DESCRIPTION')}</p>
           </div>
         </header>
-        <p className="account-card__description">{session?.user.email}</p>
-        {(selectProfileMutation.isError || signOutMutation.isError) && <RequestState isError />}
-        <div className="account-card__profile-list">
-          <h2>{t('HOME_PROFILES_TITLE')}</h2>
+
+        <section className="home-page__activity" aria-labelledby="home-activity-title">
+          <h2 className="home-page__activity-title" id="home-activity-title">{t('HOME_ACTIVITY_TITLE')}</h2>
           <RequestState
-            isLoading={profilesQuery.isLoading}
-            isFetching={profilesQuery.isFetching}
-            isError={profilesQuery.isError}
-            isEmpty={profilesQuery.isSuccess && totalItems === 0}
-            emptyMessage={t('HOME_PROFILES_EMPTY')}
-            onRetry={() => void profilesQuery.refetch()}
+            isLoading={activityQuery.isLoading}
+            isFetching={activityQuery.isFetching}
+            isError={activityQuery.isError}
+            isEmpty={activityQuery.isSuccess && activities.length === 0}
+            emptyMessage={t('HOME_ACTIVITY_EMPTY')}
+            onRetry={() => void activityQuery.refetch()}
           >
-            {profiles.map(profile => {
-              const current = profile.id === currentProfileId
-              return (
-                <div className="account-card__profile-entry" key={profile.id}>
-                  <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name} · /profile/{profile.url}</Link>
-                  {current ? <span className="account-card__current-profile">{t('HOME_CURRENT_PROFILE')}</span> : <Button variation="secondary" disabled={selectProfileMutation.isPending} onClick={() => selectProfileMutation.mutate(profile.id)}>{t('HOME_USE_PROFILE')}</Button>}
-                </div>
-              )
-            })}
+            <div className="home-page__activity-list">
+              {activities.map(activity => (
+                <article className="home-page__activity-item" key={activity.id}>
+                  <div className="home-page__activity-meta">
+                    <span>{activity.type === 'friend_connected' ? t('HOME_ACTIVITY_FRIEND_LABEL') : t('HOME_ACTIVITY_COMMUNITY_LABEL')}</span>
+                    <time dateTime={new Date(activity.updatedAt).toISOString()}>{formatDate(activity.updatedAt)}</time>
+                  </div>
+                  {activity.type === 'friend_connected' ? (
+                    <p className="home-page__activity-description">
+                      <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
+                      <Link to={ROUTES.profile + '/' + activity.profile.url}>{activity.profile.name}</Link>
+                      <span> {t('HOME_ACTIVITY_FRIEND_CONNECTOR')} </span>
+                      <Link to={ROUTES.profile + '/' + activity.friend.url}>{activity.friend.name}</Link>
+                    </p>
+                  ) : (
+                    <p className="home-page__activity-description">
+                      <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
+                      <Link to={ROUTES.profile + '/' + activity.profile.url}>{activity.profile.name}</Link>
+                      <span> {t(
+                        activity.role === 'owner'
+                          ? 'HOME_ACTIVITY_COMMUNITY_OWNER'
+                          : activity.role === 'moderator'
+                            ? 'HOME_ACTIVITY_COMMUNITY_MODERATOR'
+                            : 'HOME_ACTIVITY_COMMUNITY_MEMBER'
+                      )} </span>
+                      <Link to={ROUTES.community + '/' + activity.community.url}>{activity.community.name}</Link>
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
           </RequestState>
-          <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-        </div>
-        <div className="account-card__actions">
-          <Link className="account-card__action" to={ROUTES.createProfile}>{t('HOME_CREATE_PROFILE')}</Link>
-          <Link className="account-card__action" to={ROUTES.communities}>{t('COMMUNITIES_TITLE')}</Link>
-          <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
-        </div>
+        </section>
       </section>
     </main>
   )
