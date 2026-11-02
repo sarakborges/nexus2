@@ -64,6 +64,7 @@ export function CreateProfilePage() {
             id="profile-about"
             value={about}
             onChange={setAbout}
+            maxTextLength={500}
             imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
             imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
             placeholder={t('RICH_TEXT_PLACEHOLDER')}
