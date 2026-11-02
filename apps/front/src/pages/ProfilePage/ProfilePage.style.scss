@@ -8,7 +8,7 @@
 
 .social-page__layout {
   display: grid;
-  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(300px, 340px);
+  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(380px, 420px);
   align-items: start;
   gap: 24px;
   width: min(100%, var(--main-content-max-width));
@@ -221,8 +221,8 @@
 
 .social-preview-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .social-preview-link {
