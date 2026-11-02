@@ -27,22 +27,17 @@ body {
 }
 
 body {
-  display: flex;
-  place-content: center;
-  place-items: center;
+  display: block;
   min-height: 100dvh;
   background-color: var(--color-background);
   color: var(--text-color);
 }
 
 #root {
-  display: flex;
-  place-items: center;
-  place-content: center;
-
-  width: 100dvw;
+  display: block;
+  width: 100%;
   min-height: 100dvh;
-  overflow: auto;
+  overflow-x: hidden;
 
   font-size: 14px;
   font-family: var(--font-family);
