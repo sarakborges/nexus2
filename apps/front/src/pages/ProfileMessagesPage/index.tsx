@@ -91,6 +91,7 @@ export function ProfileMessagesPage() {
               id="profile-message-content"
               value={content}
               onChange={setContent}
+              maxTextLength={4000}
               imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
               imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
               placeholder={t('RICH_TEXT_PLACEHOLDER')}
