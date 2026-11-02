@@ -111,6 +111,10 @@
   overflow-wrap: anywhere;
 }
 
+.social-identity .social-sidebar-card__edit {
+  width: 100%;
+}
+
 .social-identity .account-card__relationship-actions {
   display: grid;
   width: 100%;
@@ -340,6 +344,10 @@
   .social-identity__name {
     align-self: end;
     font-size: 20px;
+  }
+
+  .social-identity .social-sidebar-card__edit {
+    grid-column: 1 / -1;
   }
 
   .social-identity .account-card__relationship-actions {
