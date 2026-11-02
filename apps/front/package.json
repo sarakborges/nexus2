@@ -11,7 +11,8 @@
     "preview": "vite preview --host 0.0.0.0 --outDir build",
     "prettier": "prettier --write .",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "dev:prod-bff": "vite --host 0.0.0.0 --mode production-bff"
   },
   "dependencies": {
     "@nexus/common": "*",
