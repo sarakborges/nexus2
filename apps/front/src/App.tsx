@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useLocation } from 'react-router'
 import { FloatingNavigationBar, SettingsModal } from '@/Components'
 import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
@@ -8,9 +9,8 @@ import { getUserPreferences } from '@/Services/Settings'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
-import { AppRoutes } from '@/routes'
-import { useLocation } from 'react-router'
 import { ROUTES } from '@/Constants/routes'
+import { AppRoutes } from '@/routes'
 
 export function App() {
   const location = useLocation()
@@ -30,7 +30,7 @@ export function App() {
   const preferencesQuery = useQuery({
     queryKey: queryKeys.auth.preferences(userId ?? ''),
     queryFn: getUserPreferences,
-    enabled: Boolean(userId)
+    enabled: Boolean(userId) && location.pathname !== ROUTES.landing
   })
 
   useThemePreference()
