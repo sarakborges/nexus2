@@ -72,7 +72,7 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    await this.uploads?.validateEditorImagesForResource(userId, about, 'profile', profileId)
+    await this.uploads?.validateEditorImagesForResource(userId, about, 'profile', profileId, this.extractEditorImageIds(current.about ?? ''))
     const aboutText = getRichTextPlainText(about)
 
     if (!name || about.length > 12000 || aboutText.length > 500 ||
@@ -87,7 +87,7 @@ export class DomainService {
 
     const updated: Profile = { ...current, name, url, about, type: input.type }
     await this.data.write('profiles', profiles.map(profile => profile.id === profileId ? updated : profile))
-    await this.uploads?.attachEditorImagesForResource(userId, about, 'profile', profileId)
+    await this.uploads?.attachEditorImagesForResource(userId, about, 'profile', profileId, this.extractEditorImageIds(current.about ?? ''))
     return updated
   }
 
@@ -157,7 +157,7 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    await this.uploads?.validateEditorImagesForResource(userId, about, 'community', communityId)
+    await this.uploads?.validateEditorImagesForResource(userId, about, 'community', communityId, this.extractEditorImageIds(current.about ?? ''))
     const aboutText = getRichTextPlainText(about)
 
     if (!name || about.length > 12000 || aboutText.length > 500 ||
@@ -172,7 +172,7 @@ export class DomainService {
 
     const updated: Community = { ...current, name, url, about, type: input.type }
     await this.data.write('communities', communities.map(community => community.id === communityId ? updated : community))
-    await this.uploads?.attachEditorImagesForResource(userId, about, 'community', communityId)
+    await this.uploads?.attachEditorImagesForResource(userId, about, 'community', communityId, this.extractEditorImageIds(current.about ?? ''))
     return updated
   }
 
@@ -387,6 +387,12 @@ export class DomainService {
     await this.data.write('profile_messages', [...all, message])
     await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
     return message
+  }
+
+  private extractEditorImageIds(html: string): string[] {
+    const ids = [...html.matchAll(/<img\\b[^>]*\\bsrc=(["'])\\/api\\/uploads\\/([0-9a-f-]{36})\\/content\\1/gi)]
+      .map(match => match[2])
+    return ids.filter((id, index) => ids.indexOf(id) === index)
   }
 
   private async readProfiles(): Promise<Profile[]> {
