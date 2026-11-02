@@ -9,7 +9,8 @@ export const queryKeys = {
   profiles: {
     owned: (userId: string, page: number, pageSize: number) => ['profiles', 'owned', userId, page, pageSize] as const,
     byUrl: (url: string) => ['profiles', 'by-url', url] as const,
-    byIds: (ids: string[]) => ['profiles', 'by-ids', [...ids].sort()] as const
+    byIds: (ids: string[]) => ['profiles', 'by-ids', [...ids].sort()] as const,
+    currentType: (profileId: string) => ['profiles', 'current-type', profileId] as const
   },
   communities: {
     list: (page: number, pageSize: number) => ['communities', 'list', page, pageSize] as const,

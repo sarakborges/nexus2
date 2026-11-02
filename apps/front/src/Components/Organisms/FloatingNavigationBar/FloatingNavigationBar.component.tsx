@@ -307,7 +307,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           <button
             className="floating-navigation__menu-item floating-navigation__menu-item--danger"
             type="button"
-            disabled={isRequestPending}
             role="menuitem"
             disabled={isRequestPending || signOutMutation.isPending}
             onClick={() => {

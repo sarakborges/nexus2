@@ -36,7 +36,7 @@ export function CommunityMemberActions({ memberProfileId, communityId, actorProf
       if (operation.type === 'transfer') return transferCommunityOwnership(actorProfileId, memberProfileId, communityId)
       return setCommunityRelationship(memberProfileId, communityId, operation.relationshipType, actorProfileId)
     },
-    onSuccess: async (_data, operation) => {
+    onSuccess: async () => {
       showToast(t('TOAST_COMMUNITY_MODERATION'))
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['community-relationships', communityId] }),
