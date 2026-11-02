@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
+import { ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunities } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -28,7 +29,7 @@ export function CommunitiesPage() {
       <section className="account-card">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
-          <Link className="account-card__action" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</Link>
+          <ButtonLink className="account-card__action" variation="primary" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</ButtonLink>
         </header>
         <RequestState
           isLoading={communitiesQuery.isLoading}
