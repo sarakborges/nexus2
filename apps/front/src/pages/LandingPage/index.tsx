@@ -1,22 +1,10 @@
-import { Link, Navigate } from 'react-router'
+import { Link } from 'react-router'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { useAuthStore } from '@/Stores/Auth.store'
 import '../AuthPage.style.scss'
 
 export function LandingPage() {
   const { t } = useTranslations()
-  const session = useAuthStore(state => state.session)
-
-  if (session) {
-    return (
-      <Navigate
-        to={session.user.profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted}
-        replace
-      />
-    )
-  }
-
   return (
     <main className="landing-page">
       <header className="landing-header">
