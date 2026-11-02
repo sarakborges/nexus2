@@ -59,7 +59,7 @@ export function CreateProfilePage() {
         <div className="form-field"><Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="profile-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
         <FormField id="profile-picture" label={t('PROFILE_PICTURE_LABEL')} type="url" placeholder="https://example.com/image.jpg" value={picture} onChange={event => setPicture(event.target.value)} />
         <div className="form-field">
-          <Label htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
+          <Label id="profile-about-label" htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
           <RichTextEditor
             id="profile-about"
             value={about}
