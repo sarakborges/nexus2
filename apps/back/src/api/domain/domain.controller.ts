@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
-import type { CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
+import type { CommunityPrivacy, CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
@@ -24,6 +24,7 @@ class CreateCommunityDto implements CreateCommunityInput {
   @IsString() url!: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
+  @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy
   @IsString() ownerProfileId!: string
 }
 class UpdateCommunityDto implements CreateCommunityInput {
@@ -31,6 +32,7 @@ class UpdateCommunityDto implements CreateCommunityInput {
   @IsString() url!: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
+  @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy
 }
 class ProfileRelationDto {
   @IsString() sourceProfileId!: string
@@ -66,7 +68,8 @@ export class DomainController {
   @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: { id: string }, @Param('profileId') id: string, @Body() body: UpdateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
-  @Get('communities/by-url/:url') getCommunity(@Param('url') url: string) { return this.domain.getCommunity(url) }
+  @Get('communities/by-url/:url') @UseGuards(OptionalJwtAccessGuard)
+  getCommunity(@Param('url') url: string, @CurrentUser() u: { id: string } | undefined) { return this.domain.getCommunity(url, u?.id ?? null) }
   @Get('communities/ids') getCommunities(@Query('ids') ids: string | string[]) { return this.domain.getCommunitiesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Get('communities/profile/:profileId') profileCommunities(@Param('profileId') id: string, @Query() q: PaginationDto) { return this.domain.listProfileCommunities(id, q) }
   @Post('communities') @UseGuards(JwtAccessGuard) createCommunity(@CurrentUser() u: { id: string }, @Body() body: CreateCommunityDto) {
@@ -78,10 +81,10 @@ export class DomainController {
   }
 
 
-  @Get('communities/:communityId/forum/topics')
-  forumTopics(@Param('communityId') id: string, @Query() q: PaginationDto) { return this.domain.listCommunityForumTopics(id, q) }
-  @Get('communities/:communityId/forum/topics/:topicId')
-  forumTopic(@Param('communityId') id: string, @Param('topicId') topicId: string, @Query() q: PaginationDto) { return this.domain.getCommunityForumTopic(id, topicId, q) }
+  @Get('communities/:communityId/forum/topics') @UseGuards(OptionalJwtAccessGuard)
+  forumTopics(@Param('communityId') id: string, @Query() q: PaginationDto, @CurrentUser() u: { id: string } | undefined) { return this.domain.listCommunityForumTopics(id, q, u?.id ?? null) }
+  @Get('communities/:communityId/forum/topics/:topicId') @UseGuards(OptionalJwtAccessGuard)
+  forumTopic(@Param('communityId') id: string, @Param('topicId') topicId: string, @Query() q: PaginationDto, @CurrentUser() u: { id: string } | undefined) { return this.domain.getCommunityForumTopic(id, topicId, q, u?.id ?? null) }
   @Post('communities/:communityId/forum/topics') @UseGuards(JwtAccessGuard)
   createForumTopic(@CurrentUser() u: { id: string }, @Param('communityId') id: string, @Body() body: CreateForumTopicDto) { return this.domain.createCommunityForumTopic(u.id, id, body.profileId, body.title, body.content) }
   @Post('communities/:communityId/forum/topics/:topicId/replies') @UseGuards(JwtAccessGuard)

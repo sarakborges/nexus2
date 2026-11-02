@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import type { Community, CommunityRelationship } from '@nexus/common'
+import type { Community, CommunityPrivacy, CommunityRelationship } from '@nexus/common'
 import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
+import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -20,6 +22,7 @@ type CommunityForm = {
   name: string
   url: string
   about: string
+  privacy: CommunityPrivacy
 }
 
 export function EditCommunityPage() {
@@ -57,7 +60,7 @@ export function EditCommunityPage() {
   useEffect(() => {
     if (!community || initializedCommunityId.current === community.id) return
     initializedCommunityId.current = community.id
-    setForm({ name: community.name, url: community.url, about: community.about })
+    setForm({ name: community.name, url: community.url, about: community.about, privacy: community.privacy ?? 'public' })
   }, [community])
 
   const updateMutation = useMutation({
@@ -67,7 +70,8 @@ export function EditCommunityPage() {
         name: form.name,
         url: form.url,
         picture: community.picture,
-        about: form.about
+        about: form.about,
+        privacy: form.privacy
       })
     },
     onSuccess: async updated => {
@@ -109,7 +113,7 @@ export function EditCommunityPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-card" aria-labelledby="edit-community-title">
+      <section className="auth-card auth-card--wide" aria-labelledby="edit-community-title">
         <div>
           <h1 className="auth-card__title" id="edit-community-title">{t('COMMUNITY_EDIT')}</h1>
           <p className="auth-card__description">{t('COMMUNITY_EDIT_DESCRIPTION')}</p>
@@ -136,6 +140,11 @@ export function EditCommunityPage() {
             <Label id="community-type-label" htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label>
             <input className="input" id="community-type" type="text" value={communityTypeLabel} readOnly aria-readonly="true" />
           </div>
+          <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
+            <PreferenceOption label={t('COMMUNITY_PRIVACY_PUBLIC')} description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')} isSelected={form.privacy === 'public'} onSelect={() => setForm(current => current ? { ...current, privacy: 'public' } : current)} />
+            <PreferenceOption label={t('COMMUNITY_PRIVACY_PRIVATE')} description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')} isSelected={form.privacy === 'private'} onSelect={() => setForm(current => current ? { ...current, privacy: 'private' } : current)} />
+            <PreferenceOption label={t('COMMUNITY_PRIVACY_UNLISTED')} description={t('COMMUNITY_PRIVACY_UNLISTED_DESCRIPTION')} isSelected={form.privacy === 'unlisted'} onSelect={() => setForm(current => current ? { ...current, privacy: 'unlisted' } : current)} />
+          </PreferenceSelector>
           <div className="form-field">
             <Label id="community-about-label" htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
             <RichTextEditor

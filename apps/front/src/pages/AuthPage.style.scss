@@ -21,6 +21,10 @@
   font-size: 14px;
 }
 
+.auth-card--wide {
+  width: min(100%, 760px);
+}
+
 .auth-card__title {
   color: var(--text-color);
   font-size: 26px;

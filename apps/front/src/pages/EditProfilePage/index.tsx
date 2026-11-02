@@ -93,7 +93,7 @@ export function EditProfilePage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-card" aria-labelledby="edit-profile-title">
+      <section className="auth-card auth-card--wide" aria-labelledby="edit-profile-title">
         <div>
           <h1 className="auth-card__title" id="edit-profile-title">{t('PROFILE_EDIT')}</h1>
           <p className="auth-card__description">{t('PROFILE_EDIT_DESCRIPTION')}</p>

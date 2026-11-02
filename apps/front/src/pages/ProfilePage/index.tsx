@@ -113,9 +113,8 @@ export function ProfilePage() {
         <aside className="social-page__right-column">
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
-              <h2>{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h2>
+              <h2>{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}<span className="social-preview-panel__count">({friendsQuery.data?.totalItems ?? '—'})</span></h2>
               <div className="social-preview-panel__header-actions">
-                <span>{friendsQuery.data?.totalItems ?? '—'}</span>
                 <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
               </div>
             </header>
@@ -139,9 +138,8 @@ export function ProfilePage() {
 
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
-              <h2>{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h2>
+              <h2>{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}<span className="social-preview-panel__count">({communitiesQuery.data?.totalItems ?? '—'})</span></h2>
               <div className="social-preview-panel__header-actions">
-                <span>{communitiesQuery.data?.totalItems ?? '—'}</span>
                 <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
               </div>
             </header>

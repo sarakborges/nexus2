@@ -48,10 +48,12 @@ export function CommunityPage() {
     queryFn: () => getCommunityRelationships(community!.id),
     enabled: Boolean(community?.id)
   })
+  const privateMembership = relationshipsQuery.data?.some(record => ['owner', 'moderator', 'connection'].includes(record.type)) ?? false
+  const canViewMembers = community?.privacy !== 'private' || privateMembership
   const membersQuery = useQuery({
     queryKey: queryKeys.communityMembers(community?.id ?? '', 'all', 1, 16, currentProfileId ?? undefined),
     queryFn: () => getCommunityMembers(community!.id, 'all', { page: 1, pageSize: 16 }, currentProfileId ?? undefined),
-    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
+    enabled: Boolean(community?.id && relationshipsQuery.isSuccess && canViewMembers)
   })
 
   if (!requestedUrl) return <NotFoundPage />
@@ -113,9 +115,11 @@ export function CommunityPage() {
                 <span>{t('COMMUNITY_MEMBER_COUNT')}</span>
               </div>
             </header>
-            {community.about
-              ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: community.about }} />
-              : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
+            {community.privacy === 'private' && !privateMembership
+              ? <p className="social-panel__body">{t('COMMUNITY_PRIVATE_RESTRICTED')}</p>
+              : community.about
+                ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: community.about }} />
+                : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
           </article>
         </section>
 
@@ -129,11 +133,11 @@ export function CommunityPage() {
               </div>
             </header>
             <RequestState
-              isLoading={membersQuery.isLoading}
-              isFetching={membersQuery.isFetching}
-              isError={membersQuery.isError}
-              isEmpty={membersQuery.isSuccess && members.length === 0}
-              emptyMessage={t('COMMUNITY_MEMBERS_EMPTY')}
+              isLoading={canViewMembers && membersQuery.isLoading}
+              isFetching={canViewMembers && membersQuery.isFetching}
+              isError={canViewMembers && membersQuery.isError}
+              isEmpty={!canViewMembers || (membersQuery.isSuccess && members.length === 0)}
+              emptyMessage={canViewMembers ? t('COMMUNITY_MEMBERS_EMPTY') : t('COMMUNITY_PRIVATE_RESTRICTED')}
               onRetry={() => void membersQuery.refetch()}
             >
               <div className="social-preview-grid">
