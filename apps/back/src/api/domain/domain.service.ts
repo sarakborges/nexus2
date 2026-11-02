@@ -390,7 +390,7 @@ export class DomainService {
   }
 
   private extractEditorImageIds(html: string): string[] {
-    const ids = [...html.matchAll(/<img\\b[^>]*\\bsrc=(["'])\\/api\\/uploads\\/([0-9a-f-]{36})\\/content\\1/gi)]
+    const ids = [...html.matchAll(/<img\b[^>]*\bsrc=(["'])\/api\/uploads\/([0-9a-f-]{36})\/content\1/gi)]
       .map(match => match[2])
     return ids.filter((id, index) => ids.indexOf(id) === index)
   }
