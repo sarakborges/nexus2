@@ -154,7 +154,6 @@ export function CommunityPage() {
                 ))}
               </div>
             </RequestState>
-            <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
           </section>
         </aside>
       </div>
