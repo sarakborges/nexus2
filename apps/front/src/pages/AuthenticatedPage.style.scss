@@ -240,6 +240,30 @@
   white-space: normal;
 }
 
+.rich-text-content * {
+  font-size: inherit;
+}
+
+.rich-text-content strong,
+.rich-text-content b {
+  font-weight: var(--font-weight-bold);
+}
+
+.rich-text-content em,
+.rich-text-content i {
+  font-style: italic;
+}
+
+.rich-text-content u {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rich-text-content s,
+.rich-text-content del {
+  text-decoration: line-through;
+}
+
 .rich-text-content > * + * {
   margin-top: 0.65em;
 }
