@@ -90,6 +90,28 @@
   line-height: inherit;
 }
 
+.rich-text-editor .rsw-ce * {
+  font-size: inherit;
+}
+
+.rich-text-editor .rsw-ce strong,
+.rich-text-editor .rsw-ce b {
+  font-weight: var(--font-weight-bold);
+}
+
+.rich-text-editor .rsw-ce em,
+.rich-text-editor .rsw-ce i {
+  font-style: italic;
+}
+
+.rich-text-editor .rsw-ce u {
+  text-decoration: underline;
+}
+
+.rich-text-editor .rsw-ce s {
+  text-decoration: line-through;
+}
+
 .rich-text-editor .rsw-ce ul {
   padding-left: 24px;
   list-style: disc;
