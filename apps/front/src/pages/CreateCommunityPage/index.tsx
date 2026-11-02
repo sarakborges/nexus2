@@ -57,7 +57,7 @@ export function CreateCommunityPage() {
         <div className="form-field"><Label htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="community-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
         <FormField id="community-picture" label={t('COMMUNITY_PICTURE_LABEL')} type="url" placeholder="https://example.com/image.jpg" value={picture} onChange={event => setPicture(event.target.value)} />
         <div className="form-field">
-          <Label htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
+          <Label id="community-about-label" htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
           <RichTextEditor
             id="community-about"
             value={about}
