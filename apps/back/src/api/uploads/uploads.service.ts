@@ -313,17 +313,23 @@ export class UploadsService {
     userId: string,
     html: string,
     resourceType: 'profile' | 'community',
-    resourceId: string
+    resourceId: string,
+    retainedIds: string[] = []
   ): Promise<void> {
     const ids = this.extractEditorImageIds(html)
     if (!ids.length) return
     const records = await this.data.read<UploadedFileRecord>('media_files')
+    const retained = new Set(retainedIds)
     for (const id of ids) {
+      if (retained.has(id)) continue
       const record = records.find(item => item.id === id)
-      if (!record || record.ownerUserId !== userId || record.purpose !== 'editor-image' ||
-        record.status !== 'ready' || (record.expiresAt !== null && record.expiresAt <= Date.now()) ||
-        (record.resourceType !== null &&
-          (record.resourceType !== resourceType || record.resourceId !== resourceId))) {
+      const alreadyAttachedToResource = record?.resourceType === resourceType && record.resourceId === resourceId
+      if (!record || record.purpose !== 'editor-image' || record.status !== 'ready' ||
+        (!alreadyAttachedToResource && (
+          record.ownerUserId !== userId ||
+          record.resourceType !== null ||
+          (record.expiresAt !== null && record.expiresAt <= Date.now())
+        ))) {
         throw new BadRequestException('INVALID_EDITOR_IMAGE')
       }
     }
@@ -333,9 +339,10 @@ export class UploadsService {
     userId: string,
     html: string,
     resourceType: 'profile' | 'community',
-    resourceId: string
+    resourceId: string,
+    retainedIds: string[] = []
   ): Promise<void> {
-    await this.validateEditorImagesForResource(userId, html, resourceType, resourceId)
+    await this.validateEditorImagesForResource(userId, html, resourceType, resourceId, retainedIds)
     const ids = this.extractEditorImageIds(html)
     if (!ids.length) return
     const idSet = new Set(ids)
