@@ -7,6 +7,7 @@ import type {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
+import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 
 @Injectable()
 export class DomainService {
@@ -16,32 +17,35 @@ export class DomainService {
   ) {}
 
   async listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
-    return paginate(await this.data.read<Profile>('profiles'), q)
+    return paginate(await this.readProfiles(), q)
   }
   async listOwnedProfiles(userId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
     const user = await this.auth.getUser(userId)
-    return paginate((await this.data.read<Profile>('profiles')).filter(p => user.profiles.includes(p.id)), q)
+    return paginate((await this.readProfiles()).filter(p => user.profiles.includes(p.id)), q)
   }
   async getProfile(url: string): Promise<Profile> {
     const value = this.normalize(url)
-    const found = (await this.data.read<Profile>('profiles')).find(p => p.url === value)
+    const found = (await this.readProfiles()).find(p => p.url === value)
     if (!found) throw new NotFoundException('PROFILE_NOT_FOUND')
     return found
   }
   async getProfilesByIds(ids: string[]): Promise<Profile[]> {
     const set = new Set(ids)
-    return (await this.data.read<Profile>('profiles')).filter(p => set.has(p.id))
+    return (await this.readProfiles()).filter(p => set.has(p.id))
   }
   async createProfile(userId: string, input: CreateProfileInput): Promise<Profile> {
     const name = input.name.trim()
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
-    if (!name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+    const about = sanitizeRichText(input.about)
+    const aboutText = getRichTextPlainText(about)
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-    const profiles = await this.data.read<Profile>('profiles')
+    const profiles = await this.readProfiles()
     if (profiles.some(p => p.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
-    const profile: Profile = { id: randomUUID(), name, url, picture, about: input.about.trim(), type: input.type }
+    const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
     await this.data.write('profiles', [...profiles, profile])
     try { await this.auth.addProfile(userId, profile.id) }
     catch (error) { await this.data.write('profiles', profiles); throw error }
@@ -49,16 +53,16 @@ export class DomainService {
   }
 
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
-    return paginate(await this.data.read<Community>('communities'), q)
+    return paginate(await this.readCommunities(), q)
   }
   async getCommunity(url: string): Promise<Community> {
-    const found = (await this.data.read<Community>('communities')).find(c => c.url === this.normalize(url))
+    const found = (await this.readCommunities()).find(c => c.url === this.normalize(url))
     if (!found) throw new NotFoundException('COMMUNITY_NOT_FOUND')
     return found
   }
   async getCommunitiesByIds(ids: string[]): Promise<Community[]> {
     const set = new Set(ids)
-    return (await this.data.read<Community>('communities')).filter(c => set.has(c.id))
+    return (await this.readCommunities()).filter(c => set.has(c.id))
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
     const links = await this.data.read<CommunityRelationship>('community_relationships')
@@ -70,12 +74,15 @@ export class DomainService {
     const name = input.name.trim()
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
-    if (!name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+    const about = sanitizeRichText(input.about)
+    const aboutText = getRichTextPlainText(about)
+    if (!name || about.length > 12000 || aboutText.length > 500 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
-    const communities = await this.data.read<Community>('communities')
+    const communities = await this.readCommunities()
     if (communities.some(c => c.url === url)) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
-    const community: Community = { id: randomUUID(), name, url, picture, about: input.about.trim(), type: input.type }
+    const community: Community = { id: randomUUID(), name, url, picture, about, type: input.type }
     const links = await this.data.read<CommunityRelationship>('community_relationships')
     await this.data.write('communities', [...communities, community])
     try {
@@ -104,8 +111,8 @@ export class DomainService {
     if (!ownedProfileIds.size) return []
 
     const [profiles, communities, relationships, communityRelationships] = await Promise.all([
-      this.data.read<Profile>('profiles'),
-      this.data.read<Community>('communities'),
+      this.readProfiles(),
+      this.readCommunities(),
       this.data.read<Relationship>('relationships'),
       this.data.read<CommunityRelationship>('community_relationships')
     ])
@@ -206,7 +213,7 @@ export class DomainService {
     const types = tab === 'staff' ? ['owner', 'moderator'] : tab === 'banned' ? ['blocked'] : ['owner', 'moderator', 'connection']
     const matching = records.filter(r => types.includes(r.type))
     const byId = new Map(matching.map(r => [r.profiles[0], r.type]))
-    const profiles = await this.data.read<Profile>('profiles')
+    const profiles = await this.readProfiles()
     return paginate(profiles.filter(p => byId.has(p.id)).map(p => ({ ...p, role: byId.get(p.id)! })), q)
   }
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
@@ -214,7 +221,7 @@ export class DomainService {
     await this.assertStaff(actorProfileId, communityId)
     const records = (await this.readCommunityRelationships(communityId)).filter(r => r.type === 'requested')
     const ids = new Set(records.map(r => r.profiles[0]))
-    const profiles = await this.data.read<Profile>('profiles')
+    const profiles = await this.readProfiles()
     return paginate(profiles.filter(p => ids.has(p.id)).map(p => ({ ...p, role: 'requested' })), q)
   }
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
@@ -276,7 +283,7 @@ export class DomainService {
   }
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
-    const messages = await this.data.read<ProfileMessage>('profile_messages')
+    const messages = await this.readMessages()
     const viewerProfiles = userId ? (await this.auth.getUser(userId)).profiles : []
     const own = viewerProfiles.includes(profileId)
     const visible = messages.filter(m => m.toProfileId === profileId && (own || viewerProfiles.includes(m.fromProfileId)))
@@ -285,13 +292,41 @@ export class DomainService {
   }
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     await this.assertOwns(userId, fromProfileId)
-    const normalized = content.trim()
-    if (!normalized || normalized.length > 4000) throw new ConflictException('INVALID_MESSAGE')
-    if (!(await this.data.read<Profile>('profiles')).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
-    const all = await this.data.read<ProfileMessage>('profile_messages')
+    const normalized = sanitizeRichText(content)
+    const plainText = getRichTextPlainText(normalized)
+    const hasImage = /<img\b/i.test(normalized)
+    if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
+      throw new ConflictException('INVALID_MESSAGE')
+    }
+    if (!(await this.readProfiles()).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
+    const all = await this.readMessages()
     const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }
     await this.data.write('profile_messages', [...all, message])
     return message
+  }
+
+  private async readProfiles(): Promise<Profile[]> {
+    const profiles = await this.data.read<Profile>('profiles')
+    return profiles.map(profile => ({
+      ...profile,
+      about: sanitizeRichText(profile.about ?? '')
+    }))
+  }
+
+  private async readCommunities(): Promise<Community[]> {
+    const communities = await this.data.read<Community>('communities')
+    return communities.map(community => ({
+      ...community,
+      about: sanitizeRichText(community.about ?? '')
+    }))
+  }
+
+  private async readMessages(): Promise<ProfileMessage[]> {
+    const messages = await this.data.read<ProfileMessage>('profile_messages')
+    return messages.map(message => ({
+      ...message,
+      content: sanitizeRichText(message.content ?? '')
+    }))
   }
 
   private async readCommunityRelationships(communityId: string): Promise<CommunityRelationship[]> {
@@ -302,7 +337,7 @@ export class DomainService {
     if (!await this.auth.ownsProfile(userId, profileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
   }
   private async ensureCommunity(id: string): Promise<void> {
-    if (!(await this.data.read<Community>('communities')).some(c => c.id === id)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (!(await this.readCommunities()).some(c => c.id === id)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
   }
   private async assertStaff(profileId: string, communityId: string): Promise<void> {
     const records = await this.readCommunityRelationships(communityId)
