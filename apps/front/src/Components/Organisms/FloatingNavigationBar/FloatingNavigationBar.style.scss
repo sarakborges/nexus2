@@ -1,10 +1,9 @@
 .floating-navigation {
   position: fixed;
   z-index: 120;
-  top: 16px;
-  left: 50%;
-  width: min(var(--main-content-max-width), calc(100vw - 32px));
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  width: 100%;
 
   &__bar {
     display: flex;
@@ -12,11 +11,12 @@
     justify-content: space-between;
     width: 100%;
     min-height: 64px;
-    padding: 8px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-    box-shadow: 0 12px 36px rgb(0 0 0 / 12%);
+    padding: 8px max(16px, calc((100vw - var(--main-content-max-width)) / 2));
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    box-shadow: none;
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
   }
@@ -328,13 +328,13 @@
 
 @media (max-width: 560px) {
   .floating-navigation {
-    top: 10px;
-    width: min(var(--main-content-max-width), calc(100vw - 32px));
+    top: 0;
+    width: 100%;
 
     &__bar {
       min-height: 58px;
-      padding: 6px 8px;
-      border-radius: 16px;
+      padding: 6px 12px;
+      border-radius: 0;
     }
 
     &__account-trigger { gap: 0; padding: 4px; }
