@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
 import { useEditorState } from 'react-simple-wysiwyg'
 import Editor, {
   BtnBold,
@@ -19,42 +19,69 @@ import './RichTextEditor.style.scss'
 
 type InsertImageButtonProps = {
   label: string
-  promptLabel: string
+  uploadErrorLabel: string
+  onUploadImage: (file: File) => Promise<string>
 }
 
-function InsertImageButton({ label, promptLabel }: InsertImageButtonProps) {
+function InsertImageButton({ label, uploadErrorLabel, onUploadImage }: InsertImageButtonProps) {
   const editorState = useEditorState()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const selectionRef = useRef<Range | null>(null)
+  const [error, setError] = useState('')
 
   const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
+    const selection = window.getSelection()
+    selectionRef.current = selection && selection.rangeCount > 0
+      ? selection.getRangeAt(0).cloneRange()
+      : null
     editorState.$el?.focus()
+    inputRef.current?.click()
+  }
 
-    const source = window.prompt(promptLabel)
-    if (!source) return
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (!file) return
 
+    setError('')
     try {
-      const imageUrl = new URL(source.trim())
-      if (imageUrl.protocol !== 'https:' && imageUrl.protocol !== 'http:') return
-      if (imageUrl.username || imageUrl.password) return
-
+      const imageUrl = await onUploadImage(file)
       editorState.$el?.focus()
-      document.execCommand('insertImage', false, imageUrl.toString())
+      const selection = window.getSelection()
+      if (selection && selectionRef.current) {
+        selection.removeAllRanges()
+        selection.addRange(selectionRef.current)
+      }
+      document.execCommand('insertImage', false, imageUrl)
+      selectionRef.current = null
     } catch {
-      // Invalid image URLs are ignored. The server validates the HTML again.
+      setError(uploadErrorLabel)
     }
   }
 
   return (
-    <button
-      className="rsw-btn"
-      type="button"
-      title={label}
-      aria-label={label}
-      tabIndex={-1}
-      onMouseDown={handleMouseDown}
-    >
-      <FiImage aria-hidden="true" />
-    </button>
+    <>
+      <button
+        className="rsw-btn"
+        type="button"
+        title={label}
+        aria-label={label}
+        tabIndex={-1}
+        onMouseDown={handleMouseDown}
+      >
+        <FiImage aria-hidden="true" />
+      </button>
+      <input
+        ref={inputRef}
+        className="rich-text-editor__file-input"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+        aria-label={label}
+        onChange={event => void handleFileChange(event)}
+      />
+      {error && <span className="rich-text-editor__upload-error" role="alert">{error}</span>}
+    </>
   )
 }
 
@@ -63,7 +90,8 @@ type RichTextEditorProps = {
   value: string
   onChange: (value: string) => void
   imageButtonLabel: string
-  imageUrlPrompt: string
+  imageUploadErrorLabel: string
+  onUploadImage: (file: File) => Promise<string>
   maxTextLength?: number
   placeholder?: string
 }
@@ -73,7 +101,8 @@ export function RichTextEditor({
   value,
   onChange,
   imageButtonLabel,
-  imageUrlPrompt,
+  imageUploadErrorLabel,
+  onUploadImage,
   maxTextLength,
   placeholder
 }: RichTextEditorProps) {
@@ -98,7 +127,7 @@ export function RichTextEditor({
         id={id}
         role="textbox"
         aria-multiline="true"
-        aria-labelledby={`${id}-label`}
+        aria-labelledby={id + '-label'}
         value={value}
         onChange={event => handleChange(event.target.value)}
         placeholder={placeholder}
@@ -116,7 +145,11 @@ export function RichTextEditor({
           <BtnBulletList />
           <BtnNumberedList />
           <span className="rsw-separator" />
-          <InsertImageButton label={imageButtonLabel} promptLabel={imageUrlPrompt} />
+          <InsertImageButton
+            label={imageButtonLabel}
+            uploadErrorLabel={imageUploadErrorLabel}
+            onUploadImage={onUploadImage}
+          />
           <BtnClearFormatting />
           <HtmlButton />
         </Toolbar>

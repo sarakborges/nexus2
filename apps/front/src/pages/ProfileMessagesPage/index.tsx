@@ -7,10 +7,10 @@ import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds, getProfileByUrl } from '@/Services/Profile'
-import { getProfileMessages } from '@/Services/ProfileMessage'
-import { createProfileMessage, ProfileMessageError } from '@/Services/ProfileMessage'
+import { createProfileMessage, getProfileMessages, ProfileMessageError } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { uploadFile } from '@/Services/Uploads'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 
@@ -93,7 +93,8 @@ export function ProfileMessagesPage() {
               onChange={setContent}
               maxTextLength={4000}
               imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-              imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
+              imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+              onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
               placeholder={t('RICH_TEXT_PLACEHOLDER')}
             />
             <p className="account-card__description">{t('PROFILE_MESSAGES_MAX_LENGTH')}</p>

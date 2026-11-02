@@ -71,7 +71,9 @@ Create the following variables in the Vercel project for Preview and Production:
 - `JWT_REFRESH_TTL_SECONDS=2592000`.
 - `SUPABASE_URL`: Supabase project URL.
 - `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key.
-- `SUPABASE_API_SECRET`: an independent random secret used only by the Nexus database RPCs.
+- `SUPABASE_API_SECRET`: the existing independent secret used only by the Nexus database RPCs.
+- `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
+- `CRON_SECRET`: a long random value shared by the BFF and backend to authenticate the daily cleanup cron.
 
 The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
 
@@ -83,10 +85,19 @@ Apply the SQL files in order against the Supabase project:
 
 1. `apps/back/sql/001_nexus_collections.sql` creates only Nexus-prefixed storage objects and the backend credential hash.
 2. `apps/back/sql/002_nexus_collection_private_rls.sql` removes the initial public RPC functions, adds a private header-validation helper, and enables narrowly scoped RLS policies.
+3. `apps/back/sql/003_nexus_storage_buckets.sql` creates the permanent public avatar bucket and temporary private editor-image bucket.
 
 The migrations do not modify the existing tracker tables or migrations. The `public.nexus_collections` table has RLS enabled. The `anon` role can reach only the collection operations that pass the RLS helper check, which reads the backend-only `x-nexus-api-secret` HTTP header. The helper lives in the unexposed `private` schema; no public `SECURITY DEFINER` RPC is left for the application. The database stores only the SHA-256 hash of the API secret.
 
-Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `SUPABASE_API_SECRET` on the backend service in Vercel. The publishable key identifies the Supabase project; the API secret and JWT secrets must remain sensitive backend environment variables and must never be bundled into the frontend.
+Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_API_SECRET`, and `SUPABASE_STORAGE_SECRET_KEY` on the backend service in Vercel. Configure `CRON_SECRET` on both the BFF and backend. The publishable key identifies the Supabase project; both API secrets, the cron secret, and the JWT secrets must remain sensitive environment variables and must never be bundled into the frontend.
+
+### File uploads
+
+The Supabase Storage setup uses two buckets: `nexus-avatars` is public and stores profile/community avatars permanently (up to 5 MB per image); `nexus-editor-images` is private and stores editor images (up to 10 MB). Both accept JPEG, PNG, WebP, GIF and AVIF. The backend issues short-lived signed upload URLs, and the browser uploads directly to Storage. No Storage secret is sent to the browser.
+
+Editor image references are stored in sanitized HTML as Nexus upload routes. Access to message images is checked against the sender/recipient profiles; images attached to public profile/community About content are publicly readable through the backend. Access is denied at exactly 24 hours after upload. A daily Vercel Cron removes expired objects and abandoned avatar uploads. The scheduled cleanup runs at 04:00 UTC; physical deletion may happen after the access deadline, but expired images are already inaccessible.
+
+`SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter continues to protect only the private Nexus collection table. Never expose either secret in frontend environment variables or send it from the browser.
 
 The current repository contract replaces whole JSONB collections on write, so concurrent writes to the same collection can overwrite one another. This adapter keeps the current domain services working without filesystem persistence; before substantial traffic, normalize the collections and move write operations to transactional row-level operations.
 

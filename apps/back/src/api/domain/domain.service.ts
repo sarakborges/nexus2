@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
@@ -8,12 +8,14 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import { AuthService } from '../auth/auth.service'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { UploadsService } from '../uploads/uploads.service'
 
 @Injectable()
 export class DomainService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    @Optional() private readonly uploads?: UploadsService
   ) {}
 
   async listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
@@ -38,6 +40,8 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
+    await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
+    await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
@@ -47,8 +51,14 @@ export class DomainService {
     if (profiles.some(p => p.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
     await this.data.write('profiles', [...profiles, profile])
-    try { await this.auth.addProfile(userId, profile.id) }
-    catch (error) { await this.data.write('profiles', profiles); throw error }
+    try {
+      await this.auth.addProfile(userId, profile.id)
+      await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
+      await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
+    } catch (error) {
+      await this.data.write('profiles', profiles)
+      throw error
+    }
     return profile
   }
 
@@ -75,6 +85,8 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
+    await this.uploads?.validateAvatarUrl(userId, picture, 'community-avatar')
+    await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
@@ -91,6 +103,8 @@ export class DomainService {
         requestedBy: null, blockedBy: null, updatedAt: Date.now()
       }])
     } catch (error) { await this.data.write('communities', communities); throw error }
+    await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
+    await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
     return community
   }
 
@@ -293,6 +307,7 @@ export class DomainService {
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     await this.assertOwns(userId, fromProfileId)
     const normalized = sanitizeRichText(content)
+    await this.uploads?.validateEditorImages(userId, normalized)
     const plainText = getRichTextPlainText(normalized)
     const hasImage = /<img\b/i.test(normalized)
     if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
@@ -302,6 +317,7 @@ export class DomainService {
     const all = await this.readMessages()
     const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }
     await this.data.write('profile_messages', [...all, message])
+    await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
     return message
   }
 

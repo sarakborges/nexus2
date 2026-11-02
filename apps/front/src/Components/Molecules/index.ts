@@ -1,3 +1,4 @@
+export { AvatarUploadField } from './AvatarUploadField'
 export { RequestState } from './RequestState'
 export { RichTextEditor } from './RichTextEditor'
 export { CommunityMemberActions } from './CommunityMemberActions'
