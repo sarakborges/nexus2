@@ -3,7 +3,7 @@
 }
 
 .home-page__card {
-  width: min(100%, 860px);
+  width: min(100%, var(--main-content-max-width));
   gap: 28px;
 }
 
