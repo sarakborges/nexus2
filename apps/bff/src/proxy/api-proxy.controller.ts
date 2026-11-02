@@ -26,7 +26,19 @@ export class ApiProxyController {
       }
 
       const headers: Record<string, string> = {}
-      if (accessToken) headers.Authorization = `Bearer ${accessToken}`
+      const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
+      const isBinaryImage = /^\/api\/uploads\/[0-9a-f-]{36}\/content$/i.test(req.path)
+
+      if (isCleanupCron) {
+        const cronSecret = process.env.CRON_SECRET
+        if (!cronSecret || req.headers.authorization !== 'Bearer ' + cronSecret) {
+          res.status(HttpStatus.UNAUTHORIZED).json({ statusCode: HttpStatus.UNAUTHORIZED, message: 'CRON_UNAUTHORIZED' })
+          return
+        }
+        headers['x-nexus-cron-secret'] = cronSecret
+      } else if (accessToken) {
+        headers.Authorization = 'Bearer ' + accessToken
+      }
       // Vercel forwards the original /api path to this service. BACKEND_URL
       // already contains /api, so only the path after that prefix is appended.
       const backendPath = req.path.replace(/^\/api(?=\/|$)/, '')
@@ -36,6 +48,7 @@ export class ApiProxyController {
         params: req.query,
         data: req.body,
         headers,
+        responseType: isBinaryImage ? 'arraybuffer' : 'json',
         validateStatus: () => true
       }
 
@@ -49,6 +62,12 @@ export class ApiProxyController {
           })
         } else {
           clearAuthCookies(res)
+        }
+      }
+      if (isBinaryImage) {
+        for (const header of ['content-type', 'content-length', 'cache-control', 'x-content-type-options']) {
+          const value = result.headers[header]
+          if (typeof value === 'string') res.setHeader(header, value)
         }
       }
       res.status(result.status).send(result.data)

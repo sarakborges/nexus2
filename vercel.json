@@ -38,5 +38,11 @@
         "service": "front"
       }
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/internal/cleanup-uploads",
+      "schedule": "0 4 * * *"
+    }
   ]
 }
