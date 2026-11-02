@@ -98,7 +98,9 @@ export function CommunityPage() {
                 <span>{t('COMMUNITY_MEMBER_COUNT')}</span>
               </div>
             </header>
-            <p className="social-panel__body">{community.about || t('COMMUNITY_ABOUT_EMPTY')}</p>
+            {community.about
+              ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: community.about }} />
+              : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
           </article>
         </section>
 
