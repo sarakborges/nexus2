@@ -171,8 +171,6 @@ export const enUSTranslations = {
   COMMUNITY_JOIN: "Join community",
   COMMUNITY_ACCEPT: "Accept community request",
   COMMUNITY_LEAVE: "Leave community",
-  COMMUNITY_BLOCK: "Block community",
-  COMMUNITY_UNBLOCK: "Unblock community",
   COMMUNITY_CLEAR_BLOCK: "Clear previous block",
   RELATIONSHIP_CANCEL_REQUEST: "Cancel request",
   RELATIONSHIP_LEGACY_PENDING: "This older request has no recorded sender. Clear it to start again.",
