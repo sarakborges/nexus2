@@ -44,5 +44,8 @@
       "path": "/api/internal/cleanup-uploads",
       "schedule": "0 4 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
 }
