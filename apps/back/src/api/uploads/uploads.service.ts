@@ -309,6 +309,44 @@ export class UploadsService {
     for (const id of ids) this.getReadyEditorImage(records, userId, id)
   }
 
+  async validateEditorImagesForResource(
+    userId: string,
+    html: string,
+    resourceType: 'profile' | 'community',
+    resourceId: string
+  ): Promise<void> {
+    const ids = this.extractEditorImageIds(html)
+    if (!ids.length) return
+    const records = await this.data.read<UploadedFileRecord>('media_files')
+    for (const id of ids) {
+      const record = records.find(item => item.id === id)
+      if (!record || record.ownerUserId !== userId || record.purpose !== 'editor-image' ||
+        record.status !== 'ready' || (record.expiresAt !== null && record.expiresAt <= Date.now()) ||
+        (record.resourceType !== null &&
+          (record.resourceType !== resourceType || record.resourceId !== resourceId))) {
+        throw new BadRequestException('INVALID_EDITOR_IMAGE')
+      }
+    }
+  }
+
+  async attachEditorImagesForResource(
+    userId: string,
+    html: string,
+    resourceType: 'profile' | 'community',
+    resourceId: string
+  ): Promise<void> {
+    await this.validateEditorImagesForResource(userId, html, resourceType, resourceId)
+    const ids = this.extractEditorImageIds(html)
+    if (!ids.length) return
+    const idSet = new Set(ids)
+    const records = await this.data.read<UploadedFileRecord>('media_files')
+    await this.data.write('media_files', records.map(item =>
+      idSet.has(item.id) && !item.resourceType
+        ? { ...item, resourceType, resourceId }
+        : item
+    ))
+  }
+
   async attachEditorImages(
     userId: string,
     html: string,
