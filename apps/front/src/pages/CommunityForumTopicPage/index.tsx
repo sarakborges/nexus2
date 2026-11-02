@@ -16,7 +16,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
-import './CommunityForumPage.style.scss'
+import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CommunityForumTopicPage() {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
