@@ -39,6 +39,8 @@ export function AppRoutes() {
         <Route element={<OnboardingRoute />}><Route path={ROUTES.gettingStarted} element={<GettingStartedPage />} /></Route>
         <Route path={ROUTES.createProfile} element={<CreateProfilePage />} />
         <Route path={ROUTES.createCommunity} element={<CreateCommunityPage />} />
+        <Route path={`${ROUTES.profile}/:url/edit`} element={<CreateProfilePage />} />
+        <Route path={`${ROUTES.community}/:url/edit`} element={<CreateCommunityPage />} />
         <Route element={<ProfileRequiredRoute />}><Route path={ROUTES.home} element={<HomePage />} /></Route>
       </Route>
       <Route path={ROUTES.communities} element={<CommunitiesPage />} />
