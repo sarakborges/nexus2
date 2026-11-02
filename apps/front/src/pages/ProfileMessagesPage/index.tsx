@@ -12,6 +12,7 @@ import { createProfileMessage, ProfileMessageError } from '@/Services/ProfileMes
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { uploadFile } from '@/Services/Uploads'
 import '../AuthenticatedPage.style.scss'
 
 function hasRichTextContent(value: string): boolean {
@@ -93,7 +94,8 @@ export function ProfileMessagesPage() {
               onChange={setContent}
               maxTextLength={4000}
               imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-              imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
+              imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+              onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
               placeholder={t('RICH_TEXT_PLACEHOLDER')}
             />
             <p className="account-card__description">{t('PROFILE_MESSAGES_MAX_LENGTH')}</p>

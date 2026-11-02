@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { RelationshipActions, RequestState } from '@/Components'
+import { AvatarUploadField, RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityByUrl } from '@/Services/Community'
@@ -30,6 +30,7 @@ export function CommunityPage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
   const session = useAuthStore(state => state.session)
+  const queryClient = useQueryClient()
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
 
@@ -67,6 +68,7 @@ export function CommunityPage() {
 
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
+  const avatarManager = relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator')
 
   return (
     <main className="social-page social-page--community">
@@ -78,6 +80,22 @@ export function CommunityPage() {
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{community.name}</h1>
+            {avatarManager && (
+              <AvatarUploadField
+                label={t('COMMUNITY_PICTURE_LABEL')}
+                value={community.picture}
+                purpose="community-avatar"
+                targetId={community.id}
+                actorProfileId={avatarManager.profiles[0]}
+                onChange={picture => queryClient.setQueryData(queryKeys.communities.byUrl(community.url), { ...community, picture })}
+                selectLabel={t('UPLOAD_SELECT_IMAGE')}
+                changeLabel={t('UPLOAD_CHANGE_IMAGE')}
+                removeLabel={t('UPLOAD_REMOVE_IMAGE')}
+                uploadingLabel={t('UPLOAD_IN_PROGRESS')}
+                errorLabel={t('UPLOAD_FAILED')}
+                emptyLabel={t('UPLOAD_EMPTY')}
+              />
+            )}
             <RelationshipActions targetId={community.id} targetKind="community" />
           </section>
 

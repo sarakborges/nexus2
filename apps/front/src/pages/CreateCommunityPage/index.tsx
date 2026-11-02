@@ -2,7 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import type { ProfileType } from '@/Models/Profile.model'
-import { RichTextEditor } from '@/Components'
+import { AvatarUploadField, RichTextEditor } from '@/Components'
+import { uploadFile } from '@/Services/Uploads'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -55,7 +56,18 @@ export function CreateCommunityPage() {
         <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
         <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
         <div className="form-field"><Label htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="community-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
-        <FormField id="community-picture" label={t('COMMUNITY_PICTURE_LABEL')} type="url" placeholder="https://example.com/image.jpg" value={picture} onChange={event => setPicture(event.target.value)} />
+        <AvatarUploadField
+          label={t('COMMUNITY_PICTURE_LABEL')}
+          value={picture}
+          purpose="community-avatar"
+          onChange={setPicture}
+          selectLabel={t('UPLOAD_SELECT_IMAGE')}
+          changeLabel={t('UPLOAD_CHANGE_IMAGE')}
+          removeLabel={t('UPLOAD_REMOVE_IMAGE')}
+          uploadingLabel={t('UPLOAD_IN_PROGRESS')}
+          errorLabel={t('UPLOAD_FAILED')}
+          emptyLabel={t('UPLOAD_EMPTY')}
+        />
         <div className="form-field">
           <Label id="community-about-label" htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
           <RichTextEditor
@@ -64,7 +76,8 @@ export function CreateCommunityPage() {
             onChange={setAbout}
             maxTextLength={500}
             imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-            imageUrlPrompt={t('RICH_TEXT_IMAGE_URL_PROMPT')}
+            imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+            onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
             placeholder={t('RICH_TEXT_PLACEHOLDER')}
           />
           <p className="account-card__description">{t('COMMUNITY_ABOUT_MAX_LENGTH')}</p>

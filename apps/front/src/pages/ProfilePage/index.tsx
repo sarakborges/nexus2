@@ -1,12 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { RelationshipActions, RequestState } from '@/Components'
+import { AvatarUploadField, RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfileCommunities } from '@/Services/Community'
 import { getProfileByUrl } from '@/Services/Profile'
 import { getProfileFriends } from '@/Services/Relationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
+import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './ProfilePage.style.scss'
@@ -29,6 +30,8 @@ function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
 export function ProfilePage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
+  const queryClient = useQueryClient()
+  const session = useAuthStore(state => state.session)
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const profileQuery = useQuery({
     queryKey: queryKeys.profiles.byUrl(requestedUrl),
@@ -70,6 +73,21 @@ export function ProfilePage() {
               ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{profile.name}</h1>
+            {session?.user.profiles.includes(profile.id) && (
+              <AvatarUploadField
+                label={t('PROFILE_PICTURE_LABEL')}
+                value={profile.picture}
+                purpose="profile-avatar"
+                targetId={profile.id}
+                onChange={picture => queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), { ...profile, picture })}
+                selectLabel={t('UPLOAD_SELECT_IMAGE')}
+                changeLabel={t('UPLOAD_CHANGE_IMAGE')}
+                removeLabel={t('UPLOAD_REMOVE_IMAGE')}
+                uploadingLabel={t('UPLOAD_IN_PROGRESS')}
+                errorLabel={t('UPLOAD_FAILED')}
+                emptyLabel={t('UPLOAD_EMPTY')}
+              />
+            )}
             <RelationshipActions targetId={profile.id} />
           </section>
 
