@@ -8,7 +8,7 @@
 
 .social-page__layout {
   display: grid;
-  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(190px, 230px);
+  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(300px, 340px);
   align-items: start;
   gap: 24px;
   width: min(100%, var(--main-content-max-width));
@@ -77,11 +77,6 @@
   overflow-wrap: anywhere;
 }
 
-.social-identity__type {
-  color: var(--color-neutral);
-  font-size: 13px;
-}
-
 .social-identity .account-card__relationship-actions {
   display: grid;
   width: 100%;
@@ -142,12 +137,6 @@
   font-size: 20px;
   font-weight: var(--font-weight-bold);
   line-height: 1.3;
-}
-
-.social-panel__subtitle {
-  margin-top: 5px;
-  color: var(--color-neutral);
-  font-size: 12px;
 }
 
 .social-panel__body {
@@ -232,14 +221,19 @@
 
 .social-preview-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .social-preview-link {
   display: block;
   min-width: 0;
-  border-radius: 8px;
+  border-radius: 10px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.social-preview-link:hover {
+  transform: translateY(-2px);
 }
 
 .social-preview-avatar {
@@ -261,6 +255,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 180ms ease;
+}
+
+.social-preview-link:hover .social-preview-avatar img {
+  transform: scale(1.045);
 }
 
 .social-preview-panel__all {
@@ -351,5 +350,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .social-side-menu a { transition: none; }
+  .social-side-menu a,
+  .social-preview-link,
+  .social-preview-avatar img { transition: none; }
 }

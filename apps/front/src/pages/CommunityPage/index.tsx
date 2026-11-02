@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router'
 import { RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import type { ProfileType } from '@/Models/Profile.model'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityMembers, getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -11,12 +10,6 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityPage.style.scss'
-
-const PROFILE_TYPE_TRANSLATION_KEYS: Record<ProfileType, 'PROFILE_TYPE_SOCIAL' | 'PROFILE_TYPE_RP' | 'PROFILE_TYPE_BUSINESS'> = {
-  social: 'PROFILE_TYPE_SOCIAL',
-  rp: 'PROFILE_TYPE_RP',
-  business: 'PROFILE_TYPE_BUSINESS'
-}
 
 type PreviewAvatarProps = {
   name: string
@@ -85,7 +78,6 @@ export function CommunityPage() {
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{community.name}</h1>
-            <p className="social-identity__type">{t(PROFILE_TYPE_TRANSLATION_KEYS[community.type])}</p>
             <RelationshipActions targetId={community.id} targetKind="community" />
           </section>
 
@@ -100,7 +92,6 @@ export function CommunityPage() {
             <header className="social-panel__header">
               <div>
                 <h2 className="social-panel__title">{t('COMMUNITY_ABOUT_LABEL')}</h2>
-                <p className="social-panel__subtitle">{t(PROFILE_TYPE_TRANSLATION_KEYS[community.type])}</p>
               </div>
               <div className="social-community-stat">
                 <strong>{memberCount ?? '—'}</strong>
