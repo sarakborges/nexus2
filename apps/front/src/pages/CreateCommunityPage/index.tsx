@@ -52,7 +52,9 @@ function CommunityForm({ community, ownerProfileId }: CommunityFormProps) {
       }
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['communities', 'list'] }),
-        ...(ownerProfileId ? [queryClient.invalidateQueries({ queryKey: ['communities', 'by-profile', ownerProfileId] })] : [])
+        ...((ownerProfileId ?? currentProfileId)
+          ? [queryClient.invalidateQueries({ queryKey: ['communities', 'by-profile', ownerProfileId ?? currentProfileId! ] })]
+          : [])
       ])
     }
   })
