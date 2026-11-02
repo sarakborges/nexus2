@@ -69,12 +69,14 @@ export function CommunityPage() {
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
   const avatarManager = relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator')
+  const communityOwnerProfileId = relationshipsQuery.data?.find(record => record.type === 'owner')?.profiles[0] ?? null
 
   return (
     <main className="social-page social-page--community">
       <RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />
       <div className="social-page__layout">
         <aside className="social-page__left-column">
+          <section className="social-profile-card">
           <section className="social-identity">
             {community.picture
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
@@ -97,12 +99,18 @@ export function CommunityPage() {
               />
             )}
             <RelationshipActions targetId={community.id} targetKind="community" />
+            {communityOwnerProfileId && (
+              <Link className="social-identity__edit" to={ROUTES.community + '/' + community.url + '/edit'}>
+                {t('COMMUNITY_EDIT')}
+              </Link>
+            )}
           </section>
 
           <nav className="social-side-menu" aria-label={t('COMMUNITY_CREATE_TITLE')}>
             <Link to={ROUTES.community + '/' + community.url} aria-current="page">{t('COMMUNITY_ABOUT_LABEL')}</Link>
             <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
           </nav>
+          </section>
         </aside>
 
         <section className="social-page__main-column">
@@ -126,7 +134,9 @@ export function CommunityPage() {
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h2>
-              <span>{memberCount ?? '—'}</span>
+              <div className="social-preview-panel__header-actions">
+                <span>{memberCount ?? '—'}</span>
+                  </div>
             </header>
             <RequestState
               isLoading={membersQuery.isLoading}
