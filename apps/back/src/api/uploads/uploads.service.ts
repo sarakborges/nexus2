@@ -222,7 +222,8 @@ export class UploadsService {
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
-      record.status !== 'ready' || record.resourceType) {
+      record.status !== 'ready' || record.resourceType ||
+      record.createdAt + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
       throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     }
   }
@@ -342,7 +343,7 @@ export class UploadsService {
       (item.purpose === 'editor-image' && item.expiresAt !== null && item.expiresAt <= now) ||
       (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
       (item.purpose !== 'editor-image' && item.status === 'ready' &&
-        !item.resourceType && item.createdAt + ORPHAN_AVATAR_RETENTION_MS <= now)
+        !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
     )
     if (!expired.length) return { deleted: 0 }
 
@@ -421,7 +422,8 @@ export class UploadsService {
       item.ownerUserId === userId &&
       item.purpose === purpose &&
       item.status === 'ready' &&
-      !item.resourceType
+      !item.resourceType &&
+      item.createdAt + ORPHAN_AVATAR_RETENTION_MS > Date.now()
     )
     if (!file) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     return file
@@ -517,7 +519,7 @@ export class UploadsService {
     this.assertStorageConfigured()
     const headers = new Headers(init.headers)
     headers.set('apikey', this.storageSecret)
-    headers.set('authorization', 'Bearer ' + this.storageSecret)
+    headers.delete('authorization')
     if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
     return fetch(this.supabaseUrl + '/storage/v1' + path, { ...init, headers })
   }

@@ -2,7 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function makeService(collections, ownedProfiles = ['sender']) {
+function makeService(collections, ownedProfiles = ['sender'], uploads) {
   const data = {
     async read(name) {
       return structuredClone(collections.get(name) ?? [])
@@ -24,7 +24,7 @@ function makeService(collections, ownedProfiles = ['sender']) {
       }
     }
   }
-  return new DomainService(data, auth)
+  return new DomainService(data, auth, uploads)
 }
 
 test('sanitizes HTML before persisting profile messages', async () => {
@@ -76,4 +76,40 @@ test('sanitizes legacy profile, community, and message HTML on reads', async () 
   assert.doesNotMatch(community.about, /display:none/i)
   assert.match(messages.items[0].content, /Message/)
   assert.doesNotMatch(messages.items[0].content, /iframe|unsafe/i)
+})
+
+test('validates and attaches uploaded image references when saving a profile message', async () => {
+  const imageId = '123e4567-e89b-42d3-a456-426614174000'
+  const imageReference = '/api/uploads/' + imageId + '/content'
+  const calls = []
+  const uploads = {
+    async validateEditorImages(userId, html) {
+      calls.push({ method: 'validate', userId, html })
+    },
+    async attachEditorImages(userId, html, resourceType, resourceId, participants) {
+      calls.push({ method: 'attach', userId, html, resourceType, resourceId, participants })
+    }
+  }
+  const collections = new Map([
+    ['profiles', [
+      { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' },
+      { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
+    ]],
+    ['profile_messages', []]
+  ])
+  const service = makeService(collections, ['sender'], uploads)
+
+  const message = await service.sendMessage(
+    'user',
+    'sender',
+    'recipient',
+    '<p>Hello</p><img src="' + imageReference + '" alt="Uploaded">'
+  )
+
+  assert.equal(calls[0].method, 'validate')
+  assert.ok(calls[0].html.includes(imageReference))
+  assert.equal(calls[1].method, 'attach')
+  assert.equal(calls[1].resourceType, 'profile-message')
+  assert.equal(calls[1].resourceId, message.id)
+  assert.deepEqual(calls[1].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
 })

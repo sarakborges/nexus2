@@ -62,3 +62,12 @@ test('rejects unsafe link and image schemes', () => {
 test('extracts text for backend character-limit validation', () => {
   assert.equal(getRichTextPlainText('<p>Hello&nbsp;<strong>Nexus</strong></p>'), 'Hello Nexus')
 })
+
+test('preserves internal Nexus upload references in image src attributes', () => {
+  const id = '123e4567-e89b-42d3-a456-426614174000'
+  const reference = '/api/uploads/' + id + '/content'
+  const clean = sanitizeRichText('<p><img src="' + reference + '" alt="Uploaded"></p>')
+
+  assert.ok(clean.includes('src="' + reference + '"'))
+  assert.match(clean, /alt="Uploaded"/)
+})

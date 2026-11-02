@@ -12,6 +12,9 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
       JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
       JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-2592000}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_STORAGE_SECRET_KEY: ${SUPABASE_STORAGE_SECRET_KEY:-}
+      CRON_SECRET: ${CRON_SECRET:-}
     volumes:
       - nexus-data:/var/lib/nexus
     expose:
@@ -29,6 +32,7 @@ services:
       BACKEND_URL: http://back:3002/api
       JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
       JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-2592000}
+      CRON_SECRET: ${CRON_SECRET:-}
     depends_on:
       - back
     expose:
