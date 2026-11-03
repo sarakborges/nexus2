@@ -43,8 +43,14 @@ export function ProfileFriendsPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><RequestState isFetching={profileQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
-      <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
+    <main className="account-page">
+      <section className="account-card">
+        <header className="account-card__header">
+          <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
+          <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
+        </header>
+        <RequestState isFetching={profileQuery.isFetching} />
+        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <RequestState
         isLoading={friendsQuery.isLoading}
         isFetching={friendsQuery.isFetching}
@@ -53,15 +59,25 @@ export function ProfileFriendsPage() {
         emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
         onRetry={() => void friendsQuery.refetch()}
       >
-        <div className="account-card__profile-list">{friends.map(friend => (
-          <div className="account-card__profile-entry" key={friend.id}>
-            <Link className="account-card__link" to={`${ROUTES.profile}/${friend.url}`}>{friend.name}</Link>
+        <div className="account-card__profile-list account-card__profile-list--grid">{friends.map(friend => (
+          <article className="account-card__profile-entry account-card__profile-entry--card" key={friend.id}>
+            <Link className="account-card__profile-entry-identity" to={`${ROUTES.profile}/${friend.url}`}>
+              <span className="account-card__profile-entry-avatar">
+                {friend.picture
+                  ? <img src={friend.picture} alt="" />
+                  : <span aria-hidden="true">{friend.name.trim().charAt(0).toUpperCase()}</span>}
+              </span>
+              <span className="account-card__profile-entry-copy">
+                <span className="account-card__link">{friend.name}</span>
+                <span className="account-card__profile-entry-secondary">@{friend.url}</span>
+              </span>
+            </Link>
             {canInteract && <RelationshipActions targetId={friend.id} />}
-          </div>
+          </article>
         ))}</div>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
-    </section></main>
+      </section>
+    </main>
   )
 }

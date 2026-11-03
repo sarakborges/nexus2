@@ -25,10 +25,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-sizing: border-box;
     width: min(100%, var(--main-content-max-width));
     min-height: 64px;
     margin: 0 auto;
-    padding: 6px 24px;
+    padding: 6px var(--main-content-gutter);
   }
 
   &__icon-button,
