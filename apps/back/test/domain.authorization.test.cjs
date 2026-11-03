@@ -8,7 +8,7 @@ const community = {
   name: 'Test community',
   url: 'test-community',
   picture: '',
-  about: '',
+  about: 'Community details',
   type: 'social'
 }
 const page = { page: 1, pageSize: 20 }
@@ -23,9 +23,9 @@ function relationship(profileId, type) {
   }
 }
 
-function createDomainHarness({ userProfiles = {}, relationships = [] } = {}) {
+function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 'public' } = {}) {
   const collections = new Map([
-    ['communities', [community]],
+    ['communities', [{ ...community, privacy }]],
     ['community_relationships', relationships],
     ['profiles', [
       { id: 'owner-1', name: 'Owner', url: 'owner', picture: '', about: '', type: 'social' },
@@ -51,6 +51,56 @@ function createDomainHarness({ userProfiles = {}, relationships = [] } = {}) {
   }
   return { service: new DomainService(data, auth), collections }
 }
+
+
+test('unlisted communities stay out of directories but remain accessible by direct URL', async () => {
+  const { service } = createDomainHarness({ privacy: 'unlisted' })
+
+  const directory = await service.listCommunities(page)
+  const direct = await service.getCommunity('test-community')
+
+  assert.equal(directory.totalItems, 0)
+  assert.equal(direct.privacy, 'unlisted')
+  assert.equal(direct.about, 'Community details')
+})
+
+test('private communities expose only a preview and restrict member and forum reads', async () => {
+  const { service } = createDomainHarness({
+    privacy: 'private',
+    relationships: [relationship('owner-1', 'owner')]
+  })
+
+  const preview = await service.getCommunity('test-community')
+
+  assert.equal(preview.name, 'Test community')
+  assert.equal(preview.picture, '')
+  assert.equal(preview.about, '')
+  await assert.rejects(
+    service.listCommunityMembers(communityId, 'all', page, null),
+    error => error.getStatus() === 404
+  )
+  await assert.rejects(
+    service.listCommunityForumTopics(communityId, page),
+    error => error.getStatus() === 404
+  )
+})
+
+test('private community members can access the full community and member list', async () => {
+  const { service } = createDomainHarness({
+    privacy: 'private',
+    userProfiles: { memberUser: ['member-1'] },
+    relationships: [
+      relationship('owner-1', 'owner'),
+      relationship('member-1', 'connection')
+    ]
+  })
+
+  const visible = await service.getCommunity('test-community', 'memberUser')
+  const members = await service.listCommunityMembers(communityId, 'all', page, 'memberUser', 'member-1')
+
+  assert.equal(visible.about, 'Community details')
+  assert.deepEqual(members.items.map(item => item.id).sort(), ['member-1', 'owner-1'])
+})
 
 test('anonymous callers never receive private community relationship records', async () => {
   const { service } = createDomainHarness({

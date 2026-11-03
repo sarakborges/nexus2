@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import type { ProfileType } from '@/Models/Profile.model'
 import { AvatarUploadField, RichTextEditor } from '@/Components'
+import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -55,12 +57,16 @@ export function CreateProfilePage() {
     }
   }
   return (
-    <main className="auth-page"><section className="auth-card" aria-labelledby="create-profile-title">
+    <main className="auth-page"><section className="auth-card auth-card--wide" aria-labelledby="create-profile-title">
       <div><h1 className="auth-card__title" id="create-profile-title">{t('CREATE_PROFILE_TITLE')}</h1><p className="auth-card__description">{t('CREATE_PROFILE_DESCRIPTION')}</p></div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
         <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="profile-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
-        <div className="form-field"><Label htmlFor="profile-type">{t('PROFILE_TYPE_LABEL')}</Label><select className="input" id="profile-type" value={type} onChange={event => setType(event.target.value as ProfileType)} required><option value="social">{t('PROFILE_TYPE_SOCIAL')}</option><option value="rp">{t('PROFILE_TYPE_RP')}</option><option value="business">{t('PROFILE_TYPE_BUSINESS')}</option></select></div>
+        <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
+          <PreferenceOption label={t('PROFILE_TYPE_SOCIAL')} description={t('PROFILE_TYPE_SOCIAL_DESCRIPTION')} isSelected={type === 'social'} onSelect={() => setType('social')} />
+          <PreferenceOption label={t('PROFILE_TYPE_RP')} description={t('PROFILE_TYPE_RP_DESCRIPTION')} isSelected={type === 'rp'} onSelect={() => setType('rp')} />
+          <PreferenceOption label={t('PROFILE_TYPE_BUSINESS')} description={t('PROFILE_TYPE_BUSINESS_DESCRIPTION')} isSelected={type === 'business'} onSelect={() => setType('business')} />
+        </PreferenceSelector>
         <AvatarUploadField
           label={t('PROFILE_PICTURE_LABEL')}
           value={picture}

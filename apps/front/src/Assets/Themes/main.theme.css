@@ -1,12 +1,12 @@
 :root {
   /* Brand palette: stable across light and dark appearance. */
-  --color-primary: #8665bd;
-  --color-primary-weak: #7651ad;
-  --color-primary-strong: #56377f;
+  --color-primary: #8b5cf6;
+  --color-primary-weak: #a78bfa;
+  --color-primary-strong: #6d28d9;
 
-  --color-secondary: #39a69a;
-  --color-secondary-weak: #287e75;
-  --color-secondary-strong: #216a62;
+  --color-secondary: #d946ef;
+  --color-secondary-weak: #c026d3;
+  --color-secondary-strong: #86198f;
 
   /* Semantic status palette: never overridden by appearance themes. */
   --color-success: #249b62;
@@ -29,14 +29,14 @@
   --color-allies: #1b5dd8;
 
   /* Default values are replaced by the selected appearance theme. */
-  --color-neutral-weak: #2a3544;
-  --color-neutral: #8695a8;
-  --color-neutral-strong: #e8edf4;
-  --text-color: #edf2f8;
-  --color-background: #0e141d;
-  --color-surface: #151e2a;
-  --color-surface-raised: #202c3b;
-  --color-border: #354456;
+  --color-neutral-weak: #252238;
+  --color-neutral: #aaa4bd;
+  --color-neutral-strong: #f4f0ff;
+  --text-color: #f5f2ff;
+  --color-background: #11111b;
+  --color-surface: #191827;
+  --color-surface-raised: #242238;
+  --color-border: #39334f;
 
   --theme-image: none;
 }

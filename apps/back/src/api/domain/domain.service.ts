@@ -97,23 +97,26 @@ export class DomainService {
   }
 
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
-    return paginate(await this.readCommunities(), q)
+    return paginate((await this.readCommunities()).filter(community => community.privacy === 'public'), q)
   }
-  async getCommunity(url: string): Promise<Community> {
-    const found = (await this.readCommunities()).find(c => c.url === this.normalize(url))
+  async getCommunity(url: string, userId: string | null = null): Promise<Community> {
+    const found = (await this.readCommunities()).find(community => community.url === this.normalize(url))
     if (!found) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (found.privacy === 'private' && !(await this.isCommunityMember(found.id, userId))) {
+      return { ...found, picture: '', about: '' }
+    }
     return found
   }
   async getCommunitiesByIds(ids: string[]): Promise<Community[]> {
     const set = new Set(ids)
-    return (await this.readCommunities()).filter(c => set.has(c.id))
+    return (await this.readCommunities()).filter(community => set.has(community.id) && community.privacy === 'public')
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
     const profile = (await this.readProfiles()).find(item => item.id === profileId)
     if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
     const links = await this.data.read<CommunityRelationship>('community_relationships')
     const ids = new Set(links.filter(r => r.profiles[0] === profileId && ['owner', 'moderator', 'connection'].includes(r.type)).map(r => r.profiles[1]))
-    return paginate((await this.readCommunities()).filter(community => ids.has(community.id) && community.type === profile.type), q)
+    return paginate((await this.readCommunities()).filter(community => ids.has(community.id) && community.type === profile.type && community.privacy === 'public'), q)
   }
   async createCommunity(userId: string, ownerProfileId: string, input: CreateCommunityInput): Promise<Community> {
     await this.assertOwns(userId, ownerProfileId)
@@ -123,15 +126,17 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
+    const privacy = input.privacy ?? 'public'
     await this.uploads?.validateAvatarUrl(userId, picture, 'community-avatar')
     await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['public', 'private', 'unlisted'].includes(privacy) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
     const communities = await this.readCommunities()
     if (communities.some(c => c.url === url)) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
-    const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type }
+    const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type, privacy }
     const links = await this.data.read<CommunityRelationship>('community_relationships')
     await this.data.write('communities', [...communities, community])
     try {
@@ -162,9 +167,11 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
+    const privacy = input.privacy ?? current.privacy ?? 'public'
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !['public', 'private', 'unlisted'].includes(privacy) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
     if (communities.some(community => community.id !== communityId && community.url === url)) {
       throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
@@ -174,7 +181,7 @@ export class DomainService {
     const newEditorImages = this.getNewEditorImages(about, current.about)
     await this.uploads?.validateEditorImages(userId, newEditorImages)
 
-    const updated: Community = { ...current, name, url, picture, about, type: ownerProfile.type }
+    const updated: Community = { ...current, name, url, picture, about, type: ownerProfile.type, privacy }
     await this.data.write('communities', communities.map(community => community.id === communityId ? updated : community))
     if (picture !== current.picture) {
       await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', communityId)
@@ -309,7 +316,7 @@ export class DomainService {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<Profile & { role: string }>> {
-    await this.ensureCommunity(communityId)
+    await this.assertCommunityReadable(communityId, userId)
     if (!['all', 'staff', 'banned'].includes(tab)) throw new BadRequestException('INVALID_MEMBER_TAB')
     if (tab !== 'all') {
       if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
@@ -413,8 +420,8 @@ export class DomainService {
   }
 
 
-  async listCommunityForumTopics(communityId: string, q: PaginationDto): Promise<PaginatedResult<CommunityForumTopicSummary>> {
-    await this.ensureCommunity(communityId)
+  async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
+    await this.assertCommunityReadable(communityId, userId)
     const [topics, replies] = await Promise.all([this.data.read<CommunityForumTopic>('community_forum_topics'), this.data.read<CommunityForumReply>('community_forum_replies')])
     const replyCounts = new Map<string, number>()
     for (const reply of replies) replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
@@ -424,8 +431,8 @@ export class DomainService {
     return paginate(visible, q)
   }
 
-  async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto): Promise<CommunityForumTopicDetail> {
-    await this.ensureCommunity(communityId)
+  async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
+    await this.assertCommunityReadable(communityId, userId)
     const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
@@ -576,19 +583,23 @@ export class DomainService {
     ])
     const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
     let hasTypeChanges = false
+    let hasPrivacyChanges = false
     const communities = stored.map(community => {
       const ownerProfileId = relationships.find(record =>
         record.profiles[1] === community.id && record.type === 'owner'
       )?.profiles[0]
       const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
       if (inheritedType && inheritedType !== community.type) hasTypeChanges = true
+      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy) ? community.privacy : 'public'
+      if (privacy !== community.privacy) hasPrivacyChanges = true
       return {
         ...community,
         ...(inheritedType ? { type: inheritedType } : {}),
+        privacy,
         about: sanitizeRichText(community.about ?? '')
       }
     })
-    if (hasTypeChanges) await this.data.write('communities', communities)
+    if (hasTypeChanges || hasPrivacyChanges) await this.data.write('communities', communities)
     return communities
   }
 
@@ -613,6 +624,22 @@ export class DomainService {
     const targetProfile = profiles.find(profile => profile.id === profileId)
     if (currentProfile && targetProfile && currentProfile.type !== targetProfile.type) {
       throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    }
+  }
+  private async isCommunityMember(communityId: string, userId: string | null): Promise<boolean> {
+    if (!userId) return false
+    const user = await this.auth.getUser(userId)
+    const ownedProfileIds = new Set(user.profiles)
+    const relationships = await this.readCommunityRelationships(communityId)
+    return relationships.some(record =>
+      ownedProfileIds.has(record.profiles[0]) && ['owner', 'moderator', 'connection'].includes(record.type)
+    )
+  }
+  private async assertCommunityReadable(communityId: string, userId: string | null): Promise<void> {
+    const community = (await this.readCommunities()).find(item => item.id === communityId)
+    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (community.privacy === 'private' && !(await this.isCommunityMember(communityId, userId))) {
+      throw new NotFoundException('COMMUNITY_NOT_FOUND')
     }
   }
   private async ensureCommunity(id: string): Promise<void> {

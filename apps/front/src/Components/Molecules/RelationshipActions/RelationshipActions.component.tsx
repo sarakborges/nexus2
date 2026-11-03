@@ -96,8 +96,7 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
     run({ type: 'requested' })
   }
 
-  if (isCommunity && isOwner) return <p className="account-card__description">{t('COMMUNITY_ROLE_OWNER')}</p>
-  if (isCommunity && isModerator) return <p className="account-card__description">{t('COMMUNITY_ROLE_MODERATOR')}</p>
+  if (isCommunity && (isOwner || isModerator)) return null
   if (isBlockedByOther) return <p className="account-card__description">{t('RELATIONSHIP_BLOCKED_BY_OTHER')}</p>
 
   return (

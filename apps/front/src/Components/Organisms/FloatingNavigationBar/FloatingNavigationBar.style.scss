@@ -1,24 +1,34 @@
 .floating-navigation {
   position: fixed;
   z-index: 120;
-  top: 18px;
-  left: 50%;
-  width: min(960px, calc(100vw - 40px));
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  width: 100%;
 
   &__bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
-    min-height: 60px;
-    padding: 6px;
-    border: 1px solid var(--color-border);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+    min-height: 64px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--color-surface) 97%, transparent);
     box-shadow: 0 14px 38px rgb(0 0 0 / 16%);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(100%, var(--main-content-max-width));
+    min-height: 64px;
+    margin: 0 auto;
+    padding: 6px 24px;
   }
 
   &__icon-button,
@@ -176,8 +186,8 @@
     animation: floating-navigation-enter 140ms ease-out both;
   }
 
-  &__menu--navigation { left: 0; }
-  &__menu--account { right: 0; left: auto; }
+  &__menu--navigation { left: max(16px, calc((100vw - var(--main-content-max-width)) / 2 + 24px)); }
+  &__menu--account { right: max(16px, calc((100vw - var(--main-content-max-width)) / 2 + 24px)); left: auto; }
 
   &__menu-heading {
     display: grid;
@@ -329,17 +339,22 @@
 
 @media (max-width: 560px) {
   .floating-navigation {
-    top: 10px;
-    width: min(960px, calc(100vw - 32px));
+    top: 0;
+    width: 100%;
 
     &__bar {
       min-height: 58px;
-      padding: 6px 8px;
-      border-radius: 16px;
+      padding: 0;
+      border-radius: 0;
     }
 
-    &__menu--navigation { left: 0; }
-    &__menu--account { right: 0; }
+    &__content {
+      min-height: 58px;
+      padding: 6px 16px;
+    }
+
+    &__menu--navigation { left: 16px; }
+    &__menu--account { right: 16px; }
     &__account-trigger { gap: 0; padding: 4px; }
     &__account-label,
     &__account-chevron { display: none; }

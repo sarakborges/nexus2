@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
+import type { CommunityPrivacy } from '@nexus/common'
 import { AvatarUploadField, RichTextEditor } from '@/Components'
+import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -39,9 +42,10 @@ export function CreateCommunityPage() {
   const [url, setUrl] = useState('')
   const [picture, setPicture] = useState('')
   const [about, setAbout] = useState('')
+  const [privacy, setPrivacy] = useState<CommunityPrivacy>('public')
   const [errorMessage, setErrorMessage] = useState('')
   const createCommunityMutation = useMutation({
-    mutationFn: () => createCommunity({ name, url, picture, about }, ownerProfileId!),
+    mutationFn: () => createCommunity({ name, url, picture, about, privacy }, ownerProfileId!),
     onSuccess: async community => {
       queryClient.setQueryData(queryKeys.communities.byUrl(community.url), community)
       showToast(t('TOAST_COMMUNITY_CREATED'))
@@ -66,7 +70,7 @@ export function CreateCommunityPage() {
     }
   }
   return (
-    <main className="auth-page"><section className="auth-card" aria-labelledby="create-community-title">
+    <main className="auth-page"><section className="auth-card auth-card--wide" aria-labelledby="create-community-title">
       <div><h1 className="auth-card__title" id="create-community-title">{t('COMMUNITY_CREATE_TITLE')}</h1><p className="auth-card__description">{t('COMMUNITY_CREATE_DESCRIPTION')}</p></div>
       <form className="auth-form" onSubmit={handleSubmit}>
         <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
@@ -77,6 +81,11 @@ export function CreateCommunityPage() {
             <input className="input" id="community-type" type="text" value={activeProfileTypeLabel} readOnly aria-readonly="true" />
           </div>
         )}
+        <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
+          <PreferenceOption label={t('COMMUNITY_PRIVACY_PUBLIC')} description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')} isSelected={privacy === 'public'} onSelect={() => setPrivacy('public')} />
+          <PreferenceOption label={t('COMMUNITY_PRIVACY_PRIVATE')} description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')} isSelected={privacy === 'private'} onSelect={() => setPrivacy('private')} />
+          <PreferenceOption label={t('COMMUNITY_PRIVACY_UNLISTED')} description={t('COMMUNITY_PRIVACY_UNLISTED_DESCRIPTION')} isSelected={privacy === 'unlisted'} onSelect={() => setPrivacy('unlisted')} />
+        </PreferenceSelector>
         <AvatarUploadField
           label={t('COMMUNITY_PICTURE_LABEL')}
           value={picture}

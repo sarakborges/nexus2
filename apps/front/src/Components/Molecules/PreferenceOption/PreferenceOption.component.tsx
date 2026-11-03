@@ -6,6 +6,7 @@ import './PreferenceOption.style.scss'
 
 type PreferenceOptionProps = {
   label: string
+  description?: string
   isSelected: boolean
   onSelect: () => void
   disabled?: boolean
@@ -14,6 +15,7 @@ type PreferenceOptionProps = {
 
 export function PreferenceOption({
   label,
+  description,
   isSelected,
   onSelect,
   disabled = false,
@@ -29,7 +31,10 @@ export function PreferenceOption({
       aria-pressed={isSelected}
     >
       {leadingVisual}
-      <Text className="preference-option__label">{label}</Text>
+      <span className="preference-option__content">
+        <Text className="preference-option__label">{label}</Text>
+        {description && <span className="preference-option__description">{description}</span>}
+      </span>
       {isSelected && (
         <FaCheck
           className="preference-option__selected-icon"

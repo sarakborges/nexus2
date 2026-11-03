@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useIsFetching, useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  FiCheck, FiChevronDown, FiHome, FiLogOut, FiMenu, FiMessageCircle,
+  FiCheck, FiChevronDown, FiEdit3, FiHome, FiLogOut, FiMenu, FiMessageCircle,
   FiPlusCircle, FiSettings, FiUserPlus, FiUsers, FiX
 } from 'react-icons/fi'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -54,6 +54,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const currentProfile = profiles.find(profile => profile.id === currentProfileId)
   const profileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url : null
   const messagesRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/messages' : null
+  const editProfileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/edit' : null
   const accountName = currentProfile?.name ?? t('NAVIGATION_ACCOUNT')
   const accountInitial = accountName.trim().charAt(0).toUpperCase()
 
@@ -124,6 +125,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   return createPortal(
     <div className="floating-navigation" ref={navigationRef}>
       <div className="floating-navigation__bar">
+        <div className="floating-navigation__content">
         <nav className="floating-navigation__desktop-links" aria-label={t('NAVIGATION_LABEL')}>
           <Link className="floating-navigation__desktop-link" to={ROUTES.home} aria-current={location.pathname === ROUTES.home ? 'page' : undefined} onClick={closePanels}>
             <FiHome aria-hidden="true" />
@@ -178,6 +180,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           </span>
           <FiChevronDown className="floating-navigation__account-chevron" aria-hidden="true" />
         </button>
+        </div>
       </div>
 
       {activePanel === 'navigation' && (
@@ -283,6 +286,12 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
             )}
           </div>
 
+          {editProfileRoute && (
+            <Link className="floating-navigation__menu-item" to={editProfileRoute} role="menuitem" onClick={closePanels}>
+              <FiEdit3 aria-hidden="true" />
+              <span>{t('PROFILE_EDIT')}</span>
+            </Link>
+          )}
           <Link className="floating-navigation__menu-item" to={ROUTES.createProfile} role="menuitem" onClick={closePanels}>
             <FiUserPlus aria-hidden="true" />
             <span>{t('HOME_CREATE_PROFILE')}</span>
