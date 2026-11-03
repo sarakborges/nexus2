@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { Pagination, RequestState, RelationshipActions } from '@/Components'
+import { SocialDirectoryCard } from '@/Components/Molecules'
+import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
@@ -38,19 +40,19 @@ export function ProfileFriendsPage() {
   }, [friendsQuery.data, page, setPage])
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading) return <main className="account-page"><section className="account-card"><RequestState isLoading /></section></main>
-  if (profileQuery.isError) return <main className="account-page"><section className="account-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
+  if (profileQuery.isLoading) return <main className="social-page"><div className="social-page__state"><RequestState isLoading /></div></main>
+  if (profileQuery.isError) return <main className="social-page"><div className="social-page__state"><RequestState isError onRetry={() => void profileQuery.refetch()} /></div></main>
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page">
-      <section className="account-card">
-        <header className="account-card__header">
-          <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
-          <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
-        </header>
-        <RequestState isFetching={profileQuery.isFetching} />
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
+    <SocialPageLayout
+      className="social-page--profile-directory"
+      sidebar={<ProfileSidebar profile={profile} activeSection="friends" canInteract={canInteract} />}
+    >
+      <header className="social-directory-header">
+        <h1>{t('PROFILE_FRIENDS_TITLE', { name: profile.name })}</h1>
+        <Link to={ROUTES.profile + '/' + profile.url}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
+      </header>
       <RequestState
         isLoading={friendsQuery.isLoading}
         isFetching={friendsQuery.isFetching}
@@ -59,25 +61,21 @@ export function ProfileFriendsPage() {
         emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
         onRetry={() => void friendsQuery.refetch()}
       >
-        <div className="account-card__profile-list account-card__profile-list--grid">{friends.map(friend => (
-          <article className="account-card__profile-entry account-card__profile-entry--card" key={friend.id}>
-            <Link className="account-card__profile-entry-identity" to={`${ROUTES.profile}/${friend.url}`}>
-              <span className="account-card__profile-entry-avatar">
-                {friend.picture
-                  ? <img src={friend.picture} alt="" />
-                  : <span aria-hidden="true">{friend.name.trim().charAt(0).toUpperCase()}</span>}
-              </span>
-              <span className="account-card__profile-entry-copy">
-                <span className="account-card__link">{friend.name}</span>
-                <span className="account-card__profile-entry-secondary">@{friend.url}</span>
-              </span>
-            </Link>
-            {canInteract && <RelationshipActions targetId={friend.id} />}
-          </article>
-        ))}</div>
+        <div className="social-directory-grid">
+          {friends.map(friend => (
+            <SocialDirectoryCard
+              key={friend.id}
+              name={friend.name}
+              picture={friend.picture}
+              meta={'@' + friend.url}
+              href={ROUTES.profile + '/' + friend.url}
+              actionLabel={t('DIRECTORY_OPEN_PROFILE')}
+              actions={canInteract ? <RelationshipActions targetId={friend.id} /> : null}
+            />
+          ))}
+        </div>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      </section>
-    </main>
+    </SocialPageLayout>
   )
 }

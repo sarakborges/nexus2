@@ -191,6 +191,7 @@ export const enUSTranslations = {
   COMMUNITY_ERROR_OWNER_REQUIRED: "Select one of your profiles before creating a community.",
   PROFILE_COMMUNITIES_LINK: "View communities",
   PROFILE_COMMUNITIES_TITLE: "{{name}}'s communities",
+  PROFILE_MY_COMMUNITIES_TITLE: "Your communities",
   PROFILE_COMMUNITIES_EMPTY: "This profile is not connected to any communities yet.",
   COMMUNITY_ACCEPT_REQUEST: "Accept request",
   COMMUNITY_REJECT_REQUEST: "Decline request",

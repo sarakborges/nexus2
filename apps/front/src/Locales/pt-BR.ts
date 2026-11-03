@@ -193,6 +193,7 @@ export const ptBRTranslations = {
   COMMUNITY_ERROR_OWNER_REQUIRED: "Selecione um dos seus perfis antes de criar uma comunidade.",
   PROFILE_COMMUNITIES_LINK: "Ver comunidades",
   PROFILE_COMMUNITIES_TITLE: "Comunidades de {{name}}",
+  PROFILE_MY_COMMUNITIES_TITLE: "Suas comunidades",
   PROFILE_COMMUNITIES_EMPTY: "Este perfil ainda não está conectado a nenhuma comunidade.",
   COMMUNITY_ACCEPT_REQUEST: "Aceitar solicitação",
   COMMUNITY_REJECT_REQUEST: "Recusar solicitação",

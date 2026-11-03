@@ -6,5 +6,5 @@ export { LanguageOption } from './LanguageOption'
 export { Pagination } from './Pagination'
 export { PreferenceOption } from './PreferenceOption'
 export { RelationshipActions } from './RelationshipActions'
-
+export { SocialDirectoryCard } from './SocialDirectoryCard'
 export * from './ProfileTypeNotice'

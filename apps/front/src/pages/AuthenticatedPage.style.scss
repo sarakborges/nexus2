@@ -274,11 +274,16 @@
 .profile-message-form {
   display: grid;
   gap: 16px;
-  width: min(100%, 1000px);
-  padding: 20px;
+  width: 100%;
+  padding: 16px;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background: var(--color-surface-raised);
+  border-radius: 6px;
+  background: var(--color-surface);
+}
+
+.profile-message-form .button {
+  justify-self: start;
+  min-width: 92px;
 }
 
 .profile-message-list {

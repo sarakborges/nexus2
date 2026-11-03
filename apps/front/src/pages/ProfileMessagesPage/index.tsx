@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { Pagination, RequestState, RichTextEditor } from '@/Components'
+import { SocialPageLayout, ProfileSidebar, SuggestedCommunities } from '@/Components/Organisms'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -79,17 +80,24 @@ export function ProfileMessagesPage() {
   }
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading) return <main className="account-page"><section className="account-card"><RequestState isLoading /></section></main>
-  if (profileQuery.isError) return <main className="account-page"><section className="account-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
+  if (profileQuery.isLoading) return <main className="social-page"><div className="social-page__state"><RequestState isLoading /></div></main>
+  if (profileQuery.isError) return <main className="social-page"><div className="social-page__state"><RequestState isError onRetry={() => void profileQuery.refetch()} /></div></main>
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><section className="account-card">
+    <SocialPageLayout
+      className="social-page--messages"
+      sidebar={<ProfileSidebar profile={profile} activeSection="messages" canInteract={canInteract} />}
+      aside={<SuggestedCommunities />}
+    >
       <RequestState isFetching={profileQuery.isFetching} />
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
-      <header className="account-card__header">
-        <div><h1 className="account-card__title">{t('PROFILE_MESSAGES_TITLE', { name: profile.name })}</h1><p className="account-card__description">{t(isProfileOwner ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION' : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}</p></div>
-        <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
+      <header className="social-directory-header">
+        <div>
+          <h1>{t('PROFILE_MESSAGES_TITLE', { name: profile.name })}</h1>
+          <p>{t(isProfileOwner ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION' : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}</p>
+        </div>
+        <Link to={ROUTES.profile + '/' + profile.url}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
       </header>
       {canSendMessage ? (
         <form className="profile-message-form" onSubmit={handleSubmit}>
@@ -140,7 +148,7 @@ export function ProfileMessagesPage() {
               return (
                 <article className="profile-message" key={message.id}>
                   <header className="profile-message__header">
-                    {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
+                    {sender ? <Link className="account-card__link" to={ROUTES.profile + '/' + sender.url}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
                     <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
                   </header>
                   <div className="profile-message__content rich-text-content" dangerouslySetInnerHTML={{ __html: message.content }} />
@@ -151,6 +159,6 @@ export function ProfileMessagesPage() {
         </RequestState>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-    </section></main>
+    </SocialPageLayout>
   )
 }
