@@ -5,7 +5,7 @@
   justify-content: flex-start;
   width: 100%;
   min-height: 100dvh;
-  padding: 104px var(--main-content-gutter) 40px;
+  padding: 104px 0 40px;
   color: var(--text-color);
   font-size: 14px;
 }
@@ -19,6 +19,7 @@
   flex-direction: column;
   gap: 24px;
   width: min(100%, var(--main-content-max-width));
+  margin-inline: auto;
   padding: 24px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -415,7 +416,7 @@
 
 @media (max-width: 680px) {
   .account-page {
-    padding: 88px 16px 28px;
+    padding: 88px 0 28px;
   }
 
   .account-card {
