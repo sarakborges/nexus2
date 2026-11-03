@@ -69,8 +69,6 @@ export function ProfilePage() {
 
   return (
     <main className="social-page social-page--profile">
-      <RequestState isFetching={profileQuery.isFetching} />
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <div className="social-page__layout">
         <aside className="social-page__left-column">
           <div className="social-sidebar-card">
@@ -98,6 +96,8 @@ export function ProfilePage() {
         </aside>
 
         <section className="social-page__main-column">
+          <RequestState isFetching={profileQuery.isFetching} />
+          {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
           <article className="social-panel social-panel--about">
             <header className="social-panel__header">
               <div>

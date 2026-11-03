@@ -39,11 +39,21 @@ export function CommunitiesPage() {
           emptyMessage={t('COMMUNITIES_EMPTY')}
           onRetry={() => void communitiesQuery.refetch()}
         >
-          <div className="account-card__profile-list">
+          <div className="account-card__profile-list account-card__profile-list--grid">
             {communities.map(community => (
-              <div className="account-card__profile-entry" key={community.id}>
-                <Link className="account-card__link" to={`${ROUTES.community}/${community.url}`}>{community.name} · /community/{community.url}</Link>
-              </div>
+              <article className="account-card__profile-entry account-card__profile-entry--card" key={community.id}>
+                <Link className="account-card__profile-entry-identity" to={`${ROUTES.community}/${community.url}`}>
+                  <span className="account-card__profile-entry-avatar">
+                    {community.picture
+                      ? <img src={community.picture} alt="" />
+                      : <span aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</span>}
+                  </span>
+                  <span className="account-card__profile-entry-copy">
+                    <span className="account-card__link">{community.name}</span>
+                    <span className="account-card__profile-entry-secondary">/community/{community.url}</span>
+                  </span>
+                </Link>
+              </article>
             ))}
           </div>
         </RequestState>

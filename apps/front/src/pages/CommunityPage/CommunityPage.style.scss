@@ -1,7 +1,1 @@
 @use '../ProfilePage/ProfilePage.style.scss';
-
-@media (max-width: 680px) {
-  .social-page--community .social-side-menu {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}

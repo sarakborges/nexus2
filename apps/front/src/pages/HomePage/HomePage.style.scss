@@ -1,15 +1,11 @@
-.home-page {
-  place-items: start center;
-}
-
 .home-page__card {
-  width: min(100%, var(--main-card-max-width));
+  width: 100%;
   gap: 28px;
 }
 
 .home-page__activity {
   display: grid;
-  gap: 16px;
+  gap: 18px;
 }
 
 .home-page__activity-title {
@@ -20,23 +16,24 @@
 
 .home-page__activity-list {
   display: grid;
-  gap: 0;
+  gap: 14px;
 }
 
 .home-page__activity-item {
   display: grid;
-  gap: 10px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--color-border);
+  gap: 14px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface-raised);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
-.home-page__activity-item:first-child {
-  padding-top: 0;
-}
-
-.home-page__activity-item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
+.home-page__activity-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-strong);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 8%);
 }
 
 .home-page__activity-meta {
@@ -44,15 +41,32 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
+}
+
+.home-page__activity-meta > span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--color-primary-weak);
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+}
+
+.home-page__activity-meta time {
   color: var(--color-neutral);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .home-page__activity-description {
   color: var(--text-color);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .home-page__activity-description a {
@@ -64,4 +78,14 @@
 .home-page__activity-description a:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+@media (max-width: 680px) {
+  .home-page__card {
+    gap: 22px;
+  }
+
+  .home-page__activity-item {
+    padding: 16px;
+  }
 }

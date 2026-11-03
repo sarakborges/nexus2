@@ -39,13 +39,6 @@ export function EditCommunityPage() {
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
-  const communityTypeLabel = community?.type === 'business'
-    ? t('PROFILE_TYPE_BUSINESS')
-    : community?.type === 'rp'
-      ? t('PROFILE_TYPE_RP')
-      : community?.type === 'social'
-        ? t('PROFILE_TYPE_SOCIAL')
-        : ''
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
     queryFn: () => getCommunityRelationships(community!.id),
@@ -136,10 +129,6 @@ export function EditCommunityPage() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
           <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
-          <div className="form-field">
-            <Label id="community-type-label" htmlFor="community-type">{t('PROFILE_TYPE_LABEL')}</Label>
-            <input className="input" id="community-type" type="text" value={communityTypeLabel} readOnly aria-readonly="true" />
-          </div>
           <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
             <PreferenceOption label={t('COMMUNITY_PRIVACY_PUBLIC')} description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')} isSelected={form.privacy === 'public'} onSelect={() => setForm(current => current ? { ...current, privacy: 'public' } : current)} />
             <PreferenceOption label={t('COMMUNITY_PRIVACY_PRIVATE')} description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')} isSelected={form.privacy === 'private'} onSelect={() => setForm(current => current ? { ...current, privacy: 'private' } : current)} />

@@ -3,5 +3,6 @@
   --font-weight-regular: 300;
   --font-weight-bold: 700;
   --main-content-max-width: 1280px;
-  --main-card-max-width: 860px;
+  --main-content-gutter: 24px;
+  --main-card-max-width: var(--main-content-max-width);
 }
