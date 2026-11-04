@@ -238,23 +238,4 @@ export class CommunityForumService {
       }
     )
   }
-
-})
-    await this.access.ensureCommunity(communityId)
-    const [profiles, communities] = await Promise.all([this.access.readProfiles(), this.access.readCommunities()])
-    this.access.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
-    const replies = await this.data.read<CommunityForumReply>('community_forum_replies')
-    const reply = replies.find(record => record.id === replyId && record.communityId === communityId)
-    if (!reply) throw new NotFoundException('FORUM_REPLY_NOT_FOUND')
-    const role = this.access.role(actorProfileId, await this.access.readCommunityRelationships(communityId))
-    if (reply.profileId !== actorProfileId && role !== 'owner' && role !== 'moderator') throw new ForbiddenException('FORUM_DELETE_NOT_ALLOWED')
-    await this.data.update<CommunityForumReply>('community_forum_replies', current =>
-      current.filter(record => record.id !== replyId)
-    )
-    await this.uploads?.detachResourceAttachments(null, 'community-forum-reply', replyId)
-    await this.data.update<CommunityForumTopic>('community_forum_topics', topics =>
-      topics.map(topic => topic.id === reply.topicId ? { ...topic, updatedAt: Date.now() } : topic)
-    )
-  }
-
 }
