@@ -61,7 +61,7 @@ export class ProfileService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
 
     const user = await this.data.transaction<AuthenticatedUser>(
