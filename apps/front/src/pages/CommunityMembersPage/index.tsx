@@ -82,15 +82,21 @@ export function CommunityMembersPage() {
     const roleKey = profile.role === 'owner' ? 'COMMUNITY_ROLE_OWNER' : profile.role === 'moderator' ? 'COMMUNITY_ROLE_MODERATOR' : profile.role === 'connection' ? 'COMMUNITY_ROLE_MEMBER' : null
     const relationship = relationships.find(record => record.profiles[0] === profile.id && record.profiles[1] === community.id) ?? null
     return (
-      <div className="account-card__profile-entry" key={profile.id}>
-        <div className="community-member__identity">
-          <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{profile.name}</Link>
-          {roleKey && <span className="community-member__role">{t(roleKey)}</span>}
-        </div>
+      <article className="account-card__profile-entry account-card__profile-entry--card" key={profile.id}>
+        <Link className="account-card__profile-entry-identity" to={ROUTES.profile + '/' + profile.url}>
+          <span className="account-card__profile-entry-avatar">
+            {profile.picture ? <img src={profile.picture} alt="" /> : <span aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</span>}
+          </span>
+          <span className="account-card__profile-entry-copy">
+            <span className="account-card__link">{profile.name}</span>
+            <span className="account-card__profile-entry-secondary">@{profile.url}</span>
+            {roleKey && <span className="community-member__role">{t(roleKey)}</span>}
+          </span>
+        </Link>
         {isStaff && canInteract && currentProfileId && profile.role !== 'owner' && (
           <CommunityMemberActions memberProfileId={profile.id} communityId={community.id} actorProfileId={currentProfileId} actorRole={currentRole as 'owner' | 'moderator'} relationship={relationship} />
         )}
-      </div>
+      </article>
     )
   }
 
@@ -105,8 +111,7 @@ export function CommunityMembersPage() {
   return (
     <main className="account-page"><RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
       <header className="account-card__header">
-        <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
-        <Link className="account-card__link" to={`${ROUTES.community}/${community.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
+        <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE')}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
       </header>
       {canViewPending && (
         <section className="account-card__profile-list">
@@ -135,7 +140,7 @@ export function CommunityMembersPage() {
         emptyMessage={t(visibleTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : visibleTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}
         onRetry={() => void membersQuery.refetch()}
       >
-        <div className="account-card__profile-list">{members.map(renderMember)}</div>
+        <div className="account-card__profile-list account-card__profile-list--grid">{members.map(renderMember)}</div>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalMembers} onPageChange={setPage} />
     </section></main>

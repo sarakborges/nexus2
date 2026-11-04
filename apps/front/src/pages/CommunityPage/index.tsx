@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { RelationshipActions, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
-import { ButtonLink } from '@/DesignSystem'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityMembers, getCommunityRelationships } from '@/Services/CommunityRelationship'
@@ -31,6 +31,7 @@ function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
 export function CommunityPage() {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
+  const navigate = useNavigate()
   const session = useAuthStore(state => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
@@ -85,18 +86,12 @@ export function CommunityPage() {
               ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
               : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</div>}
             <h1 className="social-identity__name">{community.name}</h1>
-            {ownerRelationship && (
-              <ButtonLink className="social-sidebar-card__edit" variation="secondary" to={ROUTES.community + '/' + community.url + '/edit'}>
-                {t('COMMUNITY_EDIT')}
-              </ButtonLink>
-            )}
-
             {canInteract && <RelationshipActions targetId={community.id} targetKind="community" />}
           </section>
 
           <nav className="social-side-menu" aria-label={t('COMMUNITY_CREATE_TITLE')}>
             <Link to={ROUTES.community + '/' + community.url} aria-current="page">{t('COMMUNITY_ABOUT_LABEL')}</Link>
-            <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
+            <Link to={ROUTES.community + '/' + community.url + '/members'}>{t('VIEW_ALL')}</Link>
             <Link to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_TITLE')}</Link>
           </nav>
           </div>
@@ -110,10 +105,11 @@ export function CommunityPage() {
               <div>
                 <h2 className="social-panel__title">{t('COMMUNITY_ABOUT_LABEL')}</h2>
               </div>
-              <div className="social-community-stat">
-                <strong>{memberCount ?? '—'}</strong>
-                <span>{t('COMMUNITY_MEMBER_COUNT')}</span>
-              </div>
+              {ownerRelationship && (
+                <Button type="button" variation="secondary" onClick={() => navigate(ROUTES.community + '/' + community.url + '/edit')}>
+                  {t('COMMUNITY_EDIT')}
+                </Button>
+              )}
             </header>
             {community.privacy === 'private' && !privateMembership
               ? <p className="social-panel__body">{t('COMMUNITY_PRIVATE_RESTRICTED')}</p>
@@ -126,10 +122,10 @@ export function CommunityPage() {
         <aside className="social-page__right-column">
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
-              <h2>{t('COMMUNITY_MEMBERS_TITLE', { name: community.name })}</h2>
+              <h2>{t('COMMUNITY_MEMBERS_TITLE')}</h2>
               <div className="social-preview-panel__header-actions">
                 <span>{memberCount ?? '—'}</span>
-                <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
+                <Link className="social-preview-panel__all" to={ROUTES.community + '/' + community.url + '/members'}>{t('VIEW_ALL')}</Link>
               </div>
             </header>
             <RequestState
