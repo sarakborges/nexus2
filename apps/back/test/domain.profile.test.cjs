@@ -2,40 +2,53 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function createHarness({ uploads, failAfterProfileLink = false } = {}) {
-  const collections = new Map([['profiles', []]])
+function createHarness({ uploads, failTransaction = false } = {}) {
   const account = {
     id: 'user-1',
     email: 'user@example.test',
     profiles: ['existing-profile'],
     currentProfile: 'existing-profile'
   }
+  const collections = new Map([
+    ['profiles', []],
+    ['accounts', [account]]
+  ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      const records = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(records)
+      if (failTransaction) throw new Error('ACCOUNT_TRANSACTION_FAILED')
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
-    async getUser() {
-      return { id: account.id, email: account.email, profiles: [...account.profiles], currentProfile: account.currentProfile }
-    },
-    async addProfile(_userId, profileId, makeCurrent = false) {
-      if (!account.profiles.includes(profileId)) account.profiles.push(profileId)
-      if (makeCurrent) account.currentProfile = profileId
-      if (failAfterProfileLink) throw new Error('ACCOUNT_PROFILE_LINK_FAILED')
-      return { id: account.id, email: account.email, profiles: [...account.profiles], currentProfile: account.currentProfile }
-    },
-    async ownsProfile(_userId, profileId) { return account.profiles.includes(profileId) },
-    async removeProfile(_userId, profileId, previousCurrentProfileId = null) {
-      account.profiles = account.profiles.filter(id => id !== profileId)
-      if (account.currentProfile === profileId) {
-        account.currentProfile = previousCurrentProfileId && account.profiles.includes(previousCurrentProfileId)
-          ? previousCurrentProfileId
-          : account.profiles[0] ?? null
+    async getUser(userId) {
+      const saved = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!saved) throw new Error('ACCOUNT_NOT_FOUND')
+      return {
+        id: saved.id,
+        email: saved.email,
+        profiles: [...saved.profiles],
+        currentProfile: saved.currentProfile
       }
+    },
+    async ownsProfile(userId, profileId) {
+      return (collections.get('accounts') ?? []).some(item =>
+        item.id === userId && item.profiles.includes(profileId)
+      )
     }
   }
   return { service: new DomainService(data, auth, uploads), collections, account }
@@ -49,16 +62,17 @@ const input = {
   type: 'social'
 }
 
-test('profile creation returns the persisted profile and links it to the authenticated account', async () => {
+test('profile creation atomically persists the profile and links it to the authenticated account', async () => {
   const { service, collections, account } = createHarness()
   const created = await service.createProfile(account.id, input)
+  const savedAccount = collections.get('accounts')[0]
 
   assert.equal(collections.get('profiles').length, 1)
   assert.deepEqual(collections.get('profiles')[0], created.profile)
-  assert.deepEqual(account.profiles, ['existing-profile', created.profile.id])
-  assert.equal(account.currentProfile, created.profile.id)
+  assert.deepEqual(savedAccount.profiles, ['existing-profile', created.profile.id])
+  assert.equal(savedAccount.currentProfile, created.profile.id)
   assert.equal(created.user.id, account.id)
-  assert.deepEqual(created.user.profiles, account.profiles)
+  assert.deepEqual(created.user.profiles, savedAccount.profiles)
   assert.equal(created.user.currentProfile, created.profile.id)
 })
 
@@ -73,25 +87,26 @@ test('profile creation rollback removes both the profile row and account ownersh
   }
   const { service, collections, account } = createHarness({ uploads })
 
-  await assert.rejects(service.createProfile(account.id, { ...input, picture: 'https://example.test/avatar.png' }), /EDITOR_ATTACHMENT_FAILED/)
+  await assert.rejects(
+    service.createProfile(account.id, { ...input, picture: 'https://example.test/avatar.png' }),
+    /EDITOR_ATTACHMENT_FAILED/
+  )
 
   assert.deepEqual(collections.get('profiles'), [])
-  assert.deepEqual(account.profiles, ['existing-profile'])
-  assert.equal(account.currentProfile, 'existing-profile')
+  assert.deepEqual(collections.get('accounts')[0].profiles, ['existing-profile'])
+  assert.equal(collections.get('accounts')[0].currentProfile, 'existing-profile')
   assert.equal(attached, false)
 })
 
+test('failed atomic profile and account persistence leaves both collections unchanged', async () => {
+  const { service, collections, account } = createHarness({ failTransaction: true })
 
-test('profile creation removes a partially linked account profile when account persistence throws', async () => {
-  const { service, collections, account } = createHarness({ failAfterProfileLink: true })
-
-  await assert.rejects(service.createProfile(account.id, input), /ACCOUNT_PROFILE_LINK_FAILED/)
+  await assert.rejects(service.createProfile(account.id, input), /ACCOUNT_TRANSACTION_FAILED/)
 
   assert.deepEqual(collections.get('profiles'), [])
-  assert.deepEqual(account.profiles, ['existing-profile'])
-  assert.equal(account.currentProfile, 'existing-profile')
+  assert.deepEqual(collections.get('accounts')[0].profiles, ['existing-profile'])
+  assert.equal(collections.get('accounts')[0].currentProfile, 'existing-profile')
 })
-
 
 test('profile creation derives a sanitized URL from the name when URL is omitted', async () => {
   const { service, collections, account } = createHarness()
@@ -103,7 +118,7 @@ test('profile creation derives a sanitized URL from the name when URL is omitted
   })
 
   assert.equal(created.profile.url, 'arvore-mar')
-  assert.equal(account.currentProfile, created.profile.id)
+  assert.equal(collections.get('accounts')[0].currentProfile, created.profile.id)
   assert.equal(created.user.currentProfile, created.profile.id)
   assert.equal(collections.get('profiles')[0].url, 'arvore-mar')
 })
@@ -119,10 +134,6 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
     type: 'social'
   }
   collections.set('profiles', [owner])
-  collections.set('communities', [])
-  collections.set('community_relationships', [])
-  account.profiles = [owner.id]
-  account.currentProfile = owner.id
 
   const created = await service.createCommunity(account.id, owner.id, {
     name: 'Café & Pão',
@@ -132,6 +143,8 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
     privacy: 'public'
   })
   assert.equal(created.url, 'meu-caminho')
+  assert.equal(collections.get('community_relationships').length, 1)
+  assert.equal(collections.get('community_relationships')[0].type, 'owner')
 
   const updated = await service.updateCommunity(account.id, created.id, {
     name: 'Novo Nome',
