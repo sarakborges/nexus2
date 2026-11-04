@@ -52,6 +52,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       profiles,
       currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId
     }
+    if (makeCurrent && session.user.currentProfile !== profileId) {
+      useProfileStore.getState().clearProfile()
+    }
     set({ session: { ...session, user } })
     return true
   },
