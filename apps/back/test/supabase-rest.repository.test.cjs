@@ -142,3 +142,100 @@ test('reports REST errors', async t => {
   const repo = new SupabaseRestRepository(url, key, headerSecret)
   await assert.rejects(() => repo.read('accounts'), /Supabase storage request failed \(403\)/)
 })
+
+
+test('transaction commits multiple collection snapshots through one authenticated RPC', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    const requestUrl = new URL(String(input))
+    calls.push({ url: requestUrl, options })
+    if (options.method === 'GET') {
+      const collection = requestUrl.searchParams.get('collection').slice(3)
+      const records = collection === 'accounts' ? [{ id: 'account' }] : [{ id: 'profile' }]
+      return new Response(JSON.stringify([{
+        records,
+        updated_at: collection === 'accounts' ? updatedAt : '2026-11-04T12:00:02.000Z'
+      }]), { status: 200 })
+    }
+
+    assert.equal(requestUrl.pathname, '/rest/v1/rpc/nexus_commit_collections')
+    assert.equal(options.headers.apikey, key)
+    assert.equal(options.headers['x-nexus-api-secret'], headerSecret)
+    return new Response(JSON.stringify({ committed: true }), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  const result = await repo.transaction(['profiles', 'accounts'], records => ({
+    records: {
+      ...records,
+      accounts: [...records.accounts, { id: 'account-linked' }],
+      profiles: [...records.profiles, { id: 'profile-created' }]
+    },
+    result: 'created'
+  }))
+
+  assert.equal(result, 'created')
+  const rpcCalls = calls.filter(call => call.options.method === 'POST')
+  assert.equal(rpcCalls.length, 1)
+  const body = JSON.parse(rpcCalls[0].options.body)
+  assert.deepEqual(body.p_changes.map(change => change.collection), ['accounts', 'profiles'])
+  assert.equal(body.p_changes[0].expected_updated_at, updatedAt)
+  assert.deepEqual(body.p_changes[0].records.map(record => record.id), ['account', 'account-linked'])
+  assert.deepEqual(body.p_changes[1].records.map(record => record.id), ['profile', 'profile-created'])
+})
+
+test('transaction retries all collection snapshots after an atomic version conflict', async t => {
+  const reads = new Map()
+  let rpcAttempts = 0
+  let updaterCalls = 0
+  let secondAttemptAccounts
+  withFetch(t, async (input, options) => {
+    const requestUrl = new URL(String(input))
+    if (options.method === 'GET') {
+      const collection = requestUrl.searchParams.get('collection').slice(3)
+      const count = (reads.get(collection) ?? 0) + 1
+      reads.set(collection, count)
+      const records = collection === 'accounts'
+        ? (count === 1 ? [{ id: 'account' }] : [{ id: 'account' }, { id: 'concurrent' }])
+        : [{ id: 'profile' }]
+      return new Response(JSON.stringify([{
+        records,
+        updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
+      }]), { status: 200 })
+    }
+
+    rpcAttempts += 1
+    const body = JSON.parse(options.body)
+    if (rpcAttempts === 1) return new Response(JSON.stringify({ committed: false }), { status: 200 })
+    secondAttemptAccounts = body.p_changes.find(change => change.collection === 'accounts').records
+    return new Response(JSON.stringify({ committed: true }), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  const result = await repo.transaction(['accounts', 'profiles'], records => {
+    updaterCalls += 1
+    return {
+      records: {
+        ...records,
+        accounts: [...records.accounts, { id: 'new-account' }],
+        profiles: [...records.profiles, { id: 'new-profile' }]
+      },
+      result: updaterCalls
+    }
+  })
+
+  assert.equal(result, 2)
+  assert.equal(rpcAttempts, 2)
+  assert.equal(updaterCalls, 2)
+  assert.equal(reads.get('accounts'), 2)
+  assert.equal(reads.get('profiles'), 2)
+  assert.deepEqual(secondAttemptAccounts.map(record => record.id), ['account', 'concurrent', 'new-account'])
+})
+
+test('transaction rejects empty, duplicate and invalid collection names', async () => {
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  const updater = records => ({ records, result: undefined })
+  await assert.rejects(() => repo.transaction([], updater), /non-empty list/)
+  await assert.rejects(() => repo.transaction(['accounts', 'accounts'], updater), /unique collections/)
+  await assert.rejects(() => repo.transaction(['bad name'], updater), /Invalid collection name/)
+})
