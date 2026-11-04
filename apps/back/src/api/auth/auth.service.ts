@@ -12,6 +12,11 @@ type RefreshRotation = {
   tokenHash: string
 }
 
+type TokenIssueContext =
+  | { kind: 'sign-up' }
+  | { kind: 'sign-in' }
+  | { kind: 'refresh'; rotation: RefreshRotation }
+
 @Injectable()
 export class AuthService {
   private readonly accessTtl: number
@@ -38,14 +43,7 @@ export class AuthService {
       currentProfile: null
     }
 
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      if (accounts.some(existing => existing.email === email)) {
-        throw new ConflictException('EMAIL_ALREADY_EXISTS')
-      }
-      return [...accounts, account]
-    })
-
-    return this.issueTokens(account)
+    return this.issueTokens(account, { kind: 'sign-up' })
   }
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
@@ -55,7 +53,7 @@ export class AuthService {
     if (!account || !(await this.verifyPassword(credentials.password, account))) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
-    return this.issueTokens(account)
+    return this.issueTokens(account, { kind: 'sign-in' })
   }
 
   async refresh(token: string): Promise<AuthTokenPair> {
@@ -79,9 +77,12 @@ export class AuthService {
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
 
     return this.issueTokens(account, {
-      id: payload.jti,
-      userId: payload.sub,
-      tokenHash: this.hashToken(token)
+      kind: 'refresh',
+      rotation: {
+        id: payload.jti,
+        userId: payload.sub,
+        tokenHash: this.hashToken(token)
+      }
     })
   }
 
@@ -175,7 +176,10 @@ export class AuthService {
     return accounts.some(item => item.id === userId && item.profiles.includes(profileId))
   }
 
-  private async issueTokens(account: AccountRecord, rotation?: RefreshRotation): Promise<AuthTokenPair> {
+  private async issueTokens(
+    account: AccountRecord,
+    context: TokenIssueContext
+  ): Promise<AuthTokenPair> {
     const accessPayload: JwtPayload = { sub: account.id, email: account.email, type: 'access' }
     const jti = randomUUID()
     const refreshPayload: JwtPayload = { sub: account.id, email: account.email, type: 'refresh', jti }
@@ -195,8 +199,8 @@ export class AuthService {
       tokenHash: this.hashToken(refreshToken),
       expiresAt: now + this.refreshTtl * 1000
     }
-
-    await this.repository.update<RefreshTokenRecord>('refresh_tokens', records => {
+    const rotation = context.kind === 'refresh' ? context.rotation : undefined
+    const rotateRecords = (records: RefreshTokenRecord[]): RefreshTokenRecord[] => {
       if (rotation) {
         const previous = records.find(item =>
           item.id === rotation.id &&
@@ -213,7 +217,30 @@ export class AuthService {
         ),
         nextRecord
       ]
-    })
+    }
+
+    if (context.kind === 'sign-up') {
+      await this.repository.transaction(
+        ['accounts', 'refresh_tokens'],
+        collections => {
+          const accounts = collections.accounts as AccountRecord[]
+          if (accounts.some(existing => existing.email === account.email)) {
+            throw new ConflictException('EMAIL_ALREADY_EXISTS')
+          }
+
+          return {
+            records: {
+              ...collections,
+              accounts: [...accounts, account],
+              refresh_tokens: rotateRecords(collections.refresh_tokens as RefreshTokenRecord[])
+            },
+            result: undefined
+          }
+        }
+      )
+    } else {
+      await this.repository.update<RefreshTokenRecord>('refresh_tokens', rotateRecords)
+    }
 
     return {
       accessToken,
