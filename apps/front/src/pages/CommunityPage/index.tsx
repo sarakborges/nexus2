@@ -74,7 +74,7 @@ export function CommunityPage() {
 
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
-  const ownerRelationship = canInteract ? relationshipsQuery.data?.find(record => record.type === 'owner') ?? null : null
+  const ownerRelationship = relationshipsQuery.data?.find(record => record.type === 'owner') ?? null
 
   return (
     <main className="social-page social-page--community">

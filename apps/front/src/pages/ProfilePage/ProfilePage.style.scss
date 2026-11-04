@@ -139,6 +139,8 @@
 .social-side-menu {
   display: grid;
   width: 100%;
+  margin-inline: 0;
+  box-sizing: border-box;
 }
 
 .social-side-menu a {
@@ -343,12 +345,12 @@
   .social-page__layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
-    padding-inline: 16px;
+    padding-inline: var(--main-content-gutter);
   }
 
   .social-page__state,
   .social-page > .request-state {
-    padding-inline: 16px;
+    padding-inline: var(--main-content-gutter);
   }
 
   .social-page__left-column {
@@ -368,7 +370,7 @@
     width: 104px;
     height: 104px;
     aspect-ratio: 1;
-    border-radius: 12px;
+    border-radius: var(--avatar-shape-radius);
   }
 
   .social-identity__name {

@@ -179,7 +179,7 @@ export function CommunityForumTopicPage() {
           >
             {replies.map(reply => {
               const author = authorsById.get(reply.profileId)
-              const canDelete = Boolean(canInteract && currentProfileId && (reply.profileId === forumProfileId || isStaff))
+              const canDelete = Boolean(canInteract && forumProfileId && (reply.profileId === forumProfileId || isStaff))
               return (
                 <article className="community-forum__reply" key={reply.id}>
                   <header className="community-forum__post-header">

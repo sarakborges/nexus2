@@ -4,7 +4,7 @@
   align-content: center;
   width: 100%;
   min-height: 100dvh;
-  padding: 112px 16px 32px;
+  padding: 112px var(--main-content-gutter) 32px;
   color: var(--text-color);
   font-size: 14px;
 }
