@@ -5,7 +5,7 @@
 
   background-color: var(--color-neutral-weak);
   border: 2px solid var(--color-neutral-weak);
-  border-radius: 4px;
+  border-radius: var(--nexus-control-radius, 0);
 
   color: var(--color-neutral-strong);
   font-size: 12px;

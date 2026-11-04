@@ -4,8 +4,8 @@
   place-items: center;
   min-height: 40px;
   padding: 8px 16px;
-  border: 1px solid transparent;
-  border-radius: 6px;
+  border: var(--nexus-border-width, 2px) solid transparent;
+  border-radius: var(--nexus-control-radius, 0);
   color: var(--text-color);
   font-size: 14px;
   line-height: 1.2;

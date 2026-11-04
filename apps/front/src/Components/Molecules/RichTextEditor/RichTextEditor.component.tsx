@@ -77,11 +77,11 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage, onUploading
 }
 
 function highlightTag(tag: string, key: number): ReactNode {
-  const match = tag.match(/^(<\\/?)([A-Za-z][\\w:-]*)([\\s\\S]*?)(\\/?>)$/)
+  const match = tag.match(/^(<\/?)([A-Za-z][\w:-]*)([\s\S]*?)(\/?>)$/)
   if (!match) return <span className="rich-text-editor__token rich-text-editor__token--tag" key={key}>{tag}</span>
   const [, opening, name, rawAttributes, closing] = match
   const attributes: ReactNode[] = []
-  const attributePattern = /([A-Za-z_:][\\w:.-]*)(\\s*=\\s*)((?:"[^"]*")|(?:'[^']*')|(?:[^\\s>]+))/g
+  const attributePattern = /([A-Za-z_:][\w:.-]*)(\s*=\s*)((?:"[^"]*")|(?:'[^']*')|(?:[^\s>]+))/g
   let cursor = 0
   let attributeIndex = 0
   for (const attribute of rawAttributes.matchAll(attributePattern)) {
@@ -95,7 +95,7 @@ function highlightTag(tag: string, key: number): ReactNode {
 }
 
 function highlightHtml(source: string): ReactNode[] {
-  const pattern = /<!--[\\s\\S]*?-->|<!doctype\\b[^>]*>|<\\/?[A-Za-z][^>]*>|&(?:#\\d+|#x[\\da-f]+|[A-Za-z][\\w]+);/gi
+  const pattern = /<!--[\s\S]*?-->|<!doctype\b[^>]*>|<\/?[A-Za-z][^>]*>|&(?:#\d+|#x[\da-f]+|[A-Za-z][\w]+);/gi
   const pieces: ReactNode[] = []
   let cursor = 0
   let key = 0
@@ -110,7 +110,7 @@ function highlightHtml(source: string): ReactNode[] {
     cursor = start + token.length
   }
   if (cursor < source.length) pieces.push(source.slice(cursor))
-  if (source.endsWith('\\n')) pieces.push('\\u200b')
+  if (source.endsWith('\n')) pieces.push('\u200b')
   return pieces
 }
 
@@ -118,7 +118,7 @@ type HtmlSourceEditorProps = { value: string; onChange: (value: string) => void;
 function HtmlSourceEditor({ value, onChange, disabled, id }: HtmlSourceEditorProps) {
   const highlightRef = useRef<HTMLPreElement>(null)
   const gutterRef = useRef<HTMLDivElement>(null)
-  const lineCount = Math.max(1, value.split('\\n').length)
+  const lineCount = Math.max(1, value.split('\n').length)
   const syncScroll = (event: UIEvent<HTMLTextAreaElement>) => {
     const target = event.currentTarget
     if (highlightRef.current) { highlightRef.current.scrollTop = target.scrollTop; highlightRef.current.scrollLeft = target.scrollLeft }
