@@ -133,16 +133,18 @@ export function CommunityForumPage() {
                   </div>
                   <div className="community-forum__topic-main">
                     <div className="community-forum__topic-labels">
-                      {topic.isPinned && <span className="community-forum__label">{t('FORUM_PINNED')}</span>}
                       {topic.isLocked && <span className="community-forum__label">{t('FORUM_LOCKED')}</span>}
+                      {topic.isPinned && <span className="community-forum__label">{t('FORUM_PINNED')}</span>}
                     </div>
                     <Link className="community-forum__topic-title" to={ROUTES.community + '/' + community.url + '/forum/' + topic.id}>{topic.title}</Link>
                     <div className="community-forum__topic-meta">
                       <span>{author ? <Link to={ROUTES.profile + '/' + author.url}>{author.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
-                      <time dateTime={new Date(topic.updatedAt).toISOString()}>{new Date(topic.updatedAt).toLocaleString()}</time>
                     </div>
                   </div>
-                  <span className="community-forum__reply-count">{topic.replyCount} {t('FORUM_REPLIES')}</span>
+                  <div className="community-forum__topic-stats">
+                    <span className="community-forum__reply-count">{topic.replyCount} {t('FORUM_REPLIES')}</span>
+                    <time className="community-forum__topic-last-post" dateTime={new Date(topic.updatedAt).toISOString()}>{new Date(topic.updatedAt).toLocaleString()}</time>
+                  </div>
                 </article>
               )
             })}

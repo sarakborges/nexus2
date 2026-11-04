@@ -243,3 +243,30 @@
   }
   .community-forum__author-avatar { height: 56px; }
 }
+
+.community-forum__topic-stats {
+  display: grid;
+  justify-items: end;
+  align-content: center;
+  gap: 4px;
+  min-width: 90px;
+}
+.community-forum__topic-last-post {
+  color: var(--color-neutral);
+  font-size: 11px;
+  text-align: right;
+  white-space: nowrap;
+}
+.community-forum__author-avatar {
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+@media (max-width: 600px) {
+  .community-forum__topic-stats {
+    grid-column: 2;
+    justify-items: start;
+    min-width: 0;
+  }
+  .community-forum__topic-last-post { text-align: left; }
+  .community-forum__author-avatar { height: auto; }
+}
