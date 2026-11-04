@@ -25,7 +25,7 @@ export class SupabaseRestRepository implements DataRepository {
     private readonly publishableKey: string,
     private readonly apiSecret: string
   ) {
-    const baseUrl = projectUrl.replace(/\\/+$/, '')
+    const baseUrl = projectUrl.replace(/\/+$/, '')
     this.endpoint = baseUrl + '/rest/v1/nexus_collections'
     this.transactionEndpoint = baseUrl + '/rest/v1/rpc/nexus_commit_collections'
   }
