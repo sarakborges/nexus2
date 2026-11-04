@@ -136,26 +136,50 @@ export class CommunityService {
       throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
     }
 
-    if (picture !== current.picture) await this.uploads?.validateAvatarUrl(userId, picture, 'community-avatar')
-    const newEditorImages = getNewEditorImages(about, current.about)
-    await this.uploads?.validateEditorImages(userId, newEditorImages)
-
     let updated: Community | undefined
-    await this.data.update<Community>('communities', currentCommunities => {
+    await this.data.transaction(['communities', 'media_files'], collections => {
+      const currentCommunities = collections.communities as Community[]
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
       const latest = currentCommunities.find(community => community.id === communityId)
       if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
       if (currentCommunities.some(community => community.id !== communityId && community.url === url)) {
         throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
       }
-      updated = { ...latest, name, url, picture, about, type: ownerProfile.type, privacy }
-      return currentCommunities.map(community => community.id === communityId ? updated! : community)
+
+      let nextMediaFiles = mediaFiles
+      if (this.uploads) {
+        if (picture !== latest.picture) {
+          nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
+            nextMediaFiles, userId, picture, 'community-avatar', 'community', communityId
+          )
+        }
+        nextMediaFiles = this.uploads.attachEditorImagesToRecords(
+          nextMediaFiles,
+          userId,
+          getNewEditorImages(about, latest.about),
+          'community',
+          communityId
+        )
+      }
+
+      updated = {
+        ...latest,
+        name,
+        url,
+        picture,
+        about,
+        type: ownerProfile.type,
+        privacy: input.privacy ?? latest.privacy ?? 'public'
+      }
+      return {
+        records: {
+          ...collections,
+          communities: currentCommunities.map(community => community.id === communityId ? updated! : community),
+          media_files: nextMediaFiles
+        },
+        result: undefined
+      }
     })
-    if (picture !== current.picture) {
-      await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', communityId)
-    }
-    if (newEditorImages) {
-      await this.uploads?.attachEditorImages(userId, newEditorImages, 'community', communityId)
-    }
     return updated!
   }
 

@@ -128,26 +128,42 @@ export class ProfileService {
       throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
     }
 
-    if (picture !== current.picture) await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
-    const newEditorImages = getNewEditorImages(about, current.about)
-    await this.uploads?.validateEditorImages(userId, newEditorImages)
-
     let updated: Profile | undefined
-    await this.data.update<Profile>('profiles', currentProfiles => {
+    await this.data.transaction(['profiles', 'media_files'], collections => {
+      const currentProfiles = collections.profiles as Profile[]
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
       const latest = currentProfiles.find(profile => profile.id === profileId)
       if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
       if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
         throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
       }
+
+      let nextMediaFiles = mediaFiles
+      if (this.uploads) {
+        if (picture !== latest.picture) {
+          nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
+            nextMediaFiles, userId, picture, 'profile-avatar', 'profile', profileId
+          )
+        }
+        nextMediaFiles = this.uploads.attachEditorImagesToRecords(
+          nextMediaFiles,
+          userId,
+          getNewEditorImages(about, latest.about),
+          'profile',
+          profileId
+        )
+      }
+
       updated = { ...latest, name, url, picture, about }
-      return currentProfiles.map(profile => profile.id === profileId ? updated! : profile)
+      return {
+        records: {
+          ...collections,
+          profiles: currentProfiles.map(profile => profile.id === profileId ? updated! : profile),
+          media_files: nextMediaFiles
+        },
+        result: undefined
+      }
     })
-    if (picture !== current.picture) {
-      await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profileId)
-    }
-    if (newEditorImages) {
-      await this.uploads?.attachEditorImages(userId, newEditorImages, 'profile', profileId)
-    }
     return updated!
   }
 

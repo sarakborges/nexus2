@@ -182,3 +182,90 @@ test('community, owner membership and media metadata remain unchanged when attac
   assert.deepEqual(collections.get('community_relationships'), [])
   assert.deepEqual(collections.get('media_files'), [])
 })
+
+test('profile update keeps content and media metadata atomic when an attachment fails', async () => {
+  const uploads = {
+    attachAvatarUrlToRecords(records) {
+      return [...records, { id: 'staged-avatar' }]
+    },
+    attachEditorImagesToRecords() {
+      throw new Error('PROFILE_EDITOR_ATTACHMENT_FAILED')
+    }
+  }
+  const { service, collections, account } = createHarness({ uploads })
+  const original = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  collections.set('profiles', [original])
+
+  await assert.rejects(
+    service.updateProfile(account.id, original.id, {
+      name: 'Updated Owner',
+      url: 'updated-owner',
+      picture: 'https://example.test/new-avatar.png',
+      about: '<p>Updated</p><img src="/api/uploads/123e4567-e89b-42d3-a456-426614174000/content">'
+    }),
+    /PROFILE_EDITOR_ATTACHMENT_FAILED/
+  )
+
+  assert.deepEqual(collections.get('profiles'), [original])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('community update keeps content and media metadata atomic when an attachment fails', async () => {
+  const uploads = {
+    attachAvatarUrlToRecords(records) {
+      return [...records, { id: 'staged-avatar' }]
+    },
+    attachEditorImagesToRecords() {
+      throw new Error('COMMUNITY_EDITOR_ATTACHMENT_FAILED')
+    }
+  }
+  const { service, collections, account } = createHarness({ uploads })
+  const owner = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const original = {
+    id: 'community-1',
+    name: 'Community',
+    url: 'community',
+    picture: '',
+    about: '',
+    type: 'social',
+    privacy: 'public'
+  }
+  collections.set('profiles', [owner])
+  collections.set('communities', [original])
+  collections.set('community_relationships', [{
+    profiles: [owner.id, original.id],
+    type: 'owner',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  await assert.rejects(
+    service.updateCommunity(account.id, original.id, {
+      name: 'Updated Community',
+      url: 'updated-community',
+      picture: 'https://example.test/new-avatar.png',
+      about: '<p>Updated</p><img src="/api/uploads/123e4567-e89b-42d3-a456-426614174000/content">',
+      privacy: 'private'
+    }),
+    /COMMUNITY_EDITOR_ATTACHMENT_FAILED/
+  )
+
+  assert.deepEqual(collections.get('communities'), [original])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
