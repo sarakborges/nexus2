@@ -12,6 +12,8 @@ function createHarness({ uploads, failTransaction = false } = {}) {
   const collections = new Map([
     ['profiles', []],
     ['accounts', [account]],
+    ['communities', []],
+    ['community_relationships', []],
     ['media_files', []]
   ])
   const data = {
