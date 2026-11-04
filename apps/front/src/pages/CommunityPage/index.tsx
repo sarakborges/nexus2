@@ -70,8 +70,8 @@ export function CommunityPage() {
   })
 
   const forumTopicsQuery = useQuery({
-    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 5),
-    queryFn: () => getCommunityForumTopics(community!.id, { page: 1, pageSize: 5 }),
+    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20),
+    queryFn: () => getCommunityForumTopics(community!.id, { page: 1, pageSize: 20 }),
     enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
   })
   const forumTopics = forumTopicsQuery.data?.items ?? []
