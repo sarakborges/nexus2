@@ -19,7 +19,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   isInitialized: false,
   initializationError: false,
-  setSession: (session, initializationError = false) => set({ session, isInitialized: true, initializationError }),
+  setSession: (session, initializationError = false) => {
+    const currentProfileId = get().session?.user.currentProfile ?? null
+    if (currentProfileId !== (session?.user.currentProfile ?? null)) {
+      useProfileStore.getState().clearProfile()
+    }
+    set({ session, isInitialized: true, initializationError })
+  },
   initialize: async () => {
     if (get().isInitialized) return
     try {
