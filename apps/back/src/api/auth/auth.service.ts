@@ -82,6 +82,19 @@ export class AuthService {
     await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
     return this.toPublicUser(updated)
   }
+  async removeProfile(userId: string, profileId: string, previousCurrentProfileId: string | null = null): Promise<void> {
+    const accounts = await this.repository.read<AccountRecord>('accounts')
+    const account = accounts.find((item) => item.id === userId)
+    if (!account || !account.profiles.includes(profileId)) return
+
+    const profiles = account.profiles.filter((id) => id !== profileId)
+    const currentProfile = account.currentProfile === profileId
+      ? (previousCurrentProfileId && profiles.includes(previousCurrentProfileId) ? previousCurrentProfileId : profiles[0] ?? null)
+      : account.currentProfile
+
+    const updated = { ...account, profiles, currentProfile }
+    await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
+  }
   async getPreferences(userId: string): Promise<UserPreferences> {
     const accounts = await this.repository.read<AccountRecord>('accounts')
     const account = accounts.find((item) => item.id === userId)

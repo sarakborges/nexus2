@@ -43,7 +43,7 @@ export function ProfileCommunitiesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="communities" />}>
+    <SocialPageLayout className="social-page--wide-content" sidebar={<ProfileSidebar profile={profile} active="communities" />}>
       <section className="account-card">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE')}</h1>

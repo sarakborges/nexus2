@@ -2,14 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import type { ProfileType } from '@/Models/Profile.model'
-import { AvatarUploadField, RichTextEditor } from '@/Components'
+import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { createUserProfile } from '@/Services/Profile'
+import { createUserProfile, getProfileByUrl } from '@/Services/Profile'
+import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -20,8 +21,9 @@ export function CreateProfilePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const user = useAuthStore(state => state.session?.user)
-  const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
+  const session = useAuthStore(state => state.session)
+  const user = session?.user
+  const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -31,31 +33,66 @@ export function CreateProfilePage() {
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useMutation({
     mutationFn: async () => {
-      const profile = await createUserProfile({ name, url, picture, about, type })
-      const isCurrentProfileSet = await setCurrentProfile(profile.id)
-      if (!isCurrentProfileSet) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
-      return profile
+      const created = await createUserProfile({ name, url, picture, about, type })
+      const [backendSessionResult, backendProfileResult] = await Promise.allSettled([
+        getCurrentAuthSession(),
+        getProfileByUrl(created.url)
+      ])
+      const backendSession = backendSessionResult.status === 'fulfilled' ? backendSessionResult.value : null
+      const backendProfile = backendProfileResult.status === 'fulfilled' ? backendProfileResult.value : null
+      const profile = backendProfile?.id === created.id ? backendProfile : created
+
+      const sessionMatchesProfile = Boolean(
+        backendSession &&
+        backendSession.user.id === user?.id &&
+        backendSession.user.profiles.includes(profile.id)
+      )
+      if (sessionMatchesProfile && backendSession) {
+        useAuthStore.getState().setSession(backendSession)
+      } else {
+        useAuthStore.getState().addProfileToUser(profile.id, true)
+      }
+
+      let activated = await useAuthStore.getState().setCurrentProfile(profile.id)
+      if (!activated) {
+        const refreshedSession = await getCurrentAuthSession().catch(() => null)
+        if (refreshedSession?.user.profiles.includes(profile.id)) {
+          useAuthStore.getState().setSession(refreshedSession)
+          activated = await useAuthStore.getState().setCurrentProfile(profile.id)
+        }
+      }
+
+      return { profile, activationFailed: !activated }
     },
-    onSuccess: async profile => {
+    onSuccess: async ({ profile, activationFailed }) => {
       queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
-      await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned', user?.id] })
-      showToast(t('TOAST_PROFILE_CREATED'))
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+        queryClient.invalidateQueries({ queryKey: ['auth'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity'] })
+      ])
+      showToast(t(activationFailed ? 'TOAST_PROFILE_CREATED_NOT_ACTIVE' : 'TOAST_PROFILE_CREATED'), activationFailed ? 'error' : undefined)
     }
   })
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
+    if (!isAuthInitialized) return
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
-      const profile = await createProfileMutation.mutateAsync()
-      navigate(ROUTES.profile + '/' + profile.url, { replace: true })
+      const result = await createProfileMutation.mutateAsync()
+      navigate(ROUTES.profile + '/' + result.profile.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key = code === 'PROFILE_URL_ALREADY_IN_USE' ? 'PROFILE_ERROR_URL_TAKEN' : code === 'INVALID_PROFILE' ? 'PROFILE_ERROR_INVALID' : 'PROFILE_ERROR_GENERIC'
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }
+  }
+
+  if (!isAuthInitialized) {
+    return <main className="auth-page"><section className="entity-form-page"><RequestState isLoading /></section></main>
   }
 
   return (

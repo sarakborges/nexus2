@@ -178,3 +178,18 @@
   outline: 2px solid var(--color-primary-weak);
   outline-offset: -2px;
 }
+
+.rich-text-editor .rsw-btn.rich-text-editor__toolbar-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rich-text-editor .rsw-btn.rich-text-editor__toolbar-button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
