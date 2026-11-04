@@ -15,6 +15,18 @@ function createHarness(initial = {}, activeProfileId = null) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      const records = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(records)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
@@ -400,4 +412,112 @@ test('profile avatar upload cannot target a profile of another type than the act
     }),
     error => error.getStatus() === 403 && error.message === 'PROFILE_TYPE_MISMATCH'
   )
+})
+
+
+test('attaches and detaches editor image records as pure transaction transformations', () => {
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/image.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness()
+  const html = '<p>Message</p><img src="/api/uploads/' + file.id + '/content">'
+  const attached = service.attachEditorImagesToRecords(
+    [file], 'user-1', html, 'profile-message', 'message-1',
+    { fromProfileId: 'sender', toProfileId: 'recipient' }
+  )
+
+  assert.equal(attached[0].resourceType, 'profile-message')
+  assert.equal(attached[0].resourceId, 'message-1')
+  assert.equal(attached[0].messageFromProfileId, 'sender')
+  assert.equal(attached[0].messageToProfileId, 'recipient')
+  assert.throws(
+    () => service.attachEditorImagesToRecords(attached, 'user-1', html, 'profile-message', 'message-2'),
+    error => error.getStatus() === 400 && error.message === 'EDITOR_IMAGE_ALREADY_ATTACHED'
+  )
+
+  const detached = service.detachResourceAttachmentsFromRecords(attached, null, [
+    { resourceType: 'profile-message', resourceId: 'message-1' }
+  ])
+  assert.equal(detached[0].resourceType, null)
+  assert.equal(detached[0].resourceId, null)
+  assert.equal(detached[0].messageFromProfileId, null)
+  assert.equal(detached[0].messageToProfileId, null)
+})
+
+test('updates a profile avatar and attaches its metadata in one transaction', async () => {
+  const file = {
+    id: '223e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/avatar.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    profiles: [{ id: 'profile-1', picture: '' }],
+    media_files: [file]
+  })
+
+  const result = await service.setProfileAvatar('user-1', 'profile-1', file.id)
+  assert.equal(result.picture, 'https://project.example.supabase.co/storage/v1/object/public/nexus-avatars/profiles/user-1/avatar.png')
+  assert.equal(collections.get('profiles')[0].picture, result.picture)
+  assert.equal(collections.get('media_files')[0].resourceType, 'profile')
+  assert.equal(collections.get('media_files')[0].resourceId, 'profile-1')
+})
+
+test('rejects invalid avatar metadata without changing the profile or media collection', async () => {
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'another-user',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/another-user/avatar.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    profiles: [{ id: 'profile-1', picture: '' }],
+    media_files: [file]
+  })
+
+  await assert.rejects(
+    service.setProfileAvatar('user-1', 'profile-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_AVATAR_UPLOAD'
+  )
+  assert.equal(collections.get('profiles')[0].picture, '')
+  assert.deepEqual(collections.get('media_files'), [file])
 })
