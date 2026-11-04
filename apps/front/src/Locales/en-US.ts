@@ -66,6 +66,7 @@ export const enUSTranslations = {
   AUTH_HAS_ACCOUNT: 'Already have an account?',
   AUTH_SIGN_IN_LINK: 'Sign in',
   AUTH_SIGN_UP_LINK: 'Create an account',
+  AUTH_FORM_REGION: 'Authentication form',
   AUTH_BACK_TO_LANDING: 'Back to home',
   ACTION_CANCEL: 'Cancel',
   AUTH_SIGN_OUT: 'Sign out',
