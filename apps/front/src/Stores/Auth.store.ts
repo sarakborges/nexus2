@@ -19,7 +19,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   isInitialized: false,
   initializationError: false,
-  setSession: (session, initializationError = false) => set({ session, isInitialized: true, initializationError }),
+  setSession: (session, initializationError = false) => {
+    const currentProfileId = get().session?.user.currentProfile ?? null
+    if (currentProfileId !== (session?.user.currentProfile ?? null)) {
+      useProfileStore.getState().clearProfile()
+    }
+    set({ session, isInitialized: true, initializationError })
+  },
   initialize: async () => {
     if (get().isInitialized) return
     try {
@@ -43,8 +49,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   addProfileToUser: (profileId, makeCurrent = false) => {
     const session = get().session
-    if (!session || session.user.profiles.includes(profileId)) return false
-    const user = { ...session.user, profiles: [...session.user.profiles, profileId], currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId }
+    if (!session) return false
+    const profiles = session.user.profiles.includes(profileId)
+      ? session.user.profiles
+      : [...session.user.profiles, profileId]
+    const user = {
+      ...session.user,
+      profiles,
+      currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId
+    }
+    if (makeCurrent && session.user.currentProfile !== profileId) {
+      useProfileStore.getState().clearProfile()
+    }
     set({ session: { ...session, user } })
     return true
   },

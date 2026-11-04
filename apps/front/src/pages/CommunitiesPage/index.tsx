@@ -39,8 +39,8 @@ export function CommunitiesPage() {
   if (!currentProfile) return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
 
   return (
-    <SocialPageLayout className="social-page--wide-content" sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
-      <section className="account-card">
+    <SocialPageLayout sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
+      <div className="social-page__content-stack">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
           <ButtonLink className="account-card__action" variation="primary" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</ButtonLink>
@@ -72,7 +72,7 @@ export function CommunitiesPage() {
           </div>
         </RequestState>
         <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      </section>
+      </div>
     </SocialPageLayout>
   )
 }

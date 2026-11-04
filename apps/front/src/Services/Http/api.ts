@@ -9,8 +9,14 @@ export const api = axios.create({
 
 export function getApiErrorCode(error: unknown, fallback = 'REQUEST_FAILED'): string {
   if (axios.isAxiosError(error)) {
-    const message = error.response?.data?.message
-    return typeof message === 'string' ? message : fallback
+    const response = error.response?.data as { message?: unknown; code?: unknown } | undefined
+    if (typeof response?.code === 'string' && response.code.trim()) return response.code
+    if (typeof response?.message === 'string' && response.message.trim()) return response.message
+    if (Array.isArray(response?.message)) {
+      const firstMessage = response.message.find(item => typeof item === 'string' && item.trim())
+      if (typeof firstMessage === 'string') return firstMessage
+    }
+    return fallback
   }
   return error instanceof Error ? error.message : fallback
 }

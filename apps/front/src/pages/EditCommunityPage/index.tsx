@@ -58,7 +58,7 @@ export function EditCommunityPage() {
       if (!community || !form) throw new Error('COMMUNITY_NOT_READY')
       return updateCommunity(community.id, {
         name: form.name,
-        url: form.url,
+        url: form.url || undefined,
         picture: community.picture,
         about: form.about,
         privacy: form.privacy
@@ -122,7 +122,8 @@ export function EditCommunityPage() {
               emptyLabel={t('UPLOAD_EMPTY')}
             />
             <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
-            <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
+            <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder={t('COMMUNITY_URL_AUTO_PLACEHOLDER')} value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} autoComplete="off" />
+            <p className="account-card__description">{t('COMMUNITY_URL_AUTO_HELP')}</p>
             <div className="form-field">
               <Label id="community-about-label" htmlFor="community-about">{t('COMMUNITY_ABOUT_LABEL')}</Label>
               <RichTextEditor

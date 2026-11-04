@@ -45,7 +45,7 @@ export function ProfileFriendsPage() {
 
   return (
     <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="friends" />}>
-      <section className="account-card">
+      <div className="social-page__content-stack">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
         </header>
@@ -77,7 +77,7 @@ export function ProfileFriendsPage() {
         ))}</div>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      </section>
+      </div>
     </SocialPageLayout>
   )
 }

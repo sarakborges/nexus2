@@ -90,7 +90,7 @@ export function CreateCommunityForumTopicPage() {
 
   return (
     <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract />}>
-      <section className="account-card community-forum">
+      <section className="community-forum social-page__content-stack">
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_NEW_TOPIC')}</h1>

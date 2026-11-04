@@ -9,7 +9,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { createUserProfile, getProfileByUrl } from '@/Services/Profile'
+import { createUserProfile } from '@/Services/Profile'
 import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
@@ -33,38 +33,18 @@ export function CreateProfilePage() {
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useMutation({
     mutationFn: async () => {
-      const created = await createUserProfile({ name, url, picture, about, type })
-      const [backendSessionResult, backendProfileResult] = await Promise.allSettled([
-        getCurrentAuthSession(),
-        getProfileByUrl(created.url)
-      ])
-      const backendSession = backendSessionResult.status === 'fulfilled' ? backendSessionResult.value : null
-      const backendProfile = backendProfileResult.status === 'fulfilled' ? backendProfileResult.value : null
-      const profile = backendProfile?.id === created.id ? backendProfile : created
+      const profile = await createUserProfile({ name, url: url || undefined, picture, about, type })
+      const backendSession = await getCurrentAuthSession().catch(() => null)
 
-      const sessionMatchesProfile = Boolean(
-        backendSession &&
-        backendSession.user.id === user?.id &&
-        backendSession.user.profiles.includes(profile.id)
-      )
-      if (sessionMatchesProfile && backendSession) {
+      if (backendSession?.user.profiles.includes(profile.id)) {
         useAuthStore.getState().setSession(backendSession)
-      } else {
-        useAuthStore.getState().addProfileToUser(profile.id, true)
+      } else if (!useAuthStore.getState().addProfileToUser(profile.id, true)) {
+        throw new Error('PROFILE_CREATION_SESSION_MISSING')
       }
 
-      let activated = await useAuthStore.getState().setCurrentProfile(profile.id)
-      if (!activated) {
-        const refreshedSession = await getCurrentAuthSession().catch(() => null)
-        if (refreshedSession?.user.profiles.includes(profile.id)) {
-          useAuthStore.getState().setSession(refreshedSession)
-          activated = await useAuthStore.getState().setCurrentProfile(profile.id)
-        }
-      }
-
-      return { profile, activationFailed: !activated }
+      return profile
     },
-    onSuccess: async ({ profile, activationFailed }) => {
+    onSuccess: async profile => {
       queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
       await Promise.all([
@@ -72,7 +52,7 @@ export function CreateProfilePage() {
         queryClient.invalidateQueries({ queryKey: ['auth'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] })
       ])
-      showToast(t(activationFailed ? 'TOAST_PROFILE_CREATED_NOT_ACTIVE' : 'TOAST_PROFILE_CREATED'), activationFailed ? 'error' : undefined)
+      showToast(t('TOAST_PROFILE_CREATED'))
     }
   })
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -82,10 +62,16 @@ export function CreateProfilePage() {
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
       const result = await createProfileMutation.mutateAsync()
-      navigate(ROUTES.profile + '/' + result.profile.url, { replace: true })
+      navigate(ROUTES.profile + '/' + result.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
-      const key = code === 'PROFILE_URL_ALREADY_IN_USE' ? 'PROFILE_ERROR_URL_TAKEN' : code === 'INVALID_PROFILE' ? 'PROFILE_ERROR_INVALID' : 'PROFILE_ERROR_GENERIC'
+      const key = code === 'PROFILE_URL_ALREADY_IN_USE'
+        ? 'PROFILE_ERROR_URL_TAKEN'
+        : code === 'INVALID_PROFILE'
+          ? 'PROFILE_ERROR_INVALID'
+          : code === 'PROFILE_CREATION_SESSION_MISSING'
+            ? 'PROFILE_ERROR_SESSION'
+            : 'PROFILE_ERROR_GENERIC'
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }
@@ -105,7 +91,8 @@ export function CreateProfilePage() {
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <div className="entity-form-page__card">
             <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
-            <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="profile-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
+            <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')} value={url} onChange={event => setUrl(event.target.value)} autoComplete="off" />
+            <p className="account-card__description">{t('PROFILE_URL_AUTO_HELP')}</p>
             <AvatarUploadField label={t('PROFILE_PICTURE_LABEL')} value={picture} fallbackName={name} purpose="profile-avatar" onChange={setPicture}
               selectLabel={t('UPLOAD_SELECT_IMAGE')} changeLabel={t('UPLOAD_CHANGE_IMAGE')} removeLabel={t('UPLOAD_REMOVE_IMAGE')}
               uploadingLabel={t('UPLOAD_IN_PROGRESS')} errorLabel={t('UPLOAD_FAILED')} emptyLabel={t('UPLOAD_EMPTY')} />

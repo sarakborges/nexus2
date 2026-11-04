@@ -1,0 +1,156 @@
+:root {
+  --nexus-border-width: 2px;
+  --nexus-card-radius: 0;
+  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 30%);
+  --nexus-control-radius: 0;
+  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 30%);
+  --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
+  --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
+  --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
+  --nexus-accent-glow: rgb(184 148 250 / 22%);
+  --avatar-shape-radius: 0;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-background: #0b0b0f;
+  --color-surface: #1d1b25;
+  --color-surface-raised: #282431;
+  --color-neutral-weak: #0a090d;
+  --color-neutral: #b3adc2;
+  --color-neutral-strong: #f0f0f5;
+  --text-color: #f0f0f5;
+  --color-border: rgb(140 128 168 / 62%);
+
+  --color-primary-strong: #7a4db8;
+  --color-primary: #9461d6;
+  --color-primary-weak: #b894fa;
+  --color-secondary-strong: #613894;
+  --color-secondary: #7a4db8;
+  --color-secondary-weak: #b894fa;
+
+  --color-success: #8ed27b;
+  --color-success-weak: rgb(142 210 123 / 18%);
+  --color-success-strong: #8ed27b;
+  --color-warning: #e3c86d;
+  --color-warning-weak: rgb(227 200 109 / 16%);
+  --color-warning-strong: #e3c86d;
+  --color-error: #c73333;
+  --color-error-weak: rgb(199 51 51 / 20%);
+  --color-error-strong: #c73333;
+
+  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 38%);
+}
+
+:root[data-theme='light'] {
+  --color-primary-strong: #613894;
+  --color-primary: #7a4db8;
+  --color-primary-weak: #9461d6;
+  --color-secondary-strong: #613894;
+  --color-secondary: #7a4db8;
+  --color-secondary-weak: #9461d6;
+  --color-border: rgb(99 72 134 / 44%);
+
+  --nexus-card-shadow: 0 5px 14px rgb(19 13 31 / 8%);
+}
+
+/* Square, edged surfaces and controls follow the Asteria WebUI language. */
+.account-card,
+.social-sidebar-card,
+.social-panel,
+.social-preview-panel,
+.auth-card,
+.entity-form-page__card,
+.profile-message-form,
+.profile-message,
+.community-forum__topic,
+.community-forum__composer {
+  border-width: var(--nexus-border-width);
+  border-radius: var(--nexus-card-radius);
+  box-shadow: var(--nexus-card-shadow);
+}
+
+.account-card,
+.social-sidebar-card,
+.social-panel,
+.social-preview-panel,
+.auth-card,
+.entity-form-page__card,
+.profile-message-form,
+.profile-message,
+.community-forum__topic {
+  background:
+    linear-gradient(
+      to bottom,
+      var(--color-frosted-highlight, rgb(148 107 199 / 5%)) 0%,
+      transparent 24%,
+      rgb(0 0 0 / 2%) 100%
+    ),
+    var(--color-surface);
+}
+
+.button {
+  min-height: 44px;
+  border-width: var(--nexus-border-width);
+  border-radius: var(--nexus-control-radius);
+  box-shadow: var(--nexus-control-shadow);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.button:not(:disabled):not([aria-disabled='true']):hover {
+  transform: translateY(1px);
+  box-shadow: var(--nexus-control-shadow-hover);
+}
+
+.button:not(:disabled):not([aria-disabled='true']):active {
+  transform: translateY(2px);
+  box-shadow: var(--nexus-control-shadow-pressed);
+}
+
+.button--primary {
+  border-color: var(--color-border-strong, var(--color-primary-weak));
+  background-color: var(--color-primary-strong);
+}
+
+.button--primary:not(:disabled):hover { background-color: var(--color-primary); }
+.button--primary:not(:disabled):active { background-color: var(--color-secondary-strong); }
+
+.button--secondary {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+}
+
+.button--cancel {
+  border-color: var(--color-border);
+  background-color: var(--color-error-strong);
+}
+
+.input {
+  min-height: 44px;
+  padding: 8px 12px;
+  border: var(--nexus-border-width) solid var(--color-border);
+  border-radius: 0;
+  background: var(--color-neutral-weak);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.input:not(:disabled):focus {
+  border-color: var(--color-primary-weak);
+  box-shadow: 0 0 0 2px var(--nexus-accent-glow);
+}
+
+.auth-card__error,
+.form-field__error {
+  border: var(--nexus-border-width) solid var(--color-error-strong);
+  border-radius: 0;
+  background: var(--color-error-weak);
+  color: var(--text-color);
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline-color: var(--color-primary-weak);
+  outline-offset: 3px;
+}

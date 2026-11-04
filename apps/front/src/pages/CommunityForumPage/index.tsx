@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
+import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -82,7 +83,7 @@ export function CommunityForumPage() {
 
   return (
     <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract={!session || (typeCompatibility.isCompatible && !typeCompatibility.isChecking)} />}>
-      <section className="account-card community-forum">
+      <section className="community-forum social-page__content-stack">
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -106,51 +107,20 @@ export function CommunityForumPage() {
           </div>
         )}
 
-        <section className="community-forum__topics">
-          <RequestState
-            isLoading={topicsQuery.isLoading || authorsQuery.isLoading}
-            isFetching={topicsQuery.isFetching || authorsQuery.isFetching}
-            isError={topicsQuery.isError || authorsQuery.isError}
-            isEmpty={topicsQuery.isSuccess && topicsQuery.data.totalItems === 0}
-            emptyMessage={t('FORUM_EMPTY')}
-            onRetry={() => {
-              void topicsQuery.refetch()
-              void authorsQuery.refetch()
-            }}
-          >
-            {topics.map(topic => {
-              const author = authorsById.get(topic.profileId)
-              return (
-                <article className="community-forum__topic" key={topic.id}>
-                  <div className="community-forum__topic-author">
-                    {author ? (
-                      <Link to={ROUTES.profile + '/' + author.url} aria-label={author.name} title={author.name}>
-                        <span className="community-forum__author-avatar">
-                          {author.picture ? <img src={author.picture} alt="" /> : <span aria-hidden="true">{author.name.trim().charAt(0).toUpperCase()}</span>}
-                        </span>
-                      </Link>
-                    ) : <span className="community-forum__author-avatar" aria-hidden="true">?</span>}
-                  </div>
-                  <div className="community-forum__topic-main">
-                    <div className="community-forum__topic-labels">
-                      {topic.isLocked && <span className="community-forum__label">{t('FORUM_LOCKED')}</span>}
-                      {topic.isPinned && <span className="community-forum__label">{t('FORUM_PINNED')}</span>}
-                    </div>
-                    <Link className="community-forum__topic-title" to={ROUTES.community + '/' + community.url + '/forum/' + topic.id}>{topic.title}</Link>
-                    <div className="community-forum__topic-meta">
-                      <span>{author ? <Link to={ROUTES.profile + '/' + author.url}>{author.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
-                    </div>
-                  </div>
-                  <div className="community-forum__topic-stats">
-                    <span className="community-forum__reply-count">{topic.replyCount} {t('FORUM_REPLIES')}</span>
-                    <time className="community-forum__topic-last-post" dateTime={new Date(topic.updatedAt).toISOString()}>{new Date(topic.updatedAt).toLocaleString()}</time>
-                  </div>
-                </article>
-              )
-            })}
-          </RequestState>
-          <Pagination page={page} pageSize={pageSize} totalItems={topicsQuery.data?.totalItems ?? 0} onPageChange={setPage} />
-        </section>
+        <RequestState
+          isLoading={topicsQuery.isLoading || authorsQuery.isLoading}
+          isFetching={topicsQuery.isFetching || authorsQuery.isFetching}
+          isError={topicsQuery.isError || authorsQuery.isError}
+          isEmpty={topicsQuery.isSuccess && topicsQuery.data.totalItems === 0}
+          emptyMessage={t('FORUM_EMPTY')}
+          onRetry={() => {
+            void topicsQuery.refetch()
+            void authorsQuery.refetch()
+          }}
+        >
+          <CommunityForumTopicList communityUrl={community.url} topics={topics} authorsById={authorsById} />
+        </RequestState>
+        <Pagination page={page} pageSize={pageSize} totalItems={topicsQuery.data?.totalItems ?? 0} onPageChange={setPage} />
       </section>
     </SocialPageLayout>
   )

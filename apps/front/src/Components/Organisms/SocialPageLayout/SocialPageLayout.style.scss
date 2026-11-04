@@ -354,10 +354,19 @@
   .social-panel, .social-preview-panel { padding: 16px; }
 }
 
-.social-page--wide-content .social-page__layout--two-column {
-  width: min(100%, calc(var(--main-content-max-width) + 220px));
+
+.social-page__content-stack {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
-@media (max-width: 680px) {
-  .social-page--wide-content .social-page__layout--two-column { width: 100%; }
+.social-page__content-stack > .account-card,
+.social-page__content-stack > .social-panel,
+.social-page__content-stack > .profile-message-form {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }

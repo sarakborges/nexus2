@@ -30,7 +30,7 @@ export function CreateCommunityPage() {
   const [privacy, setPrivacy] = useState<CommunityPrivacy>('public')
   const [errorMessage, setErrorMessage] = useState('')
   const createCommunityMutation = useMutation({
-    mutationFn: () => createCommunity({ name, url, picture, about, privacy }, ownerProfileId!),
+    mutationFn: () => createCommunity({ name, url: url || undefined, picture, about, privacy }, ownerProfileId!),
     onSuccess: async community => {
       queryClient.setQueryData(queryKeys.communities.byUrl(community.url), community)
       showToast(t('TOAST_COMMUNITY_CREATED'))
@@ -65,7 +65,8 @@ export function CreateCommunityPage() {
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <div className="entity-form-page__card">
             <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
-            <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
+            <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder={t('COMMUNITY_URL_AUTO_PLACEHOLDER')} value={url} onChange={event => setUrl(event.target.value)} autoComplete="off" />
+            <p className="account-card__description">{t('COMMUNITY_URL_AUTO_HELP')}</p>
             <AvatarUploadField
               label={t('COMMUNITY_PICTURE_LABEL')}
               value={picture}

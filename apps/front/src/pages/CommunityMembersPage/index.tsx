@@ -84,7 +84,7 @@ export function CommunityMembersPage() {
     const roleKey = profile.role === 'owner' ? 'COMMUNITY_ROLE_OWNER' : profile.role === 'moderator' ? 'COMMUNITY_ROLE_MODERATOR' : profile.role === 'connection' ? 'COMMUNITY_ROLE_MEMBER' : null
     const relationship = relationships.find(record => record.profiles[0] === profile.id && record.profiles[1] === community.id) ?? null
     return (
-      <article className="account-card__profile-entry account-card__profile-entry--card" key={profile.id}>
+      <article className="account-card__profile-entry" key={profile.id}>
         <Link className="account-card__profile-entry-identity" to={ROUTES.profile + '/' + profile.url}>
           <span className="account-card__profile-entry-avatar">
             {profile.picture ? <img src={profile.picture} alt="" /> : <span aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</span>}

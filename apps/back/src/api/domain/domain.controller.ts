@@ -8,20 +8,20 @@ import { DomainService } from './domain.service'
 
 class CreateProfileDto implements CreateProfileInput {
   @IsString() @MaxLength(80) name!: string
-  @IsString() url!: string
+  @IsOptional() @IsString() url?: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
   @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
 }
 class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
   @IsString() @MaxLength(80) name!: string
-  @IsString() url!: string
+  @IsOptional() @IsString() url?: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
 }
 class CreateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(80) name!: string
-  @IsString() url!: string
+  @IsOptional() @IsString() url?: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
   @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy
@@ -29,7 +29,7 @@ class CreateCommunityDto implements CreateCommunityInput {
 }
 class UpdateCommunityDto implements CreateCommunityInput {
   @IsString() @MaxLength(80) name!: string
-  @IsString() url!: string
+  @IsOptional() @IsString() url?: string
   @IsString() picture!: string
   @IsString() @MaxLength(12000) about!: string
   @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy

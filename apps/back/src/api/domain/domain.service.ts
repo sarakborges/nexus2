@@ -38,7 +38,7 @@ export class DomainService {
   }
   async createProfile(userId: string, input: CreateProfileInput): Promise<Profile> {
     const name = input.name.trim()
-    const url = this.normalize(input.url)
+    const url = this.normalize(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const userBefore = await this.auth.getUser(userId)
@@ -55,7 +55,7 @@ export class DomainService {
     await this.data.write('profiles', [...profiles, profile])
 
     try {
-      await this.auth.addProfile(userId, profile.id)
+      await this.auth.addProfile(userId, profile.id, true)
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
       await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
     } catch (error) {
@@ -89,7 +89,7 @@ export class DomainService {
     if (!current) throw new NotFoundException('PROFILE_NOT_FOUND')
 
     const name = input.name.trim()
-    const url = this.normalize(input.url)
+    const url = this.normalize(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
@@ -142,7 +142,7 @@ export class DomainService {
     const ownerProfile = (await this.readProfiles()).find(profile => profile.id === ownerProfileId)
     if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
     const name = input.name.trim()
-    const url = this.normalize(input.url)
+    const url = this.normalize(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? 'public'
@@ -183,7 +183,7 @@ export class DomainService {
     if (!current) throw new NotFoundException('COMMUNITY_NOT_FOUND')
 
     const name = input.name.trim()
-    const url = this.normalize(input.url)
+    const url = this.normalize(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? current.privacy ?? 'public'
@@ -669,5 +669,14 @@ export class DomainService {
   private role(profileId: string, records: CommunityRelationship[]): CommunityRelationshipType | null {
     return records.find(r => r.profiles[0] === profileId)?.type ?? null
   }
-  private normalize(value: string): string { return value.trim().replace(/^@/, '').toLowerCase() }
+  private normalize(value: string): string {
+    return value
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/^@+/, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+  }
 }
