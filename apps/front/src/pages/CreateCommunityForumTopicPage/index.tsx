@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { RelationshipActions, RequestState } from '@/Components'
+import { RelationshipActions, RequestState, RichTextEditor } from '@/Components'
+import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadFile } from '@/Services/Uploads'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { createCommunityForumTopic } from '@/Services/CommunityForum'
@@ -15,6 +17,11 @@ import { useToastStore } from '@/Stores/Toast.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
+
+function hasRichTextContent(value: string): boolean {
+  const text = value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').trim()
+  return Boolean(text || /<img\\b/i.test(value))
+}
 
 export function CreateCommunityForumTopicPage() {
   const { url } = useParams<{ url: string }>()
@@ -71,7 +78,7 @@ export function CreateCommunityForumTopicPage() {
   })
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!title.trim() || !content.trim() || !forumProfile) return
+    if (!title.trim() || !hasRichTextContent(content) || !forumProfile) return
     await createMutation.mutateAsync()
   }
 
@@ -81,7 +88,7 @@ export function CreateCommunityForumTopicPage() {
   if (!community) return <NotFoundPage />
 
   return (
-    <main className="account-page">
+    <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract />}>
       <section className="account-card community-forum">
         <header className="account-card__header">
           <div>
@@ -105,11 +112,20 @@ export function CreateCommunityForumTopicPage() {
               <input id="forum-topic-title" className="input" value={title} maxLength={140} onChange={event => setTitle(event.target.value)} required />
             </div>
             <div className="form-field">
-              <Label htmlFor="forum-topic-content">{t('FORUM_TOPIC_CONTENT')}</Label>
-              <textarea id="forum-topic-content" className="input community-forum__textarea" value={content} maxLength={8000} onChange={event => setContent(event.target.value)} rows={5} required />
+              <Label id="forum-topic-content-label" htmlFor="forum-topic-content">{t('FORUM_TOPIC_CONTENT')}</Label>
+              <RichTextEditor
+                id="forum-topic-content"
+                value={content}
+                onChange={setContent}
+                maxTextLength={8000}
+                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+                onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
+                placeholder={t('RICH_TEXT_PLACEHOLDER')}
+              />
             </div>
             {createMutation.isError && <p className="auth-card__error" role="alert">{t('FORUM_TOPIC_ERROR')}</p>}
-            <Button type="submit" disabled={!title.trim() || !content.trim() || createMutation.isPending}>{t('FORUM_PUBLISH_TOPIC')}</Button>
+            <Button type="submit" disabled={!title.trim() || !hasRichTextContent(content) || createMutation.isPending}>{t('FORUM_PUBLISH_TOPIC')}</Button>
           </form>
         ) : (
           <div className="community-forum__join">
@@ -118,6 +134,6 @@ export function CreateCommunityForumTopicPage() {
           </div>
         )}
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }

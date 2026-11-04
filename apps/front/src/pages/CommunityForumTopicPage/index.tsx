@@ -1,11 +1,13 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Pagination, RequestState } from '@/Components'
+import { Pagination, RequestState, RichTextEditor } from '@/Components'
+import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadFile } from '@/Services/Uploads'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { createCommunityForumReply, deleteCommunityForumReply, deleteCommunityForumTopic, getCommunityForumTopic, moderateCommunityForumTopic } from '@/Services/CommunityForum'
@@ -16,6 +18,11 @@ import { useToastStore } from '@/Stores/Toast.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
+
+function hasRichTextContent(value: string): boolean {
+  const text = value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').trim()
+  return Boolean(text || /<img\\b/i.test(value))
+}
 
 export function CommunityForumTopicPage() {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
@@ -115,7 +122,7 @@ export function CommunityForumTopicPage() {
 
   const submitReply = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!replyContent.trim() || !isMember || !canInteract || topic?.isLocked) return
+    if (!hasRichTextContent(replyContent) || !isMember || !canInteract || topic?.isLocked) return
     await replyMutation.mutateAsync()
   }
 
@@ -129,7 +136,7 @@ export function CommunityForumTopicPage() {
   const canDeleteTopic = Boolean(canInteract && forumProfileId && (topic.profileId === forumProfileId || isStaff))
 
   return (
-    <main className="account-page">
+    <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract />}>
       <section className="account-card community-forum">
         <header className="account-card__header">
           <div>
@@ -163,11 +170,20 @@ export function CommunityForumTopicPage() {
           {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? null : canInteract && isMember && !topic.isLocked ? (
             <form className="community-forum__composer" onSubmit={submitReply}>
               <div className="form-field">
-                <Label htmlFor="forum-reply-content">{t('FORUM_REPLY')}</Label>
-                <textarea id="forum-reply-content" className="input community-forum__textarea" value={replyContent} maxLength={8000} onChange={event => setReplyContent(event.target.value)} rows={4} required />
+                <Label id="forum-reply-content-label" htmlFor="forum-reply-content">{t('FORUM_REPLY')}</Label>
+                <RichTextEditor
+                  id="forum-reply-content"
+                  value={replyContent}
+                  onChange={setReplyContent}
+                  maxTextLength={8000}
+                  imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+                  imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+                  onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
+                  placeholder={t('RICH_TEXT_PLACEHOLDER')}
+                />
               </div>
               {replyMutation.isError && <p className="auth-card__error" role="alert">{t('FORUM_TOPIC_ERROR')}</p>}
-              <Button type="submit" disabled={!replyContent.trim() || replyMutation.isPending}>{t('FORUM_PUBLISH_REPLY')}</Button>
+              <Button type="submit" disabled={!hasRichTextContent(replyContent) || replyMutation.isPending}>{t('FORUM_PUBLISH_REPLY')}</Button>
             </form>
           ) : isAuthInitialized && !relationshipsQuery.isLoading && !ownedProfilesQuery.isLoading && !relationshipsQuery.isError && !ownedProfilesQuery.isError && !isMember && (
             <p className="account-card__description">{t('FORUM_MEMBERS_ONLY')}</p>
@@ -200,6 +216,6 @@ export function CommunityForumTopicPage() {
           <Pagination page={page} pageSize={pageSize} totalItems={detail.replies.totalItems} onPageChange={setPage} />
         </section>
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }
