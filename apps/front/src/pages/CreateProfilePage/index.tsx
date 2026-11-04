@@ -58,7 +58,7 @@ export function CreateProfilePage() {
     if (!isAuthInitialized) return
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
-      const result = await createProfileMutation.mutateAsync()
+      await createProfileMutation.mutateAsync()
       navigate(ROUTES.home, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
