@@ -54,10 +54,8 @@ export class DomainService {
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
     await this.data.write('profiles', [...profiles, profile])
 
-    let accountLinked = false
     try {
       await this.auth.addProfile(userId, profile.id)
-      accountLinked = true
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
       await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
     } catch (error) {
@@ -67,12 +65,10 @@ export class DomainService {
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError)
       }
-      if (accountLinked) {
-        try {
-          await this.auth.removeProfile(userId, profile.id, userBefore.currentProfile)
-        } catch (rollbackError) {
-          rollbackErrors.push(rollbackError)
-        }
+      try {
+        await this.auth.removeProfile(userId, profile.id, userBefore.currentProfile)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
       }
       try {
         await this.data.write('profiles', profiles)

@@ -22,7 +22,6 @@ export function CreateProfilePage() {
   const queryClient = useQueryClient()
   const { t } = useTranslations()
   const user = useAuthStore(state => state.session?.user)
-  const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
   const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')

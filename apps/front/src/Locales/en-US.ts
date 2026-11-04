@@ -246,6 +246,7 @@ export const enUSTranslations = {
   PROFILE_TYPE_MISMATCH_NOTICE: 'You can only interact with profiles and communities of the same type as yours.',
   TOAST_PROFILE_SWITCHED: 'Active profile changed.',
   TOAST_PROFILE_CREATED: 'Profile created.',
+  TOAST_PROFILE_CREATED_NOT_ACTIVE: 'Profile created, but it could not be activated. Refresh your session and try again.',
   TOAST_PROFILE_UPDATED: 'Profile updated.',
   TOAST_COMMUNITY_CREATED: 'Community created.',
   TOAST_COMMUNITY_UPDATED: 'Community updated.',

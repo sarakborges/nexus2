@@ -248,6 +248,7 @@ export const ptBRTranslations = {
   PROFILE_TYPE_MISMATCH_NOTICE: 'Você só pode interagir com perfis e comunidades do mesmo tipo que o seu.',
   TOAST_PROFILE_SWITCHED: 'Perfil ativo alterado.',
   TOAST_PROFILE_CREATED: 'Perfil criado.',
+  TOAST_PROFILE_CREATED_NOT_ACTIVE: 'Perfil criado, mas não foi possível ativá-lo. Atualize a sessão e tente novamente.',
   TOAST_PROFILE_UPDATED: 'Perfil atualizado.',
   TOAST_COMMUNITY_CREATED: 'Comunidade criada.',
   TOAST_COMMUNITY_UPDATED: 'Comunidade atualizada.',
