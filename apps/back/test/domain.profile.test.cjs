@@ -20,8 +20,10 @@ function createHarness({ uploads, failAfterProfileLink = false } = {}) {
     },
     async addProfile(_userId, profileId) {
       if (!account.profiles.includes(profileId)) account.profiles.push(profileId)
+      if (makeCurrent) account.currentProfile = profileId
       if (failAfterProfileLink) throw new Error('ACCOUNT_PROFILE_LINK_FAILED')
     },
+    async ownsProfile(_userId, profileId) { return account.profiles.includes(profileId) },
     async removeProfile(_userId, profileId, previousCurrentProfileId = null) {
       account.profiles = account.profiles.filter(id => id !== profileId)
       if (account.currentProfile === profileId) {
@@ -49,7 +51,7 @@ test('profile creation returns the persisted profile and links it to the authent
   assert.equal(collections.get('profiles').length, 1)
   assert.deepEqual(collections.get('profiles')[0], created)
   assert.deepEqual(account.profiles, ['existing-profile', created.id])
-  assert.equal(account.currentProfile, 'existing-profile')
+  assert.equal(account.currentProfile, created.id)
 })
 
 test('profile creation rollback removes both the profile row and account ownership after attachment failure', async () => {
@@ -80,4 +82,54 @@ test('profile creation removes a partially linked account profile when account p
   assert.deepEqual(collections.get('profiles'), [])
   assert.deepEqual(account.profiles, ['existing-profile'])
   assert.equal(account.currentProfile, 'existing-profile')
+})
+
+
+test('profile creation derives a sanitized URL from the name when URL is omitted', async () => {
+  const { service, collections, account } = createHarness()
+  const created = await service.createProfile(account.id, {
+    name: 'Árvore & Mar',
+    picture: '',
+    about: '',
+    type: 'social'
+  })
+
+  assert.equal(created.url, 'arvore-mar')
+  assert.equal(account.currentProfile, created.id)
+  assert.equal(collections.get('profiles')[0].url, 'arvore-mar')
+})
+
+test('community creation and update sanitize explicit URLs and regenerate blank URLs from the name', async () => {
+  const { service, collections, account } = createHarness()
+  const owner = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  collections.set('profiles', [owner])
+  collections.set('communities', [])
+  collections.set('community_relationships', [])
+  account.profiles = [owner.id]
+  account.currentProfile = owner.id
+
+  const created = await service.createCommunity(account.id, owner.id, {
+    name: 'Café & Pão',
+    url: '  @Meu Caminho!!  ',
+    picture: '',
+    about: '',
+    privacy: 'public'
+  })
+  assert.equal(created.url, 'meu-caminho')
+
+  const updated = await service.updateCommunity(account.id, created.id, {
+    name: 'Novo Nome',
+    url: '',
+    picture: '',
+    about: '',
+    privacy: 'public'
+  })
+  assert.equal(updated.url, 'novo-nome')
 })
