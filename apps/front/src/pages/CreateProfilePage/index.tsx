@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import type { ProfileType } from '@/Models/Profile.model'
-import { AvatarUploadField, RichTextEditor } from '@/Components'
+import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { ROUTES } from '@/Constants/routes'
@@ -21,7 +21,9 @@ export function CreateProfilePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const user = useAuthStore(state => state.session?.user)
+  const session = useAuthStore(state => state.session)
+  const user = session?.user
+  const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const showToast = useToastStore(state => state.showToast)
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
@@ -32,27 +34,30 @@ export function CreateProfilePage() {
   const createProfileMutation = useMutation({
     mutationFn: async () => {
       const created = await createUserProfile({ name, url, picture, about, type })
-      const [backendSession, backendProfile] = await Promise.all([
+      const [backendSessionResult, backendProfileResult] = await Promise.allSettled([
         getCurrentAuthSession(),
         getProfileByUrl(created.url)
       ])
+      const backendSession = backendSessionResult.status === 'fulfilled' ? backendSessionResult.value : null
+      const backendProfile = backendProfileResult.status === 'fulfilled' ? backendProfileResult.value : null
+      const profile = backendProfile?.id === created.id ? backendProfile : created
 
-      if (!backendSession || !backendSession.user.profiles.includes(created.id) || !backendProfile) {
-        throw new Error('PROFILE_CREATE_BACKEND_SYNC_FAILED')
+      if (backendSession?.user.profiles.includes(profile.id)) {
+        useAuthStore.getState().setSession(backendSession)
+      } else {
+        useAuthStore.getState().addProfileToUser(profile.id, true)
       }
 
-      useAuthStore.getState().setSession(backendSession)
-      let activated = await useAuthStore.getState().setCurrentProfile(backendProfile.id)
+      let activated = await useAuthStore.getState().setCurrentProfile(profile.id)
       if (!activated) {
-        const refreshedSession = await getCurrentAuthSession()
-        if (refreshedSession) useAuthStore.getState().setSession(refreshedSession)
-        activated = Boolean(
-          refreshedSession?.user.profiles.includes(backendProfile.id) &&
-          await useAuthStore.getState().setCurrentProfile(backendProfile.id)
-        )
+        const refreshedSession = await getCurrentAuthSession().catch(() => null)
+        if (refreshedSession?.user.profiles.includes(profile.id)) {
+          useAuthStore.getState().setSession(refreshedSession)
+          activated = await useAuthStore.getState().setCurrentProfile(profile.id)
+        }
       }
 
-      return { profile: backendProfile, activationFailed: !activated }
+      return { profile, activationFailed: !activated }
     },
     onSuccess: async ({ profile, activationFailed }) => {
       queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
@@ -68,6 +73,7 @@ export function CreateProfilePage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
+    if (!isAuthInitialized) return
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
       const result = await createProfileMutation.mutateAsync()
@@ -78,6 +84,10 @@ export function CreateProfilePage() {
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }
+  }
+
+  if (!isAuthInitialized) {
+    return <main className="auth-page"><section className="entity-form-page"><RequestState isLoading /></section></main>
   }
 
   return (
