@@ -2,6 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { Pagination, RequestState, RichTextEditor } from '@/Components'
+import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -84,7 +85,7 @@ export function ProfileMessagesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page"><section className="account-card">
+    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="messages" />}><section className="account-card">
       <RequestState isFetching={profileQuery.isFetching} />
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <header className="account-card__header">
@@ -151,6 +152,6 @@ export function ProfileMessagesPage() {
         </RequestState>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-    </section></main>
+    </section></SocialPageLayout>
   )
 }
