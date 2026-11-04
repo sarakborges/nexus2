@@ -39,6 +39,8 @@ export function SignInPage() {
 
   return (
     <main className="auth-page">
+      <div className="auth-page__stack">
+        <Link className="auth-page__back" to={ROUTES.landing}>{t('AUTH_BACK_TO_LANDING')}</Link>
       <section className="auth-card" aria-labelledby="sign-in-title">
         <div>
           <h1 className="auth-card__title" id="sign-in-title">{t('AUTH_SIGN_IN_TITLE')}</h1>
@@ -50,8 +52,9 @@ export function SignInPage() {
           {errorMessage && <p className="auth-card__error" role="alert">{errorMessage}</p>}
           <Button type="submit" disabled={signInMutation.isPending}>{signInMutation.isPending ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_IN_ACTION')}</Button>
         </form>
-        <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link>{' · '}<Link to={ROUTES.landing}>{t('AUTH_BACK_TO_LANDING')}</Link></p>
+        <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link></p>
       </section>
+      </div>
     </main>
   )
 }

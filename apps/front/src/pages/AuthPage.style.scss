@@ -1,5 +1,6 @@
 .auth-page {
   display: grid;
+  box-sizing: border-box;
   place-items: center;
   align-content: center;
   width: 100%;
@@ -439,3 +440,24 @@
   .entity-form-page__actions { flex-direction: column-reverse; }
   .entity-form-page__actions > .button { width: 100%; }
 }
+
+.auth-page__stack {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 420px);
+}
+
+.auth-page__back {
+  justify-self: start;
+  color: var(--color-primary-weak);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.auth-page__back:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.auth-page__stack > .auth-card { width: 100%; }
+
+.entity-form-page,
+.entity-form-page__card,
+.entity-form-page__actions { box-sizing: border-box; }
