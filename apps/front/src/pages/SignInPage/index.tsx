@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 
 import { AUTH_ERROR_TRANSLATION_KEYS } from '@/Constants/auth'
 import { ROUTES } from '@/Constants/routes'
+import { AuthPageLayout } from '@/Components/Organisms/AuthPageLayout/AuthPageLayout.component'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { AuthError } from '@/Services/Auth'
@@ -38,9 +39,7 @@ export function SignInPage() {
   }
 
   return (
-    <main className="auth-page">
-      <div className="auth-page__stack">
-        <Link className="auth-page__back" to={ROUTES.landing}>{t('AUTH_BACK_TO_LANDING')}</Link>
+    <AuthPageLayout>
       <section className="auth-card" aria-labelledby="sign-in-title">
         <div>
           <h1 className="auth-card__title" id="sign-in-title">{t('AUTH_SIGN_IN_TITLE')}</h1>
@@ -54,7 +53,7 @@ export function SignInPage() {
         </form>
         <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link></p>
       </section>
-      </div>
-    </main>
+      <
+    </AuthPageLayout>
   )
 }
