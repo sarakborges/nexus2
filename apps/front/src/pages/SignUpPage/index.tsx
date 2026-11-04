@@ -59,7 +59,6 @@ export function SignUpPage() {
         </form>
         <p className="auth-card__footer">{t('AUTH_HAS_ACCOUNT')}{' '}<Link to={ROUTES.signIn}>{t('AUTH_SIGN_IN_LINK')}</Link></p>
       </section>
-      <
     </AuthPageLayout>
   )
 }
