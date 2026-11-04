@@ -19,6 +19,7 @@ function harness(owned = {}, uploads = null) {
     ['community_relationships', [relationship('owner', 'owner'), relationship('member', 'connection')]],
     ['community_forum_topics', []],
     ['community_forum_replies', []],
+    ['media_files', []],
     ['relationships', []]
   ])
   const data = {
@@ -64,14 +65,20 @@ test('forum members can publish and read topics with paginated replies', async (
 test('forum content attaches editor images and detaches them when content is deleted', async () => {
   const calls = []
   const uploads = {
-    async validateEditorImages(userId, html) {
-      calls.push({ operation: 'validate', userId, html })
-    },
-    async attachEditorImages(userId, html, resourceType, resourceId) {
+    attachEditorImagesToRecords(records, userId, html, resourceType, resourceId) {
       calls.push({ operation: 'attach', userId, html, resourceType, resourceId })
+      return records
     },
-    async detachResourceAttachments(userId, resourceType, resourceId) {
-      calls.push({ operation: 'detach', userId, resourceType, resourceId })
+    detachResourceAttachmentsFromRecords(records, userId, resources) {
+      for (const resource of resources) {
+        calls.push({
+          operation: 'detach',
+          userId,
+          resourceType: resource.resourceType,
+          resourceId: resource.resourceId
+        })
+      }
+      return records
     }
   }
   const { service } = harness({ memberUser: ['member'] }, uploads)
