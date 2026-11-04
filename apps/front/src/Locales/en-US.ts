@@ -121,7 +121,8 @@ export const enUSTranslations = {
   PROFILE_ERROR_URL_TAKEN: 'This profile address is already in use.',
   PROFILE_ERROR_INVALID: 'Enter a name and a valid profile address. The picture URL must be valid when provided.',
   PROFILE_ERROR_STORAGE: 'The profile could not be saved to browser storage.',
-  PROFILE_ERROR_GENERIC: 'Something went wrong while creating your profile.',
+  PROFILE_ERROR_GENERIC: 'Something went wrong while creating your profile. Check the fields and try again.',
+  PROFILE_ERROR_SESSION: 'The profile was created, but the session could not be refreshed. Reload the page to synchronize your account.'
   HOME_TITLE: 'Home',
   HOME_WELCOME: 'Welcome, {{name}}.',
   HOME_PROFILES_TITLE: 'Your profiles',
