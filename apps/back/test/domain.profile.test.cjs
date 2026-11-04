@@ -155,3 +155,35 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
   })
   assert.equal(updated.url, 'novo-nome')
 })
+
+
+test('community creation rollback removes the community and owner relationship after attachment failure', async () => {
+  let detached = false
+  const uploads = {
+    async validateAvatarUrl() {},
+    async validateEditorImages() {},
+    async attachAvatarUrl() {},
+    async attachEditorImages() { throw new Error('COMMUNITY_EDITOR_ATTACHMENT_FAILED') },
+    async detachResourceAttachments() { detached = true }
+  }
+  const { service, collections, account } = createHarness({ uploads })
+  collections.set('profiles', [{
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }])
+
+  await assert.rejects(service.createCommunity(account.id, 'existing-profile', {
+    name: 'Community',
+    url: 'community',
+    picture: '',
+    about: '<img src="/api/uploads/123e4567-e89b-42d3-a456-426614174000/content">'
+  }), /COMMUNITY_EDITOR_ATTACHMENT_FAILED/)
+
+  assert.deepEqual(collections.get('communities'), [])
+  assert.deepEqual(collections.get('community_relationships'), [])
+  assert.equal(detached, true)
+})
