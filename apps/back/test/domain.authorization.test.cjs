@@ -23,8 +23,11 @@ function relationship(profileId, type) {
   }
 }
 
-function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 'public' } = {}) {
+function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 'public', beforeTransaction } = {}) {
   const collections = new Map([
+    ['accounts', Object.entries(userProfiles).map(([id, profiles]) => ({
+      id, email: `${id}@example.com`, profiles: [...profiles], currentProfile: profiles[0] ?? null
+    }))],
     ['communities', [{ ...community, privacy }]],
     ['community_relationships', relationships],
     ['profiles', [
@@ -42,6 +45,18 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
+    }
+    async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
+      const snapshot = Object.fromEntries(names.map(name => [
+        name, structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(snapshot)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
@@ -229,3 +244,24 @@ test('community type inherits the owner profile type and persists the normalized
   assert.equal(collections.get('communities')[0].type, 'business')
 })
 
+
+
+test('community relationship mutations recheck profile ownership in the transaction', async () => {
+  const original = [
+    relationship('owner-1', 'owner'),
+    relationship('target-1', 'connection')
+  ]
+  const { service, collections } = createDomainHarness({
+    userProfiles: { ownerUser: ['owner-1'] },
+    relationships: original,
+    beforeTransaction(_names, current) {
+      current.set('accounts', [])
+    }
+  })
+
+  await assert.rejects(
+    service.updateCommunityRelationship('ownerUser', communityId, 'target-1', 'owner-1', 'moderator'),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.deepEqual(collections.get('community_relationships'), original)
+})

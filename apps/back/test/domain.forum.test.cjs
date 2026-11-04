@@ -12,7 +12,7 @@ const community = { id: communityId, name: 'Forum', url: 'forum', picture: '', a
 const page = { page: 1, pageSize: 20 }
 const relationship = (id, type) => ({ profiles: [id, communityId], type, requestedBy: null, blockedBy: null, updatedAt: 1 })
 
-function harness(owned = {}, uploads = null) {
+function harness(owned = {}, uploads = null, beforeTransaction) {
   const collections = new Map([
     ['accounts', Object.entries(owned).map(([id, ids]) => ({
       id,
@@ -36,6 +36,7 @@ function harness(owned = {}, uploads = null) {
       return structuredClone(next)
     },
     async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
       const records = Object.fromEntries(names.map(name => [
         name,
         structuredClone(collections.get(name) ?? [])
@@ -166,4 +167,74 @@ test('a community owner can publish through an owned profile while another profi
 
   assert.ok(topic.id)
   assert.ok(reply.id)
+})
+
+
+test('forum topic creation rechecks membership when committing the topic', async () => {
+  const { service, collections } = harness(
+    { memberUser: ['member'] },
+    null,
+    (names, current) => {
+      if (names.includes('community_forum_topics')) {
+        current.set('community_relationships', [relationship('owner', 'owner')])
+      }
+    }
+  )
+
+  await assert.rejects(
+    service.createCommunityForumTopic('memberUser', communityId, 'member', 'Topic', 'Content'),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_MEMBER_REQUIRED'
+  )
+  assert.deepEqual(collections.get('community_forum_topics'), [])
+})
+
+test('forum moderation rechecks staff role in the topic transaction', async () => {
+  let revokeStaff = false
+  const { service, collections } = harness(
+    { ownerUser: ['owner'] },
+    null,
+    (names, current) => {
+      if (revokeStaff && names.includes('community_forum_topics')) {
+        current.set('community_relationships', [
+          relationship('owner', 'connection'),
+          relationship('member', 'connection')
+        ])
+      }
+    }
+  )
+  const topic = await service.createCommunityForumTopic(
+    'ownerUser', communityId, 'owner', 'Topic', 'Content'
+  )
+  revokeStaff = true
+
+  await assert.rejects(
+    service.moderateCommunityForumTopic(
+      'ownerUser', communityId, topic.id, 'owner', { isPinned: true }
+    ),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
+  )
+  assert.equal(collections.get('community_forum_topics')[0].isPinned, false)
+})
+
+test('forum replies recheck membership and topic lock in the same transaction', async () => {
+  let removeMembership = false
+  const { service, collections } = harness(
+    { memberUser: ['member'] },
+    null,
+    (names, current) => {
+      if (removeMembership && names.includes('community_forum_replies')) {
+        current.set('community_relationships', [relationship('owner', 'owner')])
+      }
+    }
+  )
+  const topic = await service.createCommunityForumTopic(
+    'memberUser', communityId, 'member', 'Topic', 'Content'
+  )
+  removeMembership = true
+
+  await assert.rejects(
+    service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', 'Reply'),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_MEMBER_REQUIRED'
+  )
+  assert.deepEqual(collections.get('community_forum_replies'), [])
 })

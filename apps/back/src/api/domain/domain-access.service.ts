@@ -93,6 +93,77 @@ export class DomainAccessService {
     }
   }
 
+  assertCommunityProfileInRecords(
+    userId: string,
+    profileId: string,
+    communityId: string,
+    accounts: readonly AccountRecord[],
+    profiles: readonly Profile[],
+    communities: readonly Community[],
+    relationships: readonly CommunityRelationship[],
+    options: { allowDifferentActiveType?: boolean } = {}
+  ): { profile: Profile; community: Community; role: CommunityRelationshipType | null } {
+    this.assertOwnsInRecords(userId, profileId, accounts, profiles, options)
+
+    const profile = profiles.find(item => item.id === profileId)
+    if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+    const community = communities.find(item => item.id === communityId)
+    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+
+    const ownerProfileId = relationships.find(record =>
+      record.profiles[1] === communityId && record.type === 'owner'
+    )?.profiles[0]
+    const ownerProfile = ownerProfileId
+      ? profiles.find(item => item.id === ownerProfileId)
+      : undefined
+    const effectiveCommunity = ownerProfile
+      ? { ...community, type: ownerProfile.type }
+      : community
+
+    this.assertSameType(profile, effectiveCommunity)
+    return {
+      profile,
+      community: effectiveCommunity,
+      role: this.role(profileId, relationships.filter(record => record.profiles[1] === communityId))
+    }
+  }
+
+  assertForumMemberInRecords(
+    userId: string,
+    profileId: string,
+    communityId: string,
+    accounts: readonly AccountRecord[],
+    profiles: readonly Profile[],
+    communities: readonly Community[],
+    relationships: readonly CommunityRelationship[]
+  ): void {
+    const context = this.assertCommunityProfileInRecords(
+      userId, profileId, communityId, accounts, profiles, communities, relationships,
+      { allowDifferentActiveType: true }
+    )
+    if (!['owner', 'moderator', 'connection'].includes(context.role ?? '')) {
+      throw new ForbiddenException('COMMUNITY_MEMBER_REQUIRED')
+    }
+  }
+
+  assertForumStaffInRecords(
+    userId: string,
+    profileId: string,
+    communityId: string,
+    accounts: readonly AccountRecord[],
+    profiles: readonly Profile[],
+    communities: readonly Community[],
+    relationships: readonly CommunityRelationship[]
+  ): void {
+    const context = this.assertCommunityProfileInRecords(
+      userId, profileId, communityId, accounts, profiles, communities, relationships,
+      { allowDifferentActiveType: true }
+    )
+    if (!['owner', 'moderator'].includes(context.role ?? '')) {
+      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+    }
+  }
+
   async assertOwns(
     userId: string,
     profileId: string,

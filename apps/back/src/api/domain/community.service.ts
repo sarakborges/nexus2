@@ -233,95 +233,162 @@ export class CommunityService {
     return paginate(profiles.filter(profile => ids.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, role: 'requested' })), q)
   }
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
-    await this.access.assertOwns(userId, actorId)
-    await this.access.ensureCommunity(communityId)
-    const community = (await this.access.readCommunities()).find(item => item.id === communityId)
-    const profiles = await this.access.readProfiles()
-    const actorProfile = profiles.find(profile => profile.id === actorId)
-    const targetProfile = profiles.find(profile => profile.id === targetId)
-    this.access.assertSameType(actorProfile, community)
-    this.access.assertSameType(targetProfile, community)
-    let record: CommunityRelationship | undefined
-    await this.data.update<CommunityRelationship>('community_relationships', all => {
-      const communityRecords = all.filter(item => item.profiles[1] === communityId)
-      const currentActorRole = this.access.role(actorId, communityRecords)
-      const currentTargetRole = this.access.role(targetId, communityRecords)
-      const self = actorId === targetId
-      let allowed = false
-      if (type === 'requested') allowed = self && currentTargetRole === null
-      if (type === 'connection') allowed = (currentActorRole === 'owner' || currentActorRole === 'moderator') && currentTargetRole === 'requested'
-      if (type === 'moderator') allowed = currentActorRole === 'owner' && currentTargetRole === 'connection'
-      if (type === 'blocked') allowed = !self && (currentActorRole === 'owner' || currentActorRole === 'moderator') && currentTargetRole === 'connection'
-      if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+    return this.data.transaction<CommunityRelationship>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const all = collections.community_relationships as CommunityRelationship[]
+        const { community, role: currentActorRole } = this.access.assertCommunityProfileInRecords(
+          userId, actorId, communityId, accounts, profiles, communities, all
+        )
+        const targetProfile = profiles.find(profile => profile.id === targetId)
+        this.access.assertSameType(targetProfile, community)
 
-      const next: CommunityRelationship = {
-        profiles: [targetId, communityId], type,
-        requestedBy: type === 'requested' ? actorId : null,
-        blockedBy: type === 'blocked' ? actorId : null, updatedAt: Date.now()
+        const communityRecords = all.filter(item => item.profiles[1] === communityId)
+        const currentTargetRole = this.access.role(targetId, communityRecords)
+        const self = actorId === targetId
+        let allowed = false
+        if (type === 'requested') allowed = self && currentTargetRole === null
+        if (type === 'connection') allowed =
+          (currentActorRole === 'owner' || currentActorRole === 'moderator') &&
+          currentTargetRole === 'requested'
+        if (type === 'moderator') allowed =
+          currentActorRole === 'owner' && currentTargetRole === 'connection'
+        if (type === 'blocked') allowed =
+          !self &&
+          (currentActorRole === 'owner' || currentActorRole === 'moderator') &&
+          currentTargetRole === 'connection'
+        if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+
+        const next: CommunityRelationship = {
+          profiles: [targetId, communityId],
+          type,
+          requestedBy: type === 'requested' ? actorId : null,
+          blockedBy: type === 'blocked' ? actorId : null,
+          updatedAt: Date.now()
+        }
+        return {
+          records: {
+            ...collections,
+            community_relationships: [
+              ...all.filter(record =>
+                record.profiles[0] !== targetId || record.profiles[1] !== communityId
+              ),
+              next
+            ]
+          },
+          result: next
+        }
       }
-      record = next
-      return [...all.filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId), next]
-    })
-    return record!
+    )
   }
+
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
-    await this.access.assertOwns(userId, actorId)
-    await this.access.ensureCommunity(communityId)
-    const [profiles, community] = await Promise.all([
-      this.access.readProfiles(),
-      this.access.readCommunities().then(items => items.find(item => item.id === communityId))
-    ])
-    this.access.assertSameType(profiles.find(profile => profile.id === actorId), community)
-    this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
-    await this.data.update<CommunityRelationship>('community_relationships', all => {
-      const target = all.find(r => r.profiles[0] === targetId && r.profiles[1] === communityId)
-      if (!target) return all
-      const actorRole = this.access.role(actorId, all.filter(r => r.profiles[1] === communityId))
-      const self = actorId === targetId
-      const canSelf = self && (['connection', 'requested'].includes(target.type) || (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null)))
-      const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
-        ['connection', 'requested', 'blocked'].includes(target.type) &&
-        !(actorRole === 'moderator' && target.type === 'moderator')
-      if (!canSelf && !canStaff) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
-      return all.filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId)
-    })
+    await this.data.transaction(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const all = collections.community_relationships as CommunityRelationship[]
+        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
+          userId, actorId, communityId, accounts, profiles, communities, all
+        )
+        this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
+
+        const target = all.find(record =>
+          record.profiles[0] === targetId && record.profiles[1] === communityId
+        )
+        if (!target) return { records: collections, result: undefined }
+
+        const self = actorId === targetId
+        const canSelf = self && (
+          ['connection', 'requested'].includes(target.type) ||
+          (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null))
+        )
+        const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
+          ['connection', 'requested', 'blocked'].includes(target.type) &&
+          !(actorRole === 'moderator' && target.type === 'moderator')
+        if (!canSelf && !canStaff) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+
+        return {
+          records: {
+            ...collections,
+            community_relationships: all.filter(record =>
+              record.profiles[0] !== targetId || record.profiles[1] !== communityId
+            )
+          },
+          result: undefined
+        }
+      }
+    )
   }
+
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
-    await this.access.assertOwns(userId, actorId)
-    await this.access.ensureCommunity(communityId)
-    const [profiles, communities] = await Promise.all([this.access.readProfiles(), this.access.readCommunities()])
-    const community = communities.find(item => item.id === communityId)
-    this.access.assertSameType(profiles.find(profile => profile.id === actorId), community)
-    this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
-    await this.data.update<CommunityRelationship>('community_relationships', all => {
-      const filtered = all.filter(r => r.profiles[1] === communityId)
-      if (this.access.role(actorId, filtered) !== 'owner' || this.access.role(targetId, filtered) !== 'moderator') {
-        throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
+    await this.data.transaction(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const all = collections.community_relationships as CommunityRelationship[]
+        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
+          userId, actorId, communityId, accounts, profiles, communities, all
+        )
+        this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
+        const targetRole = this.access.role(
+          targetId, all.filter(record => record.profiles[1] === communityId)
+        )
+        if (actorRole !== 'owner' || targetRole !== 'moderator') {
+          throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
+        }
+        return {
+          records: {
+            ...collections,
+            community_relationships: all.map(record =>
+              record.profiles[0] === targetId && record.profiles[1] === communityId
+                ? { ...record, type: 'connection', updatedAt: Date.now() }
+                : record
+            )
+          },
+          result: undefined
+        }
       }
-      return all.map(r => r.profiles[0] === targetId && r.profiles[1] === communityId
-        ? { ...r, type: 'connection', updatedAt: Date.now() }
-        : r)
-    })
+    )
   }
+
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
-    await this.access.assertOwns(userId, actorId)
-    await this.access.ensureCommunity(communityId)
-    const [profiles, communities] = await Promise.all([this.access.readProfiles(), this.access.readCommunities()])
-    const community = communities.find(item => item.id === communityId)
-    this.access.assertSameType(profiles.find(profile => profile.id === actorId), community)
-    this.access.assertSameType(profiles.find(profile => profile.id === newOwnerId), community)
-    await this.data.update<CommunityRelationship>('community_relationships', all => {
-      const filtered = all.filter(r => r.profiles[1] === communityId)
-      if (this.access.role(actorId, filtered) !== 'owner' || this.access.role(newOwnerId, filtered) !== 'moderator') {
-        throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
+    await this.data.transaction(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const all = collections.community_relationships as CommunityRelationship[]
+        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
+          userId, actorId, communityId, accounts, profiles, communities, all
+        )
+        this.access.assertSameType(profiles.find(profile => profile.id === newOwnerId), community)
+        const communityRecords = all.filter(record => record.profiles[1] === communityId)
+        if (actorRole !== 'owner' || this.access.role(newOwnerId, communityRecords) !== 'moderator') {
+          throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
+        }
+        return {
+          records: {
+            ...collections,
+            community_relationships: all.map(record => {
+              if (record.profiles[1] !== communityId) return record
+              if (record.profiles[0] === actorId) return { ...record, type: 'moderator', updatedAt: Date.now() }
+              if (record.profiles[0] === newOwnerId) return { ...record, type: 'owner', updatedAt: Date.now() }
+              return record
+            })
+          },
+          result: undefined
+        }
       }
-      return all.map(r => {
-        if (r.profiles[1] !== communityId) return r
-        if (r.profiles[0] === actorId) return { ...r, type: 'moderator', updatedAt: Date.now() }
-        if (r.profiles[0] === newOwnerId) return { ...r, type: 'owner', updatedAt: Date.now() }
-        return r
-      })
-    })
+    )
   }
 
 
