@@ -5,7 +5,8 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  Optional
+  Optional,
+  UnauthorizedException
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -19,6 +20,7 @@ import type {
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
+import type { AccountRecord } from '../auth/auth.types'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
@@ -56,26 +58,50 @@ export class ProfileService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const userBefore = await this.auth.getUser(userId)
     await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
     await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
-    let updatedUser: AuthenticatedUser | null = null
+
+    const created = await this.data.transaction<{
+      user: AuthenticatedUser
+      previousCurrentProfile: string | null
+    }>(['profiles', 'accounts'], collections => {
+      const profiles = collections.profiles as Profile[]
+      const accounts = collections.accounts as AccountRecord[]
+      const account = accounts.find(item => item.id === userId)
+      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      if (profiles.some(item => item.url === url)) {
+        throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+      }
+
+      const updatedAccount: AccountRecord = {
+        ...account,
+        profiles: [...account.profiles, profile.id],
+        currentProfile: profile.id
+      }
+      const user: AuthenticatedUser = {
+        id: updatedAccount.id,
+        email: updatedAccount.email,
+        profiles: [...updatedAccount.profiles],
+        currentProfile: updatedAccount.currentProfile
+      }
+
+      return {
+        records: {
+          ...collections,
+          profiles: [...profiles, profile],
+          accounts: accounts.map(item => item.id === userId ? updatedAccount : item)
+        },
+        result: { user, previousCurrentProfile: account.currentProfile }
+      }
+    })
 
     try {
-      await this.data.update<Profile>('profiles', current => {
-        if (current.some(item => item.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
-        return [...current, profile]
-      })
-      updatedUser = await this.auth.addProfile(userId, profile.id, true)
-      if (updatedUser.id !== userId || !updatedUser.profiles.includes(profile.id) || updatedUser.currentProfile !== profile.id) {
-        throw new InternalServerErrorException('PROFILE_ACTIVATION_FAILED')
-      }
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
       await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
     } catch (error) {
@@ -86,21 +112,38 @@ export class ProfileService {
         rollbackErrors.push(rollbackError)
       }
       try {
-        await this.auth.removeProfile(userId, profile.id, userBefore.currentProfile)
+        await this.data.transaction(['profiles', 'accounts'], collections => {
+          const profiles = collections.profiles as Profile[]
+          const accounts = collections.accounts as AccountRecord[]
+          const nextAccounts = accounts.map(account => {
+            if (account.id !== userId || !account.profiles.includes(profile.id)) return account
+            const remainingProfiles = account.profiles.filter(id => id !== profile.id)
+            const currentProfile = account.currentProfile === profile.id
+              ? (created.previousCurrentProfile && remainingProfiles.includes(created.previousCurrentProfile)
+                ? created.previousCurrentProfile
+                : remainingProfiles[0] ?? null)
+              : account.currentProfile
+            return { ...account, profiles: remainingProfiles, currentProfile }
+          })
+          return {
+            records: {
+              ...collections,
+              profiles: profiles.filter(item => item.id !== profile.id),
+              accounts: nextAccounts
+            },
+            result: undefined
+          }
+        })
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError)
       }
-      try {
-        await this.data.update<Profile>('profiles', current => current.filter(item => item.id !== profile.id))
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError)
+      if (rollbackErrors.length > 0) {
+        throw new InternalServerErrorException('PROFILE_CREATE_ROLLBACK_FAILED')
       }
-      if (rollbackErrors.length > 0) throw new InternalServerErrorException('PROFILE_CREATE_ROLLBACK_FAILED')
       throw error
     }
 
-    if (!updatedUser) throw new InternalServerErrorException('PROFILE_ACTIVATION_FAILED')
-    return { profile, user: updatedUser }
+    return { profile, user: created.user }
   }
 
   async updateProfile(userId: string, profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {
