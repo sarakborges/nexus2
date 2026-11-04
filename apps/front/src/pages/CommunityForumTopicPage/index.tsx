@@ -21,7 +21,7 @@ import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 function hasRichTextContent(value: string): boolean {
   const text = value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').trim()
-  return Boolean(text || /<img\\b/i.test(value))
+  return Boolean(text || /<img\b/i.test(value))
 }
 
 export function CommunityForumTopicPage() {
@@ -143,26 +143,36 @@ export function CommunityForumTopicPage() {
             <h1 className="account-card__title">{topic.title}</h1>
             <p className="account-card__description">{t('FORUM_TITLE')} · {community.name}</p>
           </div>
-          <Link className="account-card__link" to={`${ROUTES.community}/${community.url}/forum`}>{t('FORUM_BACK')}</Link>
         </header>
 
 
-        <article className="community-forum__post">
-          <header className="community-forum__post-header">
-            <span>{topicAuthor ? <Link to={`${ROUTES.profile}/${topicAuthor.url}`}>{topicAuthor.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
-            <time dateTime={new Date(topic.createdAt).toISOString()}>{new Date(topic.createdAt).toLocaleString()}</time>
-          </header>
-          <div className="community-forum__post-content rich-text-content" dangerouslySetInnerHTML={{ __html: topic.content }} />
-          {(canInteract && (isStaff || topic.profileId === forumProfileId)) && (
-            <div className="community-forum__actions">
-              {isStaff && <>
-                <Button variation="secondary" disabled={moderationMutation.isPending} onClick={() => moderationMutation.mutate({ isPinned: !topic.isPinned })}>{t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}</Button>
-                <Button variation="secondary" disabled={moderationMutation.isPending} onClick={() => moderationMutation.mutate({ isLocked: !topic.isLocked })}>{t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}</Button>
-              </>}
-              {canDeleteTopic && <Button variation="cancel" disabled={deleteTopicMutation.isPending} onClick={() => deleteTopicMutation.mutate()}>{t('FORUM_DELETE')}</Button>}
-            </div>
-          )}
-          {topic.isLocked && <p className="account-card__description">{t('FORUM_LOCKED')}</p>}
+        <article className="community-forum__post community-forum__entry">
+          <aside className="community-forum__author-column">
+            {topicAuthor ? (
+              <Link className="community-forum__author-link" to={ROUTES.profile + '/' + topicAuthor.url} aria-label={topicAuthor.name} title={topicAuthor.name}>
+                <span className="community-forum__author-avatar">
+                  {topicAuthor.picture ? <img src={topicAuthor.picture} alt="" /> : <span aria-hidden="true">{topicAuthor.name.trim().charAt(0).toUpperCase()}</span>}
+                </span>
+              </Link>
+            ) : <span className="community-forum__author-avatar" aria-hidden="true">?</span>}
+          </aside>
+          <div className="community-forum__entry-main">
+            <header className="community-forum__post-header">
+              <span>{topicAuthor ? <Link to={ROUTES.profile + '/' + topicAuthor.url}>{topicAuthor.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
+              <time dateTime={new Date(topic.createdAt).toISOString()}>{new Date(topic.createdAt).toLocaleString()}</time>
+            </header>
+            <div className="community-forum__post-content rich-text-content" dangerouslySetInnerHTML={{ __html: topic.content }} />
+            {(canInteract && (isStaff || topic.profileId === forumProfileId)) && (
+              <div className="community-forum__actions">
+                {isStaff && <>
+                  <Button variation="secondary" disabled={moderationMutation.isPending} onClick={() => moderationMutation.mutate({ isPinned: !topic.isPinned })}>{t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}</Button>
+                  <Button variation="secondary" disabled={moderationMutation.isPending} onClick={() => moderationMutation.mutate({ isLocked: !topic.isLocked })}>{t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}</Button>
+                </>}
+                {canDeleteTopic && <Button variation="cancel" disabled={deleteTopicMutation.isPending} onClick={() => deleteTopicMutation.mutate()}>{t('FORUM_DELETE')}</Button>}
+              </div>
+            )}
+            {topic.isLocked && <p className="account-card__description">{t('FORUM_LOCKED')}</p>}
+          </div>
         </article>
 
         <section className="community-forum__replies">
@@ -202,13 +212,24 @@ export function CommunityForumTopicPage() {
               const author = authorsById.get(reply.profileId)
               const canDelete = Boolean(canInteract && forumProfileId && (reply.profileId === forumProfileId || isStaff))
               return (
-                <article className="community-forum__reply" key={reply.id}>
-                  <header className="community-forum__post-header">
-                    <span>{author ? <Link to={`${ROUTES.profile}/${author.url}`}>{author.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
-                    <time dateTime={new Date(reply.createdAt).toISOString()}>{new Date(reply.createdAt).toLocaleString()}</time>
-                  </header>
-                  <div className="community-forum__post-content rich-text-content" dangerouslySetInnerHTML={{ __html: reply.content }} />
-                  {canDelete && <div className="community-forum__actions"><Button variation="cancel" disabled={deleteReplyMutation.isPending} onClick={() => deleteReplyMutation.mutate(reply.id)}>{t('FORUM_DELETE')}</Button></div>}
+                <article className="community-forum__reply community-forum__entry" key={reply.id}>
+                  <aside className="community-forum__author-column">
+                    {author ? (
+                      <Link className="community-forum__author-link" to={ROUTES.profile + '/' + author.url} aria-label={author.name} title={author.name}>
+                        <span className="community-forum__author-avatar">
+                          {author.picture ? <img src={author.picture} alt="" /> : <span aria-hidden="true">{author.name.trim().charAt(0).toUpperCase()}</span>}
+                        </span>
+                      </Link>
+                    ) : <span className="community-forum__author-avatar" aria-hidden="true">?</span>}
+                  </aside>
+                  <div className="community-forum__entry-main">
+                    <header className="community-forum__post-header">
+                      <span>{author ? <Link to={ROUTES.profile + '/' + author.url}>{author.name}</Link> : t('FORUM_UNKNOWN_AUTHOR')}</span>
+                      <time dateTime={new Date(reply.createdAt).toISOString()}>{new Date(reply.createdAt).toLocaleString()}</time>
+                    </header>
+                    <div className="community-forum__post-content rich-text-content" dangerouslySetInnerHTML={{ __html: reply.content }} />
+                    {canDelete && <div className="community-forum__actions"><Button variation="cancel" disabled={deleteReplyMutation.isPending} onClick={() => deleteReplyMutation.mutate(reply.id)}>{t('FORUM_DELETE')}</Button></div>}
+                  </div>
                 </article>
               )
             })}

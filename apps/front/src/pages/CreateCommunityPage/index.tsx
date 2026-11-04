@@ -66,11 +66,15 @@ export function CreateCommunityPage() {
         <div className="entity-form-page__card">
         <FormField id="community-name" label={t('COMMUNITY_NAME_LABEL')} type="text" value={name} onChange={event => setName(event.target.value)} maxLength={80} required />
         <FormField id="community-url" label={t('COMMUNITY_URL_LABEL')} type="text" placeholder="community-name" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={url} onChange={event => setUrl(event.target.value)} required />
+        </div>
+        <div className="entity-form-page__card">
         <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
           <PreferenceOption label={t('COMMUNITY_PRIVACY_PUBLIC')} description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')} isSelected={privacy === 'public'} onSelect={() => setPrivacy('public')} />
           <PreferenceOption label={t('COMMUNITY_PRIVACY_PRIVATE')} description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')} isSelected={privacy === 'private'} onSelect={() => setPrivacy('private')} />
           <PreferenceOption label={t('COMMUNITY_PRIVACY_UNLISTED')} description={t('COMMUNITY_PRIVACY_UNLISTED_DESCRIPTION')} isSelected={privacy === 'unlisted'} onSelect={() => setPrivacy('unlisted')} />
         </PreferenceSelector>
+        </div>
+        <div className="entity-form-page__card">
         <AvatarUploadField
           label={t('COMMUNITY_PICTURE_LABEL')}
           value={picture}

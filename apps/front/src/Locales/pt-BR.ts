@@ -206,6 +206,8 @@ export const ptBRTranslations = {
   COMMUNITY_BLOCK_MEMBER: "Bloquear membro",
   COMMUNITY_UNBLOCK_MEMBER: "Desbloquear membro",
   COMMUNITY_PENDING_REQUESTS: "Solicitações pendentes",
+  COMMUNITY_PENDING_COUNT: "{{count}} solicitações pendentes",
+  COMMUNITY_PENDING_ABOUT_NOTICE: "{{count}} solicitações pendentes de participação. Ver solicitações.",
   COMMUNITY_MEMBERS_PENDING_EMPTY: "Não há solicitações pendentes.",
   COMMUNITY_BLOCKED_MEMBERS: "Perfis bloqueados",
   COMMUNITY_BLOCKED_MEMBERS_EMPTY: "Não há perfis bloqueados.",

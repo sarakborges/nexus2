@@ -204,6 +204,8 @@ export const enUSTranslations = {
   COMMUNITY_BLOCK_MEMBER: "Block member",
   COMMUNITY_UNBLOCK_MEMBER: "Unblock member",
   COMMUNITY_PENDING_REQUESTS: "Pending requests",
+  COMMUNITY_PENDING_COUNT: "{{count}} pending requests",
+  COMMUNITY_PENDING_ABOUT_NOTICE: "{{count}} pending membership requests. Review requests.",
   COMMUNITY_MEMBERS_PENDING_EMPTY: "There are no pending requests.",
   COMMUNITY_BLOCKED_MEMBERS: "Blocked profiles",
   COMMUNITY_BLOCKED_MEMBERS_EMPTY: "There are no blocked profiles.",

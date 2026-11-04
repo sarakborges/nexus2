@@ -52,7 +52,7 @@ export function CommunityPage() {
   })
   const privateMembership = relationshipsQuery.data?.some(record => ['owner', 'moderator', 'connection'].includes(record.type)) ?? false
   const canViewMembers = community?.privacy !== 'private' || privateMembership
-  const pendingActor = relationshipsQuery.data?.find(record => record.type === 'owner' || record.type === 'moderator') ?? null
+  const pendingActor = relationshipsQuery.data?.find(record => (record.type === 'owner' || record.type === 'moderator') && (session?.user.profiles.includes(record.profiles[0]) ?? false)) ?? null
   const pendingRequestsQuery = useQuery({
     queryKey: queryKeys.pendingCommunityMembers(community?.id ?? '', pendingActor?.profiles[0] ?? '', 1, 1),
     queryFn: () => getPendingCommunityMembers(community!.id, pendingActor!.profiles[0], { page: 1, pageSize: 1 }),
@@ -81,7 +81,7 @@ export function CommunityPage() {
 
   const members = membersQuery.data?.items ?? []
   const memberCount = membersQuery.data?.totalItems
-  const ownerRelationship = relationshipsQuery.data?.find(record => record.type === 'owner') ?? null
+  const ownerRelationship = relationshipsQuery.data?.find(record => record.type === 'owner' && (session?.user.profiles.includes(record.profiles[0]) ?? false)) ?? null
 
   return (
     <main className="social-page social-page--community">
