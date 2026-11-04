@@ -53,7 +53,6 @@ export function SignInPage() {
         </form>
         <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link></p>
       </section>
-      <
     </AuthPageLayout>
   )
 }
