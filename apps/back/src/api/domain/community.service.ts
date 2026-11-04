@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   Optional
 } from '@nestjs/common'
@@ -21,7 +20,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import { AuthService } from '../auth/auth.service'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
-import { UploadsService } from '../uploads/uploads.service'
+import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
 
@@ -65,8 +64,6 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? 'public'
-    await this.uploads?.validateAvatarUrl(userId, picture, 'community-avatar')
-    await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
@@ -82,55 +79,32 @@ export class CommunityService {
       updatedAt: Date.now()
     }
 
-    await this.data.transaction(['communities', 'community_relationships'], collections => {
+    await this.data.transaction(['communities', 'community_relationships', 'media_files'], collections => {
       const communities = collections.communities as Community[]
       const relationships = collections.community_relationships as CommunityRelationship[]
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
       if (communities.some(item => item.url === url)) {
         throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
       }
+      const nextMediaFiles = this.uploads
+        ? this.uploads.attachEditorImagesToRecords(
+            this.uploads.attachAvatarUrlToRecords(
+              mediaFiles, userId, picture, 'community-avatar', 'community', community.id
+            ),
+            userId, about, 'community', community.id
+          )
+        : mediaFiles
+
       return {
         records: {
           ...collections,
           communities: [...communities, community],
-          community_relationships: [...relationships, ownerRelationship]
+          community_relationships: [...relationships, ownerRelationship],
+          media_files: nextMediaFiles
         },
         result: undefined
       }
     })
-
-    try {
-      await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
-      await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
-    } catch (error) {
-      const rollbackErrors: unknown[] = []
-      try {
-        await this.uploads?.detachResourceAttachments(userId, 'community', community.id)
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError)
-      }
-      try {
-        await this.data.transaction(['communities', 'community_relationships'], collections => {
-          const communities = collections.communities as Community[]
-          const relationships = collections.community_relationships as CommunityRelationship[]
-          return {
-            records: {
-              ...collections,
-              communities: communities.filter(item => item.id !== community.id),
-              community_relationships: relationships.filter(item =>
-                item.profiles[1] !== community.id || item.profiles[0] !== ownerProfileId
-              )
-            },
-            result: undefined
-          }
-        })
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError)
-      }
-      if (rollbackErrors.length > 0) {
-        throw new InternalServerErrorException('COMMUNITY_CREATE_ROLLBACK_FAILED')
-      }
-      throw error
-    }
 
     return community
   }
