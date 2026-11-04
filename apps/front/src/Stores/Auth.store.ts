@@ -1,4 +1,5 @@
 import { useProfileStore } from './Profile.store'
+import { queryClient } from '@/Services/Query/queryClient'
 import type {
   AuthSession,
   AuthenticatedUser,
@@ -31,7 +32,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isInitialized: false,
   initializationError: false,
   setSession: (session, initializationError = false) => {
+    const previousUserId = get().session?.user.id ?? null
+    const nextUserId = session?.user.id ?? null
     const currentProfileId = get().session?.user.currentProfile ?? null
+    if (previousUserId !== nextUserId) queryClient.clear()
     if (currentProfileId !== (session?.user.currentProfile ?? null)) {
       useProfileStore.getState().clearProfile()
     }
@@ -48,6 +52,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   signIn: async (credentials) => {
     const user = await signInUser(credentials)
+    queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({
       session: { user, authenticatedAt: Date.now() },
@@ -58,6 +63,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   signUp: async (credentials) => {
     const user = await signUpUser(credentials)
+    queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({
       session: { user, authenticatedAt: Date.now() },
@@ -81,6 +87,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   signOut: async () => {
     await signOutUser()
+    queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({ session: null, isInitialized: true, initializationError: false })
   }

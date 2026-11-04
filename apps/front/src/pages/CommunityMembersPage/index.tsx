@@ -46,7 +46,7 @@ export function CommunityMembersPage() {
   } = useUrlPagination('pendingPage')
 
   const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized),
+    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
     queryFn: () => getCommunityByUrl(normalized),
     enabled: Boolean(normalized)
   })
@@ -79,7 +79,8 @@ export function CommunityMembersPage() {
       visibleTab,
       page,
       pageSize,
-      actorProfileId ?? currentProfileId ?? undefined
+      actorProfileId ?? currentProfileId ?? undefined,
+      session?.user.id ?? null
     ),
     queryFn: () =>
       getCommunityMembers(
@@ -95,7 +96,8 @@ export function CommunityMembersPage() {
       community?.id ?? '',
       actorProfileId ?? '',
       pendingPage,
-      pendingPageSize
+      pendingPageSize,
+      session?.user.id ?? null
     ),
     queryFn: () =>
       getPendingCommunityMembers(community!.id, actorProfileId!, {

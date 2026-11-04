@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
-import { createHash, randomBytes, randomUUID, pbkdf2Sync, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord, JwtPayload, RefreshTokenRecord } from './auth.types'
@@ -23,9 +23,10 @@ export class AuthService {
     const accounts = await this.repository.read<AccountRecord>('accounts')
     if (accounts.some((account) => account.email === email)) throw new ConflictException('EMAIL_ALREADY_EXISTS')
     const salt = randomBytes(16)
+    const passwordHash = await this.hashPassword(credentials.password, salt)
     const account: AccountRecord = {
       id: randomUUID(), email,
-      password: { salt: salt.toString('base64'), hash: this.hashPassword(credentials.password, salt).toString('base64') },
+      password: { salt: salt.toString('base64'), hash: passwordHash.toString('base64') },
       profiles: [], currentProfile: null
     }
     await this.repository.write('accounts', [...accounts, account])
@@ -35,7 +36,7 @@ export class AuthService {
     const email = this.normalizeEmail(credentials.email)
     const accounts = await this.repository.read<AccountRecord>('accounts')
     const account = accounts.find((item) => item.email === email)
-    if (!account || !this.verifyPassword(credentials.password, account)) throw new UnauthorizedException('INVALID_CREDENTIALS')
+    if (!account || !(await this.verifyPassword(credentials.password, account))) throw new UnauthorizedException('INVALID_CREDENTIALS')
     return this.issueTokens(account)
   }
   async refresh(token: string): Promise<AuthTokenPair> {
@@ -122,8 +123,10 @@ export class AuthService {
     const refreshPayload: JwtPayload = { sub: account.id, email: account.email, type: 'refresh', jti }
     const accessToken = await this.jwt.signAsync(accessPayload, { secret: this.config.getOrThrow('JWT_ACCESS_SECRET'), expiresIn: this.accessTtl })
     const refreshToken = await this.jwt.signAsync(refreshPayload, { secret: this.config.getOrThrow('JWT_REFRESH_SECRET'), expiresIn: this.refreshTtl })
-    const records = await this.repository.read<RefreshTokenRecord>('refresh_tokens')
-    records.push({ id: jti, userId: account.id, tokenHash: this.hashToken(refreshToken), expiresAt: Date.now() + this.refreshTtl * 1000 })
+    const now = Date.now()
+    const records = (await this.repository.read<RefreshTokenRecord>('refresh_tokens'))
+      .filter(record => record.expiresAt > now)
+    records.push({ id: jti, userId: account.id, tokenHash: this.hashToken(refreshToken), expiresAt: now + this.refreshTtl * 1000 })
     await this.repository.write('refresh_tokens', records)
     return { accessToken, refreshToken, expiresIn: this.accessTtl, user: this.toPublicUser(account) }
   }
@@ -131,10 +134,17 @@ export class AuthService {
     return { id: account.id, email: account.email, profiles: [...account.profiles], currentProfile: account.currentProfile }
   }
   private normalizeEmail(email: string): string { return email.trim().toLowerCase() }
-  private hashPassword(password: string, salt: Buffer): Buffer { return pbkdf2Sync(password, salt, 310000, 32, 'sha256') }
-  private verifyPassword(password: string, account: AccountRecord): boolean {
+  private hashPassword(password: string, salt: Buffer): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      pbkdf2(password, salt, 310000, 32, 'sha256', (error, derivedKey) => {
+        if (error) reject(error)
+        else resolve(derivedKey)
+      })
+    })
+  }
+  private async verifyPassword(password: string, account: AccountRecord): Promise<boolean> {
     try {
-      const actual = this.hashPassword(password, Buffer.from(account.password.salt, 'base64'))
+      const actual = await this.hashPassword(password, Buffer.from(account.password.salt, 'base64'))
       const expected = Buffer.from(account.password.hash, 'base64')
       return actual.length === expected.length && timingSafeEqual(actual, expected)
     } catch { return false }

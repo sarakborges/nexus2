@@ -12,7 +12,7 @@ const community = { id: communityId, name: 'Forum', url: 'forum', picture: '', a
 const page = { page: 1, pageSize: 20 }
 const relationship = (id, type) => ({ profiles: [id, communityId], type, requestedBy: null, blockedBy: null, updatedAt: 1 })
 
-function harness(owned = {}) {
+function harness(owned = {}, uploads = null) {
   const collections = new Map([
     ['profiles', profiles],
     ['communities', [community]],
@@ -30,7 +30,7 @@ function harness(owned = {}) {
     async ownsProfile(id, profileId) { return (owned[id] ?? []).includes(profileId) },
     async addProfile() {}
   }
-  return { service: new DomainService(data, auth), collections }
+  return { service: new DomainService(data, auth, uploads), collections }
 }
 
 test('forum members can publish and read topics with paginated replies', async () => {
@@ -43,6 +43,38 @@ test('forum members can publish and read topics with paginated replies', async (
   assert.equal(listing.items[0].replyCount, 1)
   const detail = await service.getCommunityForumTopic(communityId, topic.id, page)
   assert.equal(detail.replies.items[0].id, reply.id)
+})
+
+test('forum content attaches editor images and detaches them when content is deleted', async () => {
+  const calls = []
+  const uploads = {
+    async validateEditorImages(userId, html) {
+      calls.push({ operation: 'validate', userId, html })
+    },
+    async attachEditorImages(userId, html, resourceType, resourceId) {
+      calls.push({ operation: 'attach', userId, html, resourceType, resourceId })
+    },
+    async detachResourceAttachments(userId, resourceType, resourceId) {
+      calls.push({ operation: 'detach', userId, resourceType, resourceId })
+    }
+  }
+  const { service } = harness({ memberUser: ['member'] }, uploads)
+  const imageId = '123e4567-e89b-42d3-a456-426614174000'
+  const content = '<p>Forum content</p><img src="/api/uploads/' + imageId + '/content">'
+
+  const topic = await service.createCommunityForumTopic('memberUser', communityId, 'member', 'Topic with image', content)
+  const firstReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', content)
+  await service.deleteCommunityForumReply('memberUser', communityId, firstReply.id, 'member')
+
+  const secondReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', content)
+  await service.deleteCommunityForumTopic('memberUser', communityId, topic.id, 'member')
+
+  assert.equal(calls.some(call => call.operation === 'attach' && call.resourceType === 'community-forum-topic' && call.resourceId === topic.id), true)
+  assert.equal(calls.some(call => call.operation === 'attach' && call.resourceType === 'community-forum-reply' && call.resourceId === firstReply.id), true)
+  assert.equal(calls.some(call => call.operation === 'attach' && call.resourceType === 'community-forum-reply' && call.resourceId === secondReply.id), true)
+  assert.equal(calls.some(call => call.operation === 'detach' && call.resourceType === 'community-forum-reply' && call.resourceId === firstReply.id), true)
+  assert.equal(calls.some(call => call.operation === 'detach' && call.resourceType === 'community-forum-topic' && call.resourceId === topic.id), true)
+  assert.equal(calls.some(call => call.operation === 'detach' && call.resourceType === 'community-forum-reply' && call.resourceId === secondReply.id), true)
 })
 
 test('forum rejects non-members, cross-type profiles, and replies to locked topics', async () => {

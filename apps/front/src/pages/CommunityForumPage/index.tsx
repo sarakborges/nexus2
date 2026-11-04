@@ -36,7 +36,7 @@ export function CommunityForumPage() {
   const { page, pageSize, setPage } = useUrlPagination()
 
   const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized),
+    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
     queryFn: () => getCommunityByUrl(normalized),
     enabled: Boolean(normalized)
   })
@@ -85,7 +85,8 @@ export function CommunityForumPage() {
     queryKey: queryKeys.communityForumTopics(
       community?.id ?? '',
       page,
-      pageSize
+      pageSize,
+      session?.user.id ?? null
     ),
     queryFn: () => getCommunityForumTopics(community!.id, { page, pageSize }),
     enabled: Boolean(community?.id)

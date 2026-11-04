@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsIn, IsString, MinLength, ValidateIf } from 'class-validator'
 import type { AuthTokenPair, UserPreferences } from '@nexus/common'
 import { AuthService } from './auth.service'
 import { CurrentUser } from './current-user.decorator'
@@ -16,8 +16,8 @@ class SignUpDto {
 class RefreshDto { @IsString() refreshToken!: string }
 class CurrentProfileDto { @IsString() profileId!: string }
 class PreferencesDto implements Partial<UserPreferences> {
-  @IsOptional() @IsIn(['system', 'pt-BR', 'en-US']) language?: UserPreferences['language']
-  @IsOptional() @IsIn(['system', 'light', 'dark']) theme?: UserPreferences['theme']
+  @ValidateIf((_object, value) => value !== undefined) @IsIn(['system', 'pt-BR', 'en-US']) language?: UserPreferences['language']
+  @ValidateIf((_object, value) => value !== undefined) @IsIn(['system', 'light', 'dark']) theme?: UserPreferences['theme']
 }
 
 @Controller('auth')

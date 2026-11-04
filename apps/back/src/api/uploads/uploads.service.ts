@@ -12,7 +12,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import { AuthService } from '../auth/auth.service'
 
 export type UploadPurpose = 'profile-avatar' | 'community-avatar' | 'editor-image'
-export type UploadResourceType = 'profile' | 'community' | 'profile-message'
+export type UploadResourceType = 'profile' | 'community' | 'profile-message' | 'community-forum-topic' | 'community-forum-reply'
 
 export type UploadedFileRecord = {
   id: string
@@ -333,18 +333,19 @@ export class UploadsService {
   }
 
   async detachResourceAttachments(
-    userId: string,
+    userId: string | null,
     resourceType: UploadResourceType,
     resourceId: string
   ): Promise<void> {
     const records = await this.data.read<UploadedFileRecord>('media_files')
-    const hasAttachments = records.some(item =>
-      item.ownerUserId === userId && item.resourceType === resourceType && item.resourceId === resourceId
-    )
-    if (!hasAttachments) return
+    const belongsToResource = (item: UploadedFileRecord) =>
+      (!userId || item.ownerUserId === userId) &&
+      item.resourceType === resourceType &&
+      item.resourceId === resourceId
+    if (!records.some(belongsToResource)) return
 
     await this.data.write('media_files', records.map(item =>
-      item.ownerUserId === userId && item.resourceType === resourceType && item.resourceId === resourceId
+      belongsToResource(item)
         ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
         : item
     ))
@@ -386,9 +387,18 @@ export class UploadsService {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
     if (record.resourceType === 'community') {
-      const communities = await this.data.read<{ id: string }>('communities')
-      if (communities.some(item => item.id === record.resourceId)) return
-      throw new NotFoundException('UPLOAD_NOT_FOUND')
+      await this.assertCanReadCommunityResource(userId, record.resourceId!)
+      return
+    }
+    if (record.resourceType === 'community-forum-topic' || record.resourceType === 'community-forum-reply') {
+      const collection = record.resourceType === 'community-forum-topic'
+        ? 'community_forum_topics'
+        : 'community_forum_replies'
+      const resources = await this.data.read<{ id: string; communityId: string }>(collection)
+      const resource = resources.find(item => item.id === record.resourceId)
+      if (!resource) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      await this.assertCanReadCommunityResource(userId, resource.communityId)
+      return
     }
 
     if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
@@ -408,6 +418,25 @@ export class UploadsService {
     if (!user.profiles.some(profileId => participants.includes(profileId))) {
       throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
     }
+  }
+
+  private async assertCanReadCommunityResource(userId: string | null, communityId: string): Promise<void> {
+    const communities = await this.data.read<{ id: string; privacy?: string }>('communities')
+    const community = communities.find(item => item.id === communityId)
+    if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    if (community.privacy !== 'private') return
+    if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
+
+    const [user, relationships] = await Promise.all([
+      this.auth.getUser(userId),
+      this.data.read<{ profiles: [string, string]; type: string }>('community_relationships')
+    ])
+    const canRead = relationships.some(record =>
+      record.profiles[1] === communityId &&
+      user.profiles.includes(record.profiles[0]) &&
+      ['owner', 'moderator', 'connection'].includes(record.type)
+    )
+    if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
   }
 
   private async assertOwnsProfile(userId: string, profileId: string): Promise<void> {

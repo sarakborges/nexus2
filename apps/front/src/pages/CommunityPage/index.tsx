@@ -52,7 +52,7 @@ export function CommunityPage() {
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
 
   const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(requestedUrl),
+    queryKey: queryKeys.communities.byUrl(requestedUrl, session?.user.id ?? null),
     queryFn: () => getCommunityByUrl(requestedUrl),
     enabled: Boolean(requestedUrl)
   })
@@ -87,7 +87,8 @@ export function CommunityPage() {
       community?.id ?? '',
       pendingActor?.profiles[0] ?? '',
       1,
-      1
+      1,
+      session?.user.id ?? null
     ),
     queryFn: () =>
       getPendingCommunityMembers(community!.id, pendingActor!.profiles[0], {
@@ -102,7 +103,8 @@ export function CommunityPage() {
       'all',
       1,
       16,
-      currentProfileId ?? undefined
+      currentProfileId ?? undefined,
+      session?.user.id ?? null
     ),
     queryFn: () =>
       getCommunityMembers(
@@ -117,7 +119,7 @@ export function CommunityPage() {
   })
 
   const forumTopicsQuery = useQuery({
-    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20),
+    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20, session?.user.id ?? null),
     queryFn: () =>
       getCommunityForumTopics(community!.id, { page: 1, pageSize: 20 }),
     enabled: Boolean(community?.id && relationshipsQuery.isSuccess)

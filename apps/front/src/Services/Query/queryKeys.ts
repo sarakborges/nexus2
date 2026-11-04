@@ -17,7 +17,7 @@ export const queryKeys = {
   communities: {
     list: (page: number, pageSize: number) =>
       ['communities', 'list', page, pageSize] as const,
-    byUrl: (url: string) => ['communities', 'by-url', url] as const,
+    byUrl: (url: string, viewerUserId: string | null = null) => ['communities', 'by-url', url, viewerUserId] as const,
     byIds: (ids: string[]) =>
       ['communities', 'by-ids', [...ids].sort()] as const,
     byProfile: (profileId: string, page: number, pageSize: number) =>
@@ -36,7 +36,8 @@ export const queryKeys = {
     tab: string,
     page: number,
     pageSize: number,
-    actorProfileId?: string
+    actorProfileId?: string,
+    viewerUserId: string | null = null
   ) =>
     [
       'community-members',
@@ -44,13 +45,15 @@ export const queryKeys = {
       tab,
       page,
       pageSize,
-      actorProfileId ?? null
+      actorProfileId ?? null,
+      viewerUserId
     ] as const,
   pendingCommunityMembers: (
     communityId: string,
     actorProfileId: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    viewerUserId: string | null = null
   ) =>
     [
       'community-members',
@@ -58,7 +61,8 @@ export const queryKeys = {
       'pending',
       actorProfileId,
       page,
-      pageSize
+      pageSize,
+      viewerUserId
     ] as const,
   profileMessages: (
     profileId: string,
@@ -66,13 +70,18 @@ export const queryKeys = {
     page: number,
     pageSize: number
   ) => ['profile-messages', profileId, viewerUserId, page, pageSize] as const,
-  communityForumTopics: (communityId: string, page: number, pageSize: number) =>
-    ['community-forum', communityId, 'topics', page, pageSize] as const,
+  communityForumTopics: (
+    communityId: string,
+    page: number,
+    pageSize: number,
+    viewerUserId: string | null = null
+  ) => ['community-forum', communityId, 'topics', page, pageSize, viewerUserId] as const,
   communityForumTopic: (
     communityId: string,
     topicId: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    viewerUserId: string | null = null
   ) =>
-    ['community-forum', communityId, 'topic', topicId, page, pageSize] as const
+    ['community-forum', communityId, 'topic', topicId, page, pageSize, viewerUserId] as const
 }

@@ -466,12 +466,31 @@ export class DomainService {
     await this.assertForumMember(userId, profileId, communityId)
     const title = rawTitle.trim().replace(/\s+/g, ' ')
     const content = sanitizeRichText(rawContent)
+    await this.uploads?.validateEditorImages(userId, content)
     const plainText = getRichTextPlainText(content)
     if (!title || title.length > 140 || !plainText || plainText.length > 8000 || content.length > 12000) throw new BadRequestException('INVALID_FORUM_TOPIC')
     const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     const now = Date.now()
     const topic: CommunityForumTopic = { id: randomUUID(), communityId, profileId, title, content, createdAt: now, updatedAt: now, isPinned: false, isLocked: false }
     await this.data.write('community_forum_topics', [...topics, topic])
+    try {
+      await this.uploads?.attachEditorImages(userId, content, 'community-forum-topic', topic.id)
+    } catch (error) {
+      const rollbackErrors: unknown[] = []
+      try {
+        const currentTopics = await this.data.read<CommunityForumTopic>('community_forum_topics')
+        await this.data.write('community_forum_topics', currentTopics.filter(item => item.id !== topic.id))
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      try {
+        await this.uploads?.detachResourceAttachments(userId, 'community-forum-topic', topic.id)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      if (rollbackErrors.length > 0) throw new InternalServerErrorException('FORUM_TOPIC_CREATE_ROLLBACK_FAILED')
+      throw error
+    }
     return topic
   }
 
@@ -482,13 +501,32 @@ export class DomainService {
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
     if (topic.isLocked) throw new ForbiddenException('FORUM_TOPIC_LOCKED')
     const content = sanitizeRichText(rawContent)
+    await this.uploads?.validateEditorImages(userId, content)
     const plainText = getRichTextPlainText(content)
     if (!plainText || plainText.length > 8000 || content.length > 12000) throw new BadRequestException('INVALID_FORUM_REPLY')
     const replies = await this.data.read<CommunityForumReply>('community_forum_replies')
     const now = Date.now()
     const reply: CommunityForumReply = { id: randomUUID(), topicId, communityId, profileId, content, createdAt: now, updatedAt: now }
     await this.data.write('community_forum_replies', [...replies, reply])
-    await this.data.write('community_forum_topics', topics.map(record => record.id === topicId ? { ...record, updatedAt: now } : record))
+    try {
+      await this.uploads?.attachEditorImages(userId, content, 'community-forum-reply', reply.id)
+      await this.data.write('community_forum_topics', topics.map(record => record.id === topicId ? { ...record, updatedAt: now } : record))
+    } catch (error) {
+      const rollbackErrors: unknown[] = []
+      try {
+        const currentReplies = await this.data.read<CommunityForumReply>('community_forum_replies')
+        await this.data.write('community_forum_replies', currentReplies.filter(item => item.id !== reply.id))
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      try {
+        await this.uploads?.detachResourceAttachments(userId, 'community-forum-reply', reply.id)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      if (rollbackErrors.length > 0) throw new InternalServerErrorException('FORUM_REPLY_CREATE_ROLLBACK_FAILED')
+      throw error
+    }
     return reply
   }
 
@@ -512,9 +550,14 @@ export class DomainService {
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
     const role = this.role(actorProfileId, await this.readCommunityRelationships(communityId))
     if (topic.profileId !== actorProfileId && role !== 'owner' && role !== 'moderator') throw new ForbiddenException('FORUM_DELETE_NOT_ALLOWED')
-    await this.data.write('community_forum_topics', topics.filter(record => record.id !== topicId))
     const replies = await this.data.read<CommunityForumReply>('community_forum_replies')
+    const topicReplies = replies.filter(reply => reply.topicId === topicId)
+    await this.data.write('community_forum_topics', topics.filter(record => record.id !== topicId))
     await this.data.write('community_forum_replies', replies.filter(reply => reply.topicId !== topicId))
+    await this.uploads?.detachResourceAttachments(null, 'community-forum-topic', topicId)
+    for (const reply of topicReplies) {
+      await this.uploads?.detachResourceAttachments(null, 'community-forum-reply', reply.id)
+    }
   }
 
   async deleteCommunityForumReply(userId: string, communityId: string, replyId: string, actorProfileId: string): Promise<void> {
@@ -528,6 +571,7 @@ export class DomainService {
     const role = this.role(actorProfileId, await this.readCommunityRelationships(communityId))
     if (reply.profileId !== actorProfileId && role !== 'owner' && role !== 'moderator') throw new ForbiddenException('FORUM_DELETE_NOT_ALLOWED')
     await this.data.write('community_forum_replies', replies.filter(record => record.id !== replyId))
+    await this.uploads?.detachResourceAttachments(null, 'community-forum-reply', replyId)
     const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     await this.data.write('community_forum_topics', topics.map(topic => topic.id === reply.topicId ? { ...topic, updatedAt: Date.now() } : topic))
   }

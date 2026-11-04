@@ -47,7 +47,7 @@ export function CreateCommunityForumTopicPage() {
   const [content, setContent] = useState('')
 
   const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized),
+    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
     queryFn: () => getCommunityByUrl(normalized),
     enabled: Boolean(normalized)
   })

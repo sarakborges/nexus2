@@ -20,9 +20,11 @@ function createHarness(initial = {}, activeProfileId = null) {
         ? ['sender-profile']
         : id === 'recipient-user'
           ? ['recipient-profile']
-          : activeProfileId
-            ? [activeProfileId]
-            : []
+          : id === 'community-member-user'
+            ? ['community-member-profile']
+            : activeProfileId
+              ? [activeProfileId]
+              : []
       return {
         id,
         email: 'user@example.test',
@@ -187,6 +189,113 @@ test('only message participants can read private message images', async t => {
   assert.deepEqual(senderImage.body, pngHeader)
   const recipientImage = await service.getEditorImage('recipient-user', file.id)
   assert.deepEqual(recipientImage.body, pngHeader)
+})
+
+test('private community images are readable only by members', async t => {
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/community.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community',
+    resourceId: 'private-community',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    communities: [{ id: 'private-community', privacy: 'private' }],
+    community_relationships: [
+      { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
+    ]
+  })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  await assert.rejects(
+    service.getEditorImage(null, file.id),
+    error => error.getStatus() === 404
+  )
+  await assert.rejects(
+    service.getEditorImage('outsider-user', file.id),
+    error => error.getStatus() === 404
+  )
+  const memberImage = await service.getEditorImage('community-member-user', file.id)
+  assert.deepEqual(memberImage.body, pngHeader)
+})
+
+test('forum topic images inherit their community privacy rules', async t => {
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/topic.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community-forum-topic',
+    resourceId: 'topic-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    communities: [{ id: 'private-community', privacy: 'private' }],
+    community_relationships: [
+      { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
+    ],
+    community_forum_topics: [{ id: 'topic-1', communityId: 'private-community' }]
+  })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  await assert.rejects(
+    service.getEditorImage('outsider-user', file.id),
+    error => error.getStatus() === 404
+  )
+  const memberImage = await service.getEditorImage('community-member-user', file.id)
+  assert.deepEqual(memberImage.body, pngHeader)
+})
+
+test('forum reply images are public when their community is public', async t => {
+  const file = {
+    id: '523e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/reply.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community-forum-reply',
+    resourceId: 'reply-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    communities: [{ id: 'public-community', privacy: 'public' }],
+    community_forum_replies: [{ id: 'reply-1', communityId: 'public-community' }]
+  })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  const image = await service.getEditorImage(null, file.id)
+  assert.deepEqual(image.body, pngHeader)
 })
 
 test('daily cleanup removes expired editor objects and unattached avatar drafts', async t => {

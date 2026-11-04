@@ -59,7 +59,7 @@ export function CommunityForumTopicPage() {
   const [replyContent, setReplyContent] = useState('')
 
   const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized),
+    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
     queryFn: () => getCommunityByUrl(normalized),
     enabled: Boolean(normalized)
   })
@@ -111,7 +111,8 @@ export function CommunityForumTopicPage() {
       community?.id ?? '',
       topicId ?? '',
       page,
-      pageSize
+      pageSize,
+      session?.user.id ?? null
     ),
     queryFn: () =>
       getCommunityForumTopic(community!.id, topicId!, { page, pageSize }),
