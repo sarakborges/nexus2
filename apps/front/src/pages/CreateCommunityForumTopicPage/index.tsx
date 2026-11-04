@@ -22,6 +22,7 @@ export function CreateCommunityForumTopicPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const session = useAuthStore(state => state.session)
+  const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore(state => state.showToast)
@@ -90,14 +91,14 @@ export function CreateCommunityForumTopicPage() {
           <Link className="account-card__link" to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_BACK')}</Link>
         </header>
         <RequestState
-          isLoading={relationshipsQuery.isLoading || ownedProfilesQuery.isLoading}
+          isLoading={!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading}
           isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
           onRetry={() => {
             void relationshipsQuery.refetch()
             void ownedProfilesQuery.refetch()
           }}
         />
-        {forumProfile ? (
+        {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? null : forumProfile ? (
           <form className="community-forum__composer" onSubmit={submit}>
             <div className="form-field">
               <Label htmlFor="forum-topic-title">{t('FORUM_TOPIC_TITLE')}</Label>

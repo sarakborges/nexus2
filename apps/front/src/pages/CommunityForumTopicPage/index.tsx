@@ -23,6 +23,7 @@ export function CommunityForumTopicPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const session = useAuthStore(state => state.session)
+  const isAuthInitialized = useAuthStore(state => state.isInitialized)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore(state => state.showToast)
@@ -159,7 +160,7 @@ export function CommunityForumTopicPage() {
 
         <section className="community-forum__replies">
           <h2>{t('FORUM_REPLIES')} ({detail.replies.totalItems})</h2>
-          {canInteract && isMember && !topic.isLocked ? (
+          {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? null : canInteract && isMember && !topic.isLocked ? (
             <form className="community-forum__composer" onSubmit={submitReply}>
               <div className="form-field">
                 <Label htmlFor="forum-reply-content">{t('FORUM_REPLY')}</Label>
@@ -168,14 +169,18 @@ export function CommunityForumTopicPage() {
               {replyMutation.isError && <p className="auth-card__error" role="alert">{t('FORUM_TOPIC_ERROR')}</p>}
               <Button type="submit" disabled={!replyContent.trim() || replyMutation.isPending}>{t('FORUM_PUBLISH_REPLY')}</Button>
             </form>
-          ) : !isMember && (
+          ) : isAuthInitialized && !relationshipsQuery.isLoading && !ownedProfilesQuery.isLoading && !relationshipsQuery.isError && !ownedProfilesQuery.isError && !isMember && (
             <p className="account-card__description">{t('FORUM_MEMBERS_ONLY')}</p>
           )}
           <RequestState
-            isLoading={authorsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isLoading}
+            isLoading={authorsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isLoading || !isAuthInitialized}
             isFetching={topicQuery.isFetching || authorsQuery.isFetching}
-            isError={authorsQuery.isError}
-            onRetry={() => void authorsQuery.refetch()}
+            isError={authorsQuery.isError || ownedProfilesQuery.isError || relationshipsQuery.isError}
+            onRetry={() => {
+              void authorsQuery.refetch()
+              void ownedProfilesQuery.refetch()
+              void relationshipsQuery.refetch()
+            }}
           >
             {replies.map(reply => {
               const author = authorsById.get(reply.profileId)
