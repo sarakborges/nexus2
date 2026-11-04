@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router'
 
 import type { Community, Profile } from '@nexus/common'
 import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
@@ -51,12 +52,12 @@ export function ProfileSidebar({ profile, active, showRelationshipActions = true
         {showRelationshipActions && <RelationshipActions targetId={profile.id} />}
       </section>
       <nav className="social-side-menu" aria-label={t('PROFILE_TITLE')}>
-        <a href={ROUTES.home} aria-current={active === 'home' ? 'page' : undefined}>{t('HOME_TITLE')}</a>
-        <a href={ROUTES.profile + '/' + profile.url} aria-current={active === 'profile' ? 'page' : undefined}>{t('PROFILE_TITLE')}</a>
-        <a href={ROUTES.profile + '/' + profile.url + '/friends'} aria-current={active === 'friends' ? 'page' : undefined}>{t('PROFILE_FRIENDS_LINK')}</a>
-        <a href={ROUTES.profile + '/' + profile.url + '/communities'} aria-current={active === 'communities' ? 'page' : undefined}>{t('PROFILE_COMMUNITIES_LINK')}</a>
-        <a href={ROUTES.profile + '/' + profile.url + '/messages'} aria-current={active === 'messages' ? 'page' : undefined}>{t('PROFILE_MESSAGES_LINK')}</a>
-        <a href={ROUTES.communities} aria-current={active === 'community-list' ? 'page' : undefined}>{t('COMMUNITIES_TITLE')}</a>
+        <Link to={ROUTES.home} aria-current={active === 'home' ? 'page' : undefined}>{t('HOME_TITLE')}</Link>
+        <Link to={ROUTES.profile + '/' + profile.url} aria-current={active === 'profile' ? 'page' : undefined}>{t('PROFILE_TITLE')}</Link>
+        <Link to={ROUTES.profile + '/' + profile.url + '/friends'} aria-current={active === 'friends' ? 'page' : undefined}>{t('PROFILE_FRIENDS_LINK')}</Link>
+        <Link to={ROUTES.profile + '/' + profile.url + '/communities'} aria-current={active === 'communities' ? 'page' : undefined}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
+        <Link to={ROUTES.profile + '/' + profile.url + '/messages'} aria-current={active === 'messages' ? 'page' : undefined}>{t('PROFILE_MESSAGES_LINK')}</Link>
+        <Link to={ROUTES.communities} aria-current={active === 'community-list' ? 'page' : undefined}>{t('COMMUNITIES_TITLE')}</Link>
       </nav>
     </div>
   )
@@ -74,9 +75,9 @@ export function CommunitySidebar({ community, active, canInteract = false }: Com
         {canInteract && <RelationshipActions targetId={community.id} targetKind="community" />}
       </section>
       <nav className="social-side-menu" aria-label={t('COMMUNITY_CREATE_TITLE')}>
-        <a href={ROUTES.community + '/' + community.url} aria-current={active === 'about' ? 'page' : undefined}>{t('COMMUNITY_ABOUT_LABEL')}</a>
-        <a href={ROUTES.community + '/' + community.url + '/members'} aria-current={active === 'members' ? 'page' : undefined}>{t('COMMUNITY_MEMBERS_LINK')}</a>
-        <a href={ROUTES.community + '/' + community.url + '/forum'} aria-current={active === 'forum' ? 'page' : undefined}>{t('FORUM_TITLE')}</a>
+        <Link to={ROUTES.community + '/' + community.url} aria-current={active === 'about' ? 'page' : undefined}>{t('COMMUNITY_ABOUT_LABEL')}</Link>
+        <Link to={ROUTES.community + '/' + community.url + '/members'} aria-current={active === 'members' ? 'page' : undefined}>{t('COMMUNITY_MEMBERS_LINK')}</Link>
+        <Link to={ROUTES.community + '/' + community.url + '/forum'} aria-current={active === 'forum' ? 'page' : undefined}>{t('FORUM_TITLE')}</Link>
       </nav>
     </div>
   )
