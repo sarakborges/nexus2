@@ -65,7 +65,13 @@ export function CreateProfilePage() {
       navigate(ROUTES.profile + '/' + result.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
-      const key = code === 'PROFILE_URL_ALREADY_IN_USE' ? 'PROFILE_ERROR_URL_TAKEN' : code === 'INVALID_PROFILE' ? 'PROFILE_ERROR_INVALID' : 'PROFILE_ERROR_GENERIC'
+      const key = code === 'PROFILE_URL_ALREADY_IN_USE'
+        ? 'PROFILE_ERROR_URL_TAKEN'
+        : code === 'INVALID_PROFILE'
+          ? 'PROFILE_ERROR_INVALID'
+          : code === 'PROFILE_CREATION_SESSION_MISSING'
+            ? 'PROFILE_ERROR_SESSION'
+            : 'PROFILE_ERROR_GENERIC'
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }
