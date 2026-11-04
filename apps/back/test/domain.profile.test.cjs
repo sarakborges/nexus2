@@ -76,14 +76,10 @@ test('profile creation atomically persists the profile and links it to the authe
   assert.equal(created.user.currentProfile, created.profile.id)
 })
 
-test('profile creation rollback removes both the profile row and account ownership after attachment failure', async () => {
-  let attached = false
+test('profile, account and media metadata remain unchanged when attachment validation fails inside the transaction', async () => {
   const uploads = {
-    async validateAvatarUrl() {},
-    async validateEditorImages() {},
-    async attachAvatarUrl() { attached = true },
-    async attachEditorImages() { throw new Error('EDITOR_ATTACHMENT_FAILED') },
-    async detachResourceAttachments() { attached = false }
+    attachAvatarUrlToRecords(records) { return records },
+    attachEditorImagesToRecords() { throw new Error('EDITOR_ATTACHMENT_FAILED') }
   }
   const { service, collections, account } = createHarness({ uploads })
 
@@ -95,7 +91,7 @@ test('profile creation rollback removes both the profile row and account ownersh
   assert.deepEqual(collections.get('profiles'), [])
   assert.deepEqual(collections.get('accounts')[0].profiles, ['existing-profile'])
   assert.equal(collections.get('accounts')[0].currentProfile, 'existing-profile')
-  assert.equal(attached, false)
+  assert.deepEqual(collections.get('media_files'), [])
 })
 
 test('failed atomic profile and account persistence leaves both collections unchanged', async () => {
@@ -157,14 +153,10 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
 })
 
 
-test('community creation rollback removes the community and owner relationship after attachment failure', async () => {
-  let detached = false
+test('community, owner membership and media metadata remain unchanged when attachment validation fails', async () => {
   const uploads = {
-    async validateAvatarUrl() {},
-    async validateEditorImages() {},
-    async attachAvatarUrl() {},
-    async attachEditorImages() { throw new Error('COMMUNITY_EDITOR_ATTACHMENT_FAILED') },
-    async detachResourceAttachments() { detached = true }
+    attachAvatarUrlToRecords(records) { return records },
+    attachEditorImagesToRecords() { throw new Error('COMMUNITY_EDITOR_ATTACHMENT_FAILED') }
   }
   const { service, collections, account } = createHarness({ uploads })
   collections.set('profiles', [{
@@ -185,5 +177,5 @@ test('community creation rollback removes the community and owner relationship a
 
   assert.deepEqual(collections.get('communities'), [])
   assert.deepEqual(collections.get('community_relationships'), [])
-  assert.equal(detached, true)
+  assert.deepEqual(collections.get('media_files'), [])
 })
