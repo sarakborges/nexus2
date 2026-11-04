@@ -302,10 +302,6 @@ export class DomainService {
     ])
     if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
     const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    const currentProfileType = user.currentProfile
-      ? profileTypes.get(user.currentProfile)
-      : undefined
-    if (currentProfileType && currentProfileType !== community.type) return []
     return records.filter(record => ownedProfileIds.has(record.profiles[0]) && profileTypes.get(record.profiles[0]) === community.type)
   }
 

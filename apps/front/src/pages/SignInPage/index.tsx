@@ -50,7 +50,7 @@ export function SignInPage() {
           {errorMessage && <p className="auth-card__error" role="alert">{errorMessage}</p>}
           <Button type="submit" disabled={signInMutation.isPending}>{signInMutation.isPending ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_IN_ACTION')}</Button>
         </form>
-        <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link></p>
+        <p className="auth-card__footer">{t('AUTH_NO_ACCOUNT')}{' '}<Link to={ROUTES.signUp}>{t('AUTH_SIGN_UP_LINK')}</Link>{' · '}<Link to={ROUTES.landing}>{t('AUTH_BACK_TO_LANDING')}</Link></p>
       </section>
     </main>
   )
