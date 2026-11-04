@@ -27,6 +27,18 @@ function harness(owned = {}, uploads = null) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      const records = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(records)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
