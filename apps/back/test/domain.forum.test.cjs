@@ -25,6 +25,7 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
     ['community_relationships', [relationship('owner', 'owner'), relationship('member', 'connection')]],
     ['community_forum_topics', []],
     ['community_forum_replies', []],
+    ['profile_messages', []],
     ['media_files', []],
     ['relationships', []]
   ])
@@ -237,4 +238,37 @@ test('forum replies recheck membership and topic lock in the same transaction', 
     error => error.getStatus() === 403 && error.message === 'COMMUNITY_MEMBER_REQUIRED'
   )
   assert.deepEqual(collections.get('community_forum_replies'), [])
+})
+
+
+test('friend-request creation rechecks source-profile ownership in the relationship transaction', async () => {
+  const { service, collections } = harness(
+    { memberUser: ['member'] },
+    null,
+    (names, current) => {
+      if (names.includes('relationships')) current.set('accounts', [])
+    }
+  )
+
+  await assert.rejects(
+    service.updateProfileRelationship('memberUser', 'member', 'owner', 'requested'),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.deepEqual(collections.get('relationships'), [])
+})
+
+test('sending a profile message rechecks sender ownership in the message transaction', async () => {
+  const { service, collections } = harness(
+    { memberUser: ['member'] },
+    null,
+    (names, current) => {
+      if (names.includes('profile_messages')) current.set('accounts', [])
+    }
+  )
+
+  await assert.rejects(
+    service.sendMessage('memberUser', 'member', 'owner', 'Hello'),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.deepEqual(collections.get('profile_messages'), [])
 })
