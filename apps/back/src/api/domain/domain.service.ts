@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, InternalServerErrorException, NotFoundException, Optional } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
@@ -41,6 +41,7 @@ export class DomainService {
     const url = this.normalize(input.url)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
+    const userBefore = await this.auth.getUser(userId)
     await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
     await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
@@ -52,14 +53,36 @@ export class DomainService {
     if (profiles.some(p => p.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
     await this.data.write('profiles', [...profiles, profile])
+
+    let accountLinked = false
     try {
       await this.auth.addProfile(userId, profile.id)
+      accountLinked = true
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
       await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
     } catch (error) {
-      await this.data.write('profiles', profiles)
+      const rollbackErrors: unknown[] = []
+      try {
+        await this.uploads?.detachResourceAttachments(userId, 'profile', profile.id)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      if (accountLinked) {
+        try {
+          await this.auth.removeProfile(userId, profile.id, userBefore.currentProfile)
+        } catch (rollbackError) {
+          rollbackErrors.push(rollbackError)
+        }
+      }
+      try {
+        await this.data.write('profiles', profiles)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      if (rollbackErrors.length > 0) throw new InternalServerErrorException('PROFILE_CREATE_ROLLBACK_FAILED')
       throw error
     }
+
     return profile
   }
 

@@ -332,6 +332,24 @@ export class UploadsService {
       : item))
   }
 
+  async detachResourceAttachments(
+    userId: string,
+    resourceType: UploadResourceType,
+    resourceId: string
+  ): Promise<void> {
+    const records = await this.data.read<UploadedFileRecord>('media_files')
+    const hasAttachments = records.some(item =>
+      item.ownerUserId === userId && item.resourceType === resourceType && item.resourceId === resourceId
+    )
+    if (!hasAttachments) return
+
+    await this.data.write('media_files', records.map(item =>
+      item.ownerUserId === userId && item.resourceType === resourceType && item.resourceId === resourceId
+        ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
+        : item
+    ))
+  }
+
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {
     if (!this.secretsMatch(this.cronSecret, suppliedSecret)) {
       throw new ForbiddenException('CRON_SECRET_INVALID')

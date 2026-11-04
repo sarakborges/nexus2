@@ -94,3 +94,17 @@ test('a user cannot select a profile that is not linked to their account', async
     error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
+
+
+test('remove-profile rolls back ownership and restores the previous active profile', async () => {
+  const { service } = createAuthHarness()
+  const { user } = await service.signUp({ email: 'person@example.com', password: 'a-secure-password' })
+  await service.addProfile(user.id, 'profile-first')
+  await service.updateCurrentProfile(user.id, 'profile-first')
+  await service.addProfile(user.id, 'profile-created-during-transaction')
+  await service.removeProfile(user.id, 'profile-created-during-transaction', 'profile-first')
+
+  const updated = await service.getUser(user.id)
+  assert.deepEqual(updated.profiles, ['profile-first'])
+  assert.equal(updated.currentProfile, 'profile-first')
+})
