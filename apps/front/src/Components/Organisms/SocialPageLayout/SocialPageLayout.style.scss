@@ -353,3 +353,11 @@
 @media (max-width: 680px) {
   .social-panel, .social-preview-panel { padding: 16px; }
 }
+
+.social-page--wide-content .social-page__layout--two-column {
+  width: min(100%, calc(var(--main-content-max-width) + 220px));
+}
+
+@media (max-width: 680px) {
+  .social-page--wide-content .social-page__layout--two-column { width: 100%; }
+}

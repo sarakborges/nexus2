@@ -1,22 +1,61 @@
-import { useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type MouseEvent, type ReactNode } from 'react'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { useEditorState } from 'react-simple-wysiwyg'
-import Editor, {
-  BtnBold,
-  BtnBulletList,
-  BtnClearFormatting,
-  BtnItalic,
-  BtnNumberedList,
-  BtnStrikeThrough,
-  BtnUnderline,
-  BtnUndo,
-  BtnRedo,
-  HtmlButton,
-  Toolbar
-} from 'react-simple-wysiwyg'
+import Editor, { Toolbar } from 'react-simple-wysiwyg'
 import { FiImage } from 'react-icons/fi'
 
 import './RichTextEditor.style.scss'
+
+type ToolbarCommandButtonProps = {
+  title: string
+  command: string
+  children: ReactNode
+}
+
+function ToolbarCommandButton({ title, command, children }: ToolbarCommandButtonProps) {
+  const editorState = useEditorState()
+  const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    if (editorState.htmlMode) return
+    editorState.$el?.focus()
+    document.execCommand(command)
+  }
+
+  return (
+    <button
+      className="rsw-btn rich-text-editor__toolbar-button"
+      type="button"
+      title={title}
+      aria-label={title}
+      disabled={editorState.htmlMode}
+      onMouseDown={handleMouseDown}
+    >
+      {children}
+    </button>
+  )
+}
+
+function HtmlModeButton() {
+  const editorState = useEditorState()
+  const toggleMode = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault()
+    editorState.update({ htmlMode: !editorState.htmlMode })
+  }
+
+  return (
+    <button
+      className="rsw-btn rich-text-editor__toolbar-button"
+      type="button"
+      title="HTML mode"
+      aria-label="HTML mode"
+      aria-pressed={editorState.htmlMode}
+      data-active={editorState.htmlMode}
+      onMouseDown={toggleMode}
+    >
+      <span aria-hidden="true">{'</>'}</span>
+    </button>
+  )
+}
 
 type InsertImageButtonProps = {
   label: string
@@ -37,6 +76,7 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage, onUploading
 
   const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
+    if (editorState.htmlMode || isRequestPending || isUploading) return
     const selection = window.getSelection()
     selectionRef.current = selection && selection.rangeCount > 0
       ? selection.getRangeAt(0).cloneRange()
@@ -74,12 +114,11 @@ function InsertImageButton({ label, uploadErrorLabel, onUploadImage, onUploading
   return (
     <>
       <button
-        className="rsw-btn"
+        className="rsw-btn rich-text-editor__toolbar-button"
         type="button"
         title={label}
         aria-label={label}
-        tabIndex={-1}
-        disabled={isRequestPending || isUploading}
+        disabled={isRequestPending || isUploading || editorState.htmlMode}
         onMouseDown={handleMouseDown}
       >
         <FiImage aria-hidden="true" />
@@ -137,41 +176,42 @@ export function RichTextEditor({
     }
     onChange(nextValue)
   }
+
   return (
     <div className="rich-text-editor" data-editor-id={id}>
       <fieldset className="rich-text-editor__fieldset" disabled={isRequestPending || isImageUploading}>
-      <Editor
-        id={id}
-        role="textbox"
-        aria-multiline="true"
-        aria-labelledby={id + '-label'}
-        value={value}
-        onChange={event => handleChange(event.target.value)}
-        placeholder={placeholder}
-        containerProps={{ className: 'rich-text-editor__container' }}
-      >
-        <Toolbar>
-          <BtnUndo />
-          <BtnRedo />
-          <span className="rsw-separator" />
-          <BtnBold />
-          <BtnItalic />
-          <BtnUnderline />
-          <BtnStrikeThrough />
-          <span className="rsw-separator" />
-          <BtnBulletList />
-          <BtnNumberedList />
-          <span className="rsw-separator" />
-          <InsertImageButton
-            label={imageButtonLabel}
-            uploadErrorLabel={imageUploadErrorLabel}
-            onUploadImage={onUploadImage}
-            onUploadingChange={setIsImageUploading}
-          />
-          <BtnClearFormatting />
-          <HtmlButton />
-        </Toolbar>
-      </Editor>
+        <Editor
+          id={id}
+          role="textbox"
+          aria-multiline="true"
+          aria-labelledby={id + '-label'}
+          value={value}
+          onChange={event => handleChange(event.target.value)}
+          placeholder={placeholder}
+          containerProps={{ className: 'rich-text-editor__container' }}
+        >
+          <Toolbar>
+            <ToolbarCommandButton title="Undo" command="undo">↶</ToolbarCommandButton>
+            <ToolbarCommandButton title="Redo" command="redo">↷</ToolbarCommandButton>
+            <span className="rsw-separator" />
+            <ToolbarCommandButton title="Bold" command="bold"><strong>B</strong></ToolbarCommandButton>
+            <ToolbarCommandButton title="Italic" command="italic"><em>I</em></ToolbarCommandButton>
+            <ToolbarCommandButton title="Underline" command="underline"><u>U</u></ToolbarCommandButton>
+            <ToolbarCommandButton title="Strike through" command="strikeThrough"><s>S</s></ToolbarCommandButton>
+            <span className="rsw-separator" />
+            <ToolbarCommandButton title="Bullet list" command="insertUnorderedList"><span aria-hidden="true">•</span></ToolbarCommandButton>
+            <ToolbarCommandButton title="Numbered list" command="insertOrderedList"><span aria-hidden="true">1.</span></ToolbarCommandButton>
+            <span className="rsw-separator" />
+            <InsertImageButton
+              label={imageButtonLabel}
+              uploadErrorLabel={imageUploadErrorLabel}
+              onUploadImage={onUploadImage}
+              onUploadingChange={setIsImageUploading}
+            />
+            <ToolbarCommandButton title="Clear formatting" command="removeFormat"><span aria-hidden="true">T×</span></ToolbarCommandButton>
+            <HtmlModeButton />
+          </Toolbar>
+        </Editor>
       </fieldset>
     </div>
   )
