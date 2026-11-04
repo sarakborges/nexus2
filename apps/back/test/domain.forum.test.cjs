@@ -14,6 +14,12 @@ const relationship = (id, type) => ({ profiles: [id, communityId], type, request
 
 function harness(owned = {}, uploads = null) {
   const collections = new Map([
+    ['accounts', Object.entries(owned).map(([id, ids]) => ({
+      id,
+      email: id + '@example.com',
+      profiles: [...ids],
+      currentProfile: ids[0] ?? null
+    }))],
     ['profiles', profiles],
     ['communities', [community]],
     ['community_relationships', [relationship('owner', 'owner'), relationship('member', 'connection')]],
