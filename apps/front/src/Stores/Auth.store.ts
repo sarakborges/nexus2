@@ -43,8 +43,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   addProfileToUser: (profileId, makeCurrent = false) => {
     const session = get().session
-    if (!session || session.user.profiles.includes(profileId)) return false
-    const user = { ...session.user, profiles: [...session.user.profiles, profileId], currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId }
+    if (!session) return false
+    const profiles = session.user.profiles.includes(profileId)
+      ? session.user.profiles
+      : [...session.user.profiles, profileId]
+    const user = {
+      ...session.user,
+      profiles,
+      currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId
+    }
     set({ session: { ...session, user } })
     return true
   },
