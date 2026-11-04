@@ -89,3 +89,77 @@
     padding: 16px;
   }
 }
+
+.home-page__activity-description { padding-left: 0; }
+.home-page__previews {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.home-page__preview-panel {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+.home-page__preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.home-page__preview-header h2 {
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+}
+.home-page__preview-header h2 span {
+  color: var(--color-neutral);
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+}
+.home-page__preview-header > a {
+  flex: 0 0 auto;
+  color: var(--color-primary-weak);
+  font-size: 12px;
+  text-decoration: none;
+}
+.home-page__preview-list { display: grid; gap: 8px; }
+.home-page__preview-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 7px;
+  border-radius: 8px;
+  color: var(--text-color);
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+.home-page__preview-entry:hover { background: var(--color-surface-raised); }
+.home-page__preview-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
+  color: var(--avatar-fallback-color);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+}
+.home-page__preview-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.home-page__preview-copy { display: grid; gap: 4px; min-width: 0; }
+.home-page__preview-copy > span { overflow: hidden; font-size: 13px; font-weight: var(--font-weight-bold); text-overflow: ellipsis; white-space: nowrap; }
+.home-page__preview-copy small { overflow: hidden; color: var(--color-neutral); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 980px) { .home-page__previews { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .home-page__previews { grid-template-columns: minmax(0, 1fr); } }
