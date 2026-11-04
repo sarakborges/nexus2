@@ -3,7 +3,6 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
   Optional,
   UnauthorizedException
@@ -23,7 +22,7 @@ import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
-import { UploadsService } from '../uploads/uploads.service'
+import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
 
@@ -58,92 +57,57 @@ export class ProfileService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    await this.uploads?.validateAvatarUrl(userId, picture, 'profile-avatar')
-    await this.uploads?.validateEditorImages(userId, about)
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
 
-    const created = await this.data.transaction<{
-      user: AuthenticatedUser
-      previousCurrentProfile: string | null
-    }>(['profiles', 'accounts'], collections => {
-      const profiles = collections.profiles as Profile[]
-      const accounts = collections.accounts as AccountRecord[]
-      const account = accounts.find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      if (profiles.some(item => item.url === url)) {
-        throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
-      }
+    const user = await this.data.transaction<AuthenticatedUser>(
+      ['profiles', 'accounts', 'media_files'],
+      collections => {
+        const profiles = collections.profiles as Profile[]
+        const accounts = collections.accounts as AccountRecord[]
+        const mediaFiles = collections.media_files as UploadedFileRecord[]
+        const account = accounts.find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        if (profiles.some(item => item.url === url)) {
+          throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+        }
 
-      const updatedAccount: AccountRecord = {
-        ...account,
-        profiles: [...account.profiles, profile.id],
-        currentProfile: profile.id
-      }
-      const user: AuthenticatedUser = {
-        id: updatedAccount.id,
-        email: updatedAccount.email,
-        profiles: [...updatedAccount.profiles],
-        currentProfile: updatedAccount.currentProfile
-      }
+        const updatedAccount: AccountRecord = {
+          ...account,
+          profiles: [...account.profiles, profile.id],
+          currentProfile: profile.id
+        }
+        const nextMediaFiles = this.uploads
+          ? this.uploads.attachEditorImagesToRecords(
+              this.uploads.attachAvatarUrlToRecords(
+                mediaFiles, userId, picture, 'profile-avatar', 'profile', profile.id
+              ),
+              userId, about, 'profile', profile.id
+            )
+          : mediaFiles
 
-      return {
-        records: {
-          ...collections,
-          profiles: [...profiles, profile],
-          accounts: accounts.map(item => item.id === userId ? updatedAccount : item)
-        },
-        result: { user, previousCurrentProfile: account.currentProfile }
-      }
-    })
-
-    try {
-      await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
-      await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
-    } catch (error) {
-      const rollbackErrors: unknown[] = []
-      try {
-        await this.uploads?.detachResourceAttachments(userId, 'profile', profile.id)
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError)
-      }
-      try {
-        await this.data.transaction(['profiles', 'accounts'], collections => {
-          const profiles = collections.profiles as Profile[]
-          const accounts = collections.accounts as AccountRecord[]
-          const nextAccounts = accounts.map(account => {
-            if (account.id !== userId || !account.profiles.includes(profile.id)) return account
-            const remainingProfiles = account.profiles.filter(id => id !== profile.id)
-            const currentProfile = account.currentProfile === profile.id
-              ? (created.previousCurrentProfile && remainingProfiles.includes(created.previousCurrentProfile)
-                ? created.previousCurrentProfile
-                : remainingProfiles[0] ?? null)
-              : account.currentProfile
-            return { ...account, profiles: remainingProfiles, currentProfile }
-          })
-          return {
-            records: {
-              ...collections,
-              profiles: profiles.filter(item => item.id !== profile.id),
-              accounts: nextAccounts
-            },
-            result: undefined
+        return {
+          records: {
+            ...collections,
+            profiles: [...profiles, profile],
+            accounts: accounts.map(item => item.id === userId ? updatedAccount : item),
+            media_files: nextMediaFiles
+          },
+          result: {
+            id: updatedAccount.id,
+            email: updatedAccount.email,
+            profiles: [...updatedAccount.profiles],
+            currentProfile: updatedAccount.currentProfile
           }
-        })
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError)
+        }
       }
-      if (rollbackErrors.length > 0) {
-        throw new InternalServerErrorException('PROFILE_CREATE_ROLLBACK_FAILED')
-      }
-      throw error
-    }
+    )
 
-    return { profile, user: created.user }
+    return { profile, user }
   }
 
   async updateProfile(userId: string, profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {
