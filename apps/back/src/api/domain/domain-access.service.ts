@@ -2,6 +2,7 @@ import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nest
 import type { Community, CommunityRelationship, CommunityRelationshipType, Profile } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
+import type { AccountRecord } from '../auth/auth.types'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
 @Injectable()
@@ -70,6 +71,26 @@ export class DomainAccessService {
   async readCommunityRelationships(communityId: string): Promise<CommunityRelationship[]> {
     return (await this.data.read<CommunityRelationship>('community_relationships'))
       .filter(record => record.profiles[1] === communityId)
+  }
+
+  assertOwnsInRecords(
+    userId: string,
+    profileId: string,
+    accounts: readonly AccountRecord[],
+    profiles: readonly Profile[],
+    options: { allowDifferentActiveType?: boolean } = {}
+  ): void {
+    const account = accounts.find(item => item.id === userId)
+    if (!account || !account.profiles.includes(profileId)) {
+      throw new ForbiddenException('PROFILE_NOT_OWNED')
+    }
+    if (!account.currentProfile || options.allowDifferentActiveType) return
+
+    const currentProfile = profiles.find(profile => profile.id === account.currentProfile)
+    const targetProfile = profiles.find(profile => profile.id === profileId)
+    if (currentProfile && targetProfile && currentProfile.type !== targetProfile.type) {
+      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    }
   }
 
   async assertOwns(

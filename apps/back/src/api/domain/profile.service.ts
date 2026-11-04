@@ -111,11 +111,6 @@ export class ProfileService {
   }
 
   async updateProfile(userId: string, profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {
-    await this.access.assertOwns(userId, profileId)
-    const profiles = await this.access.readProfiles()
-    const current = profiles.find(profile => profile.id === profileId)
-    if (!current) throw new NotFoundException('PROFILE_NOT_FOUND')
-
     const name = input.name.trim()
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
@@ -123,15 +118,14 @@ export class ProfileService {
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-    if (profiles.some(profile => profile.id !== profileId && profile.url === url)) {
-      throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
-    }
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
 
-    let updated: Profile | undefined
-    await this.data.transaction(['profiles', 'media_files'], collections => {
+    return this.data.transaction<Profile>(['accounts', 'profiles', 'media_files'], collections => {
+      const accounts = collections.accounts as AccountRecord[]
       const currentProfiles = collections.profiles as Profile[]
       const mediaFiles = collections.media_files as UploadedFileRecord[]
+      this.access.assertOwnsInRecords(userId, profileId, accounts, currentProfiles)
+
       const latest = currentProfiles.find(profile => profile.id === profileId)
       if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
       if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
@@ -154,17 +148,16 @@ export class ProfileService {
         )
       }
 
-      updated = { ...latest, name, url, picture, about }
+      const updated: Profile = { ...latest, name, url, picture, about }
       return {
         records: {
           ...collections,
-          profiles: currentProfiles.map(profile => profile.id === profileId ? updated! : profile),
+          profiles: currentProfiles.map(profile => profile.id === profileId ? updated : profile),
           media_files: nextMediaFiles
         },
-        result: undefined
+        result: updated
       }
     })
-    return updated!
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {

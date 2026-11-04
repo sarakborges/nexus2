@@ -18,6 +18,7 @@ import type {
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
+import type { AccountRecord } from '../auth/auth.types'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
@@ -56,9 +57,6 @@ export class CommunityService {
     return paginate((await this.access.readCommunities()).filter(community => ids.has(community.id) && community.type === profile.type && community.privacy === 'public'), q)
   }
   async createCommunity(userId: string, ownerProfileId: string, input: CreateCommunityInput): Promise<Community> {
-    await this.access.assertOwns(userId, ownerProfileId)
-    const ownerProfile = (await this.access.readProfiles()).find(profile => profile.id === ownerProfileId)
-    if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
     const name = input.name.trim()
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
@@ -68,120 +66,126 @@ export class CommunityService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
 
-    const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type, privacy }
-    const ownerRelationship: CommunityRelationship = {
-      profiles: [ownerProfileId, community.id],
-      type: 'owner',
-      requestedBy: null,
-      blockedBy: null,
-      updatedAt: Date.now()
-    }
+    const communityId = randomUUID()
+    return this.data.transaction<Community>(
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const mediaFiles = collections.media_files as UploadedFileRecord[]
+        this.access.assertOwnsInRecords(userId, ownerProfileId, accounts, profiles)
+        const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
+        if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
+        if (communities.some(item => item.url === url)) {
+          throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+        }
 
-    await this.data.transaction(['communities', 'community_relationships', 'media_files'], collections => {
-      const communities = collections.communities as Community[]
-      const relationships = collections.community_relationships as CommunityRelationship[]
-      const mediaFiles = collections.media_files as UploadedFileRecord[]
-      if (communities.some(item => item.url === url)) {
-        throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+        const community: Community = {
+          id: communityId, name, url, picture, about, type: ownerProfile.type, privacy
+        }
+        const ownerRelationship: CommunityRelationship = {
+          profiles: [ownerProfileId, community.id],
+          type: 'owner',
+          requestedBy: null,
+          blockedBy: null,
+          updatedAt: Date.now()
+        }
+        const nextMediaFiles = this.uploads
+          ? this.uploads.attachEditorImagesToRecords(
+              this.uploads.attachAvatarUrlToRecords(
+                mediaFiles, userId, picture, 'community-avatar', 'community', community.id
+              ),
+              userId, about, 'community', community.id
+            )
+          : mediaFiles
+
+        return {
+          records: {
+            ...collections,
+            communities: [...communities, community],
+            community_relationships: [...relationships, ownerRelationship],
+            media_files: nextMediaFiles
+          },
+          result: community
+        }
       }
-      const nextMediaFiles = this.uploads
-        ? this.uploads.attachEditorImagesToRecords(
-            this.uploads.attachAvatarUrlToRecords(
-              mediaFiles, userId, picture, 'community-avatar', 'community', community.id
-            ),
-            userId, about, 'community', community.id
-          )
-        : mediaFiles
-
-      return {
-        records: {
-          ...collections,
-          communities: [...communities, community],
-          community_relationships: [...relationships, ownerRelationship],
-          media_files: nextMediaFiles
-        },
-        result: undefined
-      }
-    })
-
-    return community
+    )
   }
 
   async updateCommunity(userId: string, communityId: string, input: CreateCommunityInput): Promise<Community> {
-    await this.access.ensureCommunity(communityId)
-    const relationships = await this.access.readCommunityRelationships(communityId)
-    const ownerProfileId = relationships.find(record => record.type === 'owner')?.profiles[0]
-    if (!ownerProfileId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    await this.access.assertOwns(userId, ownerProfileId)
-    const ownerProfile = (await this.access.readProfiles()).find(profile => profile.id === ownerProfileId)
-    if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
-
-    const communities = await this.access.readCommunities()
-    const current = communities.find(community => community.id === communityId)
-    if (!current) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-
     const name = input.name.trim()
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const privacy = input.privacy ?? current.privacy ?? 'public'
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
-    if (communities.some(community => community.id !== communityId && community.url === url)) {
-      throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
-    }
+      (input.privacy !== undefined && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
 
-    let updated: Community | undefined
-    await this.data.transaction(['communities', 'media_files'], collections => {
-      const currentCommunities = collections.communities as Community[]
-      const mediaFiles = collections.media_files as UploadedFileRecord[]
-      const latest = currentCommunities.find(community => community.id === communityId)
-      if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-      if (currentCommunities.some(community => community.id !== communityId && community.url === url)) {
-        throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
-      }
+    return this.data.transaction<Community>(
+      ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const communities = collections.communities as Community[]
+        const mediaFiles = collections.media_files as UploadedFileRecord[]
+        const ownerProfileId = relationships.find(record =>
+          record.type === 'owner' && record.profiles[1] === communityId
+        )?.profiles[0]
+        if (!ownerProfileId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        this.access.assertOwnsInRecords(userId, ownerProfileId, accounts, profiles)
 
-      let nextMediaFiles = mediaFiles
-      if (this.uploads) {
-        if (picture !== latest.picture) {
-          nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
-            nextMediaFiles, userId, picture, 'community-avatar', 'community', communityId
+        const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
+        if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
+        const latest = communities.find(community => community.id === communityId)
+        if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (communities.some(community => community.id !== communityId && community.url === url)) {
+          throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+        }
+
+        let nextMediaFiles = mediaFiles
+        if (this.uploads) {
+          if (picture !== latest.picture) {
+            nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
+              nextMediaFiles, userId, picture, 'community-avatar', 'community', communityId
+            )
+          }
+          nextMediaFiles = this.uploads.attachEditorImagesToRecords(
+            nextMediaFiles,
+            userId,
+            getNewEditorImages(about, latest.about),
+            'community',
+            communityId
           )
         }
-        nextMediaFiles = this.uploads.attachEditorImagesToRecords(
-          nextMediaFiles,
-          userId,
-          getNewEditorImages(about, latest.about),
-          'community',
-          communityId
-        )
-      }
 
-      updated = {
-        ...latest,
-        name,
-        url,
-        picture,
-        about,
-        type: ownerProfile.type,
-        privacy: input.privacy ?? latest.privacy ?? 'public'
+        const updated: Community = {
+          ...latest,
+          name,
+          url,
+          picture,
+          about,
+          type: ownerProfile.type,
+          privacy: input.privacy ?? latest.privacy ?? 'public'
+        }
+        return {
+          records: {
+            ...collections,
+            communities: communities.map(community => community.id === communityId ? updated : community),
+            media_files: nextMediaFiles
+          },
+          result: updated
+        }
       }
-      return {
-        records: {
-          ...collections,
-          communities: currentCommunities.map(community => community.id === communityId ? updated! : community),
-          media_files: nextMediaFiles
-        },
-        result: undefined
-      }
-    })
-    return updated!
+    )
   }
+
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
     await this.access.ensureCommunity(communityId)

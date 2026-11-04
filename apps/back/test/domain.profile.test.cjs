@@ -2,7 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function createHarness({ uploads, failTransaction = false } = {}) {
+function createHarness({ uploads, failTransaction = false, beforeTransaction } = {}) {
   const account = {
     id: 'user-1',
     email: 'user@example.test',
@@ -24,6 +24,7 @@ function createHarness({ uploads, failTransaction = false } = {}) {
       return structuredClone(next)
     },
     async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
       const records = Object.fromEntries(names.map(name => [
         name,
         structuredClone(collections.get(name) ?? [])
@@ -269,3 +270,105 @@ test('community update keeps content and media metadata atomic when an attachmen
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+
+test('profile update rechecks account ownership in the transaction that writes profile content', async () => {
+  const original = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const { service, collections } = createHarness({
+    beforeTransaction(_names, current) {
+      current.set('accounts', current.get('accounts').map(account => ({
+        ...account,
+        profiles: [],
+        currentProfile: null
+      })))
+    }
+  })
+  collections.set('profiles', [original])
+
+  await assert.rejects(
+    service.updateProfile('user-1', original.id, {
+      name: 'Updated Owner',
+      url: 'updated-owner',
+      picture: '',
+      about: 'Updated'
+    }),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+
+  assert.deepEqual(collections.get('profiles'), [original])
+})
+
+test('community update rejects an owner transferred before its write transaction', async () => {
+  const oldOwner = {
+    id: 'existing-profile',
+    name: 'Old Owner',
+    url: 'old-owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const newOwner = {
+    id: 'new-owner',
+    name: 'New Owner',
+    url: 'new-owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const original = {
+    id: 'community-1',
+    name: 'Community',
+    url: 'community',
+    picture: '',
+    about: '',
+    type: 'social',
+    privacy: 'public'
+  }
+  const { service, collections } = createHarness({
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', [{
+        profiles: [newOwner.id, original.id],
+        type: 'owner',
+        requestedBy: null,
+        blockedBy: null,
+        updatedAt: 2
+      }])
+    }
+  })
+  collections.set('profiles', [oldOwner, newOwner])
+  collections.set('communities', [original])
+  collections.set('community_relationships', [{
+    profiles: [oldOwner.id, original.id],
+    type: 'owner',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  await assert.rejects(
+    service.updateCommunity('user-1', original.id, {
+      name: 'Updated Community',
+      url: 'updated-community',
+      picture: '',
+      about: '',
+      privacy: 'private'
+    }),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+
+  assert.deepEqual(collections.get('communities'), [original])
+  assert.deepEqual(collections.get('community_relationships'), [{
+    profiles: [oldOwner.id, original.id],
+    type: 'owner',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+})
