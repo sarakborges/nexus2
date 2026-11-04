@@ -546,23 +546,31 @@ test('profile avatar write rechecks account ownership in the profile/media trans
 test('community avatar write rechecks staff role in the community/media transaction', async () => {
   const original = { id: 'community-1', picture: 'old-picture', type: 'social' }
   const { service, collections } = createHarness({
-    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['owner-profile'], currentProfile: 'owner-profile' }],
-    profiles: [{ id: 'owner-profile', type: 'social' }],
-    communities: [original],
-    community_relationships: [{
-      profiles: ['owner-profile', 'community-1'], type: 'owner'
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['moderator-profile'], currentProfile: 'moderator-profile'
     }],
+    profiles: [
+      { id: 'owner-profile', type: 'social' },
+      { id: 'moderator-profile', type: 'social' }
+    ],
+    communities: [original],
+    community_relationships: [
+      { profiles: ['owner-profile', 'community-1'], type: 'owner' },
+      { profiles: ['moderator-profile', 'community-1'], type: 'moderator' }
+    ],
     media_files: []
-  }, 'owner-profile', (names, current) => {
+  }, 'moderator-profile', (names, current) => {
     if (names.includes('communities')) {
-      current.set('community_relationships', [{
-        profiles: ['owner-profile', 'community-1'], type: 'connection'
-      }])
+      current.set('community_relationships', [
+        { profiles: ['owner-profile', 'community-1'], type: 'owner' },
+        { profiles: ['moderator-profile', 'community-1'], type: 'connection' }
+      ])
     }
   })
 
   await assert.rejects(
-    service.setCommunityAvatar('user-1', 'community-1', 'owner-profile', null),
+    service.setCommunityAvatar('user-1', 'community-1', 'moderator-profile', null),
     error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
   )
   assert.deepEqual(collections.get('communities'), [original])
