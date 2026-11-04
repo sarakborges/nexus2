@@ -141,7 +141,7 @@ export function CommunityPage() {
                 : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
           </article>
 
-          <section className="account-card community-forum community-page__forum">
+          <section className="community-forum social-page__content-stack community-page__forum">
             <header className="account-card__header">
               <h2 className="account-card__title">{t('FORUM_TITLE')}</h2>
               <Link to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_VIEW_ALL')}</Link>
