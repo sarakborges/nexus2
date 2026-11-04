@@ -479,7 +479,7 @@ export class DomainService {
   }
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
-    await this.assertOwns(userId, actorProfileId)
+    await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
     this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
@@ -494,7 +494,7 @@ export class DomainService {
   }
 
   async deleteCommunityForumReply(userId: string, communityId: string, replyId: string, actorProfileId: string): Promise<void> {
-    await this.assertOwns(userId, actorProfileId)
+    await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
     this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
