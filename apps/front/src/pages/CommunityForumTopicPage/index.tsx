@@ -141,14 +141,13 @@ export function CommunityForumTopicPage() {
 
   return (
     <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract />}>
-      <section className="account-card community-forum">
+      <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{topic.title}</h1>
             <p className="account-card__description">{t('FORUM_TITLE')} · {community.name}</p>
           </div>
         </header>
-
 
         <article className="community-forum__post community-forum__entry">
           <aside className="community-forum__author-column">
@@ -178,32 +177,9 @@ export function CommunityForumTopicPage() {
             {topic.isLocked && <p className="account-card__description">{t('FORUM_LOCKED')}</p>}
           </div>
         </article>
-      </section>
 
-      <section className="account-card community-forum community-forum__replies-card">
-        <div className="community-forum__replies">
+        <section className="community-forum__replies">
           <h2>{t('FORUM_REPLIES')} ({detail.replies.totalItems})</h2>
-          {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? null : canInteract && isMember && !topic.isLocked ? (
-            <form className="community-forum__composer" onSubmit={submitReply}>
-              <div className="form-field">
-                <Label id="forum-reply-content-label" htmlFor="forum-reply-content">{t('FORUM_REPLY')}</Label>
-                <RichTextEditor
-                  id="forum-reply-content"
-                  value={replyContent}
-                  onChange={setReplyContent}
-                  maxTextLength={8000}
-                  imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                  imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                  onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
-                  placeholder={t('RICH_TEXT_PLACEHOLDER')}
-                />
-              </div>
-              {replyMutation.isError && <p className="auth-card__error" role="alert">{t('FORUM_TOPIC_ERROR')}</p>}
-              <Button type="submit" disabled={!hasRichTextContent(replyContent) || replyMutation.isPending}>{t('FORUM_PUBLISH_REPLY')}</Button>
-            </form>
-          ) : isAuthInitialized && !relationshipsQuery.isLoading && !ownedProfilesQuery.isLoading && !relationshipsQuery.isError && !ownedProfilesQuery.isError && !isMember && (
-            <p className="account-card__description">{t('FORUM_MEMBERS_ONLY')}</p>
-          )}
           <RequestState
             isLoading={authorsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isLoading || !isAuthInitialized}
             isFetching={topicQuery.isFetching || authorsQuery.isFetching}
@@ -241,7 +217,42 @@ export function CommunityForumTopicPage() {
             })}
           </RequestState>
           <Pagination page={page} pageSize={pageSize} totalItems={detail.replies.totalItems} onPageChange={setPage} />
-        </div>
+        </section>
+      </section>
+
+      <section className="account-card community-forum community-forum__reply-composer-card">
+        {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? (
+          <RequestState
+            isLoading={!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading}
+            isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
+          />
+        ) : canInteract && isMember && !topic.isLocked ? (
+          <form className="community-forum__reply-composer" onSubmit={submitReply}>
+            <div className="form-field">
+              <Label id="forum-reply-content-label" htmlFor="forum-reply-content">{t('FORUM_REPLY')}</Label>
+              <RichTextEditor
+                id="forum-reply-content"
+                value={replyContent}
+                onChange={setReplyContent}
+                maxTextLength={8000}
+                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+                onUploadImage={file => uploadFile(file, 'editor-image').then(result => result.url)}
+                placeholder={t('RICH_TEXT_PLACEHOLDER')}
+              />
+            </div>
+            {replyMutation.isError && <p className="auth-card__error" role="alert">{t('FORUM_TOPIC_ERROR')}</p>}
+            <Button type="submit" disabled={!hasRichTextContent(replyContent) || replyMutation.isPending}>{t('FORUM_PUBLISH_REPLY')}</Button>
+          </form>
+        ) : (
+          <div className="community-forum__join">
+            <p className="account-card__description">
+              {topic.isLocked ? t('FORUM_LOCKED') : t('FORUM_MEMBERS_ONLY')}
+            </p>
+            {!session && <Link to={ROUTES.signIn}>{t('AUTH_SIGN_IN_LINK')}</Link>}
+            {session && !isMember && <RelationshipActions targetId={community.id} targetKind="community" />}
+          </div>
+        )}
       </section>
     </SocialPageLayout>
   )
