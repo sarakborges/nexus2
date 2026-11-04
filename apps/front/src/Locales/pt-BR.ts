@@ -271,6 +271,7 @@ export const ptBRTranslations = {
   TOAST_FORUM_REPLY_CREATED: 'Resposta publicada.',
   TOAST_FORUM_TOPIC_UPDATED: 'Tópico atualizado.',
   TOAST_FORUM_CONTENT_DELETED: 'Conteúdo do fórum excluído.',
+  FORUM_VIEW_ALL: 'Ver fórum completo',
   FORUM_TITLE: 'Fórum da comunidade',
   FORUM_DESCRIPTION: 'Discuta assuntos com os outros membros desta comunidade.',
   FORUM_NEW_TOPIC: 'Iniciar discussão',
