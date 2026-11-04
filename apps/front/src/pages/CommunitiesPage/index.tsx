@@ -36,7 +36,7 @@ export function CommunitiesPage() {
     if (communitiesQuery.data && communitiesQuery.data.page !== page) setPage(communitiesQuery.data.page)
   }, [communitiesQuery.data, page, setPage])
 
-  if (!currentProfile) return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
+  if (!currentProfile) return <main className="account-page"><div className="social-page__content-stack"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
 
   return (
     <SocialPageLayout sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
@@ -72,7 +72,7 @@ export function CommunitiesPage() {
           </div>
         </RequestState>
         <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      </section>
+      </div>
     </SocialPageLayout>
   )
 }
