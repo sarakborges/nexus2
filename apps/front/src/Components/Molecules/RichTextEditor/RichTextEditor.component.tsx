@@ -139,7 +139,9 @@ function HtmlSourceEditor({ value, onChange, disabled, id }: HtmlSourceEditorPro
 
 type RichTextEditorProps = { id: string; value: string; onChange: (value: string) => void; imageButtonLabel: string; imageUploadErrorLabel: string; onUploadImage: (file: File) => Promise<string>; maxTextLength?: number; placeholder?: string }
 export function RichTextEditor({ id, value, onChange, imageButtonLabel, imageUploadErrorLabel, onUploadImage, maxTextLength, placeholder }: RichTextEditorProps) {
-  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const isFetching = useIsFetching() > 0
+  const isMutating = useIsMutating() > 0
+  const isRequestPending = isFetching || isMutating
   const [isImageUploading, setIsImageUploading] = useState(false)
   const [isHtmlMode, setIsHtmlMode] = useState(false)
   const handleChange = (nextValue: string) => {
