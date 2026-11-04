@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -12,6 +13,7 @@ import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityForumPage.style.scss'
@@ -32,6 +34,7 @@ export function CommunityForumPage() {
     enabled: Boolean(normalized)
   })
   const community = communityQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
     queryFn: () => getCommunityRelationships(community!.id),
@@ -78,7 +81,7 @@ export function CommunityForumPage() {
   if (!community) return <NotFoundPage />
 
   return (
-    <main className="account-page">
+    <SocialPageLayout sidebar={<CommunitySidebar community={community} active="forum" canInteract={!session || (typeCompatibility.isCompatible && !typeCompatibility.isChecking)} />}>
       <section className="account-card community-forum">
         <header className="account-card__header">
           <div>
@@ -119,6 +122,15 @@ export function CommunityForumPage() {
               const author = authorsById.get(topic.profileId)
               return (
                 <article className="community-forum__topic" key={topic.id}>
+                  <div className="community-forum__topic-author">
+                    {author ? (
+                      <Link to={ROUTES.profile + '/' + author.url} aria-label={author.name} title={author.name}>
+                        <span className="community-forum__author-avatar">
+                          {author.picture ? <img src={author.picture} alt="" /> : <span aria-hidden="true">{author.name.trim().charAt(0).toUpperCase()}</span>}
+                        </span>
+                      </Link>
+                    ) : <span className="community-forum__author-avatar" aria-hidden="true">?</span>}
+                  </div>
                   <div className="community-forum__topic-main">
                     <div className="community-forum__topic-labels">
                       {topic.isPinned && <span className="community-forum__label">{t('FORUM_PINNED')}</span>}
@@ -138,6 +150,6 @@ export function CommunityForumPage() {
           <Pagination page={page} pageSize={pageSize} totalItems={topicsQuery.data?.totalItems ?? 0} onPageChange={setPage} />
         </section>
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }

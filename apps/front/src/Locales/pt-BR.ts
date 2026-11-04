@@ -206,6 +206,8 @@ export const ptBRTranslations = {
   COMMUNITY_BLOCK_MEMBER: "Bloquear membro",
   COMMUNITY_UNBLOCK_MEMBER: "Desbloquear membro",
   COMMUNITY_PENDING_REQUESTS: "Solicitações pendentes",
+  COMMUNITY_PENDING_COUNT: "{{count}} solicitações pendentes",
+  COMMUNITY_PENDING_ABOUT_NOTICE: "{{count}} solicitações pendentes de participação. Ver solicitações.",
   COMMUNITY_MEMBERS_PENDING_EMPTY: "Não há solicitações pendentes.",
   COMMUNITY_BLOCKED_MEMBERS: "Perfis bloqueados",
   COMMUNITY_BLOCKED_MEMBERS_EMPTY: "Não há perfis bloqueados.",
@@ -241,6 +243,7 @@ export const ptBRTranslations = {
   PROFILE_MESSAGES_SENDERS_ERROR: 'Não foi possível carregar os perfis de quem enviou as mensagens.',
 
   TOAST_NOTIFICATIONS: 'Notificações',
+  TOAST_ACTION_FAILED: 'Não foi possível concluir a ação. Tente novamente.',
   FORUM_PINNED: 'Fixado',
   PROFILE_TYPE_MISMATCH_NOTICE: 'Você só pode interagir com perfis e comunidades do mesmo tipo que o seu.',
   TOAST_PROFILE_SWITCHED: 'Perfil ativo alterado.',

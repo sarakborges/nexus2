@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { RelationshipActions, RequestState } from '@/Components'
+import { RequestState } from '@/Components'
+import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -72,22 +73,7 @@ export function ProfilePage() {
     <main className="social-page social-page--profile">
       <div className="social-page__layout">
         <aside className="social-page__left-column">
-          <div className="social-sidebar-card">
-          <section className="social-identity">
-            {profile.picture
-              ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
-              : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</div>}
-            <h1 className="social-identity__name">{profile.name}</h1>
-            {canInteract && <RelationshipActions targetId={profile.id} />}
-          </section>
-
-          <nav className="social-side-menu" aria-label={t('PROFILE_TITLE')}>
-            <Link to={ROUTES.profile + '/' + profile.url} aria-current="page">{t('PROFILE_TITLE')}</Link>
-            <Link to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('VIEW_ALL')}</Link>
-            <Link to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('VIEW_ALL')}</Link>
-            <Link to={ROUTES.profile + '/' + profile.url + '/messages'}>{t('PROFILE_MESSAGES_LINK')}</Link>
-          </nav>
-          </div>
+          <ProfileSidebar profile={profile} active="profile" showRelationshipActions={canInteract} />
         </aside>
 
         <section className="social-page__main-column">
@@ -99,8 +85,8 @@ export function ProfilePage() {
                 <h2 className="social-panel__title">{t('PROFILE_ABOUT_LABEL')}</h2>
               </div>
               {isOwner && canInteract && (
-                <Button type="button" variation="secondary" onClick={() => navigate(ROUTES.profile + '/' + profile.url + '/edit')}>
-                  {t('PROFILE_CHANGE_PICTURE')}
+                <Button type="button" variation="primary" onClick={() => navigate(ROUTES.profile + '/' + profile.url + '/edit')}>
+                  {t('PROFILE_EDIT')}
                 </Button>
               )}
             </header>
@@ -114,9 +100,7 @@ export function ProfilePage() {
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('PROFILE_FRIENDS_TITLE')}<span className="social-preview-panel__count">({friendsQuery.data?.totalItems ?? '—'})</span></h2>
-              <div className="social-preview-panel__header-actions">
-                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('VIEW_ALL')}</Link>
-              </div>
+              <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>
             </header>
             <RequestState
               isLoading={friendsQuery.isLoading}
@@ -139,9 +123,7 @@ export function ProfilePage() {
           <section className="social-preview-panel">
             <header className="social-preview-panel__header">
               <h2>{t('PROFILE_COMMUNITIES_TITLE')}<span className="social-preview-panel__count">({communitiesQuery.data?.totalItems ?? '—'})</span></h2>
-              <div className="social-preview-panel__header-actions">
-                <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('VIEW_ALL')}</Link>
-              </div>
+              <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + profile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
             </header>
             <RequestState
               isLoading={communitiesQuery.isLoading}

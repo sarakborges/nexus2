@@ -204,6 +204,8 @@ export const enUSTranslations = {
   COMMUNITY_BLOCK_MEMBER: "Block member",
   COMMUNITY_UNBLOCK_MEMBER: "Unblock member",
   COMMUNITY_PENDING_REQUESTS: "Pending requests",
+  COMMUNITY_PENDING_COUNT: "{{count}} pending requests",
+  COMMUNITY_PENDING_ABOUT_NOTICE: "{{count}} pending membership requests. Review requests.",
   COMMUNITY_MEMBERS_PENDING_EMPTY: "There are no pending requests.",
   COMMUNITY_BLOCKED_MEMBERS: "Blocked profiles",
   COMMUNITY_BLOCKED_MEMBERS_EMPTY: "There are no blocked profiles.",
@@ -239,6 +241,7 @@ export const enUSTranslations = {
   PROFILE_MESSAGES_SENDERS_ERROR: 'Sender profiles could not be loaded.',
 
   TOAST_NOTIFICATIONS: 'Notifications',
+  TOAST_ACTION_FAILED: 'The action could not be completed. Please try again.',
   FORUM_PINNED: 'Pinned',
   PROFILE_TYPE_MISMATCH_NOTICE: 'You can only interact with profiles and communities of the same type as yours.',
   TOAST_PROFILE_SWITCHED: 'Active profile changed.',

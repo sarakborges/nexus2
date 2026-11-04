@@ -1,0 +1,15 @@
+.community-members-page {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+.community-members-page__pending {
+  border-color: var(--color-primary-weak);
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+.community-members-page__pending .account-card__header { align-items: baseline; }
+.community-members-page__pending .account-card__description { margin-top: 0; }
+@media (max-width: 680px) {
+  .community-members-page { gap: 14px; }
+}

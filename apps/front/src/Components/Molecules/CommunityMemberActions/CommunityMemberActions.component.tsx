@@ -43,7 +43,8 @@ export function CommunityMemberActions({ memberProfileId, communityId, actorProf
         queryClient.invalidateQueries({ queryKey: ['community-members', communityId] })
       ])
       setConfirmTransfer(false)
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const run = (operation: Operation) => {
     setLastOperation(operation)

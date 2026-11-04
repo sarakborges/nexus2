@@ -2,16 +2,28 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
+import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunities } from '@/Services/Community'
+import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
+import { useAuthStore } from '@/Stores/Auth.store'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import '../AuthenticatedPage.style.scss'
 
 export function CommunitiesPage() {
   const { t } = useTranslations()
+  const session = useAuthStore(state => state.session)
+  const profileIds = session?.user.profiles ?? []
+  const currentProfileId = session?.user.currentProfile ?? null
+  const profilesQuery = useQuery({
+    queryKey: queryKeys.profiles.byIds(profileIds),
+    queryFn: () => getProfilesByIds(profileIds),
+    enabled: profileIds.length > 0
+  })
+  const currentProfile = profilesQuery.data?.find(profile => profile.id === currentProfileId) ?? profilesQuery.data?.[0] ?? null
   const { page, pageSize, setPage } = useUrlPagination()
   const communitiesQuery = useQuery({
     queryKey: queryKeys.communities.list(page, pageSize),
@@ -24,8 +36,10 @@ export function CommunitiesPage() {
     if (communitiesQuery.data && communitiesQuery.data.page !== page) setPage(communitiesQuery.data.page)
   }, [communitiesQuery.data, page, setPage])
 
+  if (!currentProfile) return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
+
   return (
-    <main className="account-page">
+    <SocialPageLayout sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
       <section className="account-card">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
@@ -59,6 +73,6 @@ export function CommunitiesPage() {
         </RequestState>
         <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }

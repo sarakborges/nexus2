@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
@@ -43,7 +44,7 @@ export function ProfileFriendsPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <main className="account-page">
+    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="friends" />}>
       <section className="account-card">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
@@ -77,6 +78,6 @@ export function ProfileFriendsPage() {
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }
