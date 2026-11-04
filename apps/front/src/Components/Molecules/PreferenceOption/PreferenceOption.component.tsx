@@ -23,7 +23,7 @@ export function PreferenceOption({
 }: PreferenceOptionProps) {
   return (
     <Button
-      className="preference-option"
+      className={['preference-option', isSelected ? 'preference-option--selected' : ''].filter(Boolean).join(' ')}
       type="button"
       variation="transparent"
       onClick={onSelect}

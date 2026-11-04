@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { LanguageSelector } from '@/Components/Organisms/LanguageSelector'
 import { ThemeSelector } from '@/Components/Organisms/ThemeSelector'
 import { RequestState } from '@/Components/Molecules/RequestState'
-import { Button, Modal } from '@/DesignSystem'
+import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
@@ -27,7 +27,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
   })
 
   return (
-    <Modal open={open} onClose={onClose} title={t('SETTINGS_TITLE')} className="settings-modal">
+    <Modal open={open} onClose={onClose} title={t('SETTINGS_TITLE')} closeLabel={t('SETTINGS_CLOSE')} className="settings-modal">
       <p className="settings-modal__description">{t('SETTINGS_DESCRIPTION')}</p>
       {updateError && <RequestState isError />}
       <RequestState
@@ -41,9 +41,6 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
           <ThemeSelector />
         </div>
       </RequestState>
-      <div className="settings-modal__actions">
-        <Button type="button" variation="secondary" onClick={onClose}>{t('SETTINGS_CLOSE')}</Button>
-      </div>
     </Modal>
   )
 }

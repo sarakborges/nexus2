@@ -5,7 +5,7 @@ import { ROUTES } from '@/Constants/routes'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import {
-  CommunitiesPage, CommunityMembersPage, CommunityPage, CommunityForumPage, CommunityForumTopicPage, CreateCommunityPage, CreateProfilePage,
+  CommunitiesPage, CommunityMembersPage, CommunityPage, CommunityForumPage, CommunityForumTopicPage, CreateCommunityForumTopicPage, CreateCommunityPage, CreateProfilePage,
   EditCommunityPage, EditProfilePage, GettingStartedPage, HomePage, LandingPage, NotFoundPage,
   ProfileCommunitiesPage, ProfileFriendsPage, ProfileMessagesPage, ProfilePage, SignInPage, SignUpPage
 } from '@/pages'
@@ -44,6 +44,7 @@ export function AppRoutes() {
         <Route element={<ProfileRequiredRoute />}><Route path={ROUTES.home} element={<HomePage />} /></Route>
       </Route>
       <Route path={ROUTES.communities} element={<CommunitiesPage />} />
+      <Route path={`${ROUTES.community}/:url/forum/new`} element={<CreateCommunityForumTopicPage />} />
       <Route path={`${ROUTES.community}/:url/forum/:topicId`} element={<CommunityForumTopicPage />} />
       <Route path={`${ROUTES.community}/:url/forum`} element={<CommunityForumPage />} />
       <Route path={`${ROUTES.community}/:url/members`} element={<CommunityMembersPage />} />

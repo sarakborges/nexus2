@@ -45,8 +45,7 @@ export function ProfileCommunitiesPage() {
     <main className="account-page">
       <section className="account-card">
         <header className="account-card__header">
-          <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE', { name: profile.name })}</h1>
-          <Link className="account-card__link" to={`${ROUTES.profile}/${profile.url}`}>{t('COMMUNITY_BACK_TO_PAGE')}</Link>
+          <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE')}</h1>
         </header>
         <RequestState isFetching={profileQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}

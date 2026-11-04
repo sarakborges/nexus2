@@ -4,7 +4,7 @@
   align-content: center;
   width: 100%;
   min-height: 100dvh;
-  padding: 112px 16px 32px;
+  padding: 112px var(--main-content-gutter) 32px;
   color: var(--text-color);
   font-size: 14px;
 }
@@ -128,7 +128,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  width: min(100%, 1180px);
+  width: min(100%, var(--main-content-max-width));
   margin: 0 auto;
 
   &__brand {
@@ -186,7 +186,7 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(260px, 0.65fr);
   align-items: center;
   gap: clamp(32px, 7vw, 100px);
-  width: min(100%, 1180px);
+  width: min(100%, var(--main-content-max-width));
   margin: 0 auto;
 
   &__content {
@@ -290,7 +290,7 @@
 }
 
 .landing-features {
-  width: min(100%, 1180px);
+  width: min(100%, var(--main-content-max-width));
   margin: 0 auto;
 
   &__title {
@@ -341,7 +341,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  width: min(100%, 1180px);
+  width: min(100%, var(--main-content-max-width));
   margin: 0 auto;
   padding-top: 20px;
   border-top: 1px solid var(--color-border);

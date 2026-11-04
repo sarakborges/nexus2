@@ -44,8 +44,13 @@
     &:not(:disabled):hover { background-color: var(--color-primary); }
   }
   &--secondary {
-    background-color: var(--color-secondary-strong);
-    &:not(:disabled):hover { background-color: var(--color-secondary); }
+    border-color: var(--color-border);
+    background-color: var(--color-surface-raised);
+    color: var(--text-color);
+    &:not(:disabled):hover {
+      border-color: var(--color-primary-weak);
+      background-color: var(--color-surface);
+    }
   }
   &--cancel {
     background-color: var(--color-error-strong);

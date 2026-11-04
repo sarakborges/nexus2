@@ -302,10 +302,6 @@ export class DomainService {
     ])
     if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
     const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    const currentProfileType = user.currentProfile
-      ? profileTypes.get(user.currentProfile)
-      : undefined
-    if (currentProfileType && currentProfileType !== community.type) return []
     return records.filter(record => ownedProfileIds.has(record.profiles[0]) && profileTypes.get(record.profiles[0]) === community.type)
   }
 
@@ -320,7 +316,7 @@ export class DomainService {
     if (!['all', 'staff', 'banned'].includes(tab)) throw new BadRequestException('INVALID_MEMBER_TAB')
     if (tab !== 'all') {
       if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-      await this.assertOwns(userId, actorProfileId)
+      await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
       await this.assertStaff(actorProfileId, communityId)
     }
     const records = await this.readCommunityRelationships(communityId)
@@ -332,7 +328,7 @@ export class DomainService {
     return paginate(profiles.filter(profile => byId.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, role: byId.get(profile.id)! })), q)
   }
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
-    await this.assertOwns(userId, actorProfileId)
+    await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
     await this.assertStaff(actorProfileId, communityId)
     const records = (await this.readCommunityRelationships(communityId)).filter(r => r.type === 'requested')
     const ids = new Set(records.map(r => r.profiles[0]))
@@ -483,7 +479,7 @@ export class DomainService {
   }
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
-    await this.assertOwns(userId, actorProfileId)
+    await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
     this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
@@ -498,7 +494,7 @@ export class DomainService {
   }
 
   async deleteCommunityForumReply(userId: string, communityId: string, replyId: string, actorProfileId: string): Promise<void> {
-    await this.assertOwns(userId, actorProfileId)
+    await this.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities] = await Promise.all([this.readProfiles(), this.readCommunities()])
     this.assertSameType(profiles.find(profile => profile.id === actorProfileId), communities.find(community => community.id === communityId))
@@ -545,14 +541,14 @@ export class DomainService {
     if (source.type !== target.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
   }
   private async assertForumMember(userId: string, profileId: string, communityId: string): Promise<void> {
-    await this.assertOwns(userId, profileId)
+    await this.assertOwns(userId, profileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities, records] = await Promise.all([this.readProfiles(), this.readCommunities(), this.readCommunityRelationships(communityId)])
     this.assertSameType(profiles.find(profile => profile.id === profileId), communities.find(item => item.id === communityId))
     if (!['owner', 'moderator', 'connection'].includes(this.role(profileId, records) ?? '')) throw new ForbiddenException('COMMUNITY_MEMBER_REQUIRED')
   }
   private async assertForumStaff(userId: string, profileId: string, communityId: string): Promise<void> {
-    await this.assertOwns(userId, profileId)
+    await this.assertOwns(userId, profileId, { allowDifferentActiveType: true })
     await this.ensureCommunity(communityId)
     const [profiles, communities, records] = await Promise.all([this.readProfiles(), this.readCommunities(), this.readCommunityRelationships(communityId)])
     this.assertSameType(profiles.find(profile => profile.id === profileId), communities.find(item => item.id === communityId))
@@ -615,10 +611,10 @@ export class DomainService {
     return (await this.data.read<CommunityRelationship>('community_relationships'))
       .filter(record => record.profiles[1] === communityId)
   }
-  private async assertOwns(userId: string, profileId: string): Promise<void> {
+  private async assertOwns(userId: string, profileId: string, options: { allowDifferentActiveType?: boolean } = {}): Promise<void> {
     if (!await this.auth.ownsProfile(userId, profileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
     const user = await this.auth.getUser(userId)
-    if (!user.currentProfile) return
+    if (!user.currentProfile || options.allowDifferentActiveType) return
     const profiles = await this.readProfiles()
     const currentProfile = profiles.find(profile => profile.id === user.currentProfile)
     const targetProfile = profiles.find(profile => profile.id === profileId)

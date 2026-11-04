@@ -58,7 +58,6 @@ export function CommunitiesPage() {
           </div>
         </RequestState>
         <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-        <Link className="account-card__link" to={ROUTES.home}>{t('PROFILE_BACK_HOME')}</Link>
       </section>
     </main>
   )

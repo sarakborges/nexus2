@@ -4,7 +4,6 @@
   justify-content: flex-start;
   gap: 12px;
   width: 100%;
-  min-height: 64px;
   padding: 12px 14px;
   text-align: left;
 
@@ -35,4 +34,9 @@
     flex: 0 0 14px;
     color: var(--color-primary-weak);
   }
+}
+
+.preference-option--selected {
+  border-color: var(--color-primary-strong);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
 }

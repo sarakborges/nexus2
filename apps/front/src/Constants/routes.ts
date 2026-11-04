@@ -9,6 +9,7 @@ export const ROUTES = {
   profile: '/profile',
   community: '/community',
   communityForum: '/forum',
+  communityForumCreate: '/forum/new',
   communities: '/communities',
   notFound: '*'
 } as const

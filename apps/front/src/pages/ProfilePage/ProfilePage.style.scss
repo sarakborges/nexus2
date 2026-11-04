@@ -92,13 +92,13 @@
   width: 100%;
   max-height: 340px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
   object-fit: cover;
 }
 
 .social-identity__picture--profile {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
 }
 
 .social-identity__picture--community {
@@ -139,6 +139,8 @@
 .social-side-menu {
   display: grid;
   width: 100%;
+  margin-inline: 0;
+  box-sizing: border-box;
 }
 
 .social-side-menu a {
@@ -293,9 +295,9 @@
   aspect-ratio: 1;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface-raised);
-  color: var(--color-neutral-strong);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
+  color: var(--avatar-fallback-color);
   font-size: 18px;
   font-weight: var(--font-weight-bold);
 }
@@ -343,12 +345,12 @@
   .social-page__layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 18px;
-    padding-inline: 16px;
+    padding-inline: var(--main-content-gutter);
   }
 
   .social-page__state,
   .social-page > .request-state {
-    padding-inline: 16px;
+    padding-inline: var(--main-content-gutter);
   }
 
   .social-page__left-column {
@@ -368,7 +370,7 @@
     width: 104px;
     height: 104px;
     aspect-ratio: 1;
-    border-radius: 12px;
+    border-radius: var(--avatar-shape-radius);
   }
 
   .social-identity__name {

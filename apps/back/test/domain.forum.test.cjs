@@ -91,3 +91,17 @@ test('a user cannot interact through an owned profile with a type different from
     error => error.getStatus() === 403 && error.message === 'PROFILE_TYPE_MISMATCH'
   )
 })
+
+test('a community owner can publish through an owned profile while another profile is active', async () => {
+  const { service } = harness({ multiProfileUser: ['other', 'owner'] })
+  const relationships = await service.getCommunityRelationships('multiProfileUser', communityId)
+
+  assert.equal(relationships.some(record => record.profiles[0] === 'owner' && record.type === 'owner'), true)
+  assert.equal(relationships.some(record => record.profiles[0] === 'other'), false)
+
+  const topic = await service.createCommunityForumTopic('multiProfileUser', communityId, 'owner', 'Owner topic', 'Owner post')
+  const reply = await service.createCommunityForumReply('multiProfileUser', communityId, topic.id, 'owner', 'Owner reply')
+
+  assert.ok(topic.id)
+  assert.ok(reply.id)
+})
