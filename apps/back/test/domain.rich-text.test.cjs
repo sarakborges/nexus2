@@ -3,6 +3,14 @@ const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
 function makeService(collections, ownedProfiles = ['sender'], uploads) {
+  if (!collections.has('accounts')) {
+    collections.set('accounts', [{
+      id: 'user',
+      email: 'user@example.test',
+      profiles: [...ownedProfiles],
+      currentProfile: ownedProfiles[0] ?? null
+    }])
+  }
   const data = {
     async read(name) {
       return structuredClone(collections.get(name) ?? [])
