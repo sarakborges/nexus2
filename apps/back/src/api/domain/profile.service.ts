@@ -116,10 +116,6 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
-    if (!name || about.length > 12000 || aboutText.length > 500 ||
-      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-
     return this.data.transaction<Profile>(['accounts', 'profiles', 'media_files'], collections => {
       const accounts = collections.accounts as AccountRecord[]
       const currentProfiles = collections.profiles as Profile[]
@@ -128,6 +124,9 @@ export class ProfileService {
 
       const latest = currentProfiles.find(profile => profile.id === profileId)
       if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
+      if (!name || about.length > 12000 || aboutText.length > 500 ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+        (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
       if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
         throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
       }

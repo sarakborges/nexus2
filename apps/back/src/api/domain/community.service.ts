@@ -63,11 +63,7 @@ export class CommunityService {
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? 'public'
     const aboutText = getRichTextPlainText(about)
-    if (!name || about.length > 12000 || aboutText.length > 500 ||
-      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
-
+    const createdAt = Date.now()
     const communityId = randomUUID()
     return this.data.transaction<Community>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
@@ -80,6 +76,10 @@ export class CommunityService {
         this.access.assertOwnsInRecords(userId, ownerProfileId, accounts, profiles)
         const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
+        if (!name || about.length > 12000 || aboutText.length > 500 ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+          !['public', 'private', 'unlisted'].includes(privacy) ||
+          (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
         if (communities.some(item => item.url === url)) {
           throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
         }
@@ -92,7 +92,7 @@ export class CommunityService {
           type: 'owner',
           requestedBy: null,
           blockedBy: null,
-          updatedAt: Date.now()
+          updatedAt: createdAt
         }
         const nextMediaFiles = this.uploads
           ? this.uploads.attachEditorImagesToRecords(
@@ -122,11 +122,6 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
-    if (!name || about.length > 12000 || aboutText.length > 500 ||
-      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      (input.privacy !== undefined && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
-
     return this.data.transaction<Community>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
       collections => {
@@ -145,6 +140,10 @@ export class CommunityService {
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
         const latest = communities.find(community => community.id === communityId)
         if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (!name || about.length > 12000 || aboutText.length > 500 ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+          (input.privacy != null && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
+          (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
         if (communities.some(community => community.id !== communityId && community.url === url)) {
           throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
         }
