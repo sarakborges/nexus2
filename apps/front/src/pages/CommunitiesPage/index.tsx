@@ -39,7 +39,7 @@ export function CommunitiesPage() {
   if (!currentProfile) return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
 
   return (
-    <SocialPageLayout className="social-page--wide-content" sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
+    <SocialPageLayout sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
       <section className="account-card">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
