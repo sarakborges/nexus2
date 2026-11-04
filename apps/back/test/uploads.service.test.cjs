@@ -11,7 +11,11 @@ function createHarness(initial = {}, activeProfileId = null) {
   const collections = new Map(Object.entries(initial))
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, records) { collections.set(name, structuredClone(records)) }
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    }
   }
   const auth = {
     async ownsProfile(_userId, profileId) { return profileId === 'profile-1' || profileId === activeProfileId },
@@ -340,14 +344,18 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
   const deleted = []
   withFetch(t, async (url, init) => {
     assert.equal(init.method, 'DELETE')
+    assert.ok(collections.get('media_files').every(item => item.status === 'deleting'))
     deleted.push({ url: String(url), body: JSON.parse(init.body) })
     return new Response(null, { status: 200 })
   })
 
   await assert.rejects(service.cleanupExpired('wrong'), error => error.getStatus() === 403)
-  const result = await service.cleanupExpired(cronSecret)
+  const results = await Promise.all([
+    service.cleanupExpired(cronSecret),
+    service.cleanupExpired(cronSecret)
+  ])
 
-  assert.equal(result.deleted, 2)
+  assert.deepEqual(results.map(result => result.deleted).sort(), [0, 2])
   assert.equal(deleted.length, 2)
   assert.deepEqual(deleted.find(item => item.url.endsWith('/nexus-avatars')).body.prefixes, ['profiles/user-1/draft.png'])
   assert.deepEqual(deleted.find(item => item.url.endsWith('/nexus-editor-images')).body.prefixes, ['editor/user-1/old.png'])

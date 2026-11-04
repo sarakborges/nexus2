@@ -23,7 +23,8 @@ export type UploadedFileRecord = {
   contentType: string
   expectedSize: number
   size: number | null
-  status: 'pending' | 'ready'
+  status: 'pending' | 'ready' | 'deleting'
+  deletingAt?: number | null
   createdAt: number
   completedAt: number | null
   expiresAt: number | null
@@ -106,7 +107,6 @@ export class UploadsService {
     const signedData = await this.readJson<SignedUploadResponse>(signedResponse)
     if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
 
-    const records = await this.data.read<UploadedFileRecord>('media_files')
     const record: UploadedFileRecord = {
       id,
       ownerUserId: userId,
@@ -125,7 +125,7 @@ export class UploadsService {
       messageFromProfileId: null,
       messageToProfileId: null
     }
-    await this.data.write('media_files', [...records, record])
+    await this.data.update<UploadedFileRecord>('media_files', records => [...records, record])
 
     const uploadUrl = signedData.url.startsWith('http')
       ? signedData.url
@@ -139,8 +139,9 @@ export class UploadsService {
     const record = records.find(item => item.id === id && item.ownerUserId === userId)
     if (!record) throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.status === 'ready') return { id, url: this.getUploadUrl(record) }
+    if (record.status !== 'pending') throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.createdAt + PENDING_MAX_AGE <= Date.now()) {
-      await this.deleteRecord(record, records)
+      await this.deleteRecord(record)
       throw new NotFoundException('UPLOAD_EXPIRED')
     }
 
@@ -165,28 +166,42 @@ export class UploadsService {
       totalSize !== record.expectedSize ||
       detectedMime !== record.contentType
     ) {
-      await this.deleteRecord(record, records)
+      await this.deleteRecord(record)
       throw new BadRequestException('INVALID_UPLOAD_CONTENT')
     }
 
     const completedAt = Date.now()
-    const updated: UploadedFileRecord = {
-      ...record,
-      size: totalSize,
-      status: 'ready',
-      completedAt,
-      expiresAt: record.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null
-    }
-    await this.data.write('media_files', records.map(item => item.id === id ? updated : item))
-    return { id, url: this.getUploadUrl(updated) }
+    let saved: UploadedFileRecord | undefined
+    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+      const latest = currentRecords.find(item => item.id === id && item.ownerUserId === userId)
+      if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      if (latest.status === 'ready') {
+        saved = latest
+        return currentRecords
+      }
+      if (latest.status !== 'pending' || latest.createdAt + PENDING_MAX_AGE <= Date.now()) {
+        throw new NotFoundException('UPLOAD_EXPIRED')
+      }
+
+      saved = {
+        ...latest,
+        size: totalSize,
+        status: 'ready',
+        deletingAt: null,
+        completedAt,
+        expiresAt: latest.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null
+      }
+      return currentRecords.map(item => item.id === id ? saved! : item)
+    })
+    return { id, url: this.getUploadUrl(saved!) }
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record = records.find(item => item.id === id && item.ownerUserId === userId)
-    if (!record) return
+    if (!record || record.status === 'deleting') return
     if (record.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
-    await this.deleteRecord(record, records)
+    await this.deleteRecord(record)
   }
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
@@ -244,9 +259,15 @@ export class UploadsService {
       (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
       throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     }
-    await this.data.write('media_files', records.map(item => item.id === record.id
-      ? { ...item, resourceType, resourceId }
-      : item))
+    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+      const latest = currentRecords.find(item => item.id === record.id)
+      if (!latest || latest.ownerUserId !== userId || latest.purpose !== purpose ||
+        latest.status !== 'ready' || latest.resourceType ||
+        (latest.completedAt ?? latest.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
+        throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+      }
+      return currentRecords.map(item => item.id === latest.id ? { ...item, resourceType, resourceId } : item)
+    })
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
@@ -261,13 +282,17 @@ export class UploadsService {
       : null
     const picture = next ? this.publicUrl(next.path) : ''
 
-    await this.data.write('profiles', profiles.map(item =>
-      item.id === profileId ? { ...item, picture } : item
-    ))
+    await this.data.update<{ id: string; picture: string }>('profiles', currentProfiles => {
+      if (!currentProfiles.some(item => item.id === profileId)) throw new NotFoundException('PROFILE_NOT_FOUND')
+      return currentProfiles.map(item => item.id === profileId ? { ...item, picture } : item)
+    })
     if (next) {
-      await this.data.write('media_files', records.map(item => item.id === next.id
-        ? { ...item, resourceType: 'profile', resourceId: profileId }
-        : item))
+      await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+        const latest = this.getReadyAvatar(currentRecords, userId, next.id, 'profile-avatar')
+        return currentRecords.map(item => item.id === latest.id
+          ? { ...item, resourceType: 'profile', resourceId: profileId }
+          : item)
+      })
     }
     await this.deletePreviousAvatar(profile.picture, next?.id)
     return { picture }
@@ -290,13 +315,17 @@ export class UploadsService {
       : null
     const picture = next ? this.publicUrl(next.path) : ''
 
-    await this.data.write('communities', communities.map(item =>
-      item.id === communityId ? { ...item, picture } : item
-    ))
+    await this.data.update<{ id: string; picture: string }>('communities', currentCommunities => {
+      if (!currentCommunities.some(item => item.id === communityId)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+      return currentCommunities.map(item => item.id === communityId ? { ...item, picture } : item)
+    })
     if (next) {
-      await this.data.write('media_files', records.map(item => item.id === next.id
-        ? { ...item, resourceType: 'community', resourceId: communityId }
-        : item))
+      await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+        const latest = this.getReadyAvatar(currentRecords, userId, next.id, 'community-avatar')
+        return currentRecords.map(item => item.id === latest.id
+          ? { ...item, resourceType: 'community', resourceId: communityId }
+          : item)
+      })
     }
     await this.deletePreviousAvatar(community.picture, next?.id)
     return { picture }
@@ -318,18 +347,19 @@ export class UploadsService {
   ): Promise<void> {
     const ids = this.extractEditorImageIds(html)
     if (!ids.length) return
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    for (const id of ids) this.getReadyEditorImage(records, userId, id)
     const idSet = new Set(ids)
-    await this.data.write('media_files', records.map(item => idSet.has(item.id)
-      ? {
-          ...item,
-          resourceType,
-          resourceId,
-          messageFromProfileId: messageParticipants?.fromProfileId ?? null,
-          messageToProfileId: messageParticipants?.toProfileId ?? null
-        }
-      : item))
+    await this.data.update<UploadedFileRecord>('media_files', records => {
+      for (const id of ids) this.getReadyEditorImage(records, userId, id)
+      return records.map(item => idSet.has(item.id)
+        ? {
+            ...item,
+            resourceType,
+            resourceId,
+            messageFromProfileId: messageParticipants?.fromProfileId ?? null,
+            messageToProfileId: messageParticipants?.toProfileId ?? null
+          }
+        : item)
+    })
   }
 
   async detachResourceAttachments(
@@ -337,18 +367,17 @@ export class UploadsService {
     resourceType: UploadResourceType,
     resourceId: string
   ): Promise<void> {
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const belongsToResource = (item: UploadedFileRecord) =>
-      (!userId || item.ownerUserId === userId) &&
-      item.resourceType === resourceType &&
-      item.resourceId === resourceId
-    if (!records.some(belongsToResource)) return
-
-    await this.data.write('media_files', records.map(item =>
-      belongsToResource(item)
-        ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
-        : item
-    ))
+    await this.data.update<UploadedFileRecord>('media_files', records => {
+      const belongsToResource = (item: UploadedFileRecord) =>
+        (!userId || item.ownerUserId === userId) &&
+        item.resourceType === resourceType &&
+        item.resourceId === resourceId
+      return records.map(item =>
+        belongsToResource(item)
+          ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
+          : item
+      )
+    })
   }
 
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {
@@ -357,22 +386,33 @@ export class UploadsService {
     }
     this.assertStorageConfigured()
 
-    const records = await this.data.read<UploadedFileRecord>('media_files')
     const now = Date.now()
-    const expired = records.filter(item =>
-      (item.purpose === 'editor-image' && item.expiresAt !== null && item.expiresAt <= now) ||
-      (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
-      (item.purpose !== 'editor-image' && item.status === 'ready' &&
-        !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
-    )
+    let expired: UploadedFileRecord[] = []
+    let expiredIds = new Set<string>()
+    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+      expired = currentRecords.filter(item =>
+        (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - 5 * 60 * 1000) ||
+        (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
+        (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
+        (item.purpose !== 'editor-image' && item.status === 'ready' &&
+          !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
+      )
+      if (!expired.length) return currentRecords
+      expiredIds = new Set(expired.map(item => item.id))
+      return currentRecords.map(item => expiredIds.has(item.id)
+        ? { ...item, status: 'deleting', deletingAt: now }
+        : item)
+    })
     if (!expired.length) return { deleted: 0 }
 
     for (const bucket of [AVATAR_BUCKET, EDITOR_BUCKET]) {
       const paths = expired.filter(item => item.bucket === bucket).map(item => item.path)
       if (paths.length) await this.removeObjects(bucket, paths)
     }
-    const expiredIds = new Set(expired.map(item => item.id))
-    await this.data.write('media_files', records.filter(item => !expiredIds.has(item.id)))
+
+    await this.data.update<UploadedFileRecord>('media_files', currentRecords =>
+      currentRecords.filter(item => !expiredIds.has(item.id) || item.status !== 'deleting')
+    )
     return { deleted: expired.length }
   }
 
@@ -515,16 +555,34 @@ export class UploadsService {
   private async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
     const path = this.getAvatarPath(previousUrl)
     if (!path) return
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const old = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-    if (!old || old.id === keepId) return
+    let old: UploadedFileRecord | undefined
+    await this.data.update<UploadedFileRecord>('media_files', current => {
+      const latest = current.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
+      if (!latest || latest.id === keepId || latest.status === 'deleting') return current
+      old = { ...latest, status: 'deleting', deletingAt: Date.now() }
+      return current.map(item => item.id === latest.id ? old! : item)
+    })
+    if (!old) return
     await this.removeObjects(AVATAR_BUCKET, [old.path])
-    await this.data.write('media_files', records.filter(item => item.id !== old.id))
+    await this.data.update<UploadedFileRecord>('media_files', current =>
+      current.filter(item => item.id !== old!.id)
+    )
   }
 
-  private async deleteRecord(record: UploadedFileRecord, records: UploadedFileRecord[]): Promise<void> {
-    await this.removeObjects(record.bucket, [record.path])
-    await this.data.write('media_files', records.filter(item => item.id !== record.id))
+  private async deleteRecord(record: UploadedFileRecord): Promise<void> {
+    let deleting: UploadedFileRecord | undefined
+    await this.data.update<UploadedFileRecord>('media_files', current => {
+      const latest = current.find(item => item.id === record.id)
+      if (!latest || latest.status === 'deleting') return current
+      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      deleting = { ...latest, status: 'deleting', deletingAt: Date.now() }
+      return current.map(item => item.id === latest.id ? deleting! : item)
+    })
+    if (!deleting) return
+    await this.removeObjects(deleting.bucket, [deleting.path])
+    await this.data.update<UploadedFileRecord>('media_files', current =>
+      current.filter(item => item.id !== deleting!.id)
+    )
   }
 
   private async removeObjects(bucket: string, paths: string[]): Promise<void> {

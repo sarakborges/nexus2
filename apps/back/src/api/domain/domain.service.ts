@@ -49,13 +49,14 @@ export class DomainService {
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-    const profiles = await this.readProfiles()
-    if (profiles.some(p => p.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
     let updatedUser: AuthenticatedUser | null = null
 
     try {
-      await this.data.write('profiles', [...profiles, profile])
+      await this.data.update<Profile>('profiles', current => {
+        if (current.some(item => item.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+        return [...current, profile]
+      })
       updatedUser = await this.auth.addProfile(userId, profile.id, true)
       if (updatedUser.id !== userId || !updatedUser.profiles.includes(profile.id) || updatedUser.currentProfile !== profile.id) {
         throw new InternalServerErrorException('PROFILE_ACTIVATION_FAILED')
@@ -75,7 +76,7 @@ export class DomainService {
         rollbackErrors.push(rollbackError)
       }
       try {
-        await this.data.write('profiles', profiles)
+        await this.data.update<Profile>('profiles', current => current.filter(item => item.id !== profile.id))
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError)
       }
@@ -109,15 +110,23 @@ export class DomainService {
     const newEditorImages = this.getNewEditorImages(about, current.about)
     await this.uploads?.validateEditorImages(userId, newEditorImages)
 
-    const updated: Profile = { ...current, name, url, picture, about }
-    await this.data.write('profiles', profiles.map(profile => profile.id === profileId ? updated : profile))
+    let updated: Profile | undefined
+    await this.data.update<Profile>('profiles', currentProfiles => {
+      const latest = currentProfiles.find(profile => profile.id === profileId)
+      if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
+      if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
+        throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+      }
+      updated = { ...latest, name, url, picture, about }
+      return currentProfiles.map(profile => profile.id === profileId ? updated! : profile)
+    })
     if (picture !== current.picture) {
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profileId)
     }
     if (newEditorImages) {
       await this.uploads?.attachEditorImages(userId, newEditorImages, 'profile', profileId)
     }
-    return updated
+    return updated!
   }
 
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
@@ -158,17 +167,20 @@ export class DomainService {
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['public', 'private', 'unlisted'].includes(privacy) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
-    const communities = await this.readCommunities()
-    if (communities.some(c => c.url === url)) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
     const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type, privacy }
-    const links = await this.data.read<CommunityRelationship>('community_relationships')
-    await this.data.write('communities', [...communities, community])
+    await this.data.update<Community>('communities', current => {
+      if (current.some(item => item.url === url)) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+      return [...current, community]
+    })
     try {
-      await this.data.write('community_relationships', [...links, {
+      await this.data.update<CommunityRelationship>('community_relationships', current => [...current, {
         profiles: [ownerProfileId, community.id], type: 'owner',
         requestedBy: null, blockedBy: null, updatedAt: Date.now()
       }])
-    } catch (error) { await this.data.write('communities', communities); throw error }
+    } catch (error) {
+      await this.data.update<Community>('communities', current => current.filter(item => item.id !== community.id))
+      throw error
+    }
     await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
     await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
     return community
@@ -205,15 +217,23 @@ export class DomainService {
     const newEditorImages = this.getNewEditorImages(about, current.about)
     await this.uploads?.validateEditorImages(userId, newEditorImages)
 
-    const updated: Community = { ...current, name, url, picture, about, type: ownerProfile.type, privacy }
-    await this.data.write('communities', communities.map(community => community.id === communityId ? updated : community))
+    let updated: Community | undefined
+    await this.data.update<Community>('communities', currentCommunities => {
+      const latest = currentCommunities.find(community => community.id === communityId)
+      if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+      if (currentCommunities.some(community => community.id !== communityId && community.url === url)) {
+        throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+      }
+      updated = { ...latest, name, url, picture, about, type: ownerProfile.type, privacy }
+      return currentCommunities.map(community => community.id === communityId ? updated! : community)
+    })
     if (picture !== current.picture) {
       await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', communityId)
     }
     if (newEditorImages) {
       await this.uploads?.attachEditorImages(userId, newEditorImages, 'community', communityId)
     }
-    return updated
+    return updated!
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
@@ -287,31 +307,35 @@ export class DomainService {
     if (!source || !target || source === target) throw new ForbiddenException('INVALID_RELATIONSHIP_PARTICIPANTS')
     const profiles = await this.readProfiles()
     this.assertSameType(profiles.find(profile => profile.id === source), profiles.find(profile => profile.id === target))
-    const all = await this.data.read<Relationship>('relationships')
     const pair = [source, target].sort() as [string, string]
-    const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
-    if (type === 'requested' && current) throw new ConflictException('RELATIONSHIP_ALREADY_EXISTS')
-    if (type === 'connection' && (current?.type !== 'requested' || current.requestedBy === source)) {
-      throw new ForbiddenException('ONLY_RECIPIENT_CAN_ACCEPT_REQUEST')
-    }
-    const value: Relationship = {
-      profiles: pair, type, requestedBy: type === 'requested' ? source : null,
-      blockedBy: type === 'blocked' ? source : null, updatedAt: Date.now()
-    }
-    await this.data.write('relationships', [...all.filter(r => r.profiles[0] !== pair[0] || r.profiles[1] !== pair[1]), value])
-    return value
+    let value: Relationship | undefined
+    await this.data.update<Relationship>('relationships', all => {
+      const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
+      if (type === 'requested' && current) throw new ConflictException('RELATIONSHIP_ALREADY_EXISTS')
+      if (type === 'connection' && (current?.type !== 'requested' || current.requestedBy === source)) {
+        throw new ForbiddenException('ONLY_RECIPIENT_CAN_ACCEPT_REQUEST')
+      }
+      const next: Relationship = {
+        profiles: pair, type, requestedBy: type === 'requested' ? source : null,
+        blockedBy: type === 'blocked' ? source : null, updatedAt: Date.now()
+      }
+      value = next
+      return [...all.filter(r => r.profiles[0] !== pair[0] || r.profiles[1] !== pair[1]), next]
+    })
+    return value!
   }
   async removeProfileRelationship(userId: string, source: string, target: string): Promise<void> {
     await this.assertOwns(userId, source)
     const profiles = await this.readProfiles()
     this.assertSameType(profiles.find(profile => profile.id === source), profiles.find(profile => profile.id === target))
-    const all = await this.data.read<Relationship>('relationships')
     const pair = [source, target].sort()
-    const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
-    if (current?.type === 'blocked' && current.blockedBy && current.blockedBy !== source) {
-      throw new ForbiddenException('ONLY_BLOCKER_CAN_UNBLOCK')
-    }
-    await this.data.write('relationships', all.filter(r => r.profiles[0] !== pair[0] || r.profiles[1] !== pair[1]))
+    await this.data.update<Relationship>('relationships', all => {
+      const current = all.find(r => r.profiles[0] === pair[0] && r.profiles[1] === pair[1])
+      if (current?.type === 'blocked' && current.blockedBy && current.blockedBy !== source) {
+        throw new ForbiddenException('ONLY_BLOCKER_CAN_UNBLOCK')
+      }
+      return all.filter(r => r.profiles[0] !== pair[0] || r.profiles[1] !== pair[1])
+    })
   }
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
@@ -363,51 +387,56 @@ export class DomainService {
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     await this.assertOwns(userId, actorId)
     await this.ensureCommunity(communityId)
-    const records = await this.readCommunityRelationships(communityId)
     const community = (await this.readCommunities()).find(item => item.id === communityId)
     const profiles = await this.readProfiles()
     const actorProfile = profiles.find(profile => profile.id === actorId)
     const targetProfile = profiles.find(profile => profile.id === targetId)
     this.assertSameType(actorProfile, community)
     this.assertSameType(targetProfile, community)
-    const actorRole = this.role(actorId, records)
-    const targetRole = this.role(targetId, records)
-    const self = actorId === targetId
-    let allowed = false
-    if (type === 'requested') allowed = self && targetRole === null
-    if (type === 'connection') allowed = (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'requested'
-    if (type === 'moderator') allowed = actorRole === 'owner' && targetRole === 'connection'
-    if (type === 'blocked') allowed = !self && (actorRole === 'owner' || actorRole === 'moderator') && targetRole === 'connection'
-    if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
-    const record: CommunityRelationship = {
-      profiles: [targetId, communityId], type,
-      requestedBy: type === 'requested' ? actorId : null,
-      blockedBy: type === 'blocked' ? actorId : null, updatedAt: Date.now()
-    }
-    const rest = (await this.data.read<CommunityRelationship>('community_relationships'))
-      .filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId)
-    await this.data.write('community_relationships', [...rest, record])
-    return record
+    let record: CommunityRelationship | undefined
+    await this.data.update<CommunityRelationship>('community_relationships', all => {
+      const communityRecords = all.filter(item => item.profiles[1] === communityId)
+      const currentActorRole = this.role(actorId, communityRecords)
+      const currentTargetRole = this.role(targetId, communityRecords)
+      const self = actorId === targetId
+      let allowed = false
+      if (type === 'requested') allowed = self && currentTargetRole === null
+      if (type === 'connection') allowed = (currentActorRole === 'owner' || currentActorRole === 'moderator') && currentTargetRole === 'requested'
+      if (type === 'moderator') allowed = currentActorRole === 'owner' && currentTargetRole === 'connection'
+      if (type === 'blocked') allowed = !self && (currentActorRole === 'owner' || currentActorRole === 'moderator') && currentTargetRole === 'connection'
+      if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+
+      const next: CommunityRelationship = {
+        profiles: [targetId, communityId], type,
+        requestedBy: type === 'requested' ? actorId : null,
+        blockedBy: type === 'blocked' ? actorId : null, updatedAt: Date.now()
+      }
+      record = next
+      return [...all.filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId), next]
+    })
+    return record!
   }
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
     await this.assertOwns(userId, actorId)
     await this.ensureCommunity(communityId)
-    const [all, profiles, community] = await Promise.all([
-      this.data.read<CommunityRelationship>('community_relationships'), this.readProfiles(),
+    const [profiles, community] = await Promise.all([
+      this.readProfiles(),
       this.readCommunities().then(items => items.find(item => item.id === communityId))
     ])
     this.assertSameType(profiles.find(profile => profile.id === actorId), community)
     this.assertSameType(profiles.find(profile => profile.id === targetId), community)
-    const target = all.find(r => r.profiles[0] === targetId && r.profiles[1] === communityId)
-    if (!target) return
-    const actorRole = this.role(actorId, all.filter(r => r.profiles[1] === communityId))
-    const self = actorId === targetId
-    const canSelf = self && (['connection', 'requested'].includes(target.type) || (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null)))
-    const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
-      ['connection', 'requested', 'blocked'].includes(target.type) &&
-      !(actorRole === 'moderator' && target.type === 'moderator')
-    if (!canSelf && !canStaff) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
-    await this.data.write('community_relationships', all.filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId))
+    await this.data.update<CommunityRelationship>('community_relationships', all => {
+      const target = all.find(r => r.profiles[0] === targetId && r.profiles[1] === communityId)
+      if (!target) return all
+      const actorRole = this.role(actorId, all.filter(r => r.profiles[1] === communityId))
+      const self = actorId === targetId
+      const canSelf = self && (['connection', 'requested'].includes(target.type) || (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null)))
+      const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
+        ['connection', 'requested', 'blocked'].includes(target.type) &&
+        !(actorRole === 'moderator' && target.type === 'moderator')
+      if (!canSelf && !canStaff) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+      return all.filter(r => r.profiles[0] !== targetId || r.profiles[1] !== communityId)
+    })
   }
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
     await this.assertOwns(userId, actorId)
@@ -416,10 +445,15 @@ export class DomainService {
     const community = communities.find(item => item.id === communityId)
     this.assertSameType(profiles.find(profile => profile.id === actorId), community)
     this.assertSameType(profiles.find(profile => profile.id === targetId), community)
-    const all = await this.data.read<CommunityRelationship>('community_relationships')
-    const filtered = all.filter(r => r.profiles[1] === communityId)
-    if (this.role(actorId, filtered) !== 'owner' || this.role(targetId, filtered) !== 'moderator') throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
-    await this.data.write('community_relationships', all.map(r => r.profiles[0] === targetId && r.profiles[1] === communityId ? { ...r, type: 'connection', updatedAt: Date.now() } : r))
+    await this.data.update<CommunityRelationship>('community_relationships', all => {
+      const filtered = all.filter(r => r.profiles[1] === communityId)
+      if (this.role(actorId, filtered) !== 'owner' || this.role(targetId, filtered) !== 'moderator') {
+        throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
+      }
+      return all.map(r => r.profiles[0] === targetId && r.profiles[1] === communityId
+        ? { ...r, type: 'connection', updatedAt: Date.now() }
+        : r)
+    })
   }
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
     await this.assertOwns(userId, actorId)
@@ -428,15 +462,18 @@ export class DomainService {
     const community = communities.find(item => item.id === communityId)
     this.assertSameType(profiles.find(profile => profile.id === actorId), community)
     this.assertSameType(profiles.find(profile => profile.id === newOwnerId), community)
-    const all = await this.data.read<CommunityRelationship>('community_relationships')
-    const filtered = all.filter(r => r.profiles[1] === communityId)
-    if (this.role(actorId, filtered) !== 'owner' || this.role(newOwnerId, filtered) !== 'moderator') throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
-    await this.data.write('community_relationships', all.map(r => {
-      if (r.profiles[1] !== communityId) return r
-      if (r.profiles[0] === actorId) return { ...r, type: 'moderator', updatedAt: Date.now() }
-      if (r.profiles[0] === newOwnerId) return { ...r, type: 'owner', updatedAt: Date.now() }
-      return r
-    }))
+    await this.data.update<CommunityRelationship>('community_relationships', all => {
+      const filtered = all.filter(r => r.profiles[1] === communityId)
+      if (this.role(actorId, filtered) !== 'owner' || this.role(newOwnerId, filtered) !== 'moderator') {
+        throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
+      }
+      return all.map(r => {
+        if (r.profiles[1] !== communityId) return r
+        if (r.profiles[0] === actorId) return { ...r, type: 'moderator', updatedAt: Date.now() }
+        if (r.profiles[0] === newOwnerId) return { ...r, type: 'owner', updatedAt: Date.now() }
+        return r
+      })
+    })
   }
 
 
@@ -469,17 +506,17 @@ export class DomainService {
     await this.uploads?.validateEditorImages(userId, content)
     const plainText = getRichTextPlainText(content)
     if (!title || title.length > 140 || !plainText || plainText.length > 8000 || content.length > 12000) throw new BadRequestException('INVALID_FORUM_TOPIC')
-    const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
     const now = Date.now()
     const topic: CommunityForumTopic = { id: randomUUID(), communityId, profileId, title, content, createdAt: now, updatedAt: now, isPinned: false, isLocked: false }
-    await this.data.write('community_forum_topics', [...topics, topic])
+    await this.data.update<CommunityForumTopic>('community_forum_topics', topics => [...topics, topic])
     try {
       await this.uploads?.attachEditorImages(userId, content, 'community-forum-topic', topic.id)
     } catch (error) {
       const rollbackErrors: unknown[] = []
       try {
-        const currentTopics = await this.data.read<CommunityForumTopic>('community_forum_topics')
-        await this.data.write('community_forum_topics', currentTopics.filter(item => item.id !== topic.id))
+        await this.data.update<CommunityForumTopic>('community_forum_topics', currentTopics =>
+          currentTopics.filter(item => item.id !== topic.id)
+        )
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError)
       }
@@ -504,18 +541,23 @@ export class DomainService {
     await this.uploads?.validateEditorImages(userId, content)
     const plainText = getRichTextPlainText(content)
     if (!plainText || plainText.length > 8000 || content.length > 12000) throw new BadRequestException('INVALID_FORUM_REPLY')
-    const replies = await this.data.read<CommunityForumReply>('community_forum_replies')
     const now = Date.now()
     const reply: CommunityForumReply = { id: randomUUID(), topicId, communityId, profileId, content, createdAt: now, updatedAt: now }
-    await this.data.write('community_forum_replies', [...replies, reply])
+    await this.data.update<CommunityForumReply>('community_forum_replies', replies => [...replies, reply])
     try {
       await this.uploads?.attachEditorImages(userId, content, 'community-forum-reply', reply.id)
-      await this.data.write('community_forum_topics', topics.map(record => record.id === topicId ? { ...record, updatedAt: now } : record))
+      await this.data.update<CommunityForumTopic>('community_forum_topics', currentTopics => {
+        const latestTopic = currentTopics.find(record => record.id === topicId && record.communityId === communityId)
+        if (!latestTopic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
+        if (latestTopic.isLocked) throw new ForbiddenException('FORUM_TOPIC_LOCKED')
+        return currentTopics.map(record => record.id === topicId ? { ...record, updatedAt: now } : record)
+      })
     } catch (error) {
       const rollbackErrors: unknown[] = []
       try {
-        const currentReplies = await this.data.read<CommunityForumReply>('community_forum_replies')
-        await this.data.write('community_forum_replies', currentReplies.filter(item => item.id !== reply.id))
+        await this.data.update<CommunityForumReply>('community_forum_replies', currentReplies =>
+          currentReplies.filter(item => item.id !== reply.id)
+        )
       } catch (rollbackError) {
         rollbackErrors.push(rollbackError)
       }
@@ -532,12 +574,19 @@ export class DomainService {
 
   async moderateCommunityForumTopic(userId: string, communityId: string, topicId: string, profileId: string, changes: { isPinned?: boolean; isLocked?: boolean }): Promise<CommunityForumTopic> {
     await this.assertForumStaff(userId, profileId, communityId)
-    const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
-    const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
-    if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
-    const updated: CommunityForumTopic = { ...topic, ...(typeof changes.isPinned === 'boolean' ? { isPinned: changes.isPinned } : {}), ...(typeof changes.isLocked === 'boolean' ? { isLocked: changes.isLocked } : {}), updatedAt: Date.now() }
-    await this.data.write('community_forum_topics', topics.map(record => record.id === topicId ? updated : record))
-    return updated
+    let updated: CommunityForumTopic | undefined
+    await this.data.update<CommunityForumTopic>('community_forum_topics', topics => {
+      const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
+      if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
+      updated = {
+        ...topic,
+        ...(typeof changes.isPinned === 'boolean' ? { isPinned: changes.isPinned } : {}),
+        ...(typeof changes.isLocked === 'boolean' ? { isLocked: changes.isLocked } : {}),
+        updatedAt: Date.now()
+      }
+      return topics.map(record => record.id === topicId ? updated! : record)
+    })
+    return updated!
   }
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
@@ -550,10 +599,14 @@ export class DomainService {
     if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
     const role = this.role(actorProfileId, await this.readCommunityRelationships(communityId))
     if (topic.profileId !== actorProfileId && role !== 'owner' && role !== 'moderator') throw new ForbiddenException('FORUM_DELETE_NOT_ALLOWED')
-    const replies = await this.data.read<CommunityForumReply>('community_forum_replies')
-    const topicReplies = replies.filter(reply => reply.topicId === topicId)
-    await this.data.write('community_forum_topics', topics.filter(record => record.id !== topicId))
-    await this.data.write('community_forum_replies', replies.filter(reply => reply.topicId !== topicId))
+    await this.data.update<CommunityForumTopic>('community_forum_topics', current =>
+      current.filter(record => record.id !== topicId)
+    )
+    let topicReplies: CommunityForumReply[] = []
+    await this.data.update<CommunityForumReply>('community_forum_replies', current => {
+      topicReplies = current.filter(reply => reply.topicId === topicId)
+      return current.filter(reply => reply.topicId !== topicId)
+    })
     await this.uploads?.detachResourceAttachments(null, 'community-forum-topic', topicId)
     for (const reply of topicReplies) {
       await this.uploads?.detachResourceAttachments(null, 'community-forum-reply', reply.id)
@@ -570,10 +623,13 @@ export class DomainService {
     if (!reply) throw new NotFoundException('FORUM_REPLY_NOT_FOUND')
     const role = this.role(actorProfileId, await this.readCommunityRelationships(communityId))
     if (reply.profileId !== actorProfileId && role !== 'owner' && role !== 'moderator') throw new ForbiddenException('FORUM_DELETE_NOT_ALLOWED')
-    await this.data.write('community_forum_replies', replies.filter(record => record.id !== replyId))
+    await this.data.update<CommunityForumReply>('community_forum_replies', current =>
+      current.filter(record => record.id !== replyId)
+    )
     await this.uploads?.detachResourceAttachments(null, 'community-forum-reply', replyId)
-    const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
-    await this.data.write('community_forum_topics', topics.map(topic => topic.id === reply.topicId ? { ...topic, updatedAt: Date.now() } : topic))
+    await this.data.update<CommunityForumTopic>('community_forum_topics', topics =>
+      topics.map(topic => topic.id === reply.topicId ? { ...topic, updatedAt: Date.now() } : topic)
+    )
   }
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
@@ -596,9 +652,8 @@ export class DomainService {
       throw new ConflictException('INVALID_MESSAGE')
     }
     if (!(await this.readProfiles()).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
-    const all = await this.readMessages()
     const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }
-    await this.data.write('profile_messages', [...all, message])
+    await this.data.update<ProfileMessage>('profile_messages', current => [...current, message])
     await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
     return message
   }
@@ -663,7 +718,20 @@ export class DomainService {
         about: sanitizeRichText(community.about ?? '')
       }
     })
-    if (hasTypeChanges || hasPrivacyChanges) await this.data.write('communities', communities)
+    if (hasTypeChanges || hasPrivacyChanges) {
+      await this.data.update<Community>('communities', current => current.map(community => {
+        const ownerProfileId = relationships.find(record =>
+          record.profiles[1] === community.id && record.type === 'owner'
+        )?.profiles[0]
+        const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
+        const privacy = ['public', 'private', 'unlisted'].includes(community.privacy) ? community.privacy : 'public'
+        return {
+          ...community,
+          ...(inheritedType ? { type: inheritedType } : {}),
+          privacy
+        }
+      }))
+    }
     return communities
   }
 

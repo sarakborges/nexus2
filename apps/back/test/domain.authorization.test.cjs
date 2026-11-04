@@ -38,7 +38,11 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, records) { collections.set(name, structuredClone(records)) }
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    }
   }
   const auth = {
     async getUser(userId) {

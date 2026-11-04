@@ -9,7 +9,7 @@ function createAuthHarness() {
   ])
   const repository = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, records) { collections.set(name, structuredClone(records)) }
+    async update(name, updater) { const next = updater(structuredClone(collections.get(name) ?? [])); collections.set(name, structuredClone(next)); return structuredClone(next) }
   }
   const signedTokens = new Map()
   let tokenCounter = 0
@@ -107,4 +107,34 @@ test('remove-profile rolls back ownership and restores the previous active profi
   const updated = await service.getUser(user.id)
   assert.deepEqual(updated.profiles, ['profile-first'])
   assert.equal(updated.currentProfile, 'profile-first')
+})
+
+
+test('concurrent refresh requests rotate a refresh token only once', async () => {
+  const { service, collections } = createAuthHarness()
+  const initial = await service.signUp({ email: 'race@example.com', password: 'a-secure-password' })
+
+  const results = await Promise.allSettled([
+    service.refresh(initial.refreshToken),
+    service.refresh(initial.refreshToken)
+  ])
+
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
+  assert.equal(results.filter(result => result.status === 'rejected').length, 1)
+  const rejection = results.find(result => result.status === 'rejected')
+  assert.equal(rejection.reason.getStatus(), 401)
+  assert.equal(rejection.reason.message, 'REFRESH_TOKEN_REVOKED')
+  assert.equal(collections.get('refresh_tokens').length, 1)
+})
+
+test('concurrent sign-ups cannot create duplicate normalized emails', async () => {
+  const { service, collections } = createAuthHarness()
+  const results = await Promise.allSettled([
+    service.signUp({ email: 'same@example.com', password: 'a-secure-password' }),
+    service.signUp({ email: ' SAME@example.com ', password: 'another-secure-password' })
+  ])
+
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
+  assert.equal(results.filter(result => result.status === 'rejected').length, 1)
+  assert.equal(collections.get('accounts').length, 1)
 })

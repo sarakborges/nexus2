@@ -23,7 +23,11 @@ function harness(owned = {}, uploads = null) {
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, rows) { collections.set(name, structuredClone(rows)) }
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    }
   }
   const auth = {
     async getUser(id) { const ids = owned[id] ?? []; return { id, email: id + '@example.com', profiles: ids, currentProfile: ids[0] ?? null } },
