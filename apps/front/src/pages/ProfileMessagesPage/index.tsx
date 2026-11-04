@@ -81,12 +81,12 @@ export function ProfileMessagesPage() {
   }
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading) return <main className="account-page"><div className="social-page__content-stack"><RequestState isLoading /></section></main>
+  if (profileQuery.isLoading) return <main className="account-page"><section className="account-card"><RequestState isLoading /></section></main>
   if (profileQuery.isError) return <main className="account-page"><section className="account-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
   if (!profile) return <NotFoundPage />
 
   return (
-    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="messages" />}><section className="account-card">
+    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="messages" />}><div className="social-page__content-stack">
       <RequestState isFetching={profileQuery.isFetching} />
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <header className="account-card__header">
