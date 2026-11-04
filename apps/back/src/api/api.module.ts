@@ -8,11 +8,13 @@ import { DomainAccessService } from './domain/domain-access.service'
 import { CommunityForumService } from './domain/community-forum.service'
 import { ProfileMessageService } from './domain/profile-message.service'
 import { ActivityService } from './domain/activity.service'
+import { ProfileService } from './domain/profile.service'
+import { CommunityService } from './domain/community.service'
 import { UploadsController, UploadsInternalController } from './uploads/uploads.controller'
 import { UploadsService } from './uploads/uploads.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AuthService, DomainAccessService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AuthService, DomainAccessService, ProfileService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}
