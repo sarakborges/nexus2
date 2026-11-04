@@ -10,6 +10,7 @@ import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { createUserProfile } from '@/Services/Profile'
+import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -33,9 +34,14 @@ export function CreateProfilePage() {
   const createProfileMutation = useMutation({
     mutationFn: async () => {
       const profile = await createUserProfile({ name, url: url || undefined, picture, about, type })
-      if (!useAuthStore.getState().addProfileToUser(profile.id, true)) {
+      const backendSession = await getCurrentAuthSession().catch(() => null)
+
+      if (backendSession?.user.profiles.includes(profile.id)) {
+        useAuthStore.getState().setSession(backendSession)
+      } else if (!useAuthStore.getState().addProfileToUser(profile.id, true)) {
         throw new Error('PROFILE_CREATION_SESSION_MISSING')
       }
+
       return profile
     },
     onSuccess: async profile => {
@@ -56,7 +62,7 @@ export function CreateProfilePage() {
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
       const result = await createProfileMutation.mutateAsync()
-      navigate(ROUTES.profile + '/' + result.profile.url, { replace: true })
+      navigate(ROUTES.profile + '/' + result.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key = code === 'PROFILE_URL_ALREADY_IN_USE' ? 'PROFILE_ERROR_URL_TAKEN' : code === 'INVALID_PROFILE' ? 'PROFILE_ERROR_INVALID' : 'PROFILE_ERROR_GENERIC'
