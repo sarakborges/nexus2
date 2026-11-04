@@ -243,6 +243,37 @@ export class UploadsService {
     }
   }
 
+  attachAvatarUrlToRecords(
+    records: UploadedFileRecord[],
+    userId: string,
+    url: string,
+    purpose: 'profile-avatar' | 'community-avatar',
+    resourceType: 'profile' | 'community',
+    resourceId: string
+  ): UploadedFileRecord[] {
+    const path = this.getAvatarPath(url)
+    if (!path) return records
+    const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
+    if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
+      record.status !== 'ready' || record.resourceType ||
+      (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
+      throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    }
+    return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
+  }
+
+  attachAvatarRecordToRecords(
+    records: UploadedFileRecord[],
+    userId: string,
+    uploadId: string,
+    purpose: 'profile-avatar' | 'community-avatar',
+    resourceType: 'profile' | 'community',
+    resourceId: string
+  ): UploadedFileRecord[] {
+    const record = this.getReadyAvatar(records, userId, uploadId, purpose)
+    return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
+  }
+
   async attachAvatarUrl(
     userId: string,
     url: string,
@@ -250,52 +281,44 @@ export class UploadsService {
     resourceType: 'profile' | 'community',
     resourceId: string
   ): Promise<void> {
-    const path = this.getAvatarPath(url)
-    if (!path) return
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-    if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
-      record.status !== 'ready' || record.resourceType ||
-      (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
-      throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-    }
-    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-      const latest = currentRecords.find(item => item.id === record.id)
-      if (!latest || latest.ownerUserId !== userId || latest.purpose !== purpose ||
-        latest.status !== 'ready' || latest.resourceType ||
-        (latest.completedAt ?? latest.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
-        throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-      }
-      return currentRecords.map(item => item.id === latest.id ? { ...item, resourceType, resourceId } : item)
-    })
+    await this.data.update<UploadedFileRecord>('media_files', records =>
+      this.attachAvatarUrlToRecords(records, userId, url, purpose, resourceType, resourceId)
+    )
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
     await this.assertOwnsProfile(userId, profileId)
-    const profiles = await this.data.read<{ id: string; picture: string }>('profiles')
-    const profile = profiles.find(item => item.id === profileId)
-    if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
+      ['profiles', 'media_files'],
+      collections => {
+        const profiles = collections.profiles as Array<{ id: string; picture: string }>
+        const records = collections.media_files as UploadedFileRecord[]
+        const profile = profiles.find(item => item.id === profileId)
+        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
 
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const next = uploadId
-      ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
-      : null
-    const picture = next ? this.publicUrl(next.path) : ''
+        const next = uploadId
+          ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
+          : null
+        const picture = next ? this.publicUrl(next.path) : ''
+        const nextRecords = next
+          ? records.map(item => item.id === next.id
+            ? { ...item, resourceType: 'profile' as const, resourceId: profileId }
+            : item)
+          : records
 
-    await this.data.update<{ id: string; picture: string }>('profiles', currentProfiles => {
-      if (!currentProfiles.some(item => item.id === profileId)) throw new NotFoundException('PROFILE_NOT_FOUND')
-      return currentProfiles.map(item => item.id === profileId ? { ...item, picture } : item)
-    })
-    if (next) {
-      await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-        const latest = this.getReadyAvatar(currentRecords, userId, next.id, 'profile-avatar')
-        return currentRecords.map(item => item.id === latest.id
-          ? { ...item, resourceType: 'profile', resourceId: profileId }
-          : item)
-      })
-    }
-    await this.deletePreviousAvatar(profile.picture, next?.id)
-    return { picture }
+        return {
+          records: {
+            ...collections,
+            profiles: profiles.map(item => item.id === profileId ? { ...item, picture } : item),
+            media_files: nextRecords
+          },
+          result: { picture, previousPicture: profile.picture }
+        }
+      }
+    )
+
+    await this.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
+    return { picture: result.picture }
   }
 
   async setCommunityAvatar(
@@ -305,30 +328,37 @@ export class UploadsService {
     uploadId: string | null
   ): Promise<{ picture: string }> {
     await this.assertCommunityStaff(userId, communityId, actorProfileId)
-    const communities = await this.data.read<{ id: string; picture: string }>('communities')
-    const community = communities.find(item => item.id === communityId)
-    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
+      ['communities', 'media_files'],
+      collections => {
+        const communities = collections.communities as Array<{ id: string; picture: string }>
+        const records = collections.media_files as UploadedFileRecord[]
+        const community = communities.find(item => item.id === communityId)
+        if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
 
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const next = uploadId
-      ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
-      : null
-    const picture = next ? this.publicUrl(next.path) : ''
+        const next = uploadId
+          ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
+          : null
+        const picture = next ? this.publicUrl(next.path) : ''
+        const nextRecords = next
+          ? records.map(item => item.id === next.id
+            ? { ...item, resourceType: 'community' as const, resourceId: communityId }
+            : item)
+          : records
 
-    await this.data.update<{ id: string; picture: string }>('communities', currentCommunities => {
-      if (!currentCommunities.some(item => item.id === communityId)) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-      return currentCommunities.map(item => item.id === communityId ? { ...item, picture } : item)
-    })
-    if (next) {
-      await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-        const latest = this.getReadyAvatar(currentRecords, userId, next.id, 'community-avatar')
-        return currentRecords.map(item => item.id === latest.id
-          ? { ...item, resourceType: 'community', resourceId: communityId }
-          : item)
-      })
-    }
-    await this.deletePreviousAvatar(community.picture, next?.id)
-    return { picture }
+        return {
+          records: {
+            ...collections,
+            communities: communities.map(item => item.id === communityId ? { ...item, picture } : item),
+            media_files: nextRecords
+          },
+          result: { picture, previousPicture: community.picture }
+        }
+      }
+    )
+
+    await this.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
+    return { picture: result.picture }
   }
 
   async validateEditorImages(userId: string, html: string): Promise<void> {
@@ -338,6 +368,46 @@ export class UploadsService {
     for (const id of ids) this.getReadyEditorImage(records, userId, id)
   }
 
+  attachEditorImagesToRecords(
+    records: UploadedFileRecord[],
+    userId: string,
+    html: string,
+    resourceType: UploadResourceType,
+    resourceId: string,
+    messageParticipants?: { fromProfileId: string; toProfileId: string }
+  ): UploadedFileRecord[] {
+    const ids = this.extractEditorImageIds(html)
+    if (!ids.length) return records
+    const idSet = new Set(ids)
+    for (const id of ids) this.getReadyEditorImage(records, userId, id)
+    return records.map(item => idSet.has(item.id)
+      ? {
+          ...item,
+          resourceType,
+          resourceId,
+          messageFromProfileId: messageParticipants?.fromProfileId ?? null,
+          messageToProfileId: messageParticipants?.toProfileId ?? null
+        }
+      : item)
+  }
+
+  detachResourceAttachmentsFromRecords(
+    records: UploadedFileRecord[],
+    userId: string | null,
+    resources: Array<{ resourceType: UploadResourceType; resourceId: string }>
+  ): UploadedFileRecord[] {
+    if (!resources.length) return records
+    const resourceKeys = new Set(resources.map(resource =>
+      JSON.stringify([resource.resourceType, resource.resourceId])
+    ))
+    return records.map(item =>
+      (!userId || item.ownerUserId === userId) &&
+      resourceKeys.has(JSON.stringify([item.resourceType, item.resourceId]))
+        ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
+        : item
+    )
+  }
+
   async attachEditorImages(
     userId: string,
     html: string,
@@ -345,21 +415,9 @@ export class UploadsService {
     resourceId: string,
     messageParticipants?: { fromProfileId: string; toProfileId: string }
   ): Promise<void> {
-    const ids = this.extractEditorImageIds(html)
-    if (!ids.length) return
-    const idSet = new Set(ids)
-    await this.data.update<UploadedFileRecord>('media_files', records => {
-      for (const id of ids) this.getReadyEditorImage(records, userId, id)
-      return records.map(item => idSet.has(item.id)
-        ? {
-            ...item,
-            resourceType,
-            resourceId,
-            messageFromProfileId: messageParticipants?.fromProfileId ?? null,
-            messageToProfileId: messageParticipants?.toProfileId ?? null
-          }
-        : item)
-    })
+    await this.data.update<UploadedFileRecord>('media_files', records =>
+      this.attachEditorImagesToRecords(records, userId, html, resourceType, resourceId, messageParticipants)
+    )
   }
 
   async detachResourceAttachments(
@@ -367,17 +425,9 @@ export class UploadsService {
     resourceType: UploadResourceType,
     resourceId: string
   ): Promise<void> {
-    await this.data.update<UploadedFileRecord>('media_files', records => {
-      const belongsToResource = (item: UploadedFileRecord) =>
-        (!userId || item.ownerUserId === userId) &&
-        item.resourceType === resourceType &&
-        item.resourceId === resourceId
-      return records.map(item =>
-        belongsToResource(item)
-          ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
-          : item
-      )
-    })
+    await this.data.update<UploadedFileRecord>('media_files', records =>
+      this.detachResourceAttachmentsFromRecords(records, userId, [{ resourceType, resourceId }])
+    )
   }
 
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {
