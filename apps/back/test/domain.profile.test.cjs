@@ -11,7 +11,8 @@ function createHarness({ uploads, failTransaction = false } = {}) {
   }
   const collections = new Map([
     ['profiles', []],
-    ['accounts', [account]]
+    ['accounts', [account]],
+    ['media_files', []]
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
