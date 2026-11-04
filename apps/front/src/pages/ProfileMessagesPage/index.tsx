@@ -70,7 +70,8 @@ export function ProfileMessagesPage() {
       if (page !== 1) setPage(1)
       showToast(t('TOAST_MESSAGE_SENT'))
       await queryClient.invalidateQueries({ queryKey: ['profile-messages', profile?.id] })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

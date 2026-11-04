@@ -243,6 +243,7 @@ export const ptBRTranslations = {
   PROFILE_MESSAGES_SENDERS_ERROR: 'Não foi possível carregar os perfis de quem enviou as mensagens.',
 
   TOAST_NOTIFICATIONS: 'Notificações',
+  TOAST_ACTION_FAILED: 'Não foi possível concluir a ação. Tente novamente.',
   FORUM_PINNED: 'Fixado',
   PROFILE_TYPE_MISMATCH_NOTICE: 'Você só pode interagir com perfis e comunidades do mesmo tipo que o seu.',
   TOAST_PROFILE_SWITCHED: 'Perfil ativo alterado.',

@@ -241,6 +241,7 @@ export const enUSTranslations = {
   PROFILE_MESSAGES_SENDERS_ERROR: 'Sender profiles could not be loaded.',
 
   TOAST_NOTIFICATIONS: 'Notifications',
+  TOAST_ACTION_FAILED: 'The action could not be completed. Please try again.',
   FORUM_PINNED: 'Pinned',
   PROFILE_TYPE_MISMATCH_NOTICE: 'You can only interact with profiles and communities of the same type as yours.',
   TOAST_PROFILE_SWITCHED: 'Active profile changed.',

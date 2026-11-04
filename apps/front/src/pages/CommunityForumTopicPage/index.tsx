@@ -95,14 +95,16 @@ export function CommunityForumTopicPage() {
       setReplyContent('')
       showToast(t('TOAST_FORUM_REPLY_CREATED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const moderationMutation = useMutation({
     mutationFn: (changes: { isPinned?: boolean; isLocked?: boolean }) => moderateCommunityForumTopic(community!.id, topicId!, forumProfileId!, changes),
     onSuccess: async () => {
       showToast(t('TOAST_FORUM_TOPIC_UPDATED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const deleteTopicMutation = useMutation({
     mutationFn: () => deleteCommunityForumTopic(community!.id, topicId!, forumProfileId!),
@@ -110,14 +112,16 @@ export function CommunityForumTopicPage() {
       showToast(t('TOAST_FORUM_CONTENT_DELETED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
       navigate(`${ROUTES.community}/${community!.url}/forum`, { replace: true })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const deleteReplyMutation = useMutation({
     mutationFn: (replyId: string) => deleteCommunityForumReply(community!.id, replyId, forumProfileId!),
     onSuccess: async () => {
       showToast(t('TOAST_FORUM_CONTENT_DELETED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
 
   const submitReply = async (event: FormEvent<HTMLFormElement>) => {

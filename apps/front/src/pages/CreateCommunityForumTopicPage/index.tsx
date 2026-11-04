@@ -74,7 +74,8 @@ export function CreateCommunityForumTopicPage() {
       showToast(t('TOAST_FORUM_TOPIC_CREATED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
       navigate(ROUTES.community + '/' + community!.url + '/forum/' + topic.id, { replace: true })
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
