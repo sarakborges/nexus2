@@ -86,6 +86,9 @@ export class JsonFileRepository implements DataRepository {
             if (original === null) {
               await unlink(path)
             } else {
+              if (typeof original !== 'string') {
+                throw new Error('Missing original collection contents during rollback.')
+              }
               const temporary = path + '.' + randomUUID() + '.rollback'
               await writeFile(temporary, original, { encoding: 'utf8', mode: 0o600 })
               await rename(temporary, path)
