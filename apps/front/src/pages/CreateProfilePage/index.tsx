@@ -9,7 +9,8 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { createUserProfile } from '@/Services/Profile'
+import { createUserProfile, getProfileByUrl } from '@/Services/Profile'
+import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -31,16 +32,38 @@ export function CreateProfilePage() {
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useMutation({
     mutationFn: async () => {
-      const profile = await createUserProfile({ name, url, picture, about, type })
-      const isCurrentProfileSet = await setCurrentProfile(profile.id)
-      if (!isCurrentProfileSet) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
-      return profile
+      const created = await createUserProfile({ name, url, picture, about, type })
+      const [backendSession, backendProfile] = await Promise.all([
+        getCurrentAuthSession(),
+        getProfileByUrl(created.url)
+      ])
+
+      if (!backendSession || !backendSession.user.profiles.includes(created.id) || !backendProfile) {
+        throw new Error('PROFILE_CREATE_BACKEND_SYNC_FAILED')
+      }
+
+      useAuthStore.getState().setSession(backendSession)
+      let activated = await useAuthStore.getState().setCurrentProfile(backendProfile.id)
+      if (!activated) {
+        const refreshedSession = await getCurrentAuthSession()
+        if (refreshedSession) useAuthStore.getState().setSession(refreshedSession)
+        activated = Boolean(
+          refreshedSession?.user.profiles.includes(backendProfile.id) &&
+          await useAuthStore.getState().setCurrentProfile(backendProfile.id)
+        )
+      }
+
+      return { profile: backendProfile, activationFailed: !activated }
     },
-    onSuccess: async profile => {
+    onSuccess: async ({ profile, activationFailed }) => {
       queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
-      await queryClient.invalidateQueries({ queryKey: ['profiles', 'owned', user?.id] })
-      showToast(t('TOAST_PROFILE_CREATED'))
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+        queryClient.invalidateQueries({ queryKey: ['auth'] }),
+        queryClient.invalidateQueries({ queryKey: ['activity'] })
+      ])
+      showToast(t(activationFailed ? 'TOAST_PROFILE_CREATED_NOT_ACTIVE' : 'TOAST_PROFILE_CREATED'), activationFailed ? 'error' : undefined)
     }
   })
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -48,8 +71,8 @@ export function CreateProfilePage() {
     setErrorMessage('')
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
-      const profile = await createProfileMutation.mutateAsync()
-      navigate(ROUTES.profile + '/' + profile.url, { replace: true })
+      const result = await createProfileMutation.mutateAsync()
+      navigate(ROUTES.profile + '/' + result.profile.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key = code === 'PROFILE_URL_ALREADY_IN_USE' ? 'PROFILE_ERROR_URL_TAKEN' : code === 'INVALID_PROFILE' ? 'PROFILE_ERROR_INVALID' : 'PROFILE_ERROR_GENERIC'

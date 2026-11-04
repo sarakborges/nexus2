@@ -57,7 +57,6 @@ export function ProfileSidebar({ profile, active, showRelationshipActions = true
         <Link to={ROUTES.profile + '/' + profile.url + '/friends'} aria-current={active === 'friends' ? 'page' : undefined}>{t('PROFILE_FRIENDS_LINK')}</Link>
         <Link to={ROUTES.profile + '/' + profile.url + '/communities'} aria-current={active === 'communities' ? 'page' : undefined}>{t('PROFILE_COMMUNITIES_LINK')}</Link>
         <Link to={ROUTES.profile + '/' + profile.url + '/messages'} aria-current={active === 'messages' ? 'page' : undefined}>{t('PROFILE_MESSAGES_LINK')}</Link>
-        <Link to={ROUTES.communities} aria-current={active === 'community-list' ? 'page' : undefined}>{t('COMMUNITIES_TITLE')}</Link>
       </nav>
     </div>
   )

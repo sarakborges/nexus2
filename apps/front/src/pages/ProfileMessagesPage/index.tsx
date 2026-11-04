@@ -86,7 +86,7 @@ export function ProfileMessagesPage() {
   if (!profile) return <NotFoundPage />
 
   return (
-    <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="messages" />}><section className="account-card">
+    <SocialPageLayout className="social-page--wide-content" sidebar={<ProfileSidebar profile={profile} active="messages" />}><section className="account-card">
       <RequestState isFetching={profileQuery.isFetching} />
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
       <header className="account-card__header">
