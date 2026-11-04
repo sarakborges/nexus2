@@ -4,7 +4,6 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityByUrl } from '@/Services/Community'
@@ -24,6 +23,7 @@ export function CommunityForumTopicPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const session = useAuthStore(state => state.session)
+  const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore(state => state.showToast)
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
@@ -36,18 +36,35 @@ export function CommunityForumTopicPage() {
     enabled: Boolean(normalized)
   })
   const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
   const relationshipsQuery = useQuery({
     queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
     queryFn: () => getCommunityRelationships(community!.id),
     enabled: Boolean(community?.id)
   })
-  const currentRole = relationshipsQuery.data?.find(record =>
-    record.profiles[0] === currentProfileId && record.profiles[1] === community?.id
-  )?.type ?? null
-  const isMember = ['owner', 'moderator', 'connection'].includes(currentRole ?? '')
+  const ownedProfilesQuery = useQuery({
+    queryKey: queryKeys.profiles.byIds(profileIds),
+    queryFn: () => getProfilesByIds(profileIds),
+    enabled: profileIds.length > 0
+  })
+  const rolesByProfileId = new Map(
+    (relationshipsQuery.data ?? [])
+      .filter(record => record.profiles[1] === community?.id)
+      .map(record => [record.profiles[0], record.type] as const)
+  )
+  const eligibleProfiles = (ownedProfilesQuery.data ?? []).filter(profile =>
+    profile.type === community?.type && ['owner', 'moderator', 'connection'].includes(rolesByProfileId.get(profile.id) ?? '')
+  )
+  const forumProfile =
+    eligibleProfiles.find(profile => profile.id === currentProfileId) ??
+    eligibleProfiles.find(profile => rolesByProfileId.get(profile.id) === 'owner') ??
+    eligibleProfiles.find(profile => rolesByProfileId.get(profile.id) === 'moderator') ??
+    eligibleProfiles[0] ??
+    null
+  const forumProfileId = forumProfile?.id ?? null
+  const currentRole = forumProfileId ? rolesByProfileId.get(forumProfileId) ?? null : null
+  const isMember = Boolean(forumProfileId)
   const isStaff = currentRole === 'owner' || currentRole === 'moderator'
-  const canInteract = Boolean(currentProfileId && typeCompatibility.isCompatible && !typeCompatibility.isChecking)
+  const canInteract = Boolean(forumProfileId)
   const topicQuery = useQuery({
     queryKey: queryKeys.communityForumTopic(community?.id ?? '', topicId ?? '', page, pageSize),
     queryFn: () => getCommunityForumTopic(community!.id, topicId!, { page, pageSize }),
@@ -65,7 +82,7 @@ export function CommunityForumTopicPage() {
   const authorsById = useMemo(() => new Map((authorsQuery.data ?? []).map(profile => [profile.id, profile] as const)), [authorsQuery.data])
 
   const replyMutation = useMutation({
-    mutationFn: () => createCommunityForumReply(community!.id, topicId!, currentProfileId!, replyContent),
+    mutationFn: () => createCommunityForumReply(community!.id, topicId!, forumProfileId!, replyContent),
     onSuccess: async () => {
       setReplyContent('')
       showToast(t('TOAST_FORUM_REPLY_CREATED'))
@@ -73,14 +90,14 @@ export function CommunityForumTopicPage() {
     }
   })
   const moderationMutation = useMutation({
-    mutationFn: (changes: { isPinned?: boolean; isLocked?: boolean }) => moderateCommunityForumTopic(community!.id, topicId!, currentProfileId!, changes),
+    mutationFn: (changes: { isPinned?: boolean; isLocked?: boolean }) => moderateCommunityForumTopic(community!.id, topicId!, forumProfileId!, changes),
     onSuccess: async () => {
       showToast(t('TOAST_FORUM_TOPIC_UPDATED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
     }
   })
   const deleteTopicMutation = useMutation({
-    mutationFn: () => deleteCommunityForumTopic(community!.id, topicId!, currentProfileId!),
+    mutationFn: () => deleteCommunityForumTopic(community!.id, topicId!, forumProfileId!),
     onSuccess: async () => {
       showToast(t('TOAST_FORUM_CONTENT_DELETED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
@@ -88,7 +105,7 @@ export function CommunityForumTopicPage() {
     }
   })
   const deleteReplyMutation = useMutation({
-    mutationFn: (replyId: string) => deleteCommunityForumReply(community!.id, replyId, currentProfileId!),
+    mutationFn: (replyId: string) => deleteCommunityForumReply(community!.id, replyId, forumProfileId!),
     onSuccess: async () => {
       showToast(t('TOAST_FORUM_CONTENT_DELETED'))
       await queryClient.invalidateQueries({ queryKey: ['community-forum', community?.id] })
@@ -108,7 +125,7 @@ export function CommunityForumTopicPage() {
   if (!community || !detail || !topic) return <NotFoundPage />
 
   const topicAuthor = authorsById.get(topic.profileId)
-  const canDeleteTopic = Boolean(canInteract && currentProfileId && (topic.profileId === currentProfileId || isStaff))
+  const canDeleteTopic = Boolean(canInteract && forumProfileId && (topic.profileId === forumProfileId || isStaff))
 
   return (
     <main className="account-page">
@@ -121,7 +138,6 @@ export function CommunityForumTopicPage() {
           <Link className="account-card__link" to={`${ROUTES.community}/${community.url}/forum`}>{t('FORUM_BACK')}</Link>
         </header>
 
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}
 
         <article className="community-forum__post">
           <header className="community-forum__post-header">
@@ -129,7 +145,7 @@ export function CommunityForumTopicPage() {
             <time dateTime={new Date(topic.createdAt).toISOString()}>{new Date(topic.createdAt).toLocaleString()}</time>
           </header>
           <div className="community-forum__post-content rich-text-content" dangerouslySetInnerHTML={{ __html: topic.content }} />
-          {(canInteract && (isStaff || topic.profileId === currentProfileId)) && (
+          {(canInteract && (isStaff || topic.profileId === forumProfileId)) && (
             <div className="community-forum__actions">
               {isStaff && <>
                 <Button variation="secondary" disabled={moderationMutation.isPending} onClick={() => moderationMutation.mutate({ isPinned: !topic.isPinned })}>{t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}</Button>
@@ -156,14 +172,14 @@ export function CommunityForumTopicPage() {
             <p className="account-card__description">{t('FORUM_MEMBERS_ONLY')}</p>
           )}
           <RequestState
-            isLoading={authorsQuery.isLoading}
+            isLoading={authorsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isLoading}
             isFetching={topicQuery.isFetching || authorsQuery.isFetching}
             isError={authorsQuery.isError}
             onRetry={() => void authorsQuery.refetch()}
           >
             {replies.map(reply => {
               const author = authorsById.get(reply.profileId)
-              const canDelete = Boolean(canInteract && currentProfileId && (reply.profileId === currentProfileId || isStaff))
+              const canDelete = Boolean(canInteract && currentProfileId && (reply.profileId === forumProfileId || isStaff))
               return (
                 <article className="community-forum__reply" key={reply.id}>
                   <header className="community-forum__post-header">
