@@ -38,7 +38,7 @@ export function ProfileCommunitiesPage() {
   }, [communitiesQuery.data, page, setPage])
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading) return <main className="account-page"><section className="account-card"><RequestState isLoading /></section></main>
+  if (profileQuery.isLoading) return <main className="account-page"><div className="social-page__content-stack"><RequestState isLoading /></section></main>
   if (profileQuery.isError) return <main className="account-page"><section className="account-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
   if (!profile) return <NotFoundPage />
 
@@ -75,7 +75,7 @@ export function ProfileCommunitiesPage() {
         ))}</div>
       </RequestState>
       <Pagination page={page} pageSize={pageSize} totalItems={totalItems} onPageChange={setPage} />
-      </section>
+      </div>
     </SocialPageLayout>
   )
 }
