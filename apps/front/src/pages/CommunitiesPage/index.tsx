@@ -36,11 +36,11 @@ export function CommunitiesPage() {
     if (communitiesQuery.data && communitiesQuery.data.page !== page) setPage(communitiesQuery.data.page)
   }, [communitiesQuery.data, page, setPage])
 
-  if (!currentProfile) return <main className="account-page"><div className="social-page__content-stack"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
+  if (!currentProfile) return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
 
   return (
     <SocialPageLayout sidebar={<ProfileSidebar profile={currentProfile} active="community-list" showRelationshipActions={false} />}>
-      <section className="account-card">
+      <div className="social-page__content-stack">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
           <ButtonLink className="account-card__action" variation="primary" to={ROUTES.createCommunity}>{t('COMMUNITIES_CREATE')}</ButtonLink>
