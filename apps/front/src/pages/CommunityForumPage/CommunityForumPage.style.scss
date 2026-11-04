@@ -270,3 +270,18 @@
   .community-forum__topic-last-post { text-align: left; }
   .community-forum__author-avatar { height: auto; }
 }
+
+@media (max-width: 600px) {
+  .community-forum__topic {
+    grid-template-columns: 44px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+  }
+  .community-forum__topic-author { grid-row: 1 / span 2; }
+  .community-forum__topic-main { grid-column: 2; }
+  .community-forum__topic-stats {
+    grid-column: 2;
+    justify-items: start;
+    min-width: 0;
+  }
+}
