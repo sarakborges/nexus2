@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
+import type { AccountRecord } from '../auth/auth.types'
 
 export type UploadPurpose = 'profile-avatar' | 'community-avatar' | 'editor-image'
 export type UploadResourceType = 'profile' | 'community' | 'profile-message' | 'community-forum-topic' | 'community-forum-reply'
@@ -287,12 +288,14 @@ export class UploadsService {
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
-    await this.assertOwnsProfile(userId, profileId)
     const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['profiles', 'media_files'],
+      ['accounts', 'profiles', 'media_files'],
       collections => {
-        const profiles = collections.profiles as Array<{ id: string; picture: string }>
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Array<{ id: string; picture: string; type?: string }>
         const records = collections.media_files as UploadedFileRecord[]
+        this.assertOwnsProfileInRecords(userId, profileId, accounts, profiles)
+
         const profile = profiles.find(item => item.id === profileId)
         if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
 
@@ -327,14 +330,36 @@ export class UploadsService {
     actorProfileId: string,
     uploadId: string | null
   ): Promise<{ picture: string }> {
-    await this.assertCommunityStaff(userId, communityId, actorProfileId)
     const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['communities', 'media_files'],
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
       collections => {
-        const communities = collections.communities as Array<{ id: string; picture: string }>
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Array<{ id: string; type?: string }>
+        const communities = collections.communities as Array<{ id: string; picture: string; type?: string }>
+        const relationships = collections.community_relationships as Array<{
+          profiles: [string, string]; type: string
+        }>
         const records = collections.media_files as UploadedFileRecord[]
+        this.assertOwnsProfileInRecords(userId, actorProfileId, accounts, profiles)
+
+        const actor = profiles.find(item => item.id === actorProfileId)
         const community = communities.find(item => item.id === communityId)
-        if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        const ownerProfileId = relationships.find(item =>
+          item.profiles[1] === communityId && item.type === 'owner'
+        )?.profiles[0]
+        const owner = ownerProfileId
+          ? profiles.find(item => item.id === ownerProfileId)
+          : undefined
+        if (!actor || !community || !owner) {
+          throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        }
+        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+        const role = relationships.find(item =>
+          item.profiles[0] === actorProfileId && item.profiles[1] === communityId
+        )?.type
+        if (role !== 'owner' && role !== 'moderator') {
+          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+        }
 
         const next = uploadId
           ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
@@ -527,6 +552,28 @@ export class UploadsService {
       ['owner', 'moderator', 'connection'].includes(record.type)
     )
     if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
+  }
+
+  private assertOwnsProfileInRecords(
+    userId: string,
+    profileId: string,
+    accounts: readonly AccountRecord[],
+    profiles: readonly { id: string; type?: string }[]
+  ): void {
+    const account = accounts.find(item => item.id === userId)
+    if (!account || !account.profiles.includes(profileId)) {
+      throw new ForbiddenException('PROFILE_NOT_OWNED')
+    }
+    if (!account.currentProfile) return
+    const currentProfile = profiles.find(profile => profile.id === account.currentProfile)
+    const targetProfile = profiles.find(profile => profile.id === profileId)
+    if (
+      currentProfile?.type &&
+      targetProfile?.type &&
+      currentProfile.type !== targetProfile.type
+    ) {
+      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    }
   }
 
   private async assertOwnsProfile(userId: string, profileId: string): Promise<void> {

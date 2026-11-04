@@ -7,7 +7,7 @@ const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
 
-function createHarness(initial = {}, activeProfileId = null) {
+function createHarness(initial = {}, activeProfileId = null, beforeTransaction) {
   const collections = new Map(Object.entries(initial))
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
@@ -17,6 +17,7 @@ function createHarness(initial = {}, activeProfileId = null) {
       return structuredClone(next)
     },
     async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
       const records = Object.fromEntries(names.map(name => [
         name,
         structuredClone(collections.get(name) ?? [])
@@ -479,7 +480,8 @@ test('updates a profile avatar and attaches its metadata in one transaction', as
     messageToProfileId: null
   }
   const { service, collections } = createHarness({
-    profiles: [{ id: 'profile-1', picture: '' }],
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['profile-1'], currentProfile: 'profile-1' }],
+    profiles: [{ id: 'profile-1', picture: '', type: 'social' }],
     media_files: [file]
   })
 
@@ -510,7 +512,8 @@ test('rejects invalid avatar metadata without changing the profile or media coll
     messageToProfileId: null
   }
   const { service, collections } = createHarness({
-    profiles: [{ id: 'profile-1', picture: '' }],
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['profile-1'], currentProfile: 'profile-1' }],
+    profiles: [{ id: 'profile-1', picture: '', type: 'social' }],
     media_files: [file]
   })
 
@@ -520,4 +523,47 @@ test('rejects invalid avatar metadata without changing the profile or media coll
   )
   assert.equal(collections.get('profiles')[0].picture, '')
   assert.deepEqual(collections.get('media_files'), [file])
+})
+
+
+test('profile avatar write rechecks account ownership in the profile/media transaction', async () => {
+  const original = { id: 'profile-1', picture: 'old-picture', type: 'social' }
+  const { service, collections } = createHarness({
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['profile-1'], currentProfile: 'profile-1' }],
+    profiles: [original],
+    media_files: []
+  }, 'profile-1', (names, current) => {
+    if (names.includes('profiles')) current.set('accounts', [])
+  })
+
+  await assert.rejects(
+    service.setProfileAvatar('user-1', 'profile-1', null),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.deepEqual(collections.get('profiles'), [original])
+})
+
+test('community avatar write rechecks staff role in the community/media transaction', async () => {
+  const original = { id: 'community-1', picture: 'old-picture', type: 'social' }
+  const { service, collections } = createHarness({
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['owner-profile'], currentProfile: 'owner-profile' }],
+    profiles: [{ id: 'owner-profile', type: 'social' }],
+    communities: [original],
+    community_relationships: [{
+      profiles: ['owner-profile', 'community-1'], type: 'owner'
+    }],
+    media_files: []
+  }, 'owner-profile', (names, current) => {
+    if (names.includes('communities')) {
+      current.set('community_relationships', [{
+        profiles: ['owner-profile', 'community-1'], type: 'connection'
+      }])
+    }
+  })
+
+  await assert.rejects(
+    service.setCommunityAvatar('user-1', 'community-1', 'owner-profile', null),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
+  )
+  assert.deepEqual(collections.get('communities'), [original])
 })

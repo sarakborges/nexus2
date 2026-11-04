@@ -173,9 +173,6 @@ export class ProfileService {
   }
 
   async updateProfileRelationship(userId: string, source: string, target: string, type: RelationshipType): Promise<Relationship> {
-    if (!source || !target || source === target) {
-      throw new ForbiddenException('INVALID_RELATIONSHIP_PARTICIPANTS')
-    }
     const now = Date.now()
     return this.data.transaction<Relationship>(
       ['accounts', 'profiles', 'relationships'],
@@ -184,6 +181,9 @@ export class ProfileService {
         const profiles = collections.profiles as Profile[]
         const all = collections.relationships as Relationship[]
         this.access.assertOwnsInRecords(userId, source, accounts, profiles)
+        if (!source || !target || source === target) {
+          throw new ForbiddenException('INVALID_RELATIONSHIP_PARTICIPANTS')
+        }
         this.access.assertSameType(
           profiles.find(profile => profile.id === source),
           profiles.find(profile => profile.id === target)

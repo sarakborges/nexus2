@@ -27,6 +27,12 @@ export class ProfileMessageService {
     return paginate(visible, q)
   }
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
+    await this.access.assertOwns(userId, fromProfileId)
+    const initialProfiles = await this.access.readProfiles()
+    this.access.assertSameType(
+      initialProfiles.find(profile => profile.id === fromProfileId),
+      initialProfiles.find(profile => profile.id === toProfileId)
+    )
     const normalized = sanitizeRichText(content)
     await this.uploads?.validateEditorImages(userId, normalized)
     const plainText = getRichTextPlainText(normalized)
