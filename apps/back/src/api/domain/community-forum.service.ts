@@ -8,11 +8,14 @@ import {
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
+  Community,
   CommunityForumReply,
   CommunityForumTopic,
   CommunityForumTopicDetail,
   CommunityForumTopicSummary,
-  PaginatedResult
+  CommunityRelationship,
+  PaginatedResult,
+  Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
@@ -20,7 +23,6 @@ import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import type { AccountRecord } from '../auth/auth.types'
-import type { Community, CommunityRelationship, Profile } from '@nexus/common'
 
 @Injectable()
 export class CommunityForumService {
@@ -53,7 +55,7 @@ export class CommunityForumService {
   }
 
   async createCommunityForumTopic(userId: string, communityId: string, profileId: string, rawTitle: string, rawContent: string): Promise<CommunityForumTopic> {
-    const title = rawTitle.trim().replace(/\\s+/g, ' ')
+    const title = rawTitle.trim().replace(/\s+/g, ' ')
     const content = sanitizeRichText(rawContent)
     const plainText = getRichTextPlainText(content)
     const now = Date.now()
@@ -152,6 +154,7 @@ export class CommunityForumService {
   }
 
   async moderateCommunityForumTopic(userId: string, communityId: string, topicId: string, profileId: string, changes: { isPinned?: boolean; isLocked?: boolean }): Promise<CommunityForumTopic> {
+    const now = Date.now()
     return this.data.transaction<CommunityForumTopic>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics'],
       collections => {
@@ -171,7 +174,7 @@ export class CommunityForumService {
           ...topic,
           ...(typeof changes.isPinned === 'boolean' ? { isPinned: changes.isPinned } : {}),
           ...(typeof changes.isLocked === 'boolean' ? { isLocked: changes.isLocked } : {}),
-          updatedAt: Date.now()
+          updatedAt: now
         }
         return {
           records: {
@@ -242,6 +245,7 @@ export class CommunityForumService {
   }
 
   async deleteCommunityForumReply(userId: string, communityId: string, replyId: string, actorProfileId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
       collections => {
@@ -281,7 +285,7 @@ export class CommunityForumService {
             ...collections,
             community_forum_replies: currentReplies.filter(record => record.id !== replyId),
             community_forum_topics: currentTopics.map(topic =>
-              topic.id === latestReply.topicId ? { ...topic, updatedAt: Date.now() } : topic
+              topic.id === latestReply.topicId ? { ...topic, updatedAt: now } : topic
             ),
             media_files: nextMediaFiles
           },

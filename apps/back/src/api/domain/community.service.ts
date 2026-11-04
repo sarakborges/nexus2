@@ -233,6 +233,7 @@ export class CommunityService {
     return paginate(profiles.filter(profile => ids.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, role: 'requested' })), q)
   }
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
+    const now = Date.now()
     return this.data.transaction<CommunityRelationship>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -267,7 +268,7 @@ export class CommunityService {
           type,
           requestedBy: type === 'requested' ? actorId : null,
           blockedBy: type === 'blocked' ? actorId : null,
-          updatedAt: Date.now()
+          updatedAt: now
         }
         return {
           records: {
@@ -327,6 +328,7 @@ export class CommunityService {
   }
 
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -349,7 +351,7 @@ export class CommunityService {
             ...collections,
             community_relationships: all.map(record =>
               record.profiles[0] === targetId && record.profiles[1] === communityId
-                ? { ...record, type: 'connection', updatedAt: Date.now() }
+                ? { ...record, type: 'connection', updatedAt: now }
                 : record
             )
           },
@@ -360,6 +362,7 @@ export class CommunityService {
   }
 
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -380,8 +383,8 @@ export class CommunityService {
             ...collections,
             community_relationships: all.map(record => {
               if (record.profiles[1] !== communityId) return record
-              if (record.profiles[0] === actorId) return { ...record, type: 'moderator', updatedAt: Date.now() }
-              if (record.profiles[0] === newOwnerId) return { ...record, type: 'owner', updatedAt: Date.now() }
+              if (record.profiles[0] === actorId) return { ...record, type: 'moderator', updatedAt: now }
+              if (record.profiles[0] === newOwnerId) return { ...record, type: 'owner', updatedAt: now }
               return record
             })
           },
