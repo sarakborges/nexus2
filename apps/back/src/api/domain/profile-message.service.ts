@@ -1,0 +1,54 @@
+import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { randomUUID } from 'node:crypto'
+import type { PaginatedResult, ProfileMessage } from '@nexus/common'
+import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import { AuthService } from '../auth/auth.service'
+import { paginate, type PaginationDto } from '../pagination/pagination.dto'
+import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { UploadsService } from '../uploads/uploads.service'
+import { DomainAccessService } from './domain-access.service'
+
+@Injectable()
+export class ProfileMessageService {
+  constructor(
+    @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
+    private readonly auth: AuthService,
+    private readonly access: DomainAccessService,
+    @Optional() private readonly uploads?: UploadsService
+  ) {}
+
+  async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
+    const messages = await this.readMessages()
+    const viewerProfiles = userId ? (await this.auth.getUser(userId)).profiles : []
+    const own = viewerProfiles.includes(profileId)
+    const visible = messages.filter(m => m.toProfileId === profileId && (own || viewerProfiles.includes(m.fromProfileId)))
+      .sort((a, b) => b.createdAt - a.createdAt)
+    return paginate(visible, q)
+  }
+  async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
+    await this.access.assertOwns(userId, fromProfileId)
+    const profiles = await this.access.readProfiles()
+    this.access.assertSameType(profiles.find(profile => profile.id === fromProfileId), profiles.find(profile => profile.id === toProfileId))
+    const normalized = sanitizeRichText(content)
+    await this.uploads?.validateEditorImages(userId, normalized)
+    const plainText = getRichTextPlainText(normalized)
+    const hasImage = /<img\b/i.test(normalized)
+    if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
+      throw new ConflictException('INVALID_MESSAGE')
+    }
+    if (!(await this.access.readProfiles()).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
+    const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }
+    await this.data.update<ProfileMessage>('profile_messages', current => [...current, message])
+    await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
+    return message
+  }
+
+
+  private async readMessages(): Promise<ProfileMessage[]> {
+    const messages = await this.data.read<ProfileMessage>('profile_messages')
+    return messages.map(message => ({
+      ...message,
+      content: sanitizeRichText(message.content ?? '')
+    }))
+  }
+}
