@@ -17,7 +17,7 @@ import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 export function App() {
   const { language } = useTranslations()
   const location = useLocation()
-  const publicEntryRoutes: string[] = [ROUTES.landing, ROUTES.signIn, ROUTES.signUp]
+  const publicEntryRoutes: string[] = [ROUTES.signIn, ROUTES.signUp]
   const shouldInitializeAuth = !publicEntryRoutes.includes(location.pathname)
   const setSession = useAuthStore(state => state.setSession)
   const isAuthInitialized = useAuthStore(state => state.isInitialized)

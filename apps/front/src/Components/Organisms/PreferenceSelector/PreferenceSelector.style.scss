@@ -3,8 +3,8 @@
   gap: 12px;
   min-width: 0;
   padding: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
   box-shadow: 0 8px 24px rgb(0 0 0 / 7%);
 

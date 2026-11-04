@@ -21,13 +21,13 @@ type PreviewEntryProps = {
 
 function PreviewEntry({ name, picture, href, secondary }: PreviewEntryProps) {
   return (
-    <Link className="home-page__preview-entry" to={href}>
-      <span className="home-page__preview-avatar">
+    <Link className="home-page__preview-entry account-card__profile-entry-identity" to={href}>
+      <span className="home-page__preview-avatar account-card__profile-entry-avatar">
         {picture ? <img src={picture} alt="" /> : <span aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
       </span>
-      <span className="home-page__preview-copy">
-        <span>{name}</span>
-        {secondary && <small>{secondary}</small>}
+      <span className="home-page__preview-copy account-card__profile-entry-copy">
+        <span className="account-card__link">{name}</span>
+        {secondary && <small className="account-card__profile-entry-secondary">{secondary}</small>}
       </span>
     </Link>
   )

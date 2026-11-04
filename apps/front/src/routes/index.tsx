@@ -6,7 +6,7 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import {
   CommunitiesPage, CommunityMembersPage, CommunityPage, CommunityForumPage, CommunityForumTopicPage, CreateCommunityForumTopicPage, CreateCommunityPage, CreateProfilePage,
-  EditCommunityPage, EditProfilePage, GettingStartedPage, HomePage, LandingPage, NotFoundPage,
+  EditCommunityPage, EditProfilePage, GettingStartedPage, HomePage, NotFoundPage,
   ProfileCommunitiesPage, ProfileFriendsPage, ProfileMessagesPage, ProfilePage, SignInPage, SignUpPage
 } from '@/pages'
 
@@ -32,7 +32,7 @@ function ProfileRequiredRoute() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path={ROUTES.landing} element={<LandingPage />} />
+      <Route path={ROUTES.landing} element={<Navigate to={ROUTES.signIn} replace />} />
       <Route path={ROUTES.signUp} element={<SignUpPage />} />
       <Route path={ROUTES.signIn} element={<SignInPage />} />
       <Route element={<AuthenticatedRoute />}>

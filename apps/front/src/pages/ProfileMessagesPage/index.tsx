@@ -141,8 +141,19 @@ export function ProfileMessagesPage() {
               return (
                 <article className="profile-message" key={message.id}>
                   <header className="profile-message__header">
-                    {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
-                    <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
+                    <div className="profile-message__sender">
+                      {sender && (
+                        <Link className="profile-message__avatar-link" to={`${ROUTES.profile}/${sender.url}`} aria-label={sender.name} title={sender.name}>
+                          <span className="profile-message__avatar">
+                            {sender.picture ? <img src={sender.picture} alt="" /> : <span aria-hidden="true">{sender.name.trim().charAt(0).toUpperCase()}</span>}
+                          </span>
+                        </Link>
+                      )}
+                      <div className="profile-message__sender-copy">
+                        {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
+                        <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
+                      </div>
+                    </div>
                   </header>
                   <div className="profile-message__content rich-text-content" dangerouslySetInnerHTML={{ __html: message.content }} />
                 </article>

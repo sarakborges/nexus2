@@ -22,6 +22,7 @@ function createHarness({ uploads, failAfterProfileLink = false } = {}) {
       if (!account.profiles.includes(profileId)) account.profiles.push(profileId)
       if (makeCurrent) account.currentProfile = profileId
       if (failAfterProfileLink) throw new Error('ACCOUNT_PROFILE_LINK_FAILED')
+      return { id: account.id, email: account.email, profiles: [...account.profiles], currentProfile: account.currentProfile }
     },
     async ownsProfile(_userId, profileId) { return account.profiles.includes(profileId) },
     async removeProfile(_userId, profileId, previousCurrentProfileId = null) {
@@ -49,9 +50,12 @@ test('profile creation returns the persisted profile and links it to the authent
   const created = await service.createProfile(account.id, input)
 
   assert.equal(collections.get('profiles').length, 1)
-  assert.deepEqual(collections.get('profiles')[0], created)
-  assert.deepEqual(account.profiles, ['existing-profile', created.id])
-  assert.equal(account.currentProfile, created.id)
+  assert.deepEqual(collections.get('profiles')[0], created.profile)
+  assert.deepEqual(account.profiles, ['existing-profile', created.profile.id])
+  assert.equal(account.currentProfile, created.profile.id)
+  assert.equal(created.user.id, account.id)
+  assert.deepEqual(created.user.profiles, account.profiles)
+  assert.equal(created.user.currentProfile, created.profile.id)
 })
 
 test('profile creation rollback removes both the profile row and account ownership after attachment failure', async () => {
@@ -94,8 +98,9 @@ test('profile creation derives a sanitized URL from the name when URL is omitted
     type: 'social'
   })
 
-  assert.equal(created.url, 'arvore-mar')
-  assert.equal(account.currentProfile, created.id)
+  assert.equal(created.profile.url, 'arvore-mar')
+  assert.equal(account.currentProfile, created.profile.id)
+  assert.equal(created.user.currentProfile, created.profile.id)
   assert.equal(collections.get('profiles')[0].url, 'arvore-mar')
 })
 

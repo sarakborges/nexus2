@@ -10,7 +10,6 @@ import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { createUserProfile } from '@/Services/Profile'
-import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -33,19 +32,17 @@ export function CreateProfilePage() {
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useMutation({
     mutationFn: async () => {
-      const profile = await createUserProfile({ name, url: url || undefined, picture, about, type })
-      const backendSession = await getCurrentAuthSession().catch(() => null)
-
-      if (backendSession?.user.profiles.includes(profile.id)) {
-        useAuthStore.getState().setSession(backendSession)
-      } else if (!useAuthStore.getState().addProfileToUser(profile.id, true)) {
-        throw new Error('PROFILE_CREATION_SESSION_MISSING')
+      const result = await createUserProfile({ name, url: url || undefined, picture, about, type })
+      const currentSession = useAuthStore.getState().session
+      if (!currentSession || result.user.id !== currentSession.user.id ||
+        !result.user.profiles.includes(result.profile.id) || result.user.currentProfile !== result.profile.id) {
+        throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
       }
-
-      return profile
+      useAuthStore.getState().setSession({ user: result.user, authenticatedAt: currentSession.authenticatedAt })
+      return result
     },
-    onSuccess: async profile => {
-      queryClient.setQueryData(queryKeys.profiles.byUrl(profile.url), profile)
+    onSuccess: async result => {
+      queryClient.setQueryData(queryKeys.profiles.byUrl(result.profile.url), result.profile)
       queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
@@ -62,7 +59,7 @@ export function CreateProfilePage() {
     if (!user) { navigate(ROUTES.signIn, { replace: true }); return }
     try {
       const result = await createProfileMutation.mutateAsync()
-      navigate(ROUTES.profile + '/' + result.url, { replace: true })
+      navigate(ROUTES.home, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key = code === 'PROFILE_URL_ALREADY_IN_USE'
@@ -71,7 +68,9 @@ export function CreateProfilePage() {
           ? 'PROFILE_ERROR_INVALID'
           : code === 'PROFILE_CREATION_SESSION_MISSING'
             ? 'PROFILE_ERROR_SESSION'
-            : 'PROFILE_ERROR_GENERIC'
+            : code === 'PROFILE_CREATION_SESSION_INCONSISTENT'
+              ? 'PROFILE_ERROR_SESSION'
+              : 'PROFILE_ERROR_GENERIC'
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }

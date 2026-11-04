@@ -11,7 +11,6 @@ type AuthStore = {
   initialize: () => Promise<void>
   signIn: (credentials: SignInCredentials) => Promise<AuthenticatedUser>
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
-  addProfileToUser: (profileId: string, makeCurrent?: boolean) => boolean
   setCurrentProfile: (profileId: string) => Promise<boolean>
   signOut: () => Promise<void>
 }
@@ -46,23 +45,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     useProfileStore.getState().clearProfile()
     set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true, initializationError: false })
     return user
-  },
-  addProfileToUser: (profileId, makeCurrent = false) => {
-    const session = get().session
-    if (!session) return false
-    const profiles = session.user.profiles.includes(profileId)
-      ? session.user.profiles
-      : [...session.user.profiles, profileId]
-    const user = {
-      ...session.user,
-      profiles,
-      currentProfile: makeCurrent ? profileId : session.user.currentProfile ?? profileId
-    }
-    if (makeCurrent && session.user.currentProfile !== profileId) {
-      useProfileStore.getState().clearProfile()
-    }
-    set({ session: { ...session, user } })
-    return true
   },
   setCurrentProfile: async (profileId) => {
     if (!get().session) return false

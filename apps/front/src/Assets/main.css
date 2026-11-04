@@ -65,3 +65,11 @@ input[type='reset'],
     transform 160ms ease,
     opacity 160ms ease;
 }
+
+:where(a) {
+  color: var(--nexus-link-color, var(--color-primary-weak));
+}
+
+:where(a:hover) {
+  color: var(--nexus-link-hover-color, var(--color-primary));
+}

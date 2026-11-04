@@ -1,3 +1,15 @@
+.preference-selector .preference-option {
+  border-bottom: 0;
+  box-shadow: none;
+}
+
+.preference-selector .preference-option:hover,
+.preference-selector .preference-option:focus-visible,
+.preference-selector .preference-option--selected {
+  border-bottom: 0;
+  box-shadow: none;
+}
+
 .preference-option {
   display: flex;
   align-items: center;
