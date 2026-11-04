@@ -186,9 +186,19 @@ export function HomePage() {
             <div className="home-page__activity-list">
               {activities.map(activity => (
                 <article className="home-page__activity-item" key={activity.id}>
-                  <div className="home-page__activity-meta">
-                    <time dateTime={new Date(activity.updatedAt).toISOString()}>{formatDate(activity.updatedAt)}</time>
-                  </div>
+                  <header className="home-page__activity-header">
+                    <Link className="home-page__activity-avatar-link" to={ROUTES.profile + '/' + activity.profile.url} aria-label={activity.profile.name} title={activity.profile.name}>
+                      <span className="home-page__activity-avatar">
+                        {activity.profile.picture
+                          ? <img src={activity.profile.picture} alt="" />
+                          : <span aria-hidden="true">{activity.profile.name.trim().charAt(0).toUpperCase()}</span>}
+                      </span>
+                    </Link>
+                    <div className="home-page__activity-author">
+                      <Link className="home-page__activity-author-name" to={ROUTES.profile + '/' + activity.profile.url}>{activity.profile.name}</Link>
+                      <time dateTime={new Date(activity.updatedAt).toISOString()}>{formatDate(activity.updatedAt)}</time>
+                    </div>
+                  </header>
                   {activity.type === 'friend_connected' ? (
                     <p className="home-page__activity-description">
                       <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
