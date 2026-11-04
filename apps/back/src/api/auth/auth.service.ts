@@ -74,11 +74,11 @@ export class AuthService {
     await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
     return this.toPublicUser(updated)
   }
-  async addProfile(userId: string, profileId: string): Promise<AuthenticatedUser> {
+  async addProfile(userId: string, profileId: string, makeCurrent = false): Promise<AuthenticatedUser> {
     const accounts = await this.repository.read<AccountRecord>('accounts')
     const account = accounts.find((item) => item.id === userId)
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-    const updated = { ...account, profiles: account.profiles.includes(profileId) ? account.profiles : [...account.profiles, profileId], currentProfile: account.currentProfile ?? profileId }
+    const updated = { ...account, profiles: account.profiles.includes(profileId) ? account.profiles : [...account.profiles, profileId], currentProfile: makeCurrent ? profileId : account.currentProfile ?? profileId }
     await this.repository.write('accounts', accounts.map((item) => item.id === userId ? updated : item))
     return this.toPublicUser(updated)
   }
