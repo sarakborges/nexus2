@@ -194,7 +194,6 @@ export function CommunityForumTopicPage() {
           </RequestState>
           <Pagination page={page} pageSize={pageSize} totalItems={detail.replies.totalItems} onPageChange={setPage} />
         </section>
-        <p className="account-card__footer"><Link to={`${ROUTES.community}/${community.url}/forum`}>{t('FORUM_BACK')}</Link></p>
       </section>
     </main>
   )
