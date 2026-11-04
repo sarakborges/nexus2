@@ -5,7 +5,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import { AuthService } from '../auth/auth.service'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
-import { UploadsService } from '../uploads/uploads.service'
+import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 
 @Injectable()
@@ -38,8 +38,28 @@ export class ProfileMessageService {
     }
     if (!(await this.access.readProfiles()).some(p => p.id === toProfileId)) throw new NotFoundException('RECIPIENT_PROFILE_NOT_FOUND')
     const message: ProfileMessage = { id: randomUUID(), fromProfileId, toProfileId, content: normalized, createdAt: Date.now() }
-    await this.data.update<ProfileMessage>('profile_messages', current => [...current, message])
-    await this.uploads?.attachEditorImages(userId, normalized, 'profile-message', message.id, { fromProfileId, toProfileId })
+    await this.data.transaction(['profile_messages', 'media_files'], collections => {
+      const messages = collections.profile_messages as ProfileMessage[]
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
+      const nextMediaFiles = this.uploads
+        ? this.uploads.attachEditorImagesToRecords(
+            mediaFiles,
+            userId,
+            normalized,
+            'profile-message',
+            message.id,
+            { fromProfileId, toProfileId }
+          )
+        : mediaFiles
+      return {
+        records: {
+          ...collections,
+          profile_messages: [...messages, message],
+          media_files: nextMediaFiles
+        },
+        result: undefined
+      }
+    })
     return message
   }
 
