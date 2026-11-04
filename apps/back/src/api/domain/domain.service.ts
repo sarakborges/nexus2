@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
-  CreateProfileInput, PaginatedResult, Profile, ProfileMessage, RecentActivity, Relationship, RelationshipType,
+  CreateProfileInput, CreateProfileResult, PaginatedResult, Profile, ProfileMessage, RecentActivity, Relationship, RelationshipType,
   CommunityForumTopic, CommunityForumTopicSummary, CommunityForumReply, CommunityForumTopicDetail, AuthenticatedUser
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
