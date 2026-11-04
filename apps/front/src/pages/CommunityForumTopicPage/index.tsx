@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Pagination, RequestState, RichTextEditor } from '@/Components'
+import { Pagination, RelationshipActions, RequestState, RichTextEditor } from '@/Components'
 import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
