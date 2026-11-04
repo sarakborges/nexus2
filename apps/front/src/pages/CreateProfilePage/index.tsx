@@ -42,8 +42,11 @@ export function CreateProfilePage() {
       const backendProfile = backendProfileResult.status === 'fulfilled' ? backendProfileResult.value : null
       const profile = backendProfile?.id === created.id ? backendProfile : created
 
-      const sessionMatchesProfile = backendSession?.user.id === user?.id &&
+      const sessionMatchesProfile = Boolean(
+        backendSession &&
+        backendSession.user.id === user?.id &&
         backendSession.user.profiles.includes(profile.id)
+      )
       if (sessionMatchesProfile && backendSession) {
         useAuthStore.getState().setSession(backendSession)
       } else {
