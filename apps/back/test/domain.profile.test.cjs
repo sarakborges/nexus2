@@ -18,7 +18,7 @@ function createHarness({ uploads, failAfterProfileLink = false } = {}) {
     async getUser() {
       return { id: account.id, email: account.email, profiles: [...account.profiles], currentProfile: account.currentProfile }
     },
-    async addProfile(_userId, profileId) {
+    async addProfile(_userId, profileId, makeCurrent = false) {
       if (!account.profiles.includes(profileId)) account.profiles.push(profileId)
       if (makeCurrent) account.currentProfile = profileId
       if (failAfterProfileLink) throw new Error('ACCOUNT_PROFILE_LINK_FAILED')
