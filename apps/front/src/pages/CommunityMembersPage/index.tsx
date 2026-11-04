@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import type { CommunityRelationship, Profile } from '@nexus/common'
 import { CommunityMemberActions, Pagination, RequestState } from '@/Components'
 import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'

@@ -6,5 +6,7 @@ export { LanguageOption } from './LanguageOption'
 export { Pagination } from './Pagination'
 export { PreferenceOption } from './PreferenceOption'
 export { RelationshipActions } from './RelationshipActions'
+export { IdentityAvatar } from './IdentityAvatar'
+export { AccountIdentityLink } from './AccountIdentityLink'
 
 export * from './ProfileTypeNotice'

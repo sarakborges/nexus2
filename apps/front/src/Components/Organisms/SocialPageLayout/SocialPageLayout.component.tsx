@@ -6,8 +6,6 @@ import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
-import './SocialPageLayout.style.scss'
-
 type SocialPageLayoutProps = {
   sidebar: ReactNode
   children: ReactNode

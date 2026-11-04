@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
-import { RequestState } from '@/Components'
+import { AccountIdentityLink, IdentityAvatar, RequestState } from '@/Components'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -21,15 +21,18 @@ type PreviewEntryProps = {
 
 function PreviewEntry({ name, picture, href, secondary }: PreviewEntryProps) {
   return (
-    <Link className="home-page__preview-entry account-card__profile-entry-identity" to={href}>
-      <span className="home-page__preview-avatar account-card__profile-entry-avatar">
-        {picture ? <img src={picture} alt="" /> : <span aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
-      </span>
-      <span className="home-page__preview-copy account-card__profile-entry-copy">
-        <span className="account-card__link">{name}</span>
-        {secondary && <small className="account-card__profile-entry-secondary">{secondary}</small>}
-      </span>
-    </Link>
+    <AccountIdentityLink
+      to={href}
+      name={name}
+      picture={picture}
+      secondary={secondary}
+      title={name}
+      className="home-page__preview-entry account-card__profile-entry-identity"
+      avatarClassName="home-page__preview-avatar account-card__profile-entry-avatar"
+      copyClassName="home-page__preview-copy account-card__profile-entry-copy"
+      nameClassName="account-card__link"
+      secondaryClassName="account-card__profile-entry-secondary"
+    />
   )
 }
 
@@ -188,11 +191,11 @@ export function HomePage() {
                 <article className="home-page__activity-item" key={activity.id}>
                   <header className="home-page__activity-header">
                     <Link className="home-page__activity-avatar-link" to={ROUTES.profile + '/' + activity.profile.url} aria-label={activity.profile.name} title={activity.profile.name}>
-                      <span className="home-page__activity-avatar">
-                        {activity.profile.picture
-                          ? <img src={activity.profile.picture} alt="" />
-                          : <span aria-hidden="true">{activity.profile.name.trim().charAt(0).toUpperCase()}</span>}
-                      </span>
+                      <IdentityAvatar
+                        className="home-page__activity-avatar"
+                        name={activity.profile.name}
+                        picture={activity.profile.picture}
+                      />
                     </Link>
                     <div className="home-page__activity-author">
                       <Link className="home-page__activity-author-name" to={ROUTES.profile + '/' + activity.profile.url}>{activity.profile.name}</Link>
