@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
 import type { CommunityRelationship, Profile } from '@nexus/common'
 import { CommunityMemberActions, Pagination, RequestState } from '@/Components'
+import { CommunitySidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -24,6 +25,7 @@ export function CommunityMembersPage() {
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const session = useAuthStore(state => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
+  const profileIds = session?.user.profiles ?? []
   const [activeTab, setActiveTab] = useState<MemberTab>('all')
   const { page, pageSize, setPage } = useUrlPagination('page')
   const { page: pendingPage, pageSize: pendingPageSize, setPage: setPendingPage } = useUrlPagination('pendingPage')
@@ -35,34 +37,33 @@ export function CommunityMembersPage() {
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(community?.type ?? 'social')
-  const canInteract = typeCompatibility.isCompatible && !typeCompatibility.isChecking
-  const communityId = community?.id
   const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(communityId ?? '', session?.user.id ?? null),
-    queryFn: () => getCommunityRelationships(communityId!),
-    enabled: Boolean(communityId)
+    queryKey: queryKeys.communityRelationships(community?.id ?? '', session?.user.id ?? null),
+    queryFn: () => getCommunityRelationships(community!.id),
+    enabled: Boolean(community?.id)
   })
   const relationships: CommunityRelationship[] = relationshipsQuery.data ?? []
-  const currentRole = communityId && currentProfileId
-    ? relationships.find(record => record.profiles[0] === currentProfileId && record.profiles[1] === communityId)?.type ?? null
-    : null
-  const isStaff = currentRole === 'owner' || currentRole === 'moderator'
+  const managementRelationship = relationships.find(record =>
+    (record.type === 'owner' || record.type === 'moderator') && profileIds.includes(record.profiles[0])
+  ) ?? null
+  const actorProfileId = managementRelationship?.profiles[0] ?? null
+  const currentRole = managementRelationship?.type ?? null
+  const isStaff = Boolean(actorProfileId)
   const visibleTab: MemberTab = isStaff ? activeTab : 'all'
   const membersQuery = useQuery({
-    queryKey: queryKeys.communityMembers(communityId ?? '', visibleTab, page, pageSize, currentProfileId ?? undefined),
-    queryFn: () => getCommunityMembers(communityId!, visibleTab, { page, pageSize }, currentProfileId ?? undefined),
-    enabled: Boolean(communityId && relationshipsQuery.isSuccess)
+    queryKey: queryKeys.communityMembers(community?.id ?? '', visibleTab, page, pageSize, actorProfileId ?? currentProfileId ?? undefined),
+    queryFn: () => getCommunityMembers(community!.id, visibleTab, { page, pageSize }, actorProfileId ?? currentProfileId ?? undefined),
+    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
   })
   const pendingQuery = useQuery({
-    queryKey: queryKeys.pendingCommunityMembers(communityId ?? '', currentProfileId ?? '', pendingPage, pendingPageSize),
-    queryFn: () => getPendingCommunityMembers(communityId!, currentProfileId!, { page: pendingPage, pageSize: pendingPageSize }),
-    enabled: Boolean(communityId && currentProfileId && isStaff && relationshipsQuery.isSuccess && canInteract)
+    queryKey: queryKeys.pendingCommunityMembers(community?.id ?? '', actorProfileId ?? '', pendingPage, pendingPageSize),
+    queryFn: () => getPendingCommunityMembers(community!.id, actorProfileId!, { page: pendingPage, pageSize: pendingPageSize }),
+    enabled: Boolean(community?.id && actorProfileId && isStaff && relationshipsQuery.isSuccess)
   })
   const members: Member[] = membersQuery.data?.items ?? []
   const totalMembers = membersQuery.data?.totalItems ?? 0
   const pending: Member[] = pendingQuery.data?.items ?? []
   const totalPending = pendingQuery.data?.totalItems ?? 0
-  const canViewPending = Boolean(communityId && currentProfileId && isStaff)
 
   useEffect(() => {
     if (membersQuery.data && membersQuery.data.page !== page) setPage(membersQuery.data.page)
@@ -93,8 +94,8 @@ export function CommunityMembersPage() {
             {roleKey && <span className="community-member__role">{t(roleKey)}</span>}
           </span>
         </Link>
-        {isStaff && canInteract && currentProfileId && profile.role !== 'owner' && (
-          <CommunityMemberActions memberProfileId={profile.id} communityId={community.id} actorProfileId={currentProfileId} actorRole={currentRole as 'owner' | 'moderator'} relationship={relationship} />
+        {isStaff && actorProfileId && profile.role !== 'owner' && (
+          <CommunityMemberActions memberProfileId={profile.id} communityId={community.id} actorProfileId={actorProfileId} actorRole={currentRole as 'owner' | 'moderator'} relationship={relationship} />
         )}
       </article>
     )
@@ -109,40 +110,58 @@ export function CommunityMembersPage() {
   ]
 
   return (
-    <main className="account-page"><RequestState isFetching={communityQuery.isFetching || relationshipsQuery.isFetching} />{!typeCompatibility.isChecking && !typeCompatibility.isCompatible && <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>}<section className="account-card">
-      <header className="account-card__header">
-        <div><h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE')}</h1><p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p></div>
-      </header>
-      {canViewPending && (
-        <section className="account-card__profile-list">
-          <h2>{t('COMMUNITY_PENDING_REQUESTS')}</h2>
+    <SocialPageLayout sidebar={<CommunitySidebar community={community} active="members" canInteract={typeCompatibility.isCompatible && !typeCompatibility.isChecking} />}>
+      <div className="community-members-page">
+        {isStaff && (
+          <section className="account-card community-members-page__pending">
+            <header className="account-card__header">
+              <div>
+                <h1 className="account-card__title">{t('COMMUNITY_PENDING_REQUESTS')}</h1>
+                <p className="account-card__description">{t('COMMUNITY_PENDING_COUNT', { count: totalPending })}</p>
+              </div>
+            </header>
+            <RequestState
+              isLoading={pendingQuery.isLoading}
+              isFetching={pendingQuery.isFetching}
+              isError={pendingQuery.isError}
+              isEmpty={pendingQuery.isSuccess && totalPending === 0}
+              emptyMessage={t('COMMUNITY_MEMBERS_PENDING_EMPTY')}
+              onRetry={() => void pendingQuery.refetch()}
+            >
+              <div className="account-card__profile-list account-card__profile-list--grid">
+                {pending.map(renderMember)}
+              </div>
+            </RequestState>
+            {totalPending > pendingPageSize && <Pagination page={pendingPage} pageSize={pendingPageSize} totalItems={totalPending} onPageChange={setPendingPage} />}
+          </section>
+        )}
+
+        <section className="account-card">
+          <header className="account-card__header">
+            <div>
+              <h1 className="account-card__title">{t('COMMUNITY_MEMBERS_TITLE')}</h1>
+              <p className="account-card__description">{t('COMMUNITY_MEMBERS_DESCRIPTION')}</p>
+            </div>
+          </header>
+          {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+            <p className="profile-type-notice" role="alert">{t('PROFILE_TYPE_MISMATCH_NOTICE')}</p>
+          )}
+          <div className="community-member__tabs" role="tablist">
+            {tabs.map(tab => <Button key={tab.id} type="button" role="tab" aria-selected={visibleTab === tab.id} variation={activeTab === tab.id ? 'primary' : 'secondary'} onClick={() => setActiveTab(tab.id)}>{tab.label}</Button>)}
+          </div>
           <RequestState
-            isLoading={pendingQuery.isLoading}
-            isFetching={pendingQuery.isFetching}
-            isError={pendingQuery.isError}
-            isEmpty={pendingQuery.isSuccess && totalPending === 0}
-            emptyMessage={t('COMMUNITY_PENDING_EMPTY')}
-            onRetry={() => void pendingQuery.refetch()}
+            isLoading={membersQuery.isLoading}
+            isFetching={membersQuery.isFetching}
+            isError={membersQuery.isError}
+            isEmpty={membersQuery.isSuccess && totalMembers === 0}
+            emptyMessage={t(visibleTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : visibleTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}
+            onRetry={() => void membersQuery.refetch()}
           >
-            {pending.map(renderMember)}
+            <div className="account-card__profile-list account-card__profile-list--grid">{members.map(renderMember)}</div>
           </RequestState>
-          <Pagination page={pendingPage} pageSize={pendingPageSize} totalItems={totalPending} onPageChange={setPendingPage} />
+          <Pagination page={page} pageSize={pageSize} totalItems={totalMembers} onPageChange={setPage} />
         </section>
-      )}
-      <div className="community-member__tabs" role="tablist">
-        {tabs.map(tab => <Button key={tab.id} type="button" role="tab" aria-selected={visibleTab === tab.id} variation={activeTab === tab.id ? 'primary' : 'secondary'} onClick={() => setActiveTab(tab.id)}>{tab.label}</Button>)}
       </div>
-      <RequestState
-        isLoading={membersQuery.isLoading}
-        isFetching={membersQuery.isFetching}
-        isError={membersQuery.isError}
-        isEmpty={membersQuery.isSuccess && totalMembers === 0}
-        emptyMessage={t(visibleTab === 'all' ? 'COMMUNITY_MEMBERS_EMPTY' : visibleTab === 'staff' ? 'COMMUNITY_STAFF_EMPTY' : 'COMMUNITY_BANNED_EMPTY')}
-        onRetry={() => void membersQuery.refetch()}
-      >
-        <div className="account-card__profile-list account-card__profile-list--grid">{members.map(renderMember)}</div>
-      </RequestState>
-      <Pagination page={page} pageSize={pageSize} totalItems={totalMembers} onPageChange={setPage} />
-    </section></main>
+    </SocialPageLayout>
   )
 }
