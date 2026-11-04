@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   Optional
 } from '@nestjs/common'
@@ -70,23 +71,67 @@ export class CommunityService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+
     const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type, privacy }
-    await this.data.update<Community>('communities', current => {
-      if (current.some(item => item.url === url)) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
-      return [...current, community]
+    const ownerRelationship: CommunityRelationship = {
+      profiles: [ownerProfileId, community.id],
+      type: 'owner',
+      requestedBy: null,
+      blockedBy: null,
+      updatedAt: Date.now()
+    }
+
+    await this.data.transaction(['communities', 'community_relationships'], collections => {
+      const communities = collections.communities as Community[]
+      const relationships = collections.community_relationships as CommunityRelationship[]
+      if (communities.some(item => item.url === url)) {
+        throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+      }
+      return {
+        records: {
+          ...collections,
+          communities: [...communities, community],
+          community_relationships: [...relationships, ownerRelationship]
+        },
+        result: undefined
+      }
     })
+
     try {
-      await this.data.update<CommunityRelationship>('community_relationships', current => [...current, {
-        profiles: [ownerProfileId, community.id], type: 'owner',
-        requestedBy: null, blockedBy: null, updatedAt: Date.now()
-      }])
+      await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
+      await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
     } catch (error) {
-      await this.data.update<Community>('communities', current => current.filter(item => item.id !== community.id))
+      const rollbackErrors: unknown[] = []
+      try {
+        await this.uploads?.detachResourceAttachments(userId, 'community', community.id)
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      try {
+        await this.data.transaction(['communities', 'community_relationships'], collections => {
+          const communities = collections.communities as Community[]
+          const relationships = collections.community_relationships as CommunityRelationship[]
+          return {
+            records: {
+              ...collections,
+              communities: communities.filter(item => item.id !== community.id),
+              community_relationships: relationships.filter(item =>
+                item.profiles[1] !== community.id || item.profiles[0] !== ownerProfileId
+              )
+            },
+            result: undefined
+          }
+        })
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError)
+      }
+      if (rollbackErrors.length > 0) {
+        throw new InternalServerErrorException('COMMUNITY_CREATE_ROLLBACK_FAILED')
+      }
       throw error
     }
-    await this.uploads?.attachAvatarUrl(userId, picture, 'community-avatar', 'community', community.id)
-    await this.uploads?.attachEditorImages(userId, about, 'community', community.id)
+
     return community
   }
 
