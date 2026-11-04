@@ -269,6 +269,7 @@ export const enUSTranslations = {
   TOAST_FORUM_REPLY_CREATED: 'Reply published.',
   TOAST_FORUM_TOPIC_UPDATED: 'Topic updated.',
   TOAST_FORUM_CONTENT_DELETED: 'Forum content deleted.',
+  FORUM_VIEW_ALL: 'View full forum',
   FORUM_TITLE: 'Community forum',
   FORUM_DESCRIPTION: 'Discuss topics with other members of this community.',
   FORUM_NEW_TOPIC: 'Start a discussion',
