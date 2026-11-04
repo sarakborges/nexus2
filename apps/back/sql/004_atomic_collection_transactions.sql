@@ -131,3 +131,5 @@ $function$;
 
 revoke all on function public.nexus_commit_collections(jsonb) from public, authenticated;
 grant execute on function public.nexus_commit_collections(jsonb) to anon;
+
+notify pgrst, 'reload schema';
