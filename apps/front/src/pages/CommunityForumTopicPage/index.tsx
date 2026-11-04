@@ -178,8 +178,10 @@ export function CommunityForumTopicPage() {
             {topic.isLocked && <p className="account-card__description">{t('FORUM_LOCKED')}</p>}
           </div>
         </article>
+      </section>
 
-        <section className="community-forum__replies">
+      <section className="account-card community-forum community-forum__replies-card">
+        <div className="community-forum__replies">
           <h2>{t('FORUM_REPLIES')} ({detail.replies.totalItems})</h2>
           {!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading || relationshipsQuery.isError || ownedProfilesQuery.isError ? null : canInteract && isMember && !topic.isLocked ? (
             <form className="community-forum__composer" onSubmit={submitReply}>
@@ -239,7 +241,7 @@ export function CommunityForumTopicPage() {
             })}
           </RequestState>
           <Pagination page={page} pageSize={pageSize} totalItems={detail.replies.totalItems} onPageChange={setPage} />
-        </section>
+        </div>
       </section>
     </SocialPageLayout>
   )
