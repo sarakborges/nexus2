@@ -71,7 +71,7 @@ export class CommunityService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
 
     const community: Community = { id: randomUUID(), name, url, picture, about, type: ownerProfile.type, privacy }
     const ownerRelationship: CommunityRelationship = {
