@@ -1,4 +1,4 @@
-import type { DataRepository } from './repository.interface'
+import type { CollectionRecordMap, DataRepository } from './repository.interface'
 
 type CollectionRow = {
   records?: unknown
@@ -10,17 +10,24 @@ type CollectionSnapshot<T> = {
   updatedAt: string | null
 }
 
+type AtomicCommitResponse = {
+  committed?: unknown
+}
+
 const MAX_UPDATE_ATTEMPTS = 8
 
 export class SupabaseRestRepository implements DataRepository {
   private readonly endpoint: string
+  private readonly transactionEndpoint: string
 
   constructor(
     projectUrl: string,
     private readonly publishableKey: string,
     private readonly apiSecret: string
   ) {
-    this.endpoint = projectUrl.replace(/\/+$/, '') + '/rest/v1/nexus_collections'
+    const baseUrl = projectUrl.replace(/\\/+$/, '')
+    this.endpoint = baseUrl + '/rest/v1/nexus_collections'
+    this.transactionEndpoint = baseUrl + '/rest/v1/rpc/nexus_commit_collections'
   }
 
   async read<T>(collection: string): Promise<T[]> {
@@ -55,6 +62,70 @@ export class SupabaseRestRepository implements DataRepository {
     throw new Error(
       'Concurrent updates prevented collection "' + collection +
       '" from being saved after ' + MAX_UPDATE_ATTEMPTS + ' attempts.'
+    )
+  }
+
+  async transaction<T>(
+    collections: readonly string[],
+    updater: (records: CollectionRecordMap) => { records: CollectionRecordMap; result: T }
+  ): Promise<T> {
+    const names = this.validateTransactionCollections(collections)
+
+    for (let attempt = 0; attempt < MAX_UPDATE_ATTEMPTS; attempt += 1) {
+      const snapshots = new Map<string, CollectionSnapshot<unknown>>()
+      await Promise.all(names.map(async name => {
+        snapshots.set(name, await this.readSnapshot<unknown>(name))
+      }))
+
+      const current: CollectionRecordMap = {}
+      for (const name of names) current[name] = structuredClone(snapshots.get(name)!.records)
+
+      const outcome = updater(current)
+      if (!outcome || typeof outcome !== 'object' || !outcome.records || typeof outcome.records !== 'object') {
+        throw new Error('Collection transaction must return records and a result.')
+      }
+
+      const changes = names.flatMap(name => {
+        const records = outcome.records[name]
+        if (!Array.isArray(records)) {
+          throw new Error('Collection transaction must return an array for "' + name + '".')
+        }
+        if (records === current[name]) return []
+        return [{
+          collection: name,
+          expected_updated_at: snapshots.get(name)!.updatedAt,
+          records
+        }]
+      })
+      if (changes.length === 0) return outcome.result
+
+      const response = await fetch(this.transactionEndpoint, {
+        method: 'POST',
+        headers: {
+          ...this.headers(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_changes: changes })
+      })
+
+      if (response.status === 409) {
+        await this.backoff(attempt)
+        continue
+      }
+      await this.assertSuccess(response)
+
+      const result = await response.json() as AtomicCommitResponse
+      if (result?.committed === true) return outcome.result
+      if (result?.committed === false) {
+        await this.backoff(attempt)
+        continue
+      }
+      throw new Error('Supabase transaction returned an invalid commit result.')
+    }
+
+    throw new Error(
+      'Concurrent updates prevented collection transaction (' + names.join(', ') +
+      ') from being saved after ' + MAX_UPDATE_ATTEMPTS + ' attempts.'
     )
   }
 
@@ -164,6 +235,15 @@ export class SupabaseRestRepository implements DataRepository {
       apikey: this.publishableKey,
       'x-nexus-api-secret': this.apiSecret
     }
+  }
+
+  private validateTransactionCollections(collections: readonly string[]): string[] {
+    const names = [...new Set(collections)]
+    if (names.length === 0 || names.length !== collections.length) {
+      throw new Error('Collection transaction requires a non-empty list of unique collections.')
+    }
+    for (const name of names) this.assertCollectionName(name)
+    return names.sort()
   }
 
   private assertCollectionName(collection: string): void {
