@@ -68,6 +68,7 @@ export const ptBRTranslations = {
   AUTH_HAS_ACCOUNT: 'Já possui uma conta?',
   AUTH_SIGN_IN_LINK: 'Entrar',
   AUTH_SIGN_UP_LINK: 'Criar conta',
+  AUTH_FORM_REGION: 'Formulário de autenticação',
   AUTH_BACK_TO_LANDING: 'Voltar à página inicial',
   ACTION_CANCEL: 'Cancelar',
   AUTH_SIGN_OUT: 'Sair',
