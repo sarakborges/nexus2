@@ -1,3 +1,5 @@
+import './IdentityAvatar.style.scss'
+
 type IdentityAvatarProps = {
   name: string
   picture: string
@@ -11,7 +13,7 @@ export function IdentityAvatar({ name, picture, className, imageClassName }: Ide
   return (
     <span className={className}>
       {picture
-        ? <img className={imageClassName} src={picture} alt="" />
+        ? <img className={['identity-avatar__image', imageClassName].filter(Boolean).join(' ')} src={picture} alt="" />
         : <span aria-hidden="true">{initial}</span>}
     </span>
   )
