@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useIsFetching, useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  FiCheck, FiChevronDown, FiEdit3, FiHome, FiLogOut, FiMenu, FiMessageCircle,
-  FiPlusCircle, FiSettings, FiUserPlus, FiUsers, FiX
-} from 'react-icons/fi'
+import { FiChevronDown, FiHome, FiMenu, FiMessageCircle, FiUsers, FiX } from 'react-icons/fi'
 import { Link, useLocation, useNavigate } from 'react-router'
+import { AccountMenu } from './AccountMenu.component'
+import { IdentityAvatar } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
@@ -56,7 +55,6 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const messagesRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/messages' : null
   const editProfileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/edit' : null
   const accountName = currentProfile?.name ?? t('NAVIGATION_ACCOUNT')
-  const accountInitial = accountName.trim().charAt(0).toUpperCase()
 
   const closePanels = () => {
     setOpenPanel(null)
@@ -170,11 +168,11 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           aria-controls="floating-account-menu"
           onClick={() => togglePanel('account')}
         >
-          <span className="floating-navigation__avatar">
-            {currentProfile?.picture
-              ? <img src={currentProfile.picture} alt="" />
-              : <span aria-hidden="true">{accountInitial}</span>}
-          </span>
+          <IdentityAvatar
+            className="floating-navigation__avatar"
+            name={accountName}
+            picture={currentProfile?.picture ?? ''}
+          />
           <span className="floating-navigation__account-label">
             <span>{accountName}</span>
           </span>
@@ -213,122 +211,30 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
       )}
 
       {activePanel === 'account' && (
-        <div
-          className="floating-navigation__menu floating-navigation__menu--account"
-          id="floating-account-menu"
-          role="menu"
-          aria-label={t('NAVIGATION_ACCOUNT_MENU')}
-        >
-          <div className="floating-navigation__menu-heading">
-            <span>{accountName}</span>
-          </div>
-
-          <div className="floating-navigation__profile-switcher">
-            <button
-              className="floating-navigation__menu-item floating-navigation__profile-toggle"
-              type="button"
-              disabled={isRequestPending}
-              role="menuitem"
-              aria-expanded={isProfileSwitcherOpen}
-              aria-controls="floating-profile-switcher"
-              onClick={() => setIsProfileSwitcherOpen(open => !open)}
-            >
-              <FiUsers aria-hidden="true" />
-              <span>{t('NAVIGATION_SWITCH_PROFILE')}</span>
-              <FiChevronDown
-                className={isProfileSwitcherOpen ? 'floating-navigation__profile-chevron is-open' : 'floating-navigation__profile-chevron'}
-                aria-hidden="true"
-              />
-            </button>
-
-            {isProfileSwitcherOpen && (
-              <div className="floating-navigation__profile-list" id="floating-profile-switcher" role="group" aria-label={t('NAVIGATION_SWITCH_PROFILE')}>
-                {profilesQuery.isLoading && (
-                  <p className="floating-navigation__profile-status" role="status">{t('NAVIGATION_PROFILES_LOADING')}</p>
-                )}
-                {profilesQuery.isError && (
-                  <div className="floating-navigation__profile-status" role="alert">
-                    <span>{t('NAVIGATION_PROFILES_ERROR')}</span>
-                    <button type="button" disabled={isRequestPending} onClick={() => void profilesQuery.refetch()}>{t('NAVIGATION_PROFILES_RETRY')}</button>
-                  </div>
-                )}
-                {profilesQuery.isSuccess && profiles.length === 0 && (
-                  <p className="floating-navigation__profile-status">{t('HOME_PROFILES_EMPTY')}</p>
-                )}
-                {profiles.map(profile => {
-                  const isCurrent = profile.id === currentProfileId
-                  return (
-                    <button
-                      className="floating-navigation__profile-option"
-                      key={profile.id}
-                      type="button"
-                      role="menuitemradio"
-                      aria-checked={isCurrent}
-                      disabled={isRequestPending || profileSelectionMutation.isPending}
-                      onClick={() => profileSelectionMutation.mutate(profile.id)}
-                    >
-                      <span className="floating-navigation__profile-avatar">
-                        {profile.picture
-                          ? <img src={profile.picture} alt="" />
-                          : <span aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</span>}
-                      </span>
-                      <span className="floating-navigation__profile-name">{profile.name}</span>
-                      {isCurrent && <FiCheck aria-label={t('HOME_CURRENT_PROFILE')} />}
-                    </button>
-                  )
-                })}
-                {profileSelectionMutation.isError && (
-                  <p className="floating-navigation__profile-status floating-navigation__profile-status--error" role="alert">
-                    {t('NAVIGATION_PROFILE_UPDATE_ERROR')}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {editProfileRoute && (
-            <Link className="floating-navigation__menu-item" to={editProfileRoute} role="menuitem" onClick={closePanels}>
-              <FiEdit3 aria-hidden="true" />
-              <span>{t('PROFILE_EDIT')}</span>
-            </Link>
-          )}
-          <Link className="floating-navigation__menu-item" to={ROUTES.createProfile} role="menuitem" onClick={closePanels}>
-            <FiUserPlus aria-hidden="true" />
-            <span>{t('HOME_CREATE_PROFILE')}</span>
-          </Link>
-          {currentProfile && (
-            <Link className="floating-navigation__menu-item" to={ROUTES.createCommunity} role="menuitem" onClick={closePanels}>
-              <FiPlusCircle aria-hidden="true" />
-              <span>{t('COMMUNITIES_CREATE')}</span>
-            </Link>
-          )}
-
-          <div className="floating-navigation__menu-divider" />
-
-          <button
-            className="floating-navigation__menu-item"
-            type="button"
-            disabled={isRequestPending}
-            role="menuitem"
-            onClick={handleOpenSettings}
-          >
-            <FiSettings aria-hidden="true" />
-            <span>{t('SETTINGS_TITLE')}</span>
-          </button>
-          <button
-            className="floating-navigation__menu-item floating-navigation__menu-item--danger"
-            type="button"
-            role="menuitem"
-            disabled={isRequestPending || signOutMutation.isPending}
-            onClick={() => {
-              closePanels()
-              signOutMutation.mutate()
-            }}
-          >
-            <FiLogOut aria-hidden="true" />
-            <span>{signOutMutation.isPending ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
-          </button>
-        </div>
+        <AccountMenu
+          accountName={accountName}
+          profiles={profiles}
+          currentProfileId={currentProfileId}
+          currentProfile={currentProfile ?? null}
+          editProfileRoute={editProfileRoute}
+          profilesLoading={profilesQuery.isLoading}
+          profilesError={profilesQuery.isError}
+          profilesSuccess={profilesQuery.isSuccess}
+          isProfileSwitcherOpen={isProfileSwitcherOpen}
+          isRequestPending={isRequestPending}
+          isSelectionPending={profileSelectionMutation.isPending}
+          isSelectionError={profileSelectionMutation.isError}
+          isSigningOut={signOutMutation.isPending}
+          onToggleProfileSwitcher={() => setIsProfileSwitcherOpen(open => !open)}
+          onRetryProfiles={() => void profilesQuery.refetch()}
+          onSelectProfile={profileId => profileSelectionMutation.mutate(profileId)}
+          onOpenSettings={handleOpenSettings}
+          onSignOut={() => {
+            closePanels()
+            signOutMutation.mutate()
+          }}
+          onClose={closePanels}
+        />
       )}
     </div>,
     document.body

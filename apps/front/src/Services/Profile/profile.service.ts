@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { CreateProfileInput, PaginatedResult, PaginationParams, Profile } from '@nexus/common'
+import type { CreateProfileInput, CreateProfileResult, PaginatedResult, PaginationParams, Profile } from '@nexus/common'
 import { api } from '../Http/api'
 
 export async function getProfiles(params: PaginationParams = {}): Promise<PaginatedResult<Profile>> {
@@ -24,8 +24,8 @@ export async function getProfileByUrl(url: string): Promise<Profile | null> {
     throw error
   }
 }
-export async function createUserProfile(input: CreateProfileInput): Promise<Profile> {
-  const { data } = await api.post<Profile>('/profiles', input)
+export async function createUserProfile(input: CreateProfileInput): Promise<CreateProfileResult> {
+  const { data } = await api.post<CreateProfileResult>('/profiles', input)
   return data
 }
 export async function updateUserProfile(profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {

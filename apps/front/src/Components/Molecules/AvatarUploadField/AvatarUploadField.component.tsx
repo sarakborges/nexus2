@@ -1,14 +1,7 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useRef, type ChangeEvent } from 'react'
 import { FiImage } from 'react-icons/fi'
-import { useToastStore } from '@/Stores/Toast.store'
-import { useTranslations } from '@/Hooks/Language'
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-import {
-  deleteUploadedFile,
-  uploadFile,
-  updateCommunityAvatar,
-  updateProfileAvatar
-} from '@/Services/Uploads'
+
+import { useAvatarUpload } from './useAvatarUpload'
 import './AvatarUploadField.style.scss'
 
 type AvatarUploadFieldProps = {
@@ -42,72 +35,20 @@ export function AvatarUploadField({
   errorLabel,
   emptyLabel
 }: AvatarUploadFieldProps) {
-  const { t } = useTranslations()
   const inputRef = useRef<HTMLInputElement>(null)
-  const showToast = useToastStore(state => state.showToast)
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
-  const [isUploading, setIsUploading] = useState(false)
-  const [isRemoving, setIsRemoving] = useState(false)
-  const [error, setError] = useState('')
-  const [pendingUploadId, setPendingUploadId] = useState<string | null>(null)
+  const { busy, error, handleFileChange, handleRemove } = useAvatarUpload({
+    purpose,
+    onChange,
+    targetId,
+    actorProfileId,
+    errorLabel
+  })
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
-    if (!file) return
-
-    setError('')
-    setIsUploading(true)
-    try {
-      const uploaded = await uploadFile(file, purpose, targetId, actorProfileId)
-      if (targetId) {
-        const result = purpose === 'profile-avatar'
-          ? await updateProfileAvatar(targetId, uploaded.id)
-          : await updateCommunityAvatar(targetId, actorProfileId!, uploaded.id)
-        setPendingUploadId(null)
-        onChange(result.picture)
-        showToast(t('TOAST_AVATAR_UPDATED'))
-      } else {
-        if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
-        setPendingUploadId(uploaded.id)
-        onChange(uploaded.url)
-        showToast(t('TOAST_AVATAR_UPDATED'))
-      }
-    } catch {
-      setError(errorLabel)
-      showToast(t('TOAST_ACTION_FAILED'), 'error')
-    } finally {
-      setIsUploading(false)
-    }
+    if (file) void handleFileChange(file)
   }
-
-  const handleRemove = async () => {
-    setError('')
-    setIsRemoving(true)
-    try {
-      if (targetId) {
-        const result = purpose === 'profile-avatar'
-          ? await updateProfileAvatar(targetId, null)
-          : await updateCommunityAvatar(targetId, actorProfileId!, null)
-        onChange(result.picture)
-        showToast(t('TOAST_AVATAR_REMOVED'))
-      } else {
-        if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
-        setPendingUploadId(null)
-        onChange('')
-        showToast(t('TOAST_AVATAR_REMOVED'))
-      }
-    } catch {
-      setError(errorLabel)
-      showToast(t('TOAST_ACTION_FAILED'), 'error')
-    } finally {
-      setIsRemoving(false)
-    }
-  }
-
-  const busy = isUploading || isRemoving || isRequestPending
 
   return (
     <div className="avatar-upload-field">
@@ -145,7 +86,7 @@ export function AvatarUploadField({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
         aria-label={label}
-        onChange={event => void handleFileChange(event)}
+        onChange={onInputChange}
       />
       {error && <p className="avatar-upload-field__error" role="alert">{error}</p>}
     </div>

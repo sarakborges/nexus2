@@ -40,11 +40,11 @@ export function SignInPage() {
 
   return (
     <AuthPageLayout>
-      <section className="auth-card" aria-labelledby="sign-in-title">
-        <div>
+      <section className="auth-form-content" aria-labelledby="sign-in-title">
+        <header className="auth-form-content__header">
           <h1 className="auth-card__title" id="sign-in-title">{t('AUTH_SIGN_IN_TITLE')}</h1>
           <p className="auth-card__description">{t('AUTH_SIGN_IN_DESCRIPTION')}</p>
-        </div>
+        </header>
         <form className="auth-form" onSubmit={handleSubmit}>
           <FormField id="email" label={t('AUTH_EMAIL_LABEL')} type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required />
           <FormField id="password" label={t('AUTH_PASSWORD_LABEL')} type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />

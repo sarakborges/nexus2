@@ -24,8 +24,8 @@
   margin-inline: auto;
   padding: 24px;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   font-size: 14px;
 }
 
@@ -64,7 +64,7 @@
   justify-content: center;
   min-height: 40px;
   padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: var(--nexus-control-radius, 0);
   color: #fff;
   background: var(--color-primary-strong);
   font-size: 14px;
@@ -169,7 +169,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
 }
 
 .account-card__profile-entry:last-child {
@@ -180,8 +180,8 @@
   min-width: 0;
   min-height: 88px;
   padding: 14px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
 }
 
@@ -202,7 +202,7 @@
   height: 56px;
   flex: 0 0 56px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--avatar-shape-radius);
   background: var(--avatar-background);
   color: var(--avatar-fallback-color);
@@ -244,7 +244,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   padding-bottom: 12px;
 }
 
@@ -278,8 +278,8 @@
   gap: 16px;
   width: min(100%, 1000px);
   padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
 }
 
@@ -292,8 +292,8 @@
   display: grid;
   gap: 12px;
   padding: 20px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
 }
 
@@ -376,7 +376,7 @@
 
 .rich-text-content blockquote {
   padding-left: 1em;
-  border-left: 3px solid var(--color-border);
+  border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   color: var(--color-neutral);
 }
 

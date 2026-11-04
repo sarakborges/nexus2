@@ -2,8 +2,8 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { randomUUID } from 'node:crypto'
 import type {
   Community, CommunityRelationship, CommunityRelationshipType, CreateCommunityInput,
-  CreateProfileInput, PaginatedResult, Profile, ProfileMessage, RecentActivity, Relationship, RelationshipType,
-  CommunityForumTopic, CommunityForumTopicSummary, CommunityForumReply, CommunityForumTopicDetail
+  CreateProfileInput, CreateProfileResult, PaginatedResult, Profile, ProfileMessage, RecentActivity, Relationship, RelationshipType,
+  CommunityForumTopic, CommunityForumTopicSummary, CommunityForumReply, CommunityForumTopicDetail, AuthenticatedUser
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
@@ -36,7 +36,7 @@ export class DomainService {
     const set = new Set(ids)
     return (await this.readProfiles()).filter(p => set.has(p.id))
   }
-  async createProfile(userId: string, input: CreateProfileInput): Promise<Profile> {
+  async createProfile(userId: string, input: CreateProfileInput): Promise<CreateProfileResult> {
     const name = input.name.trim()
     const url = this.normalize(input.url || name)
     const picture = input.picture.trim()
@@ -52,10 +52,14 @@ export class DomainService {
     const profiles = await this.readProfiles()
     if (profiles.some(p => p.url === url)) throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
     const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
-    await this.data.write('profiles', [...profiles, profile])
+    let updatedUser: AuthenticatedUser | null = null
 
     try {
-      await this.auth.addProfile(userId, profile.id, true)
+      await this.data.write('profiles', [...profiles, profile])
+      updatedUser = await this.auth.addProfile(userId, profile.id, true)
+      if (updatedUser.id !== userId || !updatedUser.profiles.includes(profile.id) || updatedUser.currentProfile !== profile.id) {
+        throw new InternalServerErrorException('PROFILE_ACTIVATION_FAILED')
+      }
       await this.uploads?.attachAvatarUrl(userId, picture, 'profile-avatar', 'profile', profile.id)
       await this.uploads?.attachEditorImages(userId, about, 'profile', profile.id)
     } catch (error) {
@@ -79,7 +83,8 @@ export class DomainService {
       throw error
     }
 
-    return profile
+    if (!updatedUser) throw new InternalServerErrorException('PROFILE_ACTIVATION_FAILED')
+    return { profile, user: updatedUser }
   }
 
   async updateProfile(userId: string, profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {

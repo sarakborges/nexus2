@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router'
-import { Pagination, RequestState, RichTextEditor } from '@/Components'
+import { AccountIdentityLink, Pagination, RequestState, RichTextEditor } from '@/Components'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
@@ -14,16 +14,10 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { uploadFile } from '@/Services/Uploads'
+import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 
-function hasRichTextContent(value: string): boolean {
-  const text = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .trim()
-  return Boolean(text || /<img\b/i.test(value))
-}
 
 export function ProfileMessagesPage() {
   const { url } = useParams<{ url: string }>()
@@ -141,8 +135,25 @@ export function ProfileMessagesPage() {
               return (
                 <article className="profile-message" key={message.id}>
                   <header className="profile-message__header">
-                    {sender ? <Link className="account-card__link" to={`${ROUTES.profile}/${sender.url}`}>{sender.name}</Link> : <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>}
-                    <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>{new Date(message.createdAt).toLocaleString()}</time>
+                    {sender ? (
+                      <AccountIdentityLink
+                        to={ROUTES.profile + '/' + sender.url}
+                        name={sender.name}
+                        picture={sender.picture}
+                        title={sender.name}
+                        ariaLabel={sender.name}
+                        className="profile-message__sender"
+                        avatarClassName="profile-message__avatar"
+                        copyClassName="profile-message__sender-copy"
+                        nameClassName="account-card__link"
+                      >
+                        <time className="profile-message__date" dateTime={new Date(message.createdAt).toISOString()}>
+                          {new Date(message.createdAt).toLocaleString()}
+                        </time>
+                      </AccountIdentityLink>
+                    ) : (
+                      <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>
+                    )}
                   </header>
                   <div className="profile-message__content rich-text-content" dangerouslySetInnerHTML={{ __html: message.content }} />
                 </article>

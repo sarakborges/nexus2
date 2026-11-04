@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import type { CommunityForumTopicSummary, Profile } from '@nexus/common'
 
+import { IdentityAvatar } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
@@ -26,11 +27,11 @@ export function CommunityForumTopicList({
             <div className="community-forum__topic-author">
               {author ? (
                 <Link to={ROUTES.profile + '/' + author.url} aria-label={author.name} title={author.name}>
-                  <span className="community-forum__author-avatar">
-                    {author.picture
-                      ? <img src={author.picture} alt="" />
-                      : <span aria-hidden="true">{author.name.trim().charAt(0).toUpperCase()}</span>}
-                  </span>
+                  <IdentityAvatar
+                    className="community-forum__author-avatar"
+                    name={author.name}
+                    picture={author.picture}
+                  />
                 </Link>
               ) : <span className="community-forum__author-avatar" aria-hidden="true">?</span>}
             </div>

@@ -6,8 +6,8 @@
   display: grid;
   gap: 14px;
   padding: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
 }
 
@@ -34,7 +34,7 @@
   gap: 12px;
   min-width: 0;
   padding: 16px;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
   box-shadow: var(--nexus-card-shadow, none);
@@ -55,7 +55,7 @@
 
 .community-forum__reply {
   padding: 14px 0;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
 }
 
 .community-forum__reply:last-child { border-bottom: 0; }
@@ -115,8 +115,8 @@
 
 .community-forum__label {
   padding: 3px 7px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-control-radius, 0);
   color: var(--color-neutral);
   font-size: 11px;
 }
@@ -135,7 +135,7 @@
 .community-forum__actions {
   justify-content: flex-end;
   padding-top: 8px;
-  border-top: 1px solid var(--color-border);
+  border-top: var(--nexus-border-width, 2px) solid var(--color-border);
 }
 
 .community-forum__join {
@@ -163,7 +163,7 @@
   width: 56px;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--avatar-shape-radius);
   background: var(--avatar-background);
   color: var(--avatar-fallback-color);
@@ -216,7 +216,7 @@
   width: 56px;
   height: 72px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--avatar-shape-radius);
   background: var(--avatar-background);
   color: var(--avatar-fallback-color);
@@ -316,7 +316,7 @@
 }
 
 .community-forum__topic-detail-card > .community-forum__post {
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
 }
 
 .community-forum__topic-detail-card .community-forum__replies {

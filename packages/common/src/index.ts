@@ -6,6 +6,7 @@ export type PaginatedResult<T> = { items: T[]; page: number; pageSize: number; t
 export type ProfileType = 'social' | 'rp' | 'business'
 export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType }
 export type CreateProfileInput = Omit<Profile, 'id' | 'url'> & { url?: string }
+export type CreateProfileResult = { profile: Profile; user: AuthenticatedUser }
 export type CommunityPrivacy = 'public' | 'private' | 'unlisted'
 export type Community = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; privacy: CommunityPrivacy }
 export type CreateCommunityInput = Omit<Community, 'id' | 'type' | 'url'> & { url?: string }

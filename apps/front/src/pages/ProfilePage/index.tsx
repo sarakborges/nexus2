@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
-import { RequestState } from '@/Components'
+import { IdentityAvatar, RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
@@ -15,19 +15,8 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './ProfilePage.style.scss'
 
-type PreviewAvatarProps = {
-  name: string
-  picture: string
-}
-
-function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
-  return (
-    <span className="social-preview-avatar">
-      {picture
-        ? <img src={picture} alt="" />
-        : <span aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>}
-    </span>
-  )
+function PreviewAvatar({ name, picture }: { name: string; picture: string }) {
+  return <IdentityAvatar className="social-preview-avatar" name={name} picture={picture} />
 }
 
 export function ProfilePage() {

@@ -6,8 +6,6 @@ import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
-import './SocialPageLayout.style.scss'
-
 type SocialPageLayoutProps = {
   sidebar: ReactNode
   children: ReactNode
@@ -45,9 +43,11 @@ export function ProfileSidebar({ profile, active, showRelationshipActions = true
   return (
     <div className="social-sidebar-card">
       <section className="social-identity">
-        {profile.picture
-          ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt={t('PROFILE_PICTURE_ALT', { name: profile.name })} />
-          : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</div>}
+        <Link className="social-identity__link" to={ROUTES.profile + '/' + profile.url} aria-label={t('PROFILE_PICTURE_ALT', { name: profile.name })}>
+          {profile.picture
+            ? <img className="social-identity__picture social-identity__picture--profile" src={profile.picture} alt="" />
+            : <span className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{profile.name.trim().charAt(0).toUpperCase()}</span>}
+        </Link>
         <h1 className="social-identity__name">{profile.name}</h1>
         {showRelationshipActions && <RelationshipActions targetId={profile.id} />}
       </section>
@@ -67,9 +67,11 @@ export function CommunitySidebar({ community, active, canInteract = false }: Com
   return (
     <div className="social-sidebar-card">
       <section className="social-identity">
-        {community.picture
-          ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt={t('COMMUNITY_PICTURE_ALT', { name: community.name })} />
-          : <div className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</div>}
+        <Link className="social-identity__link" to={ROUTES.community + '/' + community.url} aria-label={t('COMMUNITY_PICTURE_ALT', { name: community.name })}>
+          {community.picture
+            ? <img className="social-identity__picture social-identity__picture--community" src={community.picture} alt="" />
+            : <span className="social-identity__picture social-identity__picture--fallback" aria-hidden="true">{community.name.trim().charAt(0).toUpperCase()}</span>}
+        </Link>
         <h1 className="social-identity__name">{community.name}</h1>
         {canInteract && <RelationshipActions targetId={community.id} targetKind="community" />}
       </section>
