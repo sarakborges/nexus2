@@ -48,7 +48,7 @@ export function EditProfilePage() {
       if (!profile || !form) throw new Error('PROFILE_NOT_READY')
       return updateUserProfile(profile.id, {
         name: form.name,
-        url: form.url,
+        url: form.url || undefined,
         picture: profile.picture,
         about: form.about
       })
@@ -110,7 +110,8 @@ export function EditProfilePage() {
               emptyLabel={t('UPLOAD_EMPTY')}
             />
             <FormField id="profile-name" label={t('PROFILE_NAME_LABEL')} type="text" autoComplete="nickname" value={form.name} onChange={event => setForm(current => current ? { ...current, name: event.target.value } : current)} maxLength={80} required />
-            <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder="sara-borges" pattern="[a-zA-Z0-9]+([-][a-zA-Z0-9]+)*" value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} required />
+            <FormField id="profile-url" label={t('PROFILE_URL_LABEL')} type="text" placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')} value={form.url} onChange={event => setForm(current => current ? { ...current, url: event.target.value } : current)} autoComplete="off" />
+            <p className="account-card__description">{t('PROFILE_URL_AUTO_HELP')}</p>
             <div className="form-field">
               <Label id="profile-about-label" htmlFor="profile-about">{t('PROFILE_ABOUT_LABEL')}</Label>
               <RichTextEditor
