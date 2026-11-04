@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react'
+import { FiX } from 'react-icons/fi'
 import type {
   MouseEvent,
   ReactNode,
@@ -16,6 +17,7 @@ export type ModalProps = {
   onClose: () => void
   closeOnBackdrop?: boolean
   className?: string
+  closeLabel?: string
 }
 
 export function Modal({
@@ -24,7 +26,8 @@ export function Modal({
   children,
   onClose,
   closeOnBackdrop = true,
-  className
+  className,
+  closeLabel = 'Close'
 }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
@@ -64,10 +67,12 @@ export function Modal({
       onClick={handleBackdropClick}
     >
       <div className="modal__content">
-        <Text as="h2" id={titleId} className="modal__title">
-          {title}
-        </Text>
-
+        <header className="modal__header">
+          <Text as="h2" id={titleId} className="modal__title">{title}</Text>
+          <button className="modal__close" type="button" onClick={onClose} aria-label={closeLabel}>
+            <FiX aria-hidden="true" />
+          </button>
+        </header>
         {children}
       </div>
     </dialog>
