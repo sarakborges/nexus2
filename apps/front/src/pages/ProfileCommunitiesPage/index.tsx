@@ -38,13 +38,13 @@ export function ProfileCommunitiesPage() {
   }, [communitiesQuery.data, page, setPage])
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading) return <main className="account-page"><div className="social-page__content-stack"><RequestState isLoading /></section></main>
+  if (profileQuery.isLoading) return <main className="account-page"><section className="account-card"><RequestState isLoading /></section></main>
   if (profileQuery.isError) return <main className="account-page"><section className="account-card"><RequestState isError onRetry={() => void profileQuery.refetch()} /></section></main>
   if (!profile) return <NotFoundPage />
 
   return (
     <SocialPageLayout sidebar={<ProfileSidebar profile={profile} active="communities" />}>
-      <section className="account-card">
+      <div className="social-page__content-stack">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_COMMUNITIES_TITLE')}</h1>
         </header>
