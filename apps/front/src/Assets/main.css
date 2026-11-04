@@ -6,6 +6,7 @@
 @import url('./Themes/main.theme.css');
 @import url('./Themes/light.theme.css');
 @import url('./Themes/dark.theme.css');
+@import url('./Themes/asteria.theme.css');
 
 @keyframes route-enter {
   from {
