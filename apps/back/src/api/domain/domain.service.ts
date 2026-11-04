@@ -672,7 +672,7 @@ export class DomainService {
   private normalize(value: string): string {
     return value
       .normalize('NFKD')
-      .replace(/[\\u0300-\\u036f]/g, '')
+      .replace(/[\u0300-\u036f]/g, '')
       .trim()
       .toLowerCase()
       .replace(/^@+/, '')
