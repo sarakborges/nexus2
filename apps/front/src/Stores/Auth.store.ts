@@ -52,6 +52,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (!get().session) return false
     try {
       const user = await updateCurrentProfile(profileId)
+      useProfileStore.getState().clearProfile()
       set((state) => state.session ? { session: { ...state.session, user } } : state)
       return true
     } catch { return false }
