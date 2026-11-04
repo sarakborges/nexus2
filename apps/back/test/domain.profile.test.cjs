@@ -365,10 +365,10 @@ test('community update rejects an owner transferred before its write transaction
 
   assert.deepEqual(collections.get('communities'), [original])
   assert.deepEqual(collections.get('community_relationships'), [{
-    profiles: [oldOwner.id, original.id],
+    profiles: [newOwner.id, original.id],
     type: 'owner',
     requestedBy: null,
     blockedBy: null,
-    updatedAt: 1
+    updatedAt: 2
   }])
 })

@@ -118,7 +118,7 @@ export class ProfileService {
     const aboutText = getRichTextPlainText(about)
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
 
     return this.data.transaction<Profile>(['accounts', 'profiles', 'media_files'], collections => {
       const accounts = collections.accounts as AccountRecord[]

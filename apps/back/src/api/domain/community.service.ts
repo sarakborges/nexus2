@@ -66,7 +66,7 @@ export class CommunityService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['public', 'private', 'unlisted'].includes(privacy) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
 
     const communityId = randomUUID()
     return this.data.transaction<Community>(
@@ -125,7 +125,7 @@ export class CommunityService {
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       (input.privacy !== undefined && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
+      (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
 
     return this.data.transaction<Community>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
