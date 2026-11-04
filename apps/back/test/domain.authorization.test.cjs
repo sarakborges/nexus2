@@ -214,3 +214,18 @@ test('a non-staff member cannot access pending join requests', async () => {
     error => error.getStatus() === 403
   )
 })
+
+test('community type inherits the owner profile type and persists the normalized value', async () => {
+  const { service, collections } = createDomainHarness({
+    relationships: [relationship('owner-1', 'owner')]
+  })
+  collections.set('profiles', collections.get('profiles').map(profile =>
+    profile.id === 'owner-1' ? { ...profile, type: 'business' } : profile
+  ))
+
+  const visible = await service.getCommunity('test-community')
+
+  assert.equal(visible.type, 'business')
+  assert.equal(collections.get('communities')[0].type, 'business')
+})
+

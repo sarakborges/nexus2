@@ -26,38 +26,43 @@ export class DomainAccessService {
       this.data.read<CommunityRelationship>('community_relationships')
     ])
     const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    let hasTypeChanges = false
-    let hasPrivacyChanges = false
-    const communities = stored.map(community => {
-      const ownerProfileId = relationships.find(record =>
-        record.profiles[1] === community.id && record.type === 'owner'
-      )?.profiles[0]
+    const ownerProfileByCommunityId = new Map<string, string>()
+    for (const relationship of relationships) {
+      const communityId = relationship.profiles[1]
+      if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
+        ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
+      }
+    }
+
+    const normalizeCommunity = (community: Community): Community => {
+      const ownerProfileId = ownerProfileByCommunityId.get(community.id)
       const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-      if (inheritedType && inheritedType !== community.type) hasTypeChanges = true
-      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy) ? community.privacy : 'public'
-      if (privacy !== community.privacy) hasPrivacyChanges = true
+      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+        ? community.privacy
+        : 'public'
       return {
         ...community,
         ...(inheritedType ? { type: inheritedType } : {}),
         privacy,
         about: sanitizeRichText(community.about ?? '')
       }
-    })
+    }
 
-    if (hasTypeChanges || hasPrivacyChanges) {
-      await this.data.update<Community>('communities', current => current.map(community => {
-        const ownerProfileId = relationships.find(record =>
-          record.profiles[1] === community.id && record.type === 'owner'
-        )?.profiles[0]
-        const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-        const privacy = ['public', 'private', 'unlisted'].includes(community.privacy) ? community.privacy : 'public'
-        return {
-          ...community,
-          ...(inheritedType ? { type: inheritedType } : {}),
-          privacy,
-          about: sanitizeRichText(community.about ?? '')
-        }
-      }))
+    const communities = stored.map(normalizeCommunity)
+    const hasNormalizationChanges = stored.some((community, index) =>
+      communities[index].type !== community.type ||
+      communities[index].privacy !== community.privacy
+    )
+
+    if (hasNormalizationChanges) {
+      await this.data.update<Community>('communities', current => {
+        const normalized = current.map(normalizeCommunity)
+        const hasChanges = normalized.some((community, index) =>
+          community.type !== current[index].type ||
+          community.privacy !== current[index].privacy
+        )
+        return hasChanges ? normalized : current
+      })
     }
     return communities
   }
