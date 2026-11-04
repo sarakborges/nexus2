@@ -65,7 +65,8 @@ export function RelationshipActions({ targetId, targetKind = 'profile' }: Relati
         queryClient.invalidateQueries({ queryKey: ['relationships'] }),
         queryClient.invalidateQueries({ queryKey: ['community-relationships'] })
       ])
-    }
+    },
+    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const run = (action: Action) => {
     setLastAction(action)

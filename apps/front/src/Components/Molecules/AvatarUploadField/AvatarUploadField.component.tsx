@@ -77,6 +77,7 @@ export function AvatarUploadField({
       }
     } catch {
       setError(errorLabel)
+      showToast(t('TOAST_ACTION_FAILED'), 'error')
     } finally {
       setIsUploading(false)
     }
@@ -100,6 +101,7 @@ export function AvatarUploadField({
       }
     } catch {
       setError(errorLabel)
+      showToast(t('TOAST_ACTION_FAILED'), 'error')
     } finally {
       setIsRemoving(false)
     }
