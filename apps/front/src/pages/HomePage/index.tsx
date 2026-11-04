@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { RequestState } from '@/Components'
+import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getRecentActivity } from '@/Services/Activity'
@@ -9,7 +10,6 @@ import { getProfilesByIds } from '@/Services/Profile'
 import { getProfileFriends } from '@/Services/Relationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
-import '../AuthenticatedPage.style.scss'
 import './HomePage.style.scss'
 
 type PreviewEntryProps = {
@@ -52,16 +52,17 @@ export function HomePage() {
     queryFn: () => getProfilesByIds(profileIds),
     enabled: profileIds.length > 0
   })
-  const currentProfile = profilesQuery.data?.find(profile => profile.id === currentProfileId) ?? null
+  const profiles = profilesQuery.data ?? []
+  const currentProfile = profiles.find(profile => profile.id === currentProfileId) ?? profiles[0] ?? null
   const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(currentProfileId ?? '', 1, 8),
-    queryFn: () => getProfileFriends(currentProfileId!, { page: 1, pageSize: 8 }),
-    enabled: Boolean(currentProfileId)
+    queryKey: queryKeys.relationships.friends(currentProfile?.id ?? '', 1, 8),
+    queryFn: () => getProfileFriends(currentProfile!.id, { page: 1, pageSize: 8 }),
+    enabled: Boolean(currentProfile)
   })
   const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(currentProfileId ?? '', 1, 8),
-    queryFn: () => getProfileCommunities(currentProfileId!, { page: 1, pageSize: 8 }),
-    enabled: Boolean(currentProfileId)
+    queryKey: queryKeys.communities.byProfile(currentProfile?.id ?? '', 1, 8),
+    queryFn: () => getProfileCommunities(currentProfile!.id, { page: 1, pageSize: 8 }),
+    enabled: Boolean(currentProfile)
   })
   const allCommunitiesQuery = useQuery({
     queryKey: queryKeys.communities.list(1, 50),
@@ -92,16 +93,86 @@ export function HomePage() {
     timeStyle: 'short'
   }).format(timestamp)
 
+  const rightSidebar = (
+    <div className="home-page__previews">
+      <section className="social-preview-panel">
+        <header className="social-preview-panel__header">
+          <h2>{t('PROFILE_FRIENDS_TITLE')}<span className="social-preview-panel__count">({friendsQuery.data?.totalItems ?? '—'})</span></h2>
+          {currentProfile && <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + currentProfile.url + '/friends'}>{t('PROFILE_FRIENDS_LINK')}</Link>}
+        </header>
+        <RequestState
+          isLoading={friendsQuery.isLoading}
+          isFetching={friendsQuery.isFetching}
+          isError={friendsQuery.isError}
+          isEmpty={friendsQuery.isSuccess && friends.length === 0}
+          emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
+          onRetry={() => void friendsQuery.refetch()}
+        >
+          <div className="home-page__preview-list">
+            {friends.map(friend => <PreviewEntry key={friend.id} name={friend.name} picture={friend.picture} href={ROUTES.profile + '/' + friend.url} secondary={'@' + friend.url} />)}
+          </div>
+        </RequestState>
+      </section>
+
+      <section className="social-preview-panel">
+        <header className="social-preview-panel__header">
+          <h2>{t('PROFILE_COMMUNITIES_TITLE')}<span className="social-preview-panel__count">({communitiesQuery.data?.totalItems ?? '—'})</span></h2>
+          {currentProfile && <Link className="social-preview-panel__all" to={ROUTES.profile + '/' + currentProfile.url + '/communities'}>{t('PROFILE_COMMUNITIES_LINK')}</Link>}
+        </header>
+        <RequestState
+          isLoading={communitiesQuery.isLoading}
+          isFetching={communitiesQuery.isFetching}
+          isError={communitiesQuery.isError}
+          isEmpty={communitiesQuery.isSuccess && communities.length === 0}
+          emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
+          onRetry={() => void communitiesQuery.refetch()}
+        >
+          <div className="home-page__preview-list">
+            {communities.map(community => <PreviewEntry key={community.id} name={community.name} picture={community.picture} href={ROUTES.community + '/' + community.url} secondary={'/community/' + community.url} />)}
+          </div>
+        </RequestState>
+      </section>
+
+      <section className="social-preview-panel">
+        <header className="social-preview-panel__header">
+          <h2>{t('HOME_SUGGESTED_COMMUNITIES')}</h2>
+        </header>
+        <RequestState
+          isLoading={Boolean(currentProfile && (allCommunitiesQuery.isLoading || ownedCommunityIdsQuery.isLoading))}
+          isFetching={allCommunitiesQuery.isFetching || ownedCommunityIdsQuery.isFetching}
+          isError={allCommunitiesQuery.isError || ownedCommunityIdsQuery.isError}
+          isEmpty={Boolean(currentProfile && allCommunitiesQuery.isSuccess && ownedCommunityIdsQuery.isSuccess && suggestions.length === 0)}
+          emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
+          onRetry={() => {
+            void allCommunitiesQuery.refetch()
+            void ownedCommunityIdsQuery.refetch()
+          }}
+        >
+          <div className="home-page__preview-list">
+            {suggestions.map(community => <PreviewEntry key={community.id} name={community.name} picture={community.picture} href={ROUTES.community + '/' + community.url} secondary={'/community/' + community.url} />)}
+          </div>
+        </RequestState>
+      </section>
+    </div>
+  )
+
+  if (!currentProfile) {
+    return <main className="account-page"><section className="account-card"><RequestState isLoading={profilesQuery.isLoading} isError={profilesQuery.isError} onRetry={() => void profilesQuery.refetch()} /></section></main>
+  }
+
   return (
-    <main className="account-page home-page">
-      <section className="account-card home-page__card">
-        <header className="account-card__header">
+    <SocialPageLayout
+      className="home-page"
+      sidebar={<ProfileSidebar profile={currentProfile} active="home" showRelationshipActions={false} />}
+      rightSidebar={rightSidebar}
+    >
+      <section className="social-panel home-page__card">
+        <header className="social-panel__header">
           <div>
-            <h1 className="account-card__title">{t('HOME_TITLE')}</h1>
+            <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
             <p className="account-card__description">{t('HOME_ACTIVITY_DESCRIPTION')}</p>
           </div>
         </header>
-
         <section className="home-page__activity" aria-labelledby="home-activity-title">
           <h2 className="home-page__activity-title" id="home-activity-title">{t('HOME_ACTIVITY_TITLE')}</h2>
           <RequestState
@@ -144,68 +215,7 @@ export function HomePage() {
             </div>
           </RequestState>
         </section>
-
-        <div className="home-page__previews">
-          <section className="home-page__preview-panel">
-            <header className="home-page__preview-header">
-              <h2>{t('PROFILE_FRIENDS_TITLE')} <span>({friendsQuery.data?.totalItems ?? '—'})</span></h2>
-              {currentProfile && <Link to={ROUTES.profile + '/' + currentProfile.url + '/friends'}>{t('VIEW_ALL')}</Link>}
-            </header>
-            <RequestState
-              isLoading={friendsQuery.isLoading}
-              isFetching={friendsQuery.isFetching}
-              isError={friendsQuery.isError}
-              isEmpty={friendsQuery.isSuccess && friends.length === 0}
-              emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-              onRetry={() => void friendsQuery.refetch()}
-            >
-              <div className="home-page__preview-list">
-                {friends.map(friend => <PreviewEntry key={friend.id} name={friend.name} picture={friend.picture} href={ROUTES.profile + '/' + friend.url} secondary={'@' + friend.url} />)}
-              </div>
-            </RequestState>
-          </section>
-
-          <section className="home-page__preview-panel">
-            <header className="home-page__preview-header">
-              <h2>{t('PROFILE_COMMUNITIES_TITLE')} <span>({communitiesQuery.data?.totalItems ?? '—'})</span></h2>
-              {currentProfile && <Link to={ROUTES.profile + '/' + currentProfile.url + '/communities'}>{t('VIEW_ALL')}</Link>}
-            </header>
-            <RequestState
-              isLoading={communitiesQuery.isLoading}
-              isFetching={communitiesQuery.isFetching}
-              isError={communitiesQuery.isError}
-              isEmpty={communitiesQuery.isSuccess && communities.length === 0}
-              emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-              onRetry={() => void communitiesQuery.refetch()}
-            >
-              <div className="home-page__preview-list">
-                {communities.map(community => <PreviewEntry key={community.id} name={community.name} picture={community.picture} href={ROUTES.community + '/' + community.url} secondary={'/community/' + community.url} />)}
-              </div>
-            </RequestState>
-          </section>
-
-          <section className="home-page__preview-panel">
-            <header className="home-page__preview-header">
-              <h2>{t('HOME_SUGGESTED_COMMUNITIES')}</h2>
-            </header>
-            <RequestState
-              isLoading={Boolean(currentProfile && (allCommunitiesQuery.isLoading || ownedCommunityIdsQuery.isLoading))}
-              isFetching={allCommunitiesQuery.isFetching || ownedCommunityIdsQuery.isFetching}
-              isError={allCommunitiesQuery.isError || ownedCommunityIdsQuery.isError}
-              isEmpty={Boolean(currentProfile && allCommunitiesQuery.isSuccess && ownedCommunityIdsQuery.isSuccess && suggestions.length === 0)}
-              emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
-              onRetry={() => {
-                void allCommunitiesQuery.refetch()
-                void ownedCommunityIdsQuery.refetch()
-              }}
-            >
-              <div className="home-page__preview-list">
-                {suggestions.map(community => <PreviewEntry key={community.id} name={community.name} picture={community.picture} href={ROUTES.community + '/' + community.url} secondary={'/community/' + community.url} />)}
-              </div>
-            </RequestState>
-          </section>
-        </div>
       </section>
-    </main>
+    </SocialPageLayout>
   )
 }
