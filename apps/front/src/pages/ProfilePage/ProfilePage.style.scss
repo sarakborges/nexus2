@@ -92,13 +92,13 @@
   width: 100%;
   max-height: 340px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: var(--color-surface);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
   object-fit: cover;
 }
 
 .social-identity__picture--profile {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 1 / 1;
 }
 
 .social-identity__picture--community {
@@ -293,9 +293,9 @@
   aspect-ratio: 1;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface-raised);
-  color: var(--color-neutral-strong);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
+  color: var(--avatar-fallback-color);
   font-size: 18px;
   font-weight: var(--font-weight-bold);
 }
@@ -404,4 +404,12 @@
     padding: 16px;
   }
 
+}
+
+.social-panel__header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
 }
