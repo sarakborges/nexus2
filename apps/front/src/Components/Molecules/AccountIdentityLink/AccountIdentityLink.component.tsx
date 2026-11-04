@@ -1,7 +1,7 @@
+import { IdentityAvatar } from '../IdentityAvatar'
+
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-
-import { IdentityAvatar } from '../IdentityAvatar'
 
 type AccountIdentityLinkProps = {
   to: string
@@ -34,7 +34,11 @@ export function AccountIdentityLink({
 }: AccountIdentityLinkProps) {
   return (
     <Link className={className} to={to} title={title} aria-label={ariaLabel}>
-      <IdentityAvatar name={name} picture={picture} className={avatarClassName} />
+      <IdentityAvatar
+        name={name}
+        picture={picture}
+        className={avatarClassName}
+      />
       <span className={copyClassName}>
         <span className={nameClassName}>{name}</span>
         {secondary !== undefined && (

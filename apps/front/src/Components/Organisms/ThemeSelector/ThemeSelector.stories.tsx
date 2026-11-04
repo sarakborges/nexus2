@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ThemeSelector } from './ThemeSelector.component'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 const meta = {
   title: 'Application/Organisms/ThemeSelector',

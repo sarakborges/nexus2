@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-
 import { Text } from './Text.component'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 const meta = {
   title: 'Design System/Atoms/Text',

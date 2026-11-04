@@ -1,9 +1,10 @@
+import { queryClient } from '../src/Services/Query/queryClient'
+import type { Preview } from '@storybook/react-vite'
 import { QueryClientProvider } from '@tanstack/react-query'
+
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { Preview } from '@storybook/react-vite'
 
-import { queryClient } from '../src/Services/Query/queryClient'
 import '../src/Assets/main.css'
 
 type StorybookTheme = 'light' | 'dark'

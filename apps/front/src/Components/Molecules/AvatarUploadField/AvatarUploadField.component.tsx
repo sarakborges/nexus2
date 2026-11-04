@@ -1,7 +1,8 @@
-import { useRef, type ChangeEvent } from 'react'
+import { useAvatarUpload } from './useAvatarUpload'
 import { FiImage } from 'react-icons/fi'
 
-import { useAvatarUpload } from './useAvatarUpload'
+import { type ChangeEvent, useRef } from 'react'
+
 import './AvatarUploadField.style.scss'
 
 type AvatarUploadFieldProps = {
@@ -54,11 +55,17 @@ export function AvatarUploadField({
     <div className="avatar-upload-field">
       <span className="avatar-upload-field__label">{label}</span>
       <div className="avatar-upload-field__preview">
-        {value
-          ? <img src={value} alt="" />
-          : <span className="avatar-upload-field__fallback" aria-hidden="true" title={emptyLabel}>
-              {fallbackName.trim().charAt(0).toUpperCase() || <FiImage />}
-            </span>}
+        {value ? (
+          <img src={value} alt="" />
+        ) : (
+          <span
+            className="avatar-upload-field__fallback"
+            aria-hidden="true"
+            title={emptyLabel}
+          >
+            {fallbackName.trim().charAt(0).toUpperCase() || <FiImage />}
+          </span>
+        )}
       </div>
       <div className="avatar-upload-field__actions">
         <button
@@ -88,7 +95,11 @@ export function AvatarUploadField({
         aria-label={label}
         onChange={onInputChange}
       />
-      {error && <p className="avatar-upload-field__error" role="alert">{error}</p>}
+      {error && (
+        <p className="avatar-upload-field__error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

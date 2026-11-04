@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from 'react'
+
 import { useTranslations } from '@/Hooks/Language'
 
 import './AuthPageLayout.style.scss'
@@ -8,7 +9,10 @@ export function AuthPageLayout({ children }: PropsWithChildren) {
 
   return (
     <main className="auth-split-page">
-      <section className="auth-split-page__story" aria-labelledby="auth-story-title">
+      <section
+        className="auth-split-page__story"
+        aria-labelledby="auth-story-title"
+      >
         <span className="auth-split-page__brand">NEXUS</span>
 
         <div className="auth-split-page__intro">
@@ -44,7 +48,10 @@ export function AuthPageLayout({ children }: PropsWithChildren) {
         <p className="auth-split-page__footer">{t('AUTH_STORY_FOOTER')}</p>
       </section>
 
-      <section className="auth-split-page__form-panel" aria-label={t('AUTH_FORM_REGION')}>
+      <section
+        className="auth-split-page__form-panel"
+        aria-label={t('AUTH_FORM_REGION')}
+      >
         {children}
       </section>
     </main>

@@ -1,1 +1,4 @@
-export type { CommunityRelationship, CommunityRelationshipType } from '@nexus/common'
+export type {
+  CommunityRelationship,
+  CommunityRelationshipType
+} from '@nexus/common'

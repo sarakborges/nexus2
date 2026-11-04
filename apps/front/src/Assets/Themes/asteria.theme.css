@@ -94,7 +94,6 @@
   min-height: 44px;
   border-width: var(--nexus-border-width);
   border-radius: var(--nexus-control-radius);
-  box-shadow: var(--nexus-control-shadow);
   font-size: 15px;
   font-weight: 500;
 }
@@ -114,8 +113,12 @@
   background-color: var(--color-primary-strong);
 }
 
-.button--primary:not(:disabled):hover { background-color: var(--color-primary); }
-.button--primary:not(:disabled):active { background-color: var(--color-secondary-strong); }
+.button--primary:not(:disabled):hover {
+  background-color: var(--color-primary);
+}
+.button--primary:not(:disabled):active {
+  background-color: var(--color-secondary-strong);
+}
 
 .button--secondary {
   border-color: var(--color-border);

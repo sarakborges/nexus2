@@ -1,12 +1,10 @@
 .preference-selector .preference-option {
-  border-bottom: 0;
   box-shadow: none;
 }
 
 .preference-selector .preference-option:hover,
 .preference-selector .preference-option:focus-visible,
 .preference-selector .preference-option--selected {
-  border-bottom: 0;
   box-shadow: none;
 }
 
@@ -50,5 +48,9 @@
 
 .preference-option--selected {
   border-color: var(--color-primary-strong);
-  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-primary) 12%,
+    var(--color-surface)
+  );
 }

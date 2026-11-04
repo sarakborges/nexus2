@@ -1,6 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-
 import { LanguageFlag } from './LanguageFlag.component'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 const meta = {
   title: 'Application/Atoms/LanguageFlag',

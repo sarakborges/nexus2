@@ -1,13 +1,10 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
+
 import type { ButtonHTMLAttributes } from 'react'
 
 import './Button.style.scss'
 
-export type ButtonVariation =
-  | 'primary'
-  | 'secondary'
-  | 'cancel'
-  | 'transparent'
+export type ButtonVariation = 'primary' | 'secondary' | 'cancel' | 'transparent'
 
 type ButtonProps = {
   variation?: ButtonVariation

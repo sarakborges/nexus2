@@ -33,7 +33,9 @@
     padding-right: 40px;
   }
 
-  &__title { margin: 0; }
+  &__title {
+    margin: 0;
+  }
 
   &__close {
     position: absolute;
@@ -49,8 +51,17 @@
     color: var(--color-neutral);
     cursor: pointer;
 
-    &:hover { background: var(--color-surface-raised); color: var(--text-color); }
-    &:focus-visible { outline: 2px solid var(--color-primary-strong); outline-offset: 2px; }
-    svg { width: 18px; height: 18px; }
+    &:hover {
+      background: var(--color-surface-raised);
+      color: var(--text-color);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-strong);
+      outline-offset: 2px;
+    }
+    svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 }

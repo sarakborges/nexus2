@@ -1,6 +1,6 @@
+import type { Language } from '@/Constants/languages'
 import { enUSTranslations } from '@/Locales/en-US'
 import { ptBRTranslations } from '@/Locales/pt-BR'
-import type { Language } from '@/Constants/languages'
 import type {
   TranslationKey,
   TranslationReplacements

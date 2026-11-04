@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
@@ -39,7 +40,9 @@ export function RequestState({
   if (isError) {
     return (
       <div className="request-state" role="alert">
-        <p className="account-card__description">{errorMessage ?? t('REQUEST_FAILED')}</p>
+        <p className="account-card__description">
+          {errorMessage ?? t('REQUEST_FAILED')}
+        </p>
         {onRetry && (
           <Button type="button" variation="secondary" onClick={onRetry}>
             {t('REQUEST_RETRY')}
@@ -50,15 +53,29 @@ export function RequestState({
   }
 
   const refreshingIndicator = isFetching ? (
-    <div className="request-state request-state--inline" role="status" aria-live="polite">
+    <div
+      className="request-state request-state--inline"
+      role="status"
+      aria-live="polite"
+    >
       <span className="request-state__spinner" aria-hidden="true" />
       <span>{t('REQUEST_UPDATING')}</span>
     </div>
   ) : null
 
   if (isEmpty) {
-    return <>{refreshingIndicator}<p className="account-card__description">{emptyMessage}</p></>
+    return (
+      <>
+        {refreshingIndicator}
+        <p className="account-card__description">{emptyMessage}</p>
+      </>
+    )
   }
 
-  return <>{refreshingIndicator}{children}</>
+  return (
+    <>
+      {refreshingIndicator}
+      {children}
+    </>
+  )
 }

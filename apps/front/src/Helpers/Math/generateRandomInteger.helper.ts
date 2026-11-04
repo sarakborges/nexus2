@@ -3,10 +3,7 @@ type IntegerRange = Readonly<{
   max: number
 }>
 
-export const generateRandomInteger = ({
-  min,
-  max
-}: IntegerRange): number => {
+export const generateRandomInteger = ({ min, max }: IntegerRange): number => {
   const range = max - min + 1
 
   if (

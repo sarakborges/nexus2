@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { Community, CreateCommunityInput } from '@/Models/Community.model'
 import { createCommunity, getCommunityByUrl } from '@/Services/Community'
 
@@ -7,7 +8,10 @@ type CommunityStore = {
   loadedUrl: string | null
   loadingUrl: string | null
   loadCommunityByUrl: (url: string) => Promise<void>
-  createCommunity: (input: CreateCommunityInput, ownerProfileId: string) => Promise<Community>
+  createCommunity: (
+    input: CreateCommunityInput,
+    ownerProfileId: string
+  ) => Promise<Community>
   clearCommunity: () => void
 }
 export const useCommunityStore = create<CommunityStore>((set, get) => ({
@@ -32,5 +36,6 @@ export const useCommunityStore = create<CommunityStore>((set, get) => ({
     set({ community, loadedUrl: community.url, loadingUrl: null })
     return community
   },
-  clearCommunity: () => set({ community: null, loadedUrl: null, loadingUrl: null })
+  clearCommunity: () =>
+    set({ community: null, loadedUrl: null, loadingUrl: null })
 }))

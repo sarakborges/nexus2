@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
 import { FaCheck } from 'react-icons/fa'
+
+import type { ReactNode } from 'react'
+
 import { Button, Text } from '@/DesignSystem'
 
 import './PreferenceOption.style.scss'
@@ -23,7 +25,12 @@ export function PreferenceOption({
 }: PreferenceOptionProps) {
   return (
     <Button
-      className={['preference-option', isSelected ? 'preference-option--selected' : ''].filter(Boolean).join(' ')}
+      className={[
+        'preference-option',
+        isSelected ? 'preference-option--selected' : ''
+      ]
+        .filter(Boolean)
+        .join(' ')}
       type="button"
       variation="transparent"
       onClick={onSelect}
@@ -33,7 +40,9 @@ export function PreferenceOption({
       {leadingVisual}
       <span className="preference-option__content">
         <Text className="preference-option__label">{label}</Text>
-        {description && <span className="preference-option__description">{description}</span>}
+        {description && (
+          <span className="preference-option__description">{description}</span>
+        )}
       </span>
       {isSelected && (
         <FaCheck

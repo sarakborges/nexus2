@@ -1,7 +1,19 @@
-import { create } from 'zustand'
-import type { AuthenticatedUser, AuthSession, SignInCredentials, SignUpCredentials } from '@nexus/common'
-import { getCurrentAuthSession, setCurrentProfile as updateCurrentProfile, signInUser, signOutUser, signUpUser } from '@/Services/Auth'
 import { useProfileStore } from './Profile.store'
+import type {
+  AuthSession,
+  AuthenticatedUser,
+  SignInCredentials,
+  SignUpCredentials
+} from '@nexus/common'
+import { create } from 'zustand'
+
+import {
+  getCurrentAuthSession,
+  signInUser,
+  signOutUser,
+  signUpUser,
+  setCurrentProfile as updateCurrentProfile
+} from '@/Services/Auth'
 
 type AuthStore = {
   session: AuthSession | null
@@ -37,13 +49,21 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signIn: async (credentials) => {
     const user = await signInUser(credentials)
     useProfileStore.getState().clearProfile()
-    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true, initializationError: false })
+    set({
+      session: { user, authenticatedAt: Date.now() },
+      isInitialized: true,
+      initializationError: false
+    })
     return user
   },
   signUp: async (credentials) => {
     const user = await signUpUser(credentials)
     useProfileStore.getState().clearProfile()
-    set({ session: { user, authenticatedAt: Date.now() }, isInitialized: true, initializationError: false })
+    set({
+      session: { user, authenticatedAt: Date.now() },
+      isInitialized: true,
+      initializationError: false
+    })
     return user
   },
   setCurrentProfile: async (profileId) => {
@@ -51,9 +71,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const user = await updateCurrentProfile(profileId)
       useProfileStore.getState().clearProfile()
-      set((state) => state.session ? { session: { ...state.session, user } } : state)
+      set((state) =>
+        state.session ? { session: { ...state.session, user } } : state
+      )
       return true
-    } catch { return false }
+    } catch {
+      return false
+    }
   },
   signOut: async () => {
     await signOutUser()

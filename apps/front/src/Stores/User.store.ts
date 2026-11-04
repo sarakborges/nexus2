@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { AuthenticatedUser, User } from '@/Models/User.model'
 
 type UserStore = {

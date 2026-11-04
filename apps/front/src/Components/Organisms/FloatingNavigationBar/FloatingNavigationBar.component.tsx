@@ -1,9 +1,24 @@
+import { AccountMenu } from './AccountMenu.component'
+import {
+  useIsFetching,
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/react-query'
+import {
+  FiChevronDown,
+  FiHome,
+  FiMenu,
+  FiMessageCircle,
+  FiUsers,
+  FiX
+} from 'react-icons/fi'
+
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useIsFetching, useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FiChevronDown, FiHome, FiMenu, FiMessageCircle, FiUsers, FiX } from 'react-icons/fi'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { AccountMenu } from './AccountMenu.component'
+
 import { IdentityAvatar } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -23,7 +38,9 @@ type OpenPanel = {
   pathname: string
 } | null
 
-export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarProps) {
+export function FloatingNavigationBar({
+  onOpenSettings
+}: FloatingNavigationBarProps) {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const location = useLocation()
@@ -34,11 +51,12 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
   const isRequestPending = isFetching || isMutating
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
-  const activePanel = openPanel?.pathname === location.pathname ? openPanel.panel : null
-  const session = useAuthStore(state => state.session)
-  const signOut = useAuthStore(state => state.signOut)
-  const showToast = useToastStore(state => state.showToast)
-  const setCurrentProfile = useAuthStore(state => state.setCurrentProfile)
+  const activePanel =
+    openPanel?.pathname === location.pathname ? openPanel.panel : null
+  const session = useAuthStore((state) => state.session)
+  const signOut = useAuthStore((state) => state.signOut)
+  const showToast = useToastStore((state) => state.showToast)
+  const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
   const profileIds = session?.user.profiles ?? []
 
   const profilesQuery = useQuery({
@@ -50,10 +68,21 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
 
   const currentProfileId = session?.user.currentProfile ?? null
   const profiles = profilesQuery.data ?? []
-  const currentProfile = profiles.find(profile => profile.id === currentProfileId)
-  const profileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url : null
-  const messagesRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/messages' : null
-  const editProfileRoute = currentProfile ? ROUTES.profile + '/' + currentProfile.url + '/edit' : null
+  const currentProfile = profiles.find(
+    (profile) => profile.id === currentProfileId
+  )
+  const profileRoute = currentProfile
+    ? ROUTES.profile + '/' + currentProfile.url
+    : null
+  const messagesRoute = currentProfile
+    ? ROUTES.profile + '/' + currentProfile.url + '/messages'
+    : null
+  const communitiesRoute = currentProfile
+    ? ROUTES.profile + '/' + currentProfile.url + '/communities'
+    : null
+  const editProfileRoute = currentProfile
+    ? ROUTES.profile + '/' + currentProfile.url + '/edit'
+    : null
   const accountName = currentProfile?.name ?? t('NAVIGATION_ACCOUNT')
 
   const closePanels = () => {
@@ -63,7 +92,7 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
 
   const togglePanel = (panel: 'navigation' | 'account') => {
     setIsProfileSwitcherOpen(false)
-    setOpenPanel(current =>
+    setOpenPanel((current) =>
       current?.pathname === location.pathname && current.panel === panel
         ? null
         : { panel, pathname: location.pathname }
@@ -84,7 +113,10 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
       if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
     },
     onSuccess: () => {
-      queryClient.setQueryData(queryKeys.auth.session, useAuthStore.getState().session)
+      queryClient.setQueryData(
+        queryKeys.auth.session,
+        useAuthStore.getState().session
+      )
       showToast(t('TOAST_PROFILE_SWITCHED'))
       closePanels()
     }
@@ -124,60 +156,106 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
     <div className="floating-navigation" ref={navigationRef}>
       <div className="floating-navigation__bar">
         <div className="floating-navigation__content">
-        <nav className="floating-navigation__desktop-links" aria-label={t('NAVIGATION_LABEL')}>
-          <Link className="floating-navigation__desktop-link" to={ROUTES.home} aria-current={location.pathname === ROUTES.home ? 'page' : undefined} onClick={closePanels}>
-            <FiHome aria-hidden="true" />
-            <span>{t('HOME_TITLE')}</span>
-          </Link>
-          {profileRoute && (
-            <Link className="floating-navigation__desktop-link" to={profileRoute} aria-current={location.pathname === profileRoute ? 'page' : undefined} onClick={closePanels}>
-              <FiUsers aria-hidden="true" />
-              <span>{t('NAVIGATION_PROFILE')}</span>
-            </Link>
-          )}
-          {messagesRoute && (
-            <Link className="floating-navigation__desktop-link" to={messagesRoute} aria-current={location.pathname === messagesRoute ? 'page' : undefined} onClick={closePanels}>
-              <FiMessageCircle aria-hidden="true" />
-              <span>{t('NAVIGATION_MESSAGES')}</span>
-            </Link>
-          )}
-          <Link className="floating-navigation__desktop-link" to={ROUTES.communities} aria-current={location.pathname === ROUTES.communities ? 'page' : undefined} onClick={closePanels}>
-            <FiUsers aria-hidden="true" />
-            <span>{t('COMMUNITIES_TITLE')}</span>
-          </Link>
-        </nav>
+          <nav
+            className="floating-navigation__desktop-links"
+            aria-label={t('NAVIGATION_LABEL')}
+          >
+            {currentProfile?.url && (
+              <>
+                <Link
+                  className="floating-navigation__desktop-link"
+                  to={ROUTES.home}
+                  aria-current={
+                    location.pathname === ROUTES.home ? 'page' : undefined
+                  }
+                  onClick={closePanels}
+                >
+                  <FiHome aria-hidden="true" />
+                  <span>{t('HOME_TITLE')}</span>
+                </Link>
+                {profileRoute && (
+                  <Link
+                    className="floating-navigation__desktop-link"
+                    to={profileRoute}
+                    aria-current={
+                      location.pathname === profileRoute ? 'page' : undefined
+                    }
+                    onClick={closePanels}
+                  >
+                    <FiUsers aria-hidden="true" />
+                    <span>{t('NAVIGATION_PROFILE')}</span>
+                  </Link>
+                )}
+                {messagesRoute && (
+                  <Link
+                    className="floating-navigation__desktop-link"
+                    to={messagesRoute}
+                    aria-current={
+                      location.pathname === messagesRoute ? 'page' : undefined
+                    }
+                    onClick={closePanels}
+                  >
+                    <FiMessageCircle aria-hidden="true" />
+                    <span>{t('NAVIGATION_MESSAGES')}</span>
+                  </Link>
+                )}
+                {communitiesRoute && (
+                  <Link
+                    className="floating-navigation__desktop-link"
+                    to={communitiesRoute}
+                    aria-current={
+                      location.pathname === communitiesRoute
+                        ? 'page'
+                        : undefined
+                    }
+                    onClick={closePanels}
+                  >
+                    <FiUsers aria-hidden="true" />
+                    <span>{t('COMMUNITIES_TITLE')}</span>
+                  </Link>
+                )}
+              </>
+            )}
+          </nav>
 
-        <button
-          className="floating-navigation__icon-button"
-          type="button"
-          disabled={isRequestPending}
-          aria-label={t('NAVIGATION_MENU')}
-          aria-expanded={activePanel === 'navigation'}
-          aria-controls="floating-navigation-menu"
-          onClick={() => togglePanel('navigation')}
-        >
-          {activePanel === 'navigation' ? <FiX aria-hidden="true" /> : <FiMenu aria-hidden="true" />}
-        </button>
+          <button
+            className="floating-navigation__icon-button"
+            type="button"
+            disabled={isRequestPending}
+            aria-label={t('NAVIGATION_MENU')}
+            aria-expanded={activePanel === 'navigation'}
+            aria-controls="floating-navigation-menu"
+            onClick={() => togglePanel('navigation')}
+          >
+            {activePanel === 'navigation' ? (
+              <FiX aria-hidden="true" />
+            ) : (
+              <FiMenu aria-hidden="true" />
+            )}
+          </button>
 
-        <button
-          className="floating-navigation__account-trigger"
-          type="button"
-          disabled={isRequestPending}
-          aria-label={t('NAVIGATION_ACCOUNT_MENU')}
-          aria-expanded={activePanel === 'account'}
-          aria-controls="floating-account-menu"
-          onClick={() => togglePanel('account')}
-        >
-          <IdentityAvatar
-            className="floating-navigation__avatar"
-            name={accountName}
-            picture={currentProfile?.picture ?? ''}
-          />
-          <span className="floating-navigation__account-label">
-            <span>{accountName}</span>
-          </span>
-          <FiChevronDown className="floating-navigation__account-chevron" aria-hidden="true" />
-        </button>
+          <button
+            className="floating-navigation__account-trigger"
+            type="button"
+            disabled={isRequestPending}
+            aria-label={t('NAVIGATION_ACCOUNT_MENU')}
+            aria-expanded={activePanel === 'account'}
+            aria-controls="floating-account-menu"
+            onClick={() => togglePanel('account')}
+          >
+            <IdentityAvatar
+              className="floating-navigation__avatar"
+              name={accountName}
+              picture={currentProfile?.picture ?? ''}
+            />
+            <span className="floating-navigation__account-label">
+              <span>{accountName}</span>
+            </span>
+            <FiChevronDown
+              className="floating-navigation__account-chevron"
+              aria-hidden="true"
+            />
+          </button>
         </div>
       </div>
 
@@ -187,23 +265,39 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           id="floating-navigation-menu"
           aria-label={t('NAVIGATION_LABEL')}
         >
-          <Link className="floating-navigation__menu-item" to={ROUTES.home} onClick={closePanels}>
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.home}
+            onClick={closePanels}
+          >
             <FiHome aria-hidden="true" />
             <span>{t('HOME_TITLE')}</span>
           </Link>
           {profileRoute && (
-            <Link className="floating-navigation__menu-item" to={profileRoute} onClick={closePanels}>
+            <Link
+              className="floating-navigation__menu-item"
+              to={profileRoute}
+              onClick={closePanels}
+            >
               <FiUsers aria-hidden="true" />
               <span>{t('NAVIGATION_PROFILE')}</span>
             </Link>
           )}
           {messagesRoute && (
-            <Link className="floating-navigation__menu-item" to={messagesRoute} onClick={closePanels}>
+            <Link
+              className="floating-navigation__menu-item"
+              to={messagesRoute}
+              onClick={closePanels}
+            >
               <FiMessageCircle aria-hidden="true" />
               <span>{t('NAVIGATION_MESSAGES')}</span>
             </Link>
           )}
-          <Link className="floating-navigation__menu-item" to={ROUTES.communities} onClick={closePanels}>
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.communities}
+            onClick={closePanels}
+          >
             <FiUsers aria-hidden="true" />
             <span>{t('COMMUNITIES_TITLE')}</span>
           </Link>
@@ -225,9 +319,13 @@ export function FloatingNavigationBar({ onOpenSettings }: FloatingNavigationBarP
           isSelectionPending={profileSelectionMutation.isPending}
           isSelectionError={profileSelectionMutation.isError}
           isSigningOut={signOutMutation.isPending}
-          onToggleProfileSwitcher={() => setIsProfileSwitcherOpen(open => !open)}
+          onToggleProfileSwitcher={() =>
+            setIsProfileSwitcherOpen((open) => !open)
+          }
           onRetryProfiles={() => void profilesQuery.refetch()}
-          onSelectProfile={profileId => profileSelectionMutation.mutate(profileId)}
+          onSelectProfile={(profileId) =>
+            profileSelectionMutation.mutate(profileId)
+          }
           onOpenSettings={handleOpenSettings}
           onSignOut={() => {
             closePanels()

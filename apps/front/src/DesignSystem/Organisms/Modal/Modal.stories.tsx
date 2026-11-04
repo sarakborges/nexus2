@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import type { ComponentProps } from 'react'
+import { Modal } from './Modal.component'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 
-import { Button } from '@/DesignSystem/Atoms/Button'
+import { useState } from 'react'
+import type { ComponentProps } from 'react'
 
-import { Modal } from './Modal.component'
+import { Button } from '@/DesignSystem/Atoms/Button'
 
 const meta = {
   title: 'Design System/Organisms/Modal',
@@ -30,11 +30,7 @@ function ModalPreview(args: ComponentProps<typeof Modal>) {
         Open modal
       </Button>
 
-      <Modal
-        {...args}
-        open={isOpen}
-        onClose={() => setIsOpen(false)}
-      />
+      <Modal {...args} open={isOpen} onClose={() => setIsOpen(false)} />
     </>
   )
 }

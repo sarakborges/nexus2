@@ -1,14 +1,15 @@
-import { useState } from 'react'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
+import { useState } from 'react'
+
+import { useTranslations } from '@/Hooks/Language'
 import {
   deleteUploadedFile,
-  uploadFile,
   updateCommunityAvatar,
-  updateProfileAvatar
+  updateProfileAvatar,
+  uploadFile
 } from '@/Services/Uploads'
 import { useToastStore } from '@/Stores/Toast.store'
-import { useTranslations } from '@/Hooks/Language'
 
 type UseAvatarUploadOptions = {
   purpose: 'profile-avatar' | 'community-avatar'
@@ -26,7 +27,7 @@ export function useAvatarUpload({
   errorLabel
 }: UseAvatarUploadOptions) {
   const { t } = useTranslations()
-  const showToast = useToastStore(state => state.showToast)
+  const showToast = useToastStore((state) => state.showToast)
   const isFetching = useIsFetching() > 0
   const isMutating = useIsMutating() > 0
   const isRequestPending = isFetching || isMutating
@@ -42,9 +43,14 @@ export function useAvatarUpload({
     try {
       const uploaded = await uploadFile(file, purpose, targetId, actorProfileId)
       if (targetId) {
-        const result = purpose === 'profile-avatar'
-          ? await updateProfileAvatar(targetId, uploaded.id)
-          : await updateCommunityAvatar(targetId, actorProfileId!, uploaded.id)
+        const result =
+          purpose === 'profile-avatar'
+            ? await updateProfileAvatar(targetId, uploaded.id)
+            : await updateCommunityAvatar(
+                targetId,
+                actorProfileId!,
+                uploaded.id
+              )
         setPendingUploadId(null)
         onChange(result.picture)
       } else {
@@ -67,9 +73,10 @@ export function useAvatarUpload({
 
     try {
       if (targetId) {
-        const result = purpose === 'profile-avatar'
-          ? await updateProfileAvatar(targetId, null)
-          : await updateCommunityAvatar(targetId, actorProfileId!, null)
+        const result =
+          purpose === 'profile-avatar'
+            ? await updateProfileAvatar(targetId, null)
+            : await updateCommunityAvatar(targetId, actorProfileId!, null)
         onChange(result.picture)
       } else {
         if (pendingUploadId) await deleteUploadedFile(pendingUploadId)

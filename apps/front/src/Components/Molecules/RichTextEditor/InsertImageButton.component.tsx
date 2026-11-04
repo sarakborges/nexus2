@@ -1,7 +1,8 @@
-import { useRef, useState, type ChangeEvent, type MouseEvent } from 'react'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-import { useEditorState } from 'react-simple-wysiwyg'
 import { FiImage } from 'react-icons/fi'
+import { useEditorState } from 'react-simple-wysiwyg'
+
+import { type ChangeEvent, type MouseEvent, useRef, useState } from 'react'
 
 type InsertImageButtonProps = {
   label: string
@@ -30,9 +31,10 @@ export function InsertImageButton({
     if (isRequestPending || isUploading) return
 
     const selection = window.getSelection()
-    selectionRef.current = selection && selection.rangeCount > 0
-      ? selection.getRangeAt(0).cloneRange()
-      : null
+    selectionRef.current =
+      selection && selection.rangeCount > 0
+        ? selection.getRangeAt(0).cloneRange()
+        : null
 
     editorState.$el?.focus()
     inputRef.current?.click()
@@ -85,9 +87,13 @@ export function InsertImageButton({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
         aria-label={label}
-        onChange={event => void handleFileChange(event)}
+        onChange={(event) => void handleFileChange(event)}
       />
-      {error && <span className="rich-text-editor__upload-error" role="alert">{error}</span>}
+      {error && (
+        <span className="rich-text-editor__upload-error" role="alert">
+          {error}
+        </span>
+      )}
     </>
   )
 }

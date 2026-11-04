@@ -16,8 +16,7 @@
   width: 88px;
   height: 88px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--avatar-shape-radius);
+  border: 2px solid var(--color-border);
   background: var(--avatar-background);
   color: var(--avatar-fallback-color);
   font-size: 11px;
@@ -51,14 +50,15 @@
 .avatar-upload-field__remove {
   min-height: 34px;
   padding: 6px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border: 2px solid var(--color-border);
   background: var(--color-surface);
   color: var(--text-color);
   font: inherit;
   font-size: 12px;
   cursor: pointer;
-  transition: background-color 140ms ease, border-color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
 }
 
 .avatar-upload-field__button:hover,

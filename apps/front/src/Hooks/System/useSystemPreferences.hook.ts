@@ -13,9 +13,7 @@ function getSystemLanguage(): Language {
   }
 
   const browserLanguages =
-    navigator.languages.length > 0
-      ? navigator.languages
-      : [navigator.language]
+    navigator.languages.length > 0 ? navigator.languages : [navigator.language]
 
   for (const browserLanguage of browserLanguages) {
     const languageCode = browserLanguage.toLowerCase().split(/[-_]/)[0]

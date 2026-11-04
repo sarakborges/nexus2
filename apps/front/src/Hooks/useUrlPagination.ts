@@ -1,6 +1,7 @@
+import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@nexus/common'
+
 import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@nexus/common'
 
 function positiveInteger(value: string | null, fallback: number): number {
   const parsed = Number(value)
@@ -26,14 +27,17 @@ export function useUrlPagination(pageKey = 'page') {
     if (changed) setSearchParams(next, { replace: true })
   }, [serialized, pageKey, page, setSearchParams])
 
-  const setPage = useCallback((nextPage: number) => {
-    setSearchParams(current => {
-      const next = new URLSearchParams(current)
-      next.set(pageKey, String(Math.max(1, Math.floor(nextPage))))
-      next.delete('pageSize')
-      return next
-    })
-  }, [pageKey, setSearchParams])
+  const setPage = useCallback(
+    (nextPage: number) => {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current)
+        next.set(pageKey, String(Math.max(1, Math.floor(nextPage))))
+        next.delete('pageSize')
+        return next
+      })
+    },
+    [pageKey, setSearchParams]
+  )
 
   return { page, pageSize: DEFAULT_PAGE_SIZE, setPage }
 }

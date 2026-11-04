@@ -1,13 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
+
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { LanguageSelector } from '@/Components/Organisms/LanguageSelector'
 import { ThemeSelector } from '@/Components/Organisms/ThemeSelector'
-import { RequestState } from '@/Components/Molecules/RequestState'
 import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { queryKeys } from '@/Services/Query/queryKeys'
+import { getUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
-import { getUserPreferences } from '@/Services/Settings'
-import { queryKeys } from '@/Services/Query/queryKeys'
 
 import './SettingsModal.style.scss'
 
@@ -18,8 +19,8 @@ type SettingsModalProps = {
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
-  const userId = useAuthStore(state => state.session?.user.id ?? null)
-  const updateError = useSettingsStore(state => state.updateError)
+  const userId = useAuthStore((state) => state.session?.user.id ?? null)
+  const updateError = useSettingsStore((state) => state.updateError)
   const preferencesQuery = useQuery({
     queryKey: queryKeys.auth.preferences(userId ?? ''),
     queryFn: getUserPreferences,
@@ -27,7 +28,13 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
   })
 
   return (
-    <Modal open={open} onClose={onClose} title={t('SETTINGS_TITLE')} closeLabel={t('SETTINGS_CLOSE')} className="settings-modal">
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t('SETTINGS_TITLE')}
+      closeLabel={t('SETTINGS_CLOSE')}
+      className="settings-modal"
+    >
       <p className="settings-modal__description">{t('SETTINGS_DESCRIPTION')}</p>
       {updateError && <RequestState isError />}
       <RequestState

@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import type { CommunityRelationship } from '@nexus/common'
 import { CommunityMemberActions } from './CommunityMemberActions.component'
+import type { CommunityRelationship } from '@nexus/common'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 type RelationshipPreviewProps = {
   type: 'connection' | 'moderator' | 'requested' | 'blocked'

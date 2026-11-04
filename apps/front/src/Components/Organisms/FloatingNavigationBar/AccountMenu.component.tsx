@@ -1,8 +1,16 @@
-import { Link } from 'react-router'
-import {
-  FiCheck, FiChevronDown, FiEdit3, FiLogOut, FiPlusCircle, FiSettings, FiUserPlus, FiUsers
-} from 'react-icons/fi'
 import type { Profile } from '@nexus/common'
+import {
+  FiCheck,
+  FiChevronDown,
+  FiEdit3,
+  FiLogOut,
+  FiPlusCircle,
+  FiSettings,
+  FiUserPlus,
+  FiUsers
+} from 'react-icons/fi'
+
+import { Link } from 'react-router'
 
 import { IdentityAvatar } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
@@ -39,6 +47,10 @@ function ProfileSwitcher({
 }: ProfileSwitcherProps) {
   const { t } = useTranslations()
 
+  if (!profiles.length) {
+    return
+  }
+
   return (
     <div className="floating-navigation__profile-switcher">
       <button
@@ -53,26 +65,45 @@ function ProfileSwitcher({
         <FiUsers aria-hidden="true" />
         <span>{t('NAVIGATION_SWITCH_PROFILE')}</span>
         <FiChevronDown
-          className={isOpen ? 'floating-navigation__profile-chevron is-open' : 'floating-navigation__profile-chevron'}
+          className={
+            isOpen
+              ? 'floating-navigation__profile-chevron is-open'
+              : 'floating-navigation__profile-chevron'
+          }
           aria-hidden="true"
         />
       </button>
 
       {isOpen && (
-        <div className="floating-navigation__profile-list" id="floating-profile-switcher" role="group" aria-label={t('NAVIGATION_SWITCH_PROFILE')}>
+        <div
+          className="floating-navigation__profile-list"
+          id="floating-profile-switcher"
+          role="group"
+          aria-label={t('NAVIGATION_SWITCH_PROFILE')}
+        >
           {profilesLoading && (
-            <p className="floating-navigation__profile-status" role="status">{t('NAVIGATION_PROFILES_LOADING')}</p>
+            <p className="floating-navigation__profile-status" role="status">
+              {t('NAVIGATION_PROFILES_LOADING')}
+            </p>
           )}
           {profilesError && (
             <div className="floating-navigation__profile-status" role="alert">
               <span>{t('NAVIGATION_PROFILES_ERROR')}</span>
-              <button type="button" disabled={isRequestPending} onClick={onRetry}>{t('NAVIGATION_PROFILES_RETRY')}</button>
+              <button
+                type="button"
+                disabled={isRequestPending}
+                onClick={onRetry}
+              >
+                {t('NAVIGATION_PROFILES_RETRY')}
+              </button>
             </div>
           )}
           {profilesSuccess && profiles.length === 0 && (
-            <p className="floating-navigation__profile-status">{t('HOME_PROFILES_EMPTY')}</p>
+            <p className="floating-navigation__profile-status">
+              {t('HOME_PROFILES_EMPTY')}
+            </p>
           )}
-          {profiles.map(profile => {
+          {profiles.map((profile) => {
             const isCurrent = profile.id === currentProfileId
             return (
               <button
@@ -89,13 +120,20 @@ function ProfileSwitcher({
                   name={profile.name}
                   picture={profile.picture}
                 />
-                <span className="floating-navigation__profile-name">{profile.name}</span>
-                {isCurrent && <FiCheck aria-label={t('HOME_CURRENT_PROFILE')} />}
+                <span className="floating-navigation__profile-name">
+                  {profile.name}
+                </span>
+                {isCurrent && (
+                  <FiCheck aria-label={t('HOME_CURRENT_PROFILE')} />
+                )}
               </button>
             )
           })}
           {isSelectionError && (
-            <p className="floating-navigation__profile-status floating-navigation__profile-status--error" role="alert">
+            <p
+              className="floating-navigation__profile-status floating-navigation__profile-status--error"
+              role="alert"
+            >
               {t('NAVIGATION_PROFILE_UPDATE_ERROR')}
             </p>
           )}
@@ -177,23 +215,40 @@ export function AccountMenu({
       />
 
       {editProfileRoute && (
-        <Link className="floating-navigation__menu-item" to={editProfileRoute} role="menuitem" onClick={onClose}>
+        <Link
+          className="floating-navigation__menu-item"
+          to={editProfileRoute}
+          role="menuitem"
+          onClick={onClose}
+        >
           <FiEdit3 aria-hidden="true" />
           <span>{t('PROFILE_EDIT')}</span>
         </Link>
       )}
-      <Link className="floating-navigation__menu-item" to={ROUTES.createProfile} role="menuitem" onClick={onClose}>
-        <FiUserPlus aria-hidden="true" />
-        <span>{t('HOME_CREATE_PROFILE')}</span>
-      </Link>
       {currentProfile && (
-        <Link className="floating-navigation__menu-item" to={ROUTES.createCommunity} role="menuitem" onClick={onClose}>
-          <FiPlusCircle aria-hidden="true" />
-          <span>{t('COMMUNITIES_CREATE')}</span>
-        </Link>
-      )}
+        <>
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.createProfile}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiUserPlus aria-hidden="true" />
+            <span>{t('HOME_CREATE_PROFILE')}</span>
+          </Link>
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.createCommunity}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiPlusCircle aria-hidden="true" />
+            <span>{t('COMMUNITIES_CREATE')}</span>
+          </Link>
 
-      <div className="floating-navigation__menu-divider" />
+          <div className="floating-navigation__menu-divider" />
+        </>
+      )}
 
       <button
         className="floating-navigation__menu-item"
@@ -213,7 +268,9 @@ export function AccountMenu({
         onClick={onSignOut}
       >
         <FiLogOut aria-hidden="true" />
-        <span>{isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
+        <span>
+          {isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}
+        </span>
       </button>
     </div>
   )

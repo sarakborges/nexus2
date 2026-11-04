@@ -8,7 +8,8 @@ export const queryClient = new QueryClient({
       gcTime: 5 * 60_000,
       refetchOnWindowFocus: false,
       retry: (failureCount, error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 404) return false
+        if (axios.isAxiosError(error) && error.response?.status === 404)
+          return false
         return failureCount < 1
       }
     },

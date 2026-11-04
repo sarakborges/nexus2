@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+
 import type { Profile } from '@/Models/Profile.model'
 import { getProfileByUrl } from '@/Services/Profile'
 

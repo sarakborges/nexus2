@@ -19,6 +19,5 @@ export const THEME_PREFERENCE_NAME_KEYS = {
 export const isTheme = (value: unknown): value is Theme =>
   SUPPORTED_THEMES.some((theme) => theme === value)
 
-export const isThemePreference = (
-  value: unknown
-): value is ThemePreference => value === 'system' || isTheme(value)
+export const isThemePreference = (value: unknown): value is ThemePreference =>
+  value === 'system' || isTheme(value)

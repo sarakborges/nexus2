@@ -1,10 +1,10 @@
+import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
+import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import {
   LANGUAGE_PREFERENCE_NAME_KEYS,
   type LanguagePreference
 } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
-import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
-import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 
 type LanguageOptionProps = {
   language: LanguagePreference
@@ -24,7 +24,9 @@ export function LanguageOption({ language }: LanguageOptionProps) {
       isSelected={selectedPreference === language}
       onSelect={() => setLanguage(language)}
       disabled={isUpdating}
-      leadingVisual={language !== 'system' ? <LanguageFlag language={language} /> : undefined}
+      leadingVisual={
+        language !== 'system' ? <LanguageFlag language={language} /> : undefined
+      }
     />
   )
 }

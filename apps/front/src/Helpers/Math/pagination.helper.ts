@@ -1,4 +1,4 @@
-export const getPageItems = <T,>(
+export const getPageItems = <T>(
   items: T[],
   page: number,
   pageSize: number
@@ -7,7 +7,5 @@ export const getPageItems = <T,>(
   return items.slice(startIndex, startIndex + pageSize)
 }
 
-export const getTotalPages = (
-  totalItems: number,
-  pageSize: number
-): number => Math.max(1, Math.ceil(totalItems / pageSize))
+export const getTotalPages = (totalItems: number, pageSize: number): number =>
+  Math.max(1, Math.ceil(totalItems / pageSize))

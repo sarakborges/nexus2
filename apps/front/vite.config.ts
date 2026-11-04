@@ -5,9 +5,10 @@ import { defineConfig, loadEnv } from 'vite'
 export default defineConfig(({ mode }) => {
   const appDirectory = fileURLToPath(new URL('.', import.meta.url))
   const env = loadEnv(mode, appDirectory, '')
-  const defaultProxyTarget = mode === 'production-bff'
-    ? 'https://nexus2-yoggsaras-projects.vercel.app'
-    : 'http://localhost:3001'
+  const defaultProxyTarget =
+    mode === 'production-bff'
+      ? 'https://nexus2-yoggsaras-projects.vercel.app'
+      : 'http://localhost:3001'
   const proxyTarget = env.BFF_PROXY_TARGET || defaultProxyTarget
 
   return {

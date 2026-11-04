@@ -1,10 +1,7 @@
-import { useEffect, useId, useRef } from 'react'
 import { FiX } from 'react-icons/fi'
-import type {
-  MouseEvent,
-  ReactNode,
-  SyntheticEvent
-} from 'react'
+
+import { useEffect, useId, useRef } from 'react'
+import type { MouseEvent, ReactNode, SyntheticEvent } from 'react'
 
 import { Text } from '@/DesignSystem/Atoms/Text'
 
@@ -68,8 +65,15 @@ export function Modal({
     >
       <div className="modal__content">
         <header className="modal__header">
-          <Text as="h2" id={titleId} className="modal__title">{title}</Text>
-          <button className="modal__close" type="button" onClick={onClose} aria-label={closeLabel}>
+          <Text as="h2" id={titleId} className="modal__title">
+            {title}
+          </Text>
+          <button
+            className="modal__close"
+            type="button"
+            onClick={onClose}
+            aria-label={closeLabel}
+          >
             <FiX aria-hidden="true" />
           </button>
         </header>

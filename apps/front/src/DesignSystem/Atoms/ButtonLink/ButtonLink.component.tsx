@@ -1,7 +1,9 @@
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-import { Link, type LinkProps } from 'react-router'
-import type { MouseEvent } from 'react'
 import type { ButtonVariation } from '../Button/Button.component'
+import { useIsFetching, useIsMutating } from '@tanstack/react-query'
+
+import type { MouseEvent } from 'react'
+import { Link, type LinkProps } from 'react-router'
+
 import '../Button/Button.style.scss'
 
 type ButtonLinkProps = LinkProps & {

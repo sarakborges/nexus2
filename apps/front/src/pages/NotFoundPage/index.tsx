@@ -10,7 +10,10 @@ export function NotFoundPage() {
 
   return (
     <main className="not-found-page">
-      <section className="not-found-page__content" aria-labelledby="not-found-title">
+      <section
+        className="not-found-page__content"
+        aria-labelledby="not-found-title"
+      >
         <p className="not-found-page__code" aria-hidden="true">
           {t('NOT_FOUND_CODE')}
         </p>

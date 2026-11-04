@@ -1,16 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+
 import { useNavigate } from 'react-router'
+
 import { ROUTES } from '@/Constants/routes'
 import { Button, ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
+
 import '../AuthenticatedPage.style.scss'
 
 export function GettingStartedPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const signOut = useAuthStore(state => state.signOut)
+  const signOut = useAuthStore((state) => state.signOut)
   const signOutMutation = useMutation({
     mutationFn: signOut,
     onSuccess: () => {
@@ -24,14 +27,27 @@ export function GettingStartedPage() {
       <section className="account-card">
         <header className="account-card__header">
           <div>
-            <h1 className="account-card__title">{t('GETTING_STARTED_TITLE')}</h1>
-            <p className="account-card__description">{t('GETTING_STARTED_DESCRIPTION')}</p>
+            <h1 className="account-card__title">
+              {t('GETTING_STARTED_TITLE')}
+            </h1>
+            <p className="account-card__description">
+              {t('GETTING_STARTED_DESCRIPTION')}
+            </p>
           </div>
-          <Button variation="transparent" disabled={signOutMutation.isPending} onClick={() => signOutMutation.mutate()}>
-            {signOutMutation.isPending ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_OUT')}
+          <Button
+            disabled={signOutMutation.isPending}
+            onClick={() => signOutMutation.mutate()}
+          >
+            {signOutMutation.isPending
+              ? t('AUTH_SUBMITTING')
+              : t('AUTH_SIGN_OUT')}
           </Button>
         </header>
-        {signOutMutation.isError && <p className="auth-card__error" role="alert">{t('REQUEST_FAILED')}</p>}
+        {signOutMutation.isError && (
+          <p className="auth-card__error" role="alert">
+            {t('REQUEST_FAILED')}
+          </p>
+        )}
         <div className="account-card__onboarding">
           <h2>{t('GETTING_STARTED_PROFILE_TITLE')}</h2>
           <p>{t('GETTING_STARTED_PROFILE_DESCRIPTION')}</p>
@@ -42,7 +58,13 @@ export function GettingStartedPage() {
             <li>{t('GETTING_STARTED_PROFILE_ABOUT')}</li>
           </ul>
         </div>
-        <ButtonLink className="account-card__action" variation="primary" to={ROUTES.createProfile}>{t('GETTING_STARTED_CREATE_PROFILE')}</ButtonLink>
+        <ButtonLink
+          className="account-card__action"
+          variation="primary"
+          to={ROUTES.createProfile}
+        >
+          {t('GETTING_STARTED_CREATE_PROFILE')}
+        </ButtonLink>
       </section>
     </main>
   )

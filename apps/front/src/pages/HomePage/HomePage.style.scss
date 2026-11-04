@@ -5,7 +5,6 @@
 
 .home-page__activity {
   display: grid;
-  gap: 18px;
 }
 
 .home-page__activity-title {
@@ -27,7 +26,10 @@
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
-  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .home-page__activity-item:hover {
@@ -51,7 +53,11 @@
   padding: 4px 10px;
   border-radius: var(--nexus-control-radius, 0);
   color: var(--color-primary-weak);
-  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+  background: color-mix(
+    in srgb,
+    var(--color-primary) 14%,
+    var(--color-surface)
+  );
   font-size: 12px;
   font-weight: var(--font-weight-bold);
 }
@@ -90,7 +96,9 @@
   }
 }
 
-.home-page__activity-description { padding-left: 0; }
+.home-page__activity-description {
+  padding-left: 0;
+}
 .home-page__previews {
   display: grid;
   align-content: start;
@@ -98,8 +106,13 @@
   min-width: 0;
 }
 
-.home-page__activity-description { padding-left: 0; }
- .home-page__preview-list { display: grid; gap: 0; }
+.home-page__activity-description {
+  padding-left: 0;
+}
+.home-page__preview-list {
+  display: grid;
+  gap: 0;
+}
 .home-page__preview-entry {
   display: flex;
   align-items: center;
@@ -109,10 +122,17 @@
   border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   color: var(--text-color);
   text-decoration: none;
-  transition: color 120ms ease, background-color 120ms ease;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
 }
-.home-page__preview-entry:last-child { border-bottom: 0; }
-.home-page__preview-entry:hover { background: var(--color-surface-raised); text-decoration: none; }
+.home-page__preview-entry:last-child {
+  border-bottom: 0;
+}
+.home-page__preview-entry:hover {
+  background: var(--color-surface-raised);
+  text-decoration: none;
+}
 .home-page__preview-avatar {
   display: grid;
   place-items: center;
@@ -128,12 +148,28 @@
   font-weight: var(--font-weight-bold);
   text-decoration: none;
 }
-.home-page__preview-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.home-page__preview-copy { display: grid; gap: 6px; min-width: 0; }
-.home-page__preview-copy .account-card__link { overflow-wrap: anywhere; text-decoration: none; }
-.home-page__preview-copy .account-card__profile-entry-secondary { font-size: 12px; }
+.home-page__preview-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-page__preview-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.home-page__preview-copy .account-card__link {
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+.home-page__preview-copy .account-card__profile-entry-secondary {
+  font-size: 12px;
+}
 
-.home-page__activity-list { gap: 12px; }
+.home-page__activity-list {
+  gap: 12px;
+}
 .home-page__activity-item {
   gap: 14px;
   padding: 14px;
@@ -141,7 +177,9 @@
   border-radius: var(--nexus-control-radius, 0);
   background: var(--color-surface);
   box-shadow: 0 2px 8px rgb(0 0 0 / 3%);
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 .home-page__activity-item:hover {
   transform: none;
@@ -174,8 +212,17 @@
   font-size: 16px;
   font-weight: var(--font-weight-bold);
 }
-.home-page__activity-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.home-page__activity-author { display: grid; gap: 3px; min-width: 0; }
+.home-page__activity-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.home-page__activity-author {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
 .home-page__activity-author-name {
   overflow: hidden;
   color: var(--text-color);
@@ -196,4 +243,8 @@
   font-size: 14px;
   line-height: 1.55;
 }
-@media (max-width: 680px) { .home-page__activity-item { padding: 12px; } }
+@media (max-width: 680px) {
+  .home-page__activity-item {
+    padding: 12px;
+  }
+}
