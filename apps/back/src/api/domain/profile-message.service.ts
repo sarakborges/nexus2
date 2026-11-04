@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Optional } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type { PaginatedResult, Profile, ProfileMessage } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
@@ -30,7 +30,7 @@ export class ProfileMessageService {
     const normalized = sanitizeRichText(content)
     await this.uploads?.validateEditorImages(userId, normalized)
     const plainText = getRichTextPlainText(normalized)
-    const hasImage = /<img\\b/i.test(normalized)
+    const hasImage = /<img\b/i.test(normalized)
     const message: ProfileMessage = {
       id: randomUUID(),
       fromProfileId,
