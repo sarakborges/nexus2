@@ -20,7 +20,7 @@ import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 function hasRichTextContent(value: string): boolean {
   const text = value.replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').trim()
-  return Boolean(text || /<img\\b/i.test(value))
+  return Boolean(text || /<img\b/i.test(value))
 }
 
 export function CreateCommunityForumTopicPage() {
@@ -95,7 +95,6 @@ export function CreateCommunityForumTopicPage() {
             <h1 className="account-card__title">{t('FORUM_NEW_TOPIC')}</h1>
             <p className="account-card__description">{t('FORUM_DESCRIPTION')}</p>
           </div>
-          <Link className="account-card__link" to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_BACK')}</Link>
         </header>
         <RequestState
           isLoading={!isAuthInitialized || relationshipsQuery.isLoading || ownedProfilesQuery.isLoading}

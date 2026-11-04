@@ -15,6 +15,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
+import './CommunityMembersPage.style.scss'
 
 type MemberTab = 'all' | 'staff' | 'banned'
 type Member = Profile & { role: string }
