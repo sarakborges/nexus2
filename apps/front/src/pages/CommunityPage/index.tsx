@@ -1,18 +1,23 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router'
 import { RequestState } from '@/Components'
 import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
+import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityByUrl } from '@/Services/Community'
+import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import { getCommunityMembers, getCommunityRelationships, getPendingCommunityMembers } from '@/Services/CommunityRelationship'
+import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityPage.style.scss'
+import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 type PreviewAvatarProps = {
   name: string
@@ -63,6 +68,26 @@ export function CommunityPage() {
     queryFn: () => getCommunityMembers(community!.id, 'all', { page: 1, pageSize: 16 }, currentProfileId ?? undefined),
     enabled: Boolean(community?.id && relationshipsQuery.isSuccess && canViewMembers)
   })
+
+  const forumTopicsQuery = useQuery({
+    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 5),
+    queryFn: () => getCommunityForumTopics(community!.id, { page: 1, pageSize: 5 }),
+    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
+  })
+  const forumTopics = forumTopicsQuery.data?.items ?? []
+  const forumAuthorIds = useMemo(
+    () => [...new Set(forumTopics.map(topic => topic.profileId))].sort(),
+    [forumTopics]
+  )
+  const forumAuthorsQuery = useQuery({
+    queryKey: queryKeys.profiles.byIds(forumAuthorIds),
+    queryFn: () => getProfilesByIds(forumAuthorIds),
+    enabled: forumAuthorIds.length > 0
+  })
+  const forumAuthorsById = useMemo(
+    () => new Map((forumAuthorsQuery.data ?? []).map(profile => [profile.id, profile] as const)),
+    [forumAuthorsQuery.data]
+  )
 
   if (!requestedUrl) return <NotFoundPage />
   if (communityQuery.isLoading) {
@@ -115,6 +140,26 @@ export function CommunityPage() {
                 ? <div className="social-panel__body rich-text-content" dangerouslySetInnerHTML={{ __html: community.about }} />
                 : <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>}
           </article>
+
+          <section className="account-card community-forum community-page__forum">
+            <header className="account-card__header">
+              <h2 className="account-card__title">{t('FORUM_TITLE')}</h2>
+              <Link to={ROUTES.community + '/' + community.url + '/forum'}>{t('FORUM_VIEW_ALL')}</Link>
+            </header>
+            <RequestState
+              isLoading={forumTopicsQuery.isLoading || forumAuthorsQuery.isLoading}
+              isFetching={forumTopicsQuery.isFetching || forumAuthorsQuery.isFetching}
+              isError={forumTopicsQuery.isError || forumAuthorsQuery.isError}
+              isEmpty={forumTopicsQuery.isSuccess && forumTopicsQuery.data.totalItems === 0}
+              emptyMessage={t('FORUM_EMPTY')}
+              onRetry={() => {
+                void forumTopicsQuery.refetch()
+                void forumAuthorsQuery.refetch()
+              }}
+            >
+              <CommunityForumTopicList communityUrl={community.url} topics={forumTopics} authorsById={forumAuthorsById} />
+            </RequestState>
+          </section>
         </section>
 
         <aside className="social-page__right-column">
