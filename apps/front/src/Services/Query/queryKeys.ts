@@ -17,7 +17,8 @@ export const queryKeys = {
   communities: {
     list: (page: number, pageSize: number) =>
       ['communities', 'list', page, pageSize] as const,
-    byUrl: (url: string, viewerUserId: string | null = null) => ['communities', 'by-url', url, viewerUserId] as const,
+    byUrl: (url: string, viewerUserId: string | null = null) =>
+      ['communities', 'by-url', url, viewerUserId] as const,
     byIds: (ids: string[]) =>
       ['communities', 'by-ids', [...ids].sort()] as const,
     byProfile: (profileId: string, page: number, pageSize: number) =>
@@ -75,7 +76,8 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     viewerUserId: string | null = null
-  ) => ['community-forum', communityId, 'topics', page, pageSize, viewerUserId] as const,
+  ) =>
+    ['community-forum', communityId, 'topics', page, pageSize, viewerUserId] as const,
   communityForumTopic: (
     communityId: string,
     topicId: string,
@@ -83,5 +85,13 @@ export const queryKeys = {
     pageSize: number,
     viewerUserId: string | null = null
   ) =>
-    ['community-forum', communityId, 'topic', topicId, page, pageSize, viewerUserId] as const
+    [
+      'community-forum',
+      communityId,
+      'topic',
+      topicId,
+      page,
+      pageSize,
+      viewerUserId
+    ] as const
 }

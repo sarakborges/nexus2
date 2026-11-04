@@ -59,14 +59,15 @@ test('forum content attaches editor images and detaches them when content is del
     }
   }
   const { service } = harness({ memberUser: ['member'] }, uploads)
-  const imageId = '123e4567-e89b-42d3-a456-426614174000'
-  const content = '<p>Forum content</p><img src="/api/uploads/' + imageId + '/content">'
+  const topicContent = '<p>Forum topic</p><img src="/api/uploads/123e4567-e89b-42d3-a456-426614174000/content">'
+  const firstReplyContent = '<p>First reply</p><img src="/api/uploads/223e4567-e89b-42d3-a456-426614174000/content">'
+  const secondReplyContent = '<p>Second reply</p><img src="/api/uploads/323e4567-e89b-42d3-a456-426614174000/content">'
 
-  const topic = await service.createCommunityForumTopic('memberUser', communityId, 'member', 'Topic with image', content)
-  const firstReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', content)
+  const topic = await service.createCommunityForumTopic('memberUser', communityId, 'member', 'Topic with image', topicContent)
+  const firstReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', firstReplyContent)
   await service.deleteCommunityForumReply('memberUser', communityId, firstReply.id, 'member')
 
-  const secondReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', content)
+  const secondReply = await service.createCommunityForumReply('memberUser', communityId, topic.id, 'member', secondReplyContent)
   await service.deleteCommunityForumTopic('memberUser', communityId, topic.id, 'member')
 
   assert.equal(calls.some(call => call.operation === 'attach' && call.resourceType === 'community-forum-topic' && call.resourceId === topic.id), true)

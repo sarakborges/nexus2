@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const previousUserId = get().session?.user.id ?? null
     const nextUserId = session?.user.id ?? null
     const currentProfileId = get().session?.user.currentProfile ?? null
-    if (previousUserId !== nextUserId) queryClient.clear()
+    if (previousUserId && previousUserId !== nextUserId) queryClient.clear()
     if (currentProfileId !== (session?.user.currentProfile ?? null)) {
       useProfileStore.getState().clearProfile()
     }
