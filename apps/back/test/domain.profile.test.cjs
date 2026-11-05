@@ -372,3 +372,56 @@ test('community update rejects an owner transferred before its write transaction
     updatedAt: 2
   }])
 })
+
+
+test('owned profile listing reflects account ownership from the same snapshot as profile records', async () => {
+  const profile = {
+    id: 'existing-profile',
+    name: 'Existing',
+    url: 'existing',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const { service, collections } = createHarness({
+    beforeTransaction(_names, current) {
+      current.set('accounts', [{
+        ...account,
+        profiles: [],
+        currentProfile: null
+      }])
+    }
+  })
+  collections.set('profiles', [profile])
+
+  const result = await service.listOwnedProfiles(account.id, { page: 1, pageSize: 20 })
+  assert.deepEqual(result.items, [])
+})
+
+test('private profile relationships recheck ownership in the relationship read snapshot', async () => {
+  const { service, collections, account } = createHarness({
+    beforeTransaction(_names, current) {
+      current.set('accounts', [{ ...account, profiles: [], currentProfile: null }])
+    }
+  })
+  collections.set('profiles', [{
+    id: 'existing-profile',
+    name: 'Existing',
+    url: 'existing',
+    picture: '',
+    about: '',
+    type: 'social'
+  }])
+  collections.set('relationships', [{
+    profiles: ['existing-profile', 'friend-profile'],
+    type: 'connection',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  await assert.rejects(
+    service.getProfileRelationships(account.id, 'existing-profile'),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+})

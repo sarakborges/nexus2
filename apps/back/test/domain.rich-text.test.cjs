@@ -2,7 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function makeService(collections, ownedProfiles = ['sender'], uploads) {
+function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTransaction) {
   if (!collections.has('accounts')) {
     collections.set('accounts', [{
       id: 'user',
@@ -21,6 +21,7 @@ function makeService(collections, ownedProfiles = ['sender'], uploads) {
       return structuredClone(next)
     },
     async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
       const records = Object.fromEntries(names.map(name => [
         name,
         structuredClone(collections.get(name) ?? [])
@@ -135,4 +136,30 @@ test('validates and attaches uploaded image references when saving a profile mes
   assert.equal(calls[1].resourceType, 'profile-message')
   assert.equal(calls[1].resourceId, message.id)
   assert.deepEqual(calls[1].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
+})
+
+
+test('private inbox reads use the current account profile links from the message snapshot', async () => {
+  const collections = new Map([
+    ['profiles', [
+      { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' },
+      { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
+    ]],
+    ['profile_messages', [
+      { id: 'message', fromProfileId: 'sender', toProfileId: 'recipient', content: '<p>Private</p>', createdAt: 1 }
+    ]]
+  ])
+  const service = makeService(collections, ['sender'], null, (names, current) => {
+    if (names.includes('profile_messages')) {
+      current.set('accounts', [{
+        id: 'user',
+        email: 'user@example.test',
+        profiles: [],
+        currentProfile: null
+      }])
+    }
+  })
+
+  const result = await service.getMessages('recipient', 'user', { page: 1, pageSize: 20 })
+  assert.deepEqual(result.items, [])
 })

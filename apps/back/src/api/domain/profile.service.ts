@@ -39,8 +39,19 @@ export class ProfileService {
     return paginate(await this.access.readProfiles(), q)
   }
   async listOwnedProfiles(userId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
-    const user = await this.auth.getUser(userId)
-    return paginate((await this.access.readProfiles()).filter(p => user.profiles.includes(p.id)), q)
+    return this.data.transaction<PaginatedResult<Profile>>(
+      ['accounts', 'profiles'],
+      collections => {
+        const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const ownedProfileIds = new Set(account.profiles)
+        const result = paginate(
+          (collections.profiles as Profile[]).filter(profile => ownedProfileIds.has(profile.id)),
+          q
+        )
+        return { records: collections, result }
+      }
+    )
   }
   async getProfile(url: string): Promise<Profile> {
     const value = normalizeEntityUrl(url)
@@ -160,8 +171,19 @@ export class ProfileService {
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
-    await this.access.assertOwns(userId, profileId)
-    return (await this.data.read<Relationship>('relationships')).filter(r => r.profiles.includes(profileId))
+    return this.data.transaction<Relationship[]>(
+      ['accounts', 'profiles', 'relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        this.access.assertOwnsInRecords(userId, profileId, accounts, profiles)
+        const relationships = collections.relationships as Relationship[]
+        return {
+          records: collections,
+          result: relationships.filter(record => record.profiles.includes(profileId))
+        }
+      }
+    )
   }
   async getProfileFriends(profileId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
     const profile = (await this.access.readProfiles()).find(item => item.id === profileId)

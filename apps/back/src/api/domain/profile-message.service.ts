@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, Optional } from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type { PaginatedResult, Profile, ProfileMessage } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
@@ -19,12 +19,29 @@ export class ProfileMessageService {
   ) {}
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
-    const messages = await this.readMessages()
-    const viewerProfiles = userId ? (await this.auth.getUser(userId)).profiles : []
-    const own = viewerProfiles.includes(profileId)
-    const visible = messages.filter(m => m.toProfileId === profileId && (own || viewerProfiles.includes(m.fromProfileId)))
-      .sort((a, b) => b.createdAt - a.createdAt)
-    return paginate(visible, q)
+    if (userId) await this.auth.getUser(userId)
+    return this.data.transaction<PaginatedResult<ProfileMessage>>(
+      ['accounts', 'profile_messages'],
+      collections => {
+        const account = userId
+          ? (collections.accounts as AccountRecord[]).find(item => item.id === userId)
+          : undefined
+        if (userId && !account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const viewerProfiles = account?.profiles ?? []
+        const own = viewerProfiles.includes(profileId)
+        const visible = (collections.profile_messages as ProfileMessage[])
+          .filter(message =>
+            message.toProfileId === profileId &&
+            (own || viewerProfiles.includes(message.fromProfileId))
+          )
+          .map(message => ({
+            ...message,
+            content: sanitizeRichText(message.content ?? '')
+          }))
+          .sort((a, b) => b.createdAt - a.createdAt)
+        return { records: collections, result: paginate(visible, q) }
+      }
+    )
   }
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     await this.access.assertOwns(userId, fromProfileId)
@@ -81,14 +98,5 @@ export class ProfileMessageService {
         }
       }
     )
-  }
-
-
-  private async readMessages(): Promise<ProfileMessage[]> {
-    const messages = await this.data.read<ProfileMessage>('profile_messages')
-    return messages.map(message => ({
-      ...message,
-      content: sanitizeRichText(message.content ?? '')
-    }))
   }
 }
