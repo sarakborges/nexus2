@@ -1,3 +1,4 @@
+import type { FloatingNavigationBarProps, OpenPanel } from './FloatingNavigationBar.types'
 import { AccountMenu } from './AccountMenu.component'
 import {
   useIsFetching,
@@ -28,15 +29,6 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 
 import './FloatingNavigationBar.style.scss'
-
-type FloatingNavigationBarProps = {
-  onOpenSettings: () => void
-}
-
-type OpenPanel = {
-  panel: 'navigation' | 'account'
-  pathname: string
-} | null
 
 export function FloatingNavigationBar({
   onOpenSettings
