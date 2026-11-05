@@ -19,54 +19,6 @@ import {
 } from './domain.dto'
 import { DomainService } from './domain.service'
 
-class CreateProfileDto implements CreateProfileInput {
-  @IsString() @MaxLength(80) name!: string
-  @IsOptional() @IsString() url?: string
-  @IsString() picture!: string
-  @IsString() @MaxLength(12000) about!: string
-  @IsIn(['social', 'rp', 'business']) type!: 'social' | 'rp' | 'business'
-}
-class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
-  @IsString() @MaxLength(80) name!: string
-  @IsOptional() @IsString() url?: string
-  @IsString() picture!: string
-  @IsString() @MaxLength(12000) about!: string
-}
-class CreateCommunityDto implements CreateCommunityInput {
-  @IsString() @MaxLength(80) name!: string
-  @IsOptional() @IsString() url?: string
-  @IsString() picture!: string
-  @IsString() @MaxLength(12000) about!: string
-  @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy
-  @IsString() ownerProfileId!: string
-}
-class UpdateCommunityDto implements CreateCommunityInput {
-  @IsString() @MaxLength(80) name!: string
-  @IsOptional() @IsString() url?: string
-  @IsString() picture!: string
-  @IsString() @MaxLength(12000) about!: string
-  @IsIn(['public', 'private', 'unlisted']) privacy!: CommunityPrivacy
-}
-class ProfileRelationDto {
-  @IsString() sourceProfileId!: string
-  @IsString() targetProfileId!: string
-  @IsIn(['connection', 'requested', 'blocked']) type!: RelationshipType
-}
-class CommunityRelationDto {
-  @IsString() actorProfileId!: string
-  @IsIn(['connection', 'requested', 'blocked', 'moderator']) type!: CommunityRelationshipType
-}
-class ActorDto { @IsString() actorProfileId!: string }
-class OwnershipDto extends ActorDto { @IsString() newOwnerProfileId!: string }
-class MessageDto {
-  @IsString() fromProfileId!: string
-  @IsString() @MinLength(1) @MaxLength(12000) content!: string
-}
-class CreateForumTopicDto { @IsString() profileId!: string; @IsString() @MinLength(1) @MaxLength(140) title!: string; @IsString() @MinLength(1) @MaxLength(12000) content!: string }
-class CreateForumReplyDto { @IsString() profileId!: string; @IsString() @MinLength(1) @MaxLength(12000) content!: string }
-class ForumActorDto { @IsString() profileId!: string }
-class ForumModerationDto extends ForumActorDto { @IsOptional() @IsBoolean() isPinned?: boolean; @IsOptional() @IsBoolean() isLocked?: boolean }
-
 @Controller()
 export class DomainController {
   constructor(private readonly domain: DomainService) {}
