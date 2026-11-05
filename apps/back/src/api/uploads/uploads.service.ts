@@ -50,6 +50,7 @@ const EDITOR_BUCKET = 'nexus-editor-images'
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
+const DELETE_CLAIM_LEASE_MS = 5 * 60 * 1000
 const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
 const ORPHAN_AVATAR_RETENTION_MS = 24 * 60 * 60 * 1000
 
@@ -213,7 +214,12 @@ export class UploadsService {
       '/object/' + record.bucket + '/' + this.encodePath(record.path),
       { method: 'GET', headers: { Range: 'bytes=0-63' } }
     )
-    if (!response.ok) throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
+    if (response.status === 404) {
+      throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
+    }
+    if (!response.ok) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    }
 
     const bytes = Buffer.from(await response.arrayBuffer())
     const totalSize = this.getTotalSize(
@@ -389,7 +395,10 @@ export class UploadsService {
       '/object/' + record.bucket + '/' + this.encodePath(record.path),
       { method: 'GET' }
     )
-    if (!response.ok) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    if (response.status === 404) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    if (!response.ok) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    }
     const body = Buffer.from(await response.arrayBuffer())
     if (body.length !== record.size || this.detectMime(body) !== record.contentType) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
@@ -607,19 +616,50 @@ export class UploadsService {
     )
     if (!expired.length) return { deleted: 0 }
 
+    let deleted = 0
+    let hasFailures = false
+
     for (const bucket of [AVATAR_BUCKET, EDITOR_BUCKET]) {
-      const paths = expired.filter(item => item.bucket === bucket).map(item => item.path)
-      if (paths.length) await this.removeObjects(bucket, paths)
+      const bucketClaims = expired.filter(item => item.bucket === bucket)
+      if (!bucketClaims.length) continue
+
+      try {
+        await this.removeObjects(
+          bucket,
+          bucketClaims.map(item => item.path)
+        )
+
+        const claimsById = new Map(bucketClaims.map(item => [item.id, item] as const))
+        const remaining = await this.data.update<UploadedFileRecord>(
+          'media_files',
+          currentRecords => currentRecords.filter(item => {
+            const claimed = claimsById.get(item.id)
+            return (
+              !claimed ||
+              item.status !== 'deleting' ||
+              item.deletingAt !== claimed.deletingAt
+            )
+          })
+        )
+        deleted += bucketClaims.filter(claimed =>
+          !remaining.some(item =>
+            item.id === claimed.id &&
+            item.status === 'deleting' &&
+            item.deletingAt === claimed.deletingAt
+          )
+        ).length
+      } catch {
+        // Keep failed claims in "deleting". A later cleanup or delete retry
+        // can reclaim them after the lease expires.
+        hasFailures = true
+      }
     }
 
-    const expiredById = new Map(expired.map(item => [item.id, item] as const))
-    await this.data.update<UploadedFileRecord>('media_files', currentRecords =>
-      currentRecords.filter(item => {
-        const claimed = expiredById.get(item.id)
-        return !claimed || item.status !== 'deleting' || item.deletingAt !== claimed.deletingAt
-      })
-    )
-    return { deleted: expired.length }
+    if (hasFailures) {
+      throw new ServiceUnavailableException('UPLOAD_CLEANUP_PARTIAL_FAILURE')
+    }
+
+    return { deleted }
   }
 
   private assertOwnsProfileInRecords(
@@ -692,7 +732,11 @@ export class UploadsService {
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
         const latest = current.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-        if (!latest || latest.id === keepId || latest.status === 'deleting') {
+        const hasActiveClaim = Boolean(
+          latest?.status === 'deleting' &&
+          (latest.deletingAt ?? 0) > deletingAt - DELETE_CLAIM_LEASE_MS
+        )
+        if (!latest || latest.id === keepId || hasActiveClaim) {
           return { records: collections, result: null }
         }
         const claimed: UploadedFileRecord = {
@@ -731,7 +775,11 @@ export class UploadsService {
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
         const latest = current.find(item => item.id === id && item.ownerUserId === userId)
-        if (!latest || latest.status === 'deleting' ||
+        const hasActiveClaim = Boolean(
+          latest?.status === 'deleting' &&
+          (latest.deletingAt ?? 0) > deletingAt - DELETE_CLAIM_LEASE_MS
+        )
+        if (!latest || hasActiveClaim ||
           (expectedStatus && latest.status !== expectedStatus)) {
           return { records: collections, result: null }
         }
@@ -815,7 +863,11 @@ export class UploadsService {
     headers.set('apikey', this.storageSecret)
     headers.delete('authorization')
     if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
-    return fetch(this.supabaseUrl + '/storage/v1' + path, { ...init, headers })
+    try {
+      return await fetch(this.supabaseUrl + '/storage/v1' + path, { ...init, headers })
+    } catch {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    }
   }
 
   private async readJson<T>(response: Response): Promise<T> {
