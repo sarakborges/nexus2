@@ -174,3 +174,4 @@ export function EditProfilePage() {
       </section>
     </main>
   )
+}
