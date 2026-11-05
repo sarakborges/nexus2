@@ -11,8 +11,9 @@ import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
 
-export function useCommunityForumPage() {
+export function useCommunityForumPage(): UseCommunityForumPageResult {
   const { url } = useParams<{ url: string }>()
   const session = useAuthStore((state) => state.session)
   const profileIds = session?.user.profiles ?? []
