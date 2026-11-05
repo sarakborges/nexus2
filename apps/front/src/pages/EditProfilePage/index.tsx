@@ -1,3 +1,4 @@
+import type { Profile } from '@nexus/common'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useEffect, useRef, useState } from 'react'
