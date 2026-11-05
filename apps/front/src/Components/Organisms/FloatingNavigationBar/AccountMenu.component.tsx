@@ -47,8 +47,13 @@ function ProfileSwitcher({
 }: ProfileSwitcherProps) {
   const { t } = useTranslations()
 
-  if (!profiles.length) {
-    return
+  if (
+    !profiles.length &&
+    !profilesLoading &&
+    !profilesError &&
+    !profilesSuccess
+  ) {
+    return null
   }
 
   return (
