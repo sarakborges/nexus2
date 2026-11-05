@@ -1,9 +1,22 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator'
-import type { CommunityPrivacy, CreateCommunityInput, CreateProfileInput, CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
+import {
+  ActorDto,
+  CommunityRelationDto,
+  CreateCommunityDto,
+  CreateForumReplyDto,
+  CreateForumTopicDto,
+  CreateProfileDto,
+  ForumActorDto,
+  ForumModerationDto,
+  MessageDto,
+  OwnershipDto,
+  ProfileRelationDto,
+  UpdateCommunityDto,
+  UpdateProfileDto
+} from './domain.dto'
 import { DomainService } from './domain.service'
 
 class CreateProfileDto implements CreateProfileInput {
