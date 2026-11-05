@@ -91,6 +91,24 @@ test('creates an owner-scoped signed upload and stores a pending metadata record
   assert.equal(records[0].expiresAt, null)
 })
 
+test('removes pending upload metadata when Storage cannot sign the upload', async t => {
+  const { service, collections } = createHarness()
+  withFetch(t, async () => new Response(JSON.stringify({}), {
+    status: 200,
+    headers: { 'content-type': 'application/json' }
+  }))
+
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'editor-image',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_SIGNING_FAILED'
+  )
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
 test('completion validates the stored bytes and sets editor expiration to 24 hours', async t => {
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174000',
@@ -403,6 +421,36 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+test('profile avatar presign checks ownership in the metadata-creation snapshot', async t => {
+  let transactionCount = 0
+  const { service, collections } = createHarness({
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['profile-1'], currentProfile: 'profile-1'
+    }],
+    profiles: [{ id: 'profile-1', type: 'social' }]
+  }, 'profile-1', (names, current) => {
+    transactionCount += 1
+    assert.deepEqual([...names].sort(), ['accounts', 'media_files', 'profiles'])
+    current.set('accounts', [])
+  })
+  withFetch(t, async () => {
+    throw new Error('Unauthorized avatar presigns must not create a Storage upload URL')
+  })
+
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'profile-avatar',
+      targetId: 'profile-1',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.equal(transactionCount, 1)
+  assert.deepEqual(collections.get('media_files') ?? [], [])
+})
+
 test('community avatar presign checks ownership and staff role in one snapshot', async t => {
   let transactionCount = 0
   const { service } = createHarness({
@@ -422,7 +470,7 @@ test('community avatar presign checks ownership and staff role in one snapshot',
   }, 'moderator-profile', (names, current) => {
     transactionCount += 1
     assert.deepEqual([...names].sort(), [
-      'accounts', 'communities', 'community_relationships', 'profiles'
+      'accounts', 'communities', 'community_relationships', 'media_files', 'profiles'
     ])
     current.set('community_relationships', [
       { profiles: ['owner-profile', 'community-1'], type: 'owner' },

@@ -87,13 +87,8 @@ export class UploadsService {
     if (!extension || !Number.isSafeInteger(input.size) || input.size < 1 || input.size > maxSize) {
       throw new BadRequestException('INVALID_UPLOAD')
     }
-
-    if (input.purpose === 'profile-avatar' && input.targetId) {
-      await this.assertOwnsProfile(userId, input.targetId)
-    }
-    if (input.purpose === 'community-avatar' && input.targetId) {
-      if (!input.actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-      await this.assertCommunityStaff(userId, input.targetId, input.actorProfileId)
+    if (input.purpose === 'community-avatar' && input.targetId && !input.actorProfileId) {
+      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
     }
 
     const id = randomUUID()
@@ -102,15 +97,6 @@ export class UploadsService {
       ? 'editor/' + userId
       : (input.purpose === 'profile-avatar' ? 'profiles/' : 'communities/') + userId
     const path = folder + '/' + id + '.' + extension
-    const encodedPath = this.encodePath(path)
-
-    const signedResponse = await this.storageRequest(
-      '/object/upload/sign/' + bucket + '/' + encodedPath,
-      { method: 'POST', body: JSON.stringify({}) }
-    )
-    const signedData = await this.readJson<SignedUploadResponse>(signedResponse)
-    if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
-
     const record: UploadedFileRecord = {
       id,
       ownerUserId: userId,
@@ -129,7 +115,72 @@ export class UploadsService {
       messageFromProfileId: null,
       messageToProfileId: null
     }
-    await this.data.update<UploadedFileRecord>('media_files', records => [...records, record])
+
+    const collectionsToRead = ['media_files']
+    if (input.purpose === 'profile-avatar' && input.targetId) {
+      collectionsToRead.push('accounts', 'profiles')
+    }
+    if (input.purpose === 'community-avatar' && input.targetId) {
+      collectionsToRead.push('accounts', 'profiles', 'communities', 'community_relationships')
+    }
+    await this.data.transaction<void>(collectionsToRead, collections => {
+      const profiles = collections.profiles as Array<{ id: string; type?: string }> | undefined
+      const accounts = collections.accounts as AccountRecord[] | undefined
+      if (input.purpose === 'profile-avatar' && input.targetId) {
+        this.assertOwnsProfileInRecords(userId, input.targetId, accounts!, profiles!)
+      }
+      if (input.purpose === 'community-avatar' && input.targetId && input.actorProfileId) {
+        const currentProfiles = profiles as Array<{ id: string; type: string }>
+        const communities = collections.communities as Array<{ id: string }>
+        const relationships = collections.community_relationships as Array<{
+          profiles: [string, string]; type: string
+        }>
+        this.assertOwnsProfileInRecords(userId, input.actorProfileId, accounts!, currentProfiles)
+
+        const actor = currentProfiles.find(item => item.id === input.actorProfileId)
+        const community = communities.find(item => item.id === input.targetId)
+        const ownerProfileId = relationships.find(item =>
+          item.profiles[1] === input.targetId && item.type === 'owner'
+        )?.profiles[0]
+        const owner = ownerProfileId
+          ? currentProfiles.find(item => item.id === ownerProfileId)
+          : undefined
+        if (!actor || !community || !owner) {
+          throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        }
+        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+        const role = relationships.find(item =>
+          item.profiles[0] === input.actorProfileId && item.profiles[1] === input.targetId
+        )?.type
+        if (role !== 'owner' && role !== 'moderator') {
+          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+        }
+      }
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
+      return {
+        records: { ...collections, media_files: [...mediaFiles, record] },
+        result: undefined
+      }
+    })
+
+    let signedData: SignedUploadResponse
+    try {
+      const signedResponse = await this.storageRequest(
+        '/object/upload/sign/' + bucket + '/' + this.encodePath(path),
+        { method: 'POST', body: JSON.stringify({}) }
+      )
+      signedData = await this.readJson<SignedUploadResponse>(signedResponse)
+      if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
+    } catch (error) {
+      try {
+        await this.data.update<UploadedFileRecord>('media_files', records =>
+          records.filter(item => item.id !== id || item.ownerUserId !== userId || item.status !== 'pending')
+        )
+      } catch {
+        // The pending record will be removed by the normal expiration cleanup.
+      }
+      throw error
+    }
 
     const uploadUrl = signedData.url.startsWith('http')
       ? signedData.url
@@ -583,55 +634,6 @@ export class UploadsService {
     }
   }
 
-  private async assertOwnsProfile(userId: string, profileId: string): Promise<void> {
-    await this.data.transaction<void>(
-      ['accounts', 'profiles'],
-      collections => {
-        this.assertOwnsProfileInRecords(
-          userId,
-          profileId,
-          collections.accounts as AccountRecord[],
-          collections.profiles as Array<{ id: string; type?: string }>
-        )
-        return { records: collections, result: undefined }
-      }
-    )
-  }
-
-  private async assertCommunityStaff(userId: string, communityId: string, actorProfileId: string): Promise<void> {
-    await this.data.transaction<void>(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; type: string }>
-        const communities = collections.communities as Array<{ id: string }>
-        const relationships = collections.community_relationships as Array<{
-          profiles: [string, string]; type: string
-        }>
-        this.assertOwnsProfileInRecords(userId, actorProfileId, accounts, profiles)
-
-        const actor = profiles.find(item => item.id === actorProfileId)
-        const community = communities.find(item => item.id === communityId)
-        const ownerProfileId = relationships.find(item =>
-          item.profiles[1] === communityId && item.type === 'owner'
-        )?.profiles[0]
-        const owner = ownerProfileId
-          ? profiles.find(item => item.id === ownerProfileId)
-          : undefined
-        if (!actor || !community || !owner) {
-          throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        }
-        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-        const role = relationships.find(item =>
-          item.profiles[0] === actorProfileId && item.profiles[1] === communityId
-        )?.type
-        if (role !== 'owner' && role !== 'moderator') {
-          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-        return { records: collections, result: undefined }
-      }
-    )
-  }
 
   private getReadyAvatar(
     records: UploadedFileRecord[],
