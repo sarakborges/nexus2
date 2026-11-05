@@ -13,6 +13,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction) 
     { id: 'recipient-user', email: 'recipient@example.test', profiles: ['recipient-profile'], currentProfile: 'recipient-profile' },
     { id: 'community-member-user', email: 'member@example.test', profiles: ['community-member-profile'], currentProfile: 'community-member-profile' },
     { id: 'outsider-user', email: 'outsider@example.test', profiles: [], currentProfile: null },
+    { id: 'unrelated-user', email: 'unrelated@example.test', profiles: [], currentProfile: null },
     { id: 'author-user', email: 'author@example.test', profiles: [], currentProfile: null },
     { id: 'user-1', email: 'user@example.test', profiles: activeProfileId ? [activeProfileId] : [], currentProfile: activeProfileId }
   ]
