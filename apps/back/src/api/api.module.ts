@@ -14,10 +14,11 @@ import { UploadsController, UploadsInternalController } from './uploads/uploads.
 import { UploadsService } from './uploads/uploads.service'
 import { UploadsCleanupService } from './uploads/uploads.cleanup.service'
 import { UploadsContentService } from './uploads/uploads.content.service'
+import { UploadsAvatarService } from './uploads/uploads.avatar.service'
 import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AuthService, DomainAccessService, ProfileService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AuthService, DomainAccessService, ProfileService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}
