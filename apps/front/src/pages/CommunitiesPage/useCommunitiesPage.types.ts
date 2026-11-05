@@ -1,4 +1,4 @@
-import type { AuthSession, Community, PaginatedResult, Profile } from '@nexus/common'
+import type { Community, PaginatedResult, Profile } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
