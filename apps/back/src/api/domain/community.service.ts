@@ -99,7 +99,6 @@ export class CommunityService {
             )
             .map(record => record.profiles[1])
         )
-        const communitiesById = new Map(communities.map(community => [community.id, community] as const))
         const profileTypes = new Map(profiles.map(item => [item.id, item.type] as const))
         const ownerProfileByCommunity = new Map<string, string>()
         for (const relationship of relationships) {
@@ -120,8 +119,7 @@ export class CommunityService {
             const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
               ? community.privacy
               : 'public'
-            return communityType === profile.type && privacy === 'public' &&
-              communitiesById.has(community.id)
+            return communityType === profile.type && privacy === 'public'
           })
           .map(community => ({
             ...community,

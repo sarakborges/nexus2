@@ -21,51 +21,47 @@ export class DomainAccessService {
   }
 
   async readCommunities(): Promise<Community[]> {
-    const [stored, profiles, relationships] = await Promise.all([
-      this.data.read<Community>('communities'),
-      this.readProfiles(),
-      this.data.read<CommunityRelationship>('community_relationships')
-    ])
-    const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    const ownerProfileByCommunityId = new Map<string, string>()
-    for (const relationship of relationships) {
-      const communityId = relationship.profiles[1]
-      if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
-        ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
-      }
-    }
+    return this.data.transaction<Community[]>(
+      ['communities', 'profiles', 'community_relationships'],
+      collections => {
+        const stored = collections.communities as Community[]
+        const profiles = collections.profiles as Profile[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
+        const ownerProfileByCommunityId = new Map<string, string>()
+        for (const relationship of relationships) {
+          const communityId = relationship.profiles[1]
+          if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
+            ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
+          }
+        }
 
-    const normalizeCommunity = (community: Community): Community => {
-      const ownerProfileId = ownerProfileByCommunityId.get(community.id)
-      const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
-        ? community.privacy
-        : 'public'
-      return {
-        ...community,
-        ...(inheritedType ? { type: inheritedType } : {}),
-        privacy,
-        about: sanitizeRichText(community.about ?? '')
-      }
-    }
-
-    const communities = stored.map(normalizeCommunity)
-    const hasNormalizationChanges = stored.some((community, index) =>
-      communities[index].type !== community.type ||
-      communities[index].privacy !== community.privacy
-    )
-
-    if (hasNormalizationChanges) {
-      await this.data.update<Community>('communities', current => {
-        const normalized = current.map(normalizeCommunity)
-        const hasChanges = normalized.some((community, index) =>
-          community.type !== current[index].type ||
-          community.privacy !== current[index].privacy
+        const normalized = stored.map(community => {
+          const ownerProfileId = ownerProfileByCommunityId.get(community.id)
+          const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
+          const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+            ? community.privacy
+            : 'public'
+          return {
+            ...community,
+            ...(inheritedType ? { type: inheritedType } : {}),
+            privacy,
+            about: sanitizeRichText(community.about ?? '')
+          }
+        })
+        const hasNormalizationChanges = stored.some((community, index) =>
+          normalized[index].type !== community.type ||
+          normalized[index].privacy !== community.privacy
         )
-        return hasChanges ? normalized : current
-      })
-    }
-    return communities
+
+        return {
+          records: hasNormalizationChanges
+            ? { ...collections, communities: normalized }
+            : collections,
+          result: normalized
+        }
+      }
+    )
   }
 
   assertOwnsInRecords(

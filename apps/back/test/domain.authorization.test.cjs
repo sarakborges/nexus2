@@ -244,6 +244,28 @@ test('community type inherits the owner profile type and persists the normalized
   assert.equal(collections.get('communities')[0].type, 'business')
 })
 
+test('community normalization reads owner type and privacy from one transaction snapshot', async () => {
+  const { service, collections } = createDomainHarness({
+    relationships: [relationship('owner-1', 'owner')],
+    beforeTransaction(names, current) {
+      assert.deepEqual([...names].sort(), [
+        'communities', 'community_relationships', 'profiles'
+      ])
+      current.set('profiles', current.get('profiles').map(profile =>
+        profile.id === 'owner-1' ? { ...profile, type: 'business' } : profile
+      ))
+    }
+  })
+  collections.set('communities', [{ ...community, type: 'social', privacy: 'invalid' }])
+
+  const visible = await service.listCommunities(page)
+
+  assert.equal(visible.items[0].type, 'business')
+  assert.equal(visible.items[0].privacy, 'public')
+  assert.equal(collections.get('communities')[0].type, 'business')
+  assert.equal(collections.get('communities')[0].privacy, 'public')
+})
+
 
 
 test('community relationship mutations recheck profile ownership in the transaction', async () => {
