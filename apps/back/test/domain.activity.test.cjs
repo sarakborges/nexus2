@@ -86,6 +86,26 @@ test('recent activity merges friend and community updates for all owned profiles
   assert.equal(activity[2].friend.id, 'friend-b')
 })
 
+test('recent activity normalizes communities in its existing snapshot', async () => {
+  let transactionCount = 0
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: [profile('owned-a')],
+    communities: [community('community-a')],
+    relationships: [],
+    communityRelationships: [{ profiles: ['owned-a', 'community-a'], type: 'owner', updatedAt: 100 }],
+    beforeTransaction(_names, current) {
+      transactionCount += 1
+      current.set('profiles', [profile('owned-a')])
+    }
+  })
+
+  const result = await service.getRecentActivity('user')
+
+  assert.equal(result.length, 1)
+  assert.equal(transactionCount, 1)
+})
+
 test('recent activity returns an empty list when the account has no profiles', async () => {
   const service = createService({
     ownedProfiles: [],

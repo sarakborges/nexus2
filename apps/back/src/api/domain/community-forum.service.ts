@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
-  Community,
   CommunityForumReply,
   CommunityForumTopic,
   CommunityForumTopicDetail,
@@ -33,19 +32,19 @@ export class CommunityForumService {
   ) {}
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
-    await this.access.readCommunities()
     return this.data.transaction<PaginatedResult<CommunityForumTopicSummary>>(
-      ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {
+        const normalized = this.access.normalizeCommunitiesInRecords(collections)
+        const records = normalized.records
         this.access.assertCommunityReadableInRecords(
-          communityId,
-          userId,
-          collections.accounts as AccountRecord[],
-          collections.communities as Community[],
-          collections.community_relationships as CommunityRelationship[]
+          communityId, userId,
+          records.accounts as AccountRecord[],
+          normalized.communities,
+          records.community_relationships as CommunityRelationship[]
         )
-        const topics = collections.community_forum_topics as CommunityForumTopic[]
-        const replies = collections.community_forum_replies as CommunityForumReply[]
+        const topics = records.community_forum_topics as CommunityForumTopic[]
+        const replies = records.community_forum_replies as CommunityForumReply[]
         const replyCounts = new Map<string, number>()
         for (const reply of replies) {
           replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
@@ -57,33 +56,33 @@ export class CommunityForumService {
             b.updatedAt - a.updatedAt ||
             a.id.localeCompare(b.id)
           )
-        return { records: collections, result: paginate(visible, q) }
+        return { records, result: paginate(visible, q) }
       }
     )
   }
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
-    await this.access.readCommunities()
     return this.data.transaction<CommunityForumTopicDetail>(
-      ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {
+        const normalized = this.access.normalizeCommunitiesInRecords(collections)
+        const records = normalized.records
         this.access.assertCommunityReadableInRecords(
-          communityId,
-          userId,
-          collections.accounts as AccountRecord[],
-          collections.communities as Community[],
-          collections.community_relationships as CommunityRelationship[]
+          communityId, userId,
+          records.accounts as AccountRecord[],
+          normalized.communities,
+          records.community_relationships as CommunityRelationship[]
         )
-        const topics = collections.community_forum_topics as CommunityForumTopic[]
+        const topics = records.community_forum_topics as CommunityForumTopic[]
         const topic = topics.find(record =>
           record.id === topicId && record.communityId === communityId
         )
         if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
-        const replies = (collections.community_forum_replies as CommunityForumReply[])
+        const replies = (records.community_forum_replies as CommunityForumReply[])
           .filter(reply => reply.topicId === topicId && reply.communityId === communityId)
           .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
         return {
-          records: collections,
+          records,
           result: {
             topic: { ...topic, replyCount: replies.length },
             replies: paginate(replies, q)

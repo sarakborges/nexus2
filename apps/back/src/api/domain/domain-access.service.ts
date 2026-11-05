@@ -1,6 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import type { Community, CommunityRelationship, CommunityRelationshipType, Profile } from '@nexus/common'
-import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import { DATA_REPOSITORY, type CollectionRecordMap, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { sanitizeRichText } from './rich-text-sanitizer'
@@ -20,46 +20,50 @@ export class DomainAccessService {
     }))
   }
 
+  normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
+    records: CollectionRecordMap
+    communities: Community[]
+  } {
+    const stored = collections.communities as Community[]
+    const profiles = collections.profiles as Profile[]
+    const relationships = collections.community_relationships as CommunityRelationship[]
+    const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
+    const ownerProfileByCommunityId = new Map<string, string>()
+    for (const relationship of relationships) {
+      const communityId = relationship.profiles[1]
+      if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
+        ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
+      }
+    }
+    const communities = stored.map(community => {
+      const ownerProfileId = ownerProfileByCommunityId.get(community.id)
+      const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
+      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+        ? community.privacy
+        : 'public'
+      return {
+        ...community,
+        ...(inheritedType ? { type: inheritedType } : {}),
+        privacy,
+        about: sanitizeRichText(community.about ?? '')
+      }
+    })
+    const hasNormalizationChanges = stored.some((community, index) =>
+      communities[index].type !== community.type ||
+      communities[index].privacy !== community.privacy
+    )
+    return {
+      records: hasNormalizationChanges ? { ...collections, communities } : collections,
+      communities
+    }
+  }
+
   async readCommunities(): Promise<Community[]> {
     return this.data.transaction<Community[]>(
       ['communities', 'profiles', 'community_relationships'],
       collections => {
-        const stored = collections.communities as Community[]
-        const profiles = collections.profiles as Profile[]
-        const relationships = collections.community_relationships as CommunityRelationship[]
-        const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-        const ownerProfileByCommunityId = new Map<string, string>()
-        for (const relationship of relationships) {
-          const communityId = relationship.profiles[1]
-          if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
-            ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
-          }
-        }
-
-        const normalized = stored.map(community => {
-          const ownerProfileId = ownerProfileByCommunityId.get(community.id)
-          const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-          const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
-            ? community.privacy
-            : 'public'
-          return {
-            ...community,
-            ...(inheritedType ? { type: inheritedType } : {}),
-            privacy,
-            about: sanitizeRichText(community.about ?? '')
-          }
-        })
-        const hasNormalizationChanges = stored.some((community, index) =>
-          normalized[index].type !== community.type ||
-          normalized[index].privacy !== community.privacy
-        )
-
-        return {
-          records: hasNormalizationChanges
-            ? { ...collections, communities: normalized }
-            : collections,
-          result: normalized
-        }
+        const normalized = this.normalizeCommunitiesInRecords(collections)
+        return { records: normalized.records, result: normalized.communities }
       }
     )
   }
