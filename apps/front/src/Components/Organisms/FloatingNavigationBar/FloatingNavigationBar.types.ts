@@ -1,8 +1,3 @@
-export type FloatingNavigationBarProps = {
-  onOpenSettings: () => void
-}
+import type { UseFloatingNavigationBarOptions } from './useFloatingNavigationBar.types'
 
-export type OpenPanel = {
-  panel: 'navigation' | 'account'
-  pathname: string
-} | null
+export type FloatingNavigationBarProps = UseFloatingNavigationBarOptions

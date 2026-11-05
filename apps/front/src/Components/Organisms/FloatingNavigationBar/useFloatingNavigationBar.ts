@@ -9,7 +9,10 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
-import type { FloatingNavigationBarProps, OpenPanel } from './FloatingNavigationBar.types'
+import type {
+  OpenPanel,
+  UseFloatingNavigationBarOptions
+} from './useFloatingNavigationBar.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
@@ -19,7 +22,7 @@ import { useToastStore } from '@/Stores/Toast.store'
 
 export function useFloatingNavigationBar({
   onOpenSettings
-}: FloatingNavigationBarProps) {
+}: UseFloatingNavigationBarOptions) {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const location = useLocation()
@@ -103,7 +106,8 @@ export function useFloatingNavigationBar({
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
-      if (!navigationRef.current?.contains(event.target as Node)) {
+      const target = event.target
+      if (!(target instanceof Node) || !navigationRef.current?.contains(target)) {
         setOpenPanel(null)
         setIsProfileSwitcherOpen(false)
       }

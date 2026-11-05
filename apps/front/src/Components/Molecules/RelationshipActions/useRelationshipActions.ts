@@ -1,4 +1,3 @@
-import type { CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { useState } from 'react'
@@ -6,8 +5,8 @@ import { useState } from 'react'
 import type {
   RelationshipAction,
   RelationshipActionsController,
-  RelationshipActionsProps
-} from './RelationshipActions.types'
+  UseRelationshipActionsOptions
+} from './useRelationshipActions.types'
 import { useTranslations } from '@/Hooks/Language'
 import {
   getCommunityRelationships,
@@ -26,7 +25,7 @@ import { useToastStore } from '@/Stores/Toast.store'
 export function useRelationshipActions({
   targetId,
   targetKind = 'profile'
-}: RelationshipActionsProps): RelationshipActionsController {
+}: UseRelationshipActionsOptions): RelationshipActionsController {
   const { t } = useTranslations()
   const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
@@ -78,15 +77,10 @@ export function useRelationshipActions({
         return
       }
       if (isCommunity) {
-        await setCommunityRelationship(
-          sourceId,
-          targetId,
-          action.type as CommunityRelationshipType,
-          sourceId
-        )
+        await setCommunityRelationship(sourceId, targetId, action.type, sourceId)
         return
       }
-      await setRelationship(sourceId, targetId, action.type as RelationshipType)
+      await setRelationship(sourceId, targetId, action.type)
     },
     onSuccess: async (_data, action) => {
       const toastKey =

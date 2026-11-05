@@ -1,12 +1,12 @@
-import type { UseCommunityMemberActionsOptions } from './useCommunityMemberActions.types'
+import type {
+  CommunityMemberActionsController,
+  CommunityMemberOperation,
+  UseCommunityMemberActionsOptions
+} from './useCommunityMemberActions.types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { useState } from 'react'
 
-import type {
-  CommunityMemberActionsController,
-  CommunityMemberOperation
-} from './CommunityMemberActions.types'
 import { useTranslations } from '@/Hooks/Language'
 import {
   demoteCommunityModerator,
