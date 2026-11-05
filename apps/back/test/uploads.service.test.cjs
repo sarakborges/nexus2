@@ -355,6 +355,50 @@ test('forum reply images are public when their community is public', async t => 
   assert.deepEqual(image.body, pngHeader)
 })
 
+test('avatar deletion does not clear a newer cleanup claim', async t => {
+  const file = {
+    id: 'e23e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/old-avatar.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: null,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const picture = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
+  const { service, collections } = createHarness({
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['profile-1'], currentProfile: 'profile-1'
+    }],
+    profiles: [{ id: 'profile-1', picture, type: 'social' }],
+    media_files: [file]
+  })
+  let newerClaim
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'DELETE')
+    const claimed = collections.get('media_files')[0]
+    assert.equal(claimed.status, 'deleting')
+    newerClaim = { ...claimed, deletingAt: claimed.deletingAt + 5 * 60 * 1000 }
+    collections.set('media_files', [newerClaim])
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.setProfileAvatar('user-1', 'profile-1', null)
+
+  assert.equal(result.picture, '')
+  assert.deepEqual(collections.get('media_files'), [newerClaim])
+})
+
 test('deleteUpload rechecks ownership inside the deletion claim snapshot', async t => {
   const file = {
     id: 'c23e4567-e89b-42d3-a456-426614174000',

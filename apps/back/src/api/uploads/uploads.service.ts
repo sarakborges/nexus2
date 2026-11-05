@@ -712,7 +712,11 @@ export class UploadsService {
     if (!old) return
     await this.removeObjects(AVATAR_BUCKET, [old.path])
     await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item => item.id !== old.id)
+      current.filter(item =>
+        item.id !== old.id ||
+        item.status !== 'deleting' ||
+        item.deletingAt !== old.deletingAt
+      )
     )
   }
 
