@@ -26,22 +26,7 @@ import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 import './CommunityPage.style.scss'
 
-type PreviewAvatarProps = {
-  name: string
-  picture: string
-}
-
-function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
-  return (
-    <span className="social-preview-avatar">
-      {picture ? (
-        <img src={picture} alt="" />
-      ) : (
-        <span aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>
-      )}
-    </span>
-  )
-}
+import { PreviewAvatar } from './PreviewAvatar.component'
 
 export function CommunityPage() {
   const { url } = useParams<{ url: string }>()

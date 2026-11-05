@@ -1,6 +1,5 @@
 import type {
   Community,
-  CommunityPrivacy,
   CommunityRelationship
 } from '@nexus/common'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -26,12 +25,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthPage.style.scss'
 
-type CommunityForm = {
-  name: string
-  url: string
-  about: string
-  privacy: CommunityPrivacy
-}
+import type { CommunityForm } from './EditCommunityPage.types'
 
 export function EditCommunityPage() {
   const { url } = useParams<{ url: string }>()

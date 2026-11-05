@@ -1,4 +1,3 @@
-import type { Profile } from '@nexus/common'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useEffect, useRef, useState } from 'react'
@@ -19,7 +18,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthPage.style.scss'
 
-type ProfileForm = { name: string; url: string; about: string }
+import type { ProfileForm } from './EditProfilePage.types'
 
 export function EditProfilePage() {
   const { url } = useParams<{ url: string }>()

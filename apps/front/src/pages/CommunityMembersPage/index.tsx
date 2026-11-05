@@ -1,4 +1,4 @@
-import type { CommunityRelationship, Profile } from '@nexus/common'
+import type { CommunityRelationship } from '@nexus/common'
 import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useState } from 'react'
@@ -27,8 +27,7 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityMembersPage.style.scss'
 
-type MemberTab = 'all' | 'staff' | 'banned'
-type Member = Profile & { role: string }
+import type { Member, MemberTab } from './CommunityMembersPage.types'
 
 export function CommunityMembersPage() {
   const { url } = useParams<{ url: string }>()
