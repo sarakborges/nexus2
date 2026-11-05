@@ -14,6 +14,7 @@ import type {
   Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import type { CommunityMemberProfile } from './domain.types'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
@@ -56,8 +57,8 @@ export class CommunityMembershipService {
     q: PaginationDto,
     userId: string | null,
     actorProfileId?: string
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
-    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
+  ): Promise<PaginatedResult<CommunityMemberProfile>> {
+    return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
         const normalized = this.access.normalizeCommunitiesInRecords(collections)
@@ -98,8 +99,8 @@ export class CommunityMembershipService {
     )
   }
 
-  async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
-    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
+  async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<CommunityMemberProfile>> {
+    return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
         const normalized = this.access.normalizeCommunitiesInRecords(collections)
