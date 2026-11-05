@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseGettingStartedPageResult } from './useGettingStartedPage.types'
 
-export function useGettingStartedPage() {
+export function useGettingStartedPage(): UseGettingStartedPageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const signOut = useAuthStore((state) => state.signOut)
