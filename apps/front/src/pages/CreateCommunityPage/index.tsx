@@ -22,6 +22,7 @@ export function CreateCommunityPage() {
     setPrivacy,
     errorMessage,
     isSubmitting,
+    uploadEditorImage,
     handleSubmit,
     handleCancel
   } = useCreateCommunityPage()

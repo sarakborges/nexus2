@@ -27,6 +27,7 @@ export function CreateCommunityForumTopicPage() {
     content,
     setContent,
     createMutation,
+    uploadEditorImage,
     submit,
     canSubmit
   } = useCreateCommunityForumTopicPage()

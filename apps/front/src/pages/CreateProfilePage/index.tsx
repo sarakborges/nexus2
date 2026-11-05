@@ -23,6 +23,7 @@ export function CreateProfilePage() {
     setType,
     errorMessage,
     isSubmitting,
+    uploadEditorImage,
     handleSubmit,
     handleCancel
   } = useCreateProfilePage()
