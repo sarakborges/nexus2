@@ -87,6 +87,15 @@ export function useEditCommunityPage() {
     setForm((current) => current ? { ...current, ...patch } : current)
   }
 
+  const updateCommunityPicture = (picture: string) => {
+    if (!community) return
+    queryClient.setQueryData(
+      queryKeys.communities.byUrl(community.url),
+      (current: typeof community | undefined) =>
+        current ? { ...current, picture } : current
+    )
+  }
+
   const cancelEdit = () => {
     if (community) navigate(ROUTES.community + '/' + community.url)
   }
@@ -120,6 +129,7 @@ export function useEditCommunityPage() {
     errorMessage,
     isSubmitting: updateMutation.isPending,
     updateForm,
+    updateCommunityPicture,
     cancelEdit,
     handleSubmit
   }

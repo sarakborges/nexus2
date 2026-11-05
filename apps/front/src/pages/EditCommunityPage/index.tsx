@@ -22,6 +22,7 @@ export function EditCommunityPage() {
     errorMessage,
     isSubmitting,
     updateForm,
+    updateCommunityPicture,
     cancelEdit,
     handleSubmit
   } = useEditCommunityPage()
@@ -97,12 +98,7 @@ export function EditCommunityPage() {
               purpose="community-avatar"
               targetId={community.id}
               actorProfileId={ownerProfileId}
-              onChange={(picture) =>
-                queryClient.setQueryData<Community>(
-                  queryKeys.communities.byUrl(community.url),
-                  (current) => (current ? { ...current, picture } : current)
-                )
-              }
+              onChange={updateCommunityPicture}
               selectLabel={t('UPLOAD_SELECT_IMAGE')}
               changeLabel={t('UPLOAD_CHANGE_IMAGE')}
               removeLabel={t('UPLOAD_REMOVE_IMAGE')}
