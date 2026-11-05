@@ -131,6 +131,27 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     [authorsQuery.data]
   )
 
+  const topicAuthor = topic ? authorsById.get(topic.profileId) : undefined
+  const canDeleteTopic = Boolean(
+    canInteract &&
+    forumProfileId &&
+    topic &&
+    (topic.profileId === forumProfileId || isStaff)
+  )
+  const replyItems = useMemo(
+    () =>
+      replies.map((reply) => ({
+        reply,
+        author: authorsById.get(reply.profileId),
+        canDelete: Boolean(
+          canInteract &&
+          forumProfileId &&
+          (reply.profileId === forumProfileId || isStaff)
+        )
+      })),
+    [replies, authorsById, canInteract, forumProfileId, isStaff]
+  )
+
   const replyMutation = useMutation({
     mutationFn: () =>
       createCommunityForumReply(
@@ -188,6 +209,15 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
 
+  const togglePinned = () => {
+    if (topic) moderationMutation.mutate({ isPinned: !topic.isPinned })
+  }
+  const toggleLocked = () => {
+    if (topic) moderationMutation.mutate({ isLocked: !topic.isLocked })
+  }
+  const deleteTopic = () => deleteTopicMutation.mutate()
+  const deleteReply = (replyId: string) => deleteReplyMutation.mutate(replyId)
+
   const submitReply = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (
@@ -223,13 +253,19 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     topicQuery,
     detail,
     topic,
-    replies,
+    topicAuthor,
+    canDeleteTopic,
+    replyItems,
     authorsQuery,
-    authorsById,
-    replyMutation,
-    moderationMutation,
-    deleteTopicMutation,
-    deleteReplyMutation,
+    hasReplyError: replyMutation.isError,
+    isSendingReply: replyMutation.isPending,
+    isUpdatingTopic: moderationMutation.isPending,
+    isDeletingTopic: deleteTopicMutation.isPending,
+    isDeletingReply: deleteReplyMutation.isPending,
+    togglePinned,
+    toggleLocked,
+    deleteTopic,
+    deleteReply,
     submitReply,
     uploadEditorImage
   }
