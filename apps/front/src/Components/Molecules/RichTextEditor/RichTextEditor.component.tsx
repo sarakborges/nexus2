@@ -1,11 +1,8 @@
 import type { RichTextEditorProps } from './RichTextEditor.types'
 import { HtmlSourceEditor } from './HtmlSourceEditor.component'
 import { RichTextToolbar } from './RichTextToolbar.component'
-import { getRichTextPlainText } from './richText.utils'
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
+import { useRichTextEditor } from './useRichTextEditor'
 import Editor from 'react-simple-wysiwyg'
-
-import { useState } from 'react'
 
 import './RichTextEditor.style.scss'
 
@@ -19,20 +16,15 @@ export function RichTextEditor({
   maxTextLength,
   placeholder
 }: RichTextEditorProps) {
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
-  const [isImageUploading, setIsImageUploading] = useState(false)
-  const [isHtmlMode, setIsHtmlMode] = useState(false)
-
-  const handleChange = (nextValue: string) => {
-    if (
-      maxTextLength !== undefined &&
-      getRichTextPlainText(nextValue).length > maxTextLength
-    )
-      return
-    onChange(nextValue)
-  }
+  const {
+    isRequestPending,
+    isImageUploading,
+    isHtmlMode,
+    setImageUploading,
+    openHtmlMode,
+    closeHtmlMode,
+    handleChange
+  } = useRichTextEditor({ onChange, maxTextLength })
 
   return (
     <div className="rich-text-editor" data-editor-id={id}>
@@ -46,7 +38,7 @@ export function RichTextEditor({
             <button
               className="rich-text-editor__visual-mode-button"
               type="button"
-              onClick={() => setIsHtmlMode(false)}
+              onClick={closeHtmlMode}
             >
               Visual editor
             </button>
@@ -77,8 +69,8 @@ export function RichTextEditor({
               imageButtonLabel={imageButtonLabel}
               imageUploadErrorLabel={imageUploadErrorLabel}
               onUploadImage={onUploadImage}
-              onUploadingChange={setIsImageUploading}
-              onOpenHtmlMode={() => setIsHtmlMode(true)}
+              onUploadingChange={setImageUploading}
+              onOpenHtmlMode={openHtmlMode}
             />
           </Editor>
         </fieldset>
