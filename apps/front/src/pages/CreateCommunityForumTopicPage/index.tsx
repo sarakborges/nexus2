@@ -4,6 +4,7 @@ import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { RelationshipActions, RequestState, RichTextEditor } from '@/Components'
+import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import {
   CommunitySidebar,
   SocialPageLayout
@@ -23,14 +24,6 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
-
-function hasRichTextContent(value: string): boolean {
-  const text = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .trim()
-  return Boolean(text || /<img\b/i.test(value))
-}
 
 export function CreateCommunityForumTopicPage() {
   const { url } = useParams<{ url: string }>()
@@ -107,10 +100,10 @@ export function CreateCommunityForumTopicPage() {
     },
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!title.trim() || !hasRichTextContent(content) || !forumProfile) return
-    await createMutation.mutateAsync()
+    createMutation.mutate()
   }
 
   if (!normalized) return <NotFoundPage />
