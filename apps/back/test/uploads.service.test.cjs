@@ -588,7 +588,7 @@ test('community avatar write rechecks staff role in the community/media transact
 })
 
 
-test('private community image access rechecks membership from the storage-read snapshot', async () => {
+test('private community image access rechecks membership from the storage-read snapshot', async t => {
   const file = {
     id: '623e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'author-user',
@@ -618,7 +618,7 @@ test('private community image access rechecks membership from the storage-read s
       current.set('community_relationships', [])
     }
   })
-  withFetch({ after() {} }, async () => {
+  withFetch(t, async () => {
     throw new Error('Unauthorized storage objects must not be fetched')
   })
 
@@ -628,7 +628,7 @@ test('private community image access rechecks membership from the storage-read s
   )
 })
 
-test('private message image access rechecks participant profile links from the message snapshot', async () => {
+test('private message image access rechecks participant profile links from the message snapshot', async t => {
   const file = {
     id: '723e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'sender-user',
