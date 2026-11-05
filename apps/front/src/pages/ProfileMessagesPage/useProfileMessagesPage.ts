@@ -80,6 +80,14 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       ),
     [senderProfilesQuery.data]
   )
+  const messageItems = useMemo(
+    () =>
+      messages.map((message) => ({
+        message,
+        sender: sendersById.get(message.fromProfileId)
+      })),
+    [messages, sendersById]
+  )
   const messageSenderProfileId =
     currentProfileId ?? (isProfileOwner ? (profile?.id ?? null) : null)
   const canSendMessage = Boolean(
@@ -122,7 +130,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     messages,
     totalItems,
     senderProfilesQuery,
-    sendersById,
+    messageItems,
     canSendMessage,
     canSubmitMessage: hasRichTextContent(content),
     isSendingMessage: sendMessageMutation.isPending,
