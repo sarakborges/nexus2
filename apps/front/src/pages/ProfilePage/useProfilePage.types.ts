@@ -11,4 +11,8 @@ export type UseProfilePageResult = {
   canInteract: boolean
   friendsQuery: UseQueryResult<PaginatedResult<Profile>>
   communitiesQuery: UseQueryResult<PaginatedResult<Community>>
+  friends: Profile[]
+  communities: Community[]
+  isOwner: boolean
+  openEditProfile: () => void
 }
