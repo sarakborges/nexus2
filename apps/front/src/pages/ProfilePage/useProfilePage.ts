@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { ROUTES } from '@/Constants/routes'
 import { getProfileCommunities } from '@/Services/Community'
 import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -12,6 +13,7 @@ import type { UseProfilePageResult } from './useProfilePage.types'
 
 export function useProfilePage(): UseProfilePageResult {
   const { url } = useParams<{ url: string }>()
+  const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const profileQuery = useQuery({
@@ -32,6 +34,13 @@ export function useProfilePage(): UseProfilePageResult {
     queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
+  const friends = friendsQuery.data?.items ?? []
+  const communities = communitiesQuery.data?.items ?? []
+  const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
+  const openEditProfile = () => {
+    if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')
+  }
+
   const communitiesQuery = useQuery({
     queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 16),
     queryFn: () =>
@@ -49,5 +58,9 @@ export function useProfilePage(): UseProfilePageResult {
     canInteract,
     friendsQuery,
     communitiesQuery,
+    friends,
+    communities,
+    isOwner,
+    openEditProfile,
   }
 }
