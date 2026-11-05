@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { useMemo } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { ROUTES } from '@/Constants/routes'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import {
@@ -18,6 +19,7 @@ import type { UseCommunityPageResult } from './useCommunityPage.types'
 
 export function useCommunityPage(): UseCommunityPageResult {
   const { url } = useParams<{ url: string }>()
+  const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
@@ -47,6 +49,12 @@ export function useCommunityPage(): UseCommunityPageResult {
       ['owner', 'moderator', 'connection'].includes(record.type)
     ) ?? false
   const canViewMembers = community?.privacy !== 'private' || privateMembership
+  const canEditCommunity =
+    relationshipsQuery.data?.some(
+      (record) =>
+        record.type === 'owner' &&
+        (session?.user.profiles.includes(record.profiles[0]) ?? false)
+    ) ?? false
   const pendingActor =
     relationshipsQuery.data?.find(
       (record) =>
@@ -89,6 +97,14 @@ export function useCommunityPage(): UseCommunityPageResult {
     )
   })
 
+  const members = membersQuery.data?.items ?? []
+  const memberCount = membersQuery.data?.totalItems
+  const openEditCommunity = () => {
+    if (community) {
+      navigate(ROUTES.community + '/' + community.url + '/edit')
+    }
+  }
+
   const forumTopicsQuery = useQuery({
     queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20, session?.user.id ?? null),
     queryFn: () =>
@@ -129,6 +145,10 @@ export function useCommunityPage(): UseCommunityPageResult {
     relationshipsQuery,
     privateMembership,
     canViewMembers,
+    canEditCommunity,
+    openEditCommunity,
+    members,
+    memberCount,
     pendingActor,
     pendingRequestsQuery,
     membersQuery,
