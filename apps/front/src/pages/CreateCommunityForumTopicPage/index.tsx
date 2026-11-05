@@ -3,7 +3,6 @@ import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadFile } from '@/Services/Uploads'
