@@ -113,10 +113,10 @@ export function ProfileMessagesPage() {
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!hasRichTextContent(content) || !canSendMessage) return
-    await sendMessageMutation.mutateAsync()
+    sendMessageMutation.mutate()
   }
 
   if (!requestedUrl) return <NotFoundPage />
