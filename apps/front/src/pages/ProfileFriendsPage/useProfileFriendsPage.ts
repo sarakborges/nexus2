@@ -8,8 +8,9 @@ import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getProfileFriends } from '@/Services/Relationship'
+import type { UseProfileFriendsPageResult } from './useProfileFriendsPage.types'
 
-export function useProfileFriendsPage() {
+export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const profileQuery = useQuery({
