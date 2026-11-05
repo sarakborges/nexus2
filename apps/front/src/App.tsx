@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 
-import { FloatingNavigationBar } from '@/Components/Organisms/FloatingNavigationBar'
 import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 import { ToastViewport } from '@/Components/Organisms/Toast/ToastViewport.component'
 import { ROUTES } from '@/Constants/routes'
@@ -15,6 +14,12 @@ import { getUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { AppRoutes } from '@/routes'
+
+const FloatingNavigationBar = lazy(() =>
+  import('@/Components/Organisms/FloatingNavigationBar').then(module => ({
+    default: module.FloatingNavigationBar
+  }))
+)
 
 const SettingsModal = lazy(() =>
   import('@/Components/Organisms/SettingsModal').then(module => ({
@@ -73,7 +78,9 @@ export function App() {
   return (
     <>
       {hasAuthenticatedSession && shouldInitializeAuth && (
-        <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />
+        <Suspense fallback={null}>
+          <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />
+        </Suspense>
       )}
       <AppRoutes />
       <ToastViewport />
