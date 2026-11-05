@@ -265,3 +265,70 @@ test('community relationship mutations recheck profile ownership in the transact
   )
   assert.deepEqual(collections.get('community_relationships'), original)
 })
+
+test('removing a community member rechecks actor ownership in the same transaction', async () => {
+  const original = [
+    relationship('owner-1', 'owner'),
+    relationship('member-1', 'connection')
+  ]
+  const { service, collections } = createDomainHarness({
+    userProfiles: { ownerUser: ['owner-1'] },
+    relationships: original,
+    beforeTransaction(_names, current) {
+      current.set('accounts', [])
+    }
+  })
+
+  await assert.rejects(
+    service.removeCommunityRelationship('ownerUser', communityId, 'member-1', 'owner-1'),
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
+  )
+  assert.deepEqual(collections.get('community_relationships'), original)
+})
+
+test('demoting a moderator rechecks the owner role inside the relationship transaction', async () => {
+  const original = [
+    relationship('owner-1', 'owner'),
+    relationship('moderator-1', 'moderator')
+  ]
+  const afterTransfer = original.map(record =>
+    record.profiles[0] === 'owner-1' ? { ...record, type: 'moderator' } : record
+  )
+  const { service, collections } = createDomainHarness({
+    userProfiles: { ownerUser: ['owner-1'] },
+    relationships: original,
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', afterTransfer)
+    }
+  })
+
+  await assert.rejects(
+    service.demoteModerator('ownerUser', communityId, 'moderator-1', 'owner-1'),
+    error => error.getStatus() === 403 && error.message === 'ONLY_OWNER_CAN_DEMOTE_MODERATOR'
+  )
+  assert.deepEqual(collections.get('community_relationships'), afterTransfer)
+})
+
+test('transferring community ownership rechecks the current owner role transactionally', async () => {
+  const original = [
+    relationship('owner-1', 'owner'),
+    relationship('moderator-1', 'moderator')
+  ]
+  const afterTransfer = original.map(record =>
+    record.profiles[0] === 'owner-1' ? { ...record, type: 'moderator' } : record
+  )
+  const { service, collections } = createDomainHarness({
+    userProfiles: { ownerUser: ['owner-1'] },
+    relationships: original,
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', afterTransfer)
+    }
+  })
+
+  await assert.rejects(
+    service.transferOwnership('ownerUser', communityId, 'moderator-1', 'owner-1'),
+    error => error.getStatus() === 403 && error.message === 'OWNERSHIP_TRANSFER_NOT_ALLOWED'
+  )
+  assert.deepEqual(collections.get('community_relationships'), afterTransfer)
+})
+
