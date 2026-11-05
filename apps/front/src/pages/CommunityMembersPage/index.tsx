@@ -13,7 +13,6 @@ import { useCommunityMembersPage } from './useCommunityMembersPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityMembersPage.style.scss'
 
-import type { MemberTab } from './CommunityMembersPage.types'
 
 export function CommunityMembersPage() {
   const { t } = useTranslations()
@@ -35,6 +34,7 @@ export function CommunityMembersPage() {
     actorProfileId,
     currentRole,
     isStaff,
+    tabs,
     visibleTab,
     membersQuery,
     pendingQuery,
@@ -81,15 +81,6 @@ export function CommunityMembersPage() {
       </main>
     )
 
-  const tabs: Array<{ id: MemberTab; label: string }> = [
-    { id: 'all', label: t('COMMUNITY_TAB_ALL') },
-    ...(isStaff
-      ? [
-          { id: 'staff' as const, label: t('COMMUNITY_TAB_STAFF') },
-          { id: 'banned' as const, label: t('COMMUNITY_TAB_BANNED') }
-        ]
-      : [])
-  ]
 
   return (
     <SocialPageLayout
