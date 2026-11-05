@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 
 import { RequestState } from '@/Components'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
@@ -16,8 +16,7 @@ import './CommunityPage.style.scss'
 
 export function CommunityPage() {
   const { t } = useTranslations()
-  const navigate = useNavigate()
-  const {
+    const {
     session,
     requestedUrl,
     communityQuery,
@@ -27,6 +26,10 @@ export function CommunityPage() {
     relationshipsQuery,
     privateMembership,
     canViewMembers,
+    canEditCommunity,
+    openEditCommunity,
+    members,
+    memberCount,
     pendingActor,
     pendingRequestsQuery,
     membersQuery,
@@ -77,15 +80,6 @@ export function CommunityPage() {
     )
   }
 
-  const members = membersQuery.data?.items ?? []
-  const memberCount = membersQuery.data?.totalItems
-  const ownerRelationship =
-    relationshipsQuery.data?.find(
-      (record) =>
-        record.type === 'owner' &&
-        (session?.user.profiles.includes(record.profiles[0]) ?? false)
-    ) ?? null
-
   return (
     <main className="social-page social-page--community">
       <div className="social-page__layout">
@@ -115,13 +109,11 @@ export function CommunityPage() {
                   {t('COMMUNITY_ABOUT_LABEL')}
                 </h2>
               </div>
-              {ownerRelationship && (
+              {canEditCommunity && (
                 <Button
                   type="button"
                   variation="primary"
-                  onClick={() =>
-                    navigate(ROUTES.community + '/' + community.url + '/edit')
-                  }
+                  onClick={openEditCommunity}
                 >
                   {t('COMMUNITY_EDIT')}
                 </Button>
@@ -138,7 +130,7 @@ export function CommunityPage() {
                   })}
                 </Link>
               )}
-            {community.privacy === 'private' && !privateMembership ? (
+            {!canViewMembers ? (
               <p className="social-panel__body">
                 {t('COMMUNITY_PRIVATE_RESTRICTED')}
               </p>
