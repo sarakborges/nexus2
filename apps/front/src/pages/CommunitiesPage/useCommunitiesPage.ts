@@ -7,8 +7,9 @@ import { getCommunities } from '@/Services/Community'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseCommunitiesPageResult } from './useCommunitiesPage.types'
 
-export function useCommunitiesPage() {
+export function useCommunitiesPage(): UseCommunitiesPageResult {
   const session = useAuthStore((state) => state.session)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
