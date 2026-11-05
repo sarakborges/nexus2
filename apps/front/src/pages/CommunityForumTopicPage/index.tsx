@@ -12,6 +12,7 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
+import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { uploadFile } from '@/Services/Uploads'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -21,7 +22,6 @@ import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CommunityForumTopicPage() {
   const {
-    url,
     topicId,
     t,
     session,
@@ -44,6 +44,7 @@ export function CommunityForumTopicPage() {
     detail,
     topic,
     replies,
+    authorsQuery,
     authorsById,
     replyMutation,
     moderationMutation,
