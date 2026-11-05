@@ -1,3 +1,7 @@
+import type {
+  RelationshipAction,
+  RelationshipActionsProps
+} from './RelationshipActions.types'
 import type { CommunityRelationshipType, RelationshipType } from '@nexus/common'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -20,12 +24,6 @@ import {
 } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
-
-type RelationshipActionsProps = {
-  targetId: string
-  targetKind?: 'profile' | 'community'
-}
-type Action = { type: 'remove' } | { type: RelationshipType }
 
 export function RelationshipActions({
   targetId,
@@ -61,9 +59,9 @@ export function RelationshipActions({
           item.profiles.includes(sourceId ?? '') &&
           item.profiles.includes(targetId)
       ) ?? null)
-  const [lastAction, setLastAction] = useState<Action | null>(null)
+  const [lastAction, setLastAction] = useState<RelationshipAction | null>(null)
   const mutation = useMutation({
-    mutationFn: async (action: Action) => {
+    mutationFn: async (action: RelationshipAction) => {
       if (!sourceId) throw new Error('SOURCE_PROFILE_REQUIRED')
       if (action.type === 'remove') {
         if (isCommunity)
@@ -107,7 +105,7 @@ export function RelationshipActions({
     },
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
-  const run = (action: Action) => {
+  const run = (action: RelationshipAction) => {
     setLastAction(action)
     mutation.mutate(action)
   }
