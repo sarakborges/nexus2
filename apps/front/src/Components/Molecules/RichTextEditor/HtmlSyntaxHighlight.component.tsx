@@ -1,117 +1,71 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment } from 'react'
 
-import type { HtmlSyntaxHighlightProps } from './HtmlSyntaxHighlight.types'
+import type {
+  HtmlSyntaxAttributePart,
+  HtmlSyntaxHighlightProps
+} from './HtmlSyntaxHighlight.types'
+import { tokenizeHtml } from './htmlSyntaxHighlight.utils'
 
-function highlightTag(tag: string, key: number): ReactNode {
-  const match = tag.match(/^(<\/?)([A-Za-z][\w:-]*)([\s\S]*?)(\/?>)$/)
-  if (!match) {
-    return (
-      <span
-        className="rich-text-editor__token rich-text-editor__token--tag"
-        key={key}
-      >
-        {tag}
-      </span>
-    )
-  }
+const tokenClassNames = {
+  comment: 'rich-text-editor__token--comment',
+  entity: 'rich-text-editor__token--entity',
+  doctype: 'rich-text-editor__token--doctype',
+  tag: 'rich-text-editor__token--tag',
+  name: 'rich-text-editor__token--name',
+  attribute: 'rich-text-editor__token--attribute',
+  punctuation: 'rich-text-editor__token--punctuation',
+  string: 'rich-text-editor__token--string'
+} as const
 
-  const [, opening, name, rawAttributes, closing] = match
-  const attributes: ReactNode[] = []
-  const attributePattern =
-    /([A-Za-z_:][\w:.-]*)(\s*=\s*)((?:"[^"]*")|(?:'[^']*')|(?:[^\s>]+))/g
-  let cursor = 0
-  let attributeIndex = 0
-
-  for (const attribute of rawAttributes.matchAll(attributePattern)) {
-    const start = attribute.index ?? 0
-    if (start > cursor) {
-      attributes.push(rawAttributes.slice(cursor, start))
-    }
-
-    attributes.push(
-      <Fragment key={attributeIndex++}>
-        <span className="rich-text-editor__token rich-text-editor__token--attribute">
-          {attribute[1]}
-        </span>
-        <span className="rich-text-editor__token rich-text-editor__token--punctuation">
-          {attribute[2]}
-        </span>
-        <span className="rich-text-editor__token rich-text-editor__token--string">
-          {attribute[3]}
-        </span>
-      </Fragment>
-    )
-    cursor = start + attribute[0].length
-  }
-
-  if (cursor < rawAttributes.length) {
-    attributes.push(rawAttributes.slice(cursor))
-  }
+function AttributePart({ part }: { part: HtmlSyntaxAttributePart }) {
+  if (part.type === 'text') return <>{part.value}</>
 
   return (
-    <Fragment key={key}>
-      <span className="rich-text-editor__token rich-text-editor__token--tag">
-        {opening}
-      </span>
-      <span className="rich-text-editor__token rich-text-editor__token--name">
-        {name}
-      </span>
-      {attributes}
-      <span className="rich-text-editor__token rich-text-editor__token--tag">
-        {closing}
-      </span>
-    </Fragment>
+    <span className={`rich-text-editor__token ${tokenClassNames[part.type]}`}>
+      {part.value}
+    </span>
   )
 }
 
 export function HtmlSyntaxHighlight({ source }: HtmlSyntaxHighlightProps) {
-  const pattern =
-    /<!--[\s\S]*?-->|<!doctype\b[^>]*>|<\/?[A-Za-z][^>]*>|&(?:#\d+|#x[\da-f]+|[A-Za-z][\w]+);/gi
-  const pieces: ReactNode[] = []
-  let cursor = 0
-  let key = 0
+  const tokens = tokenizeHtml(source)
 
-  for (const match of source.matchAll(pattern)) {
-    const start = match.index ?? 0
-    if (start > cursor) pieces.push(source.slice(cursor, start))
+  return (
+    <>
+      {tokens.map((token, index) => {
+        if (token.type === 'text') {
+          return <Fragment key={index}>{token.value}</Fragment>
+        }
 
-    const token = match[0]
-    if (token.startsWith('<!--')) {
-      pieces.push(
-        <span
-          className="rich-text-editor__token rich-text-editor__token--comment"
-          key={key++}
-        >
-          {token}
-        </span>
-      )
-    } else if (token.startsWith('&')) {
-      pieces.push(
-        <span
-          className="rich-text-editor__token rich-text-editor__token--entity"
-          key={key++}
-        >
-          {token}
-        </span>
-      )
-    } else if (/^<!doctype/i.test(token)) {
-      pieces.push(
-        <span
-          className="rich-text-editor__token rich-text-editor__token--doctype"
-          key={key++}
-        >
-          {token}
-        </span>
-      )
-    } else {
-      pieces.push(highlightTag(token, key++))
-    }
+        if (token.type === 'tag') {
+          return (
+            <Fragment key={index}>
+              <span className={`rich-text-editor__token ${tokenClassNames.tag}`}>
+                {token.opening}
+              </span>
+              <span className={`rich-text-editor__token ${tokenClassNames.name}`}>
+                {token.name}
+              </span>
+              {token.attributes.map((part, partIndex) => (
+                <AttributePart key={partIndex} part={part} />
+              ))}
+              <span className={`rich-text-editor__token ${tokenClassNames.tag}`}>
+                {token.closing}
+              </span>
+            </Fragment>
+          )
+        }
 
-    cursor = start + token.length
-  }
-
-  if (cursor < source.length) pieces.push(source.slice(cursor))
-  if (source.endsWith('\n')) pieces.push('\u200b')
-
-  return <>{pieces}</>
+        const tokenType = token.type === 'tag-text' ? 'tag' : token.type
+        return (
+          <span
+            className={`rich-text-editor__token ${tokenClassNames[tokenType]}`}
+            key={index}
+          >
+            {token.value}
+          </span>
+        )
+      })}
+    </>
+  )
 }
