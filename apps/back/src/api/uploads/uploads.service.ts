@@ -19,10 +19,11 @@ import {
   PENDING_MAX_AGE,
   UPLOAD_REFERENCE
 } from './uploads.constants'
-import { getTotalSize, isWithinAvatarDraftRetention } from './uploads.utils'
+import { getTotalSize } from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
+import { UploadsAvatarService } from './uploads.avatar.service'
 import type {
   CreateUploadInput,
   SignedUploadResponse,
@@ -36,7 +37,8 @@ export class UploadsService {
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
     private readonly storage: UploadsStorageService,
     private readonly cleanup: UploadsCleanupService,
-    private readonly content: UploadsContentService
+    private readonly content: UploadsContentService,
+    private readonly avatars: UploadsAvatarService
   ) {}
 
   async createUpload(userId: string, input: CreateUploadInput): Promise<{ id: string; uploadUrl: string }> {
@@ -86,7 +88,7 @@ export class UploadsService {
       const profiles = collections.profiles as Array<{ id: string; type?: string }> | undefined
       const accounts = collections.accounts as AccountRecord[] | undefined
       if (input.purpose === 'profile-avatar' && input.targetId) {
-        this.assertOwnsProfileInRecords(userId, input.targetId, accounts!, profiles!)
+        this.avatars.assertOwnsProfileInRecords(userId, input.targetId, accounts!, profiles!)
       }
       if (input.purpose === 'community-avatar' && input.targetId && input.actorProfileId) {
         const currentProfiles = profiles as Array<{ id: string; type: string }>
@@ -94,7 +96,7 @@ export class UploadsService {
         const relationships = collections.community_relationships as Array<{
           profiles: [string, string]; type: string
         }>
-        this.assertOwnsProfileInRecords(userId, input.actorProfileId, accounts!, currentProfiles)
+        this.avatars.assertOwnsProfileInRecords(userId, input.actorProfileId, accounts!, currentProfiles)
 
         const actor = currentProfiles.find(item => item.id === input.actorProfileId)
         const community = communities.find(item => item.id === input.targetId)
@@ -243,15 +245,9 @@ export class UploadsService {
     resourceType: 'profile' | 'community',
     resourceId: string
   ): UploadedFileRecord[] {
-    const path = this.storage.getAvatarPath(url)
-    if (!path) return records
-    const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-    if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
-      record.status !== 'ready' || record.resourceType ||
-      !isWithinAvatarDraftRetention(record)) {
-      throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-    }
-    return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
+    return this.avatars.attachAvatarUrlToRecords(
+      records, userId, url, purpose, resourceType, resourceId
+    )
   }
 
   attachAvatarRecordToRecords(
@@ -262,45 +258,13 @@ export class UploadsService {
     resourceType: 'profile' | 'community',
     resourceId: string
   ): UploadedFileRecord[] {
-    const record = this.getReadyAvatar(records, userId, uploadId, purpose)
-    return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
+    return this.avatars.attachAvatarRecordToRecords(
+      records, userId, uploadId, purpose, resourceType, resourceId
+    )
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
-    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['accounts', 'profiles', 'media_files'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; picture: string; type?: string }>
-        const records = collections.media_files as UploadedFileRecord[]
-        this.assertOwnsProfileInRecords(userId, profileId, accounts, profiles)
-
-        const profile = profiles.find(item => item.id === profileId)
-        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
-
-        const next = uploadId
-          ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
-          : null
-        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
-        const nextRecords = next
-          ? records.map(item => item.id === next.id
-            ? { ...item, resourceType: 'profile' as const, resourceId: profileId }
-            : item)
-          : records
-
-        return {
-          records: {
-            ...collections,
-            profiles: profiles.map(item => item.id === profileId ? { ...item, picture } : item),
-            media_files: nextRecords
-          },
-          result: { picture, previousPicture: profile.picture }
-        }
-      }
-    )
-
-    await this.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-    return { picture: result.picture }
+    return this.avatars.setProfileAvatar(userId, profileId, uploadId)
   }
 
   async setCommunityAvatar(
@@ -309,60 +273,7 @@ export class UploadsService {
     actorProfileId: string,
     uploadId: string | null
   ): Promise<{ picture: string }> {
-    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; type?: string }>
-        const communities = collections.communities as Array<{ id: string; picture: string; type?: string }>
-        const relationships = collections.community_relationships as Array<{
-          profiles: [string, string]; type: string
-        }>
-        const records = collections.media_files as UploadedFileRecord[]
-        this.assertOwnsProfileInRecords(userId, actorProfileId, accounts, profiles)
-
-        const actor = profiles.find(item => item.id === actorProfileId)
-        const community = communities.find(item => item.id === communityId)
-        const ownerProfileId = relationships.find(item =>
-          item.profiles[1] === communityId && item.type === 'owner'
-        )?.profiles[0]
-        const owner = ownerProfileId
-          ? profiles.find(item => item.id === ownerProfileId)
-          : undefined
-        if (!actor || !community || !owner) {
-          throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        }
-        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-        const role = relationships.find(item =>
-          item.profiles[0] === actorProfileId && item.profiles[1] === communityId
-        )?.type
-        if (role !== 'owner' && role !== 'moderator') {
-          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-
-        const next = uploadId
-          ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
-          : null
-        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
-        const nextRecords = next
-          ? records.map(item => item.id === next.id
-            ? { ...item, resourceType: 'community' as const, resourceId: communityId }
-            : item)
-          : records
-
-        return {
-          records: {
-            ...collections,
-            communities: communities.map(item => item.id === communityId ? { ...item, picture } : item),
-            media_files: nextRecords
-          },
-          result: { picture, previousPicture: community.picture }
-        }
-      }
-    )
-
-    await this.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-    return { picture: result.picture }
+    return this.avatars.setCommunityAvatar(userId, communityId, actorProfileId, uploadId)
   }
 
   attachEditorImagesToRecords(
@@ -407,46 +318,6 @@ export class UploadsService {
 
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {
     return this.cleanup.cleanupExpired(suppliedSecret)
-  }
-
-  private assertOwnsProfileInRecords(
-    userId: string,
-    profileId: string,
-    accounts: readonly AccountRecord[],
-    profiles: readonly { id: string; type?: string }[]
-  ): void {
-    const account = accounts.find(item => item.id === userId)
-    if (!account || !account.profiles.includes(profileId)) {
-      throw new ForbiddenException('PROFILE_NOT_OWNED')
-    }
-    if (!account.currentProfile) return
-    const currentProfile = profiles.find(profile => profile.id === account.currentProfile)
-    const targetProfile = profiles.find(profile => profile.id === profileId)
-    if (
-      currentProfile?.type &&
-      targetProfile?.type &&
-      currentProfile.type !== targetProfile.type
-    ) {
-      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-    }
-  }
-
-  private getReadyAvatar(
-    records: UploadedFileRecord[],
-    userId: string,
-    id: string,
-    purpose: 'profile-avatar' | 'community-avatar'
-  ): UploadedFileRecord {
-    const file = records.find(item =>
-      item.id === id &&
-      item.ownerUserId === userId &&
-      item.purpose === purpose &&
-      item.status === 'ready' &&
-      !item.resourceType &&
-      isWithinAvatarDraftRetention(item)
-    )
-    if (!file) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-    return file
   }
 
   private getReadyEditorImage(records: UploadedFileRecord[], userId: string, id: string): UploadedFileRecord {
