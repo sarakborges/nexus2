@@ -9,6 +9,7 @@ import {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
 import { UploadsStorageService } from './uploads.storage.service'
+import { detectMime } from './uploads.utils'
 import type { UploadedFileRecord } from './uploads.types'
 
 @Injectable()
@@ -143,7 +144,7 @@ export class UploadsContentService {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     }
     const body = Buffer.from(await response.arrayBuffer())
-    if (body.length !== record.size || this.storage.detectMime(body) !== record.contentType) {
+    if (body.length !== record.size || detectMime(body) !== record.contentType) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
     return { body, contentType: record.contentType }
