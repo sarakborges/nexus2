@@ -1365,6 +1365,11 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
 
 test('expired pending upload metadata is recovered when Storage signing rollback fails', async t => {
   const now = Date.now()
+  let currentTime = now
+  const originalNow = Date.now
+  Date.now = () => currentTime
+  t.after(() => { Date.now = originalNow })
+
   let failRollback = true
   const { service, collections } = createHarness(
     {},
@@ -1402,9 +1407,7 @@ test('expired pending upload metadata is recovered when Storage signing rollback
   const [orphaned] = collections.get('media_files')
   assert.equal(orphaned.status, 'pending')
 
-  const originalNow = Date.now
-  Date.now = () => now + 3 * 60 * 60 * 1000
-  t.after(() => { Date.now = originalNow })
+  currentTime = now + 3 * 60 * 60 * 1000
 
   const cleanup = await service.cleanupExpired(cronSecret)
 
