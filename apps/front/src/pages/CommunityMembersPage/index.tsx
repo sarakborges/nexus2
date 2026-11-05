@@ -19,7 +19,6 @@ import type { MemberTab } from './CommunityMembersPage.types'
 export function CommunityMembersPage() {
   const { t } = useTranslations()
   const {
-    url,
     normalized,
     activeTab,
     setActiveTab,

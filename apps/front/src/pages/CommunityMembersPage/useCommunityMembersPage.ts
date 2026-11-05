@@ -109,7 +109,6 @@ export function useCommunityMembersPage() {
 
 
   return {
-    url,
     normalized,
     activeTab,
     setActiveTab,
