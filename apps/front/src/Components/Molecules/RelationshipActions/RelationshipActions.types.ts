@@ -1,3 +1,4 @@
-import type { UseRelationshipActionsOptions } from './useRelationshipActions.types'
-
-export type RelationshipActionsProps = UseRelationshipActionsOptions
+export type RelationshipActionsProps = {
+  targetId: string
+  targetKind?: 'profile' | 'community'
+}

@@ -1,9 +1,8 @@
 import type { RelationshipType } from '@nexus/common'
 
-export type UseRelationshipActionsOptions = {
-  targetId: string
-  targetKind?: 'profile' | 'community'
-}
+import type { RelationshipActionsProps } from './RelationshipActions.types'
+
+export type UseRelationshipActionsOptions = RelationshipActionsProps
 
 export type RelationshipAction =
   | { type: 'remove' }

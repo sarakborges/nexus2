@@ -1,9 +1,9 @@
 import type { Profile } from '@nexus/common'
 import type { RefObject } from 'react'
 
-export type UseFloatingNavigationBarOptions = {
-  onOpenSettings: () => void
-}
+import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
+
+export type UseFloatingNavigationBarOptions = FloatingNavigationBarProps
 
 export type NavigationPanel = 'navigation' | 'account'
 

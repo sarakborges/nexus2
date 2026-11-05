@@ -1,3 +1,3 @@
-import type { UseFloatingNavigationBarOptions } from './useFloatingNavigationBar.types'
-
-export type FloatingNavigationBarProps = UseFloatingNavigationBarOptions
+export type FloatingNavigationBarProps = {
+  onOpenSettings: () => void
+}
