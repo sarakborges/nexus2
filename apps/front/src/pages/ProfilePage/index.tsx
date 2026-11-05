@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 
 import { IdentityAvatar, RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
@@ -13,7 +13,6 @@ import './ProfilePage.style.scss'
 
 export function ProfilePage() {
   const { t } = useTranslations()
-  const navigate = useNavigate()
   const {
     requestedUrl,
     session,
@@ -23,6 +22,10 @@ export function ProfilePage() {
     canInteract,
     friendsQuery,
     communitiesQuery,
+    friends,
+    communities,
+    isOwner,
+    openEditProfile,
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
@@ -45,10 +48,6 @@ export function ProfilePage() {
     )
   }
   if (!profile) return <NotFoundPage />
-
-  const friends = friendsQuery.data?.items ?? []
-  const communities = communitiesQuery.data?.items ?? []
-  const isOwner = session?.user.profiles.includes(profile.id) ?? false
 
   return (
     <main className="social-page social-page--profile">
@@ -79,9 +78,7 @@ export function ProfilePage() {
                 <Button
                   type="button"
                   variation="primary"
-                  onClick={() =>
-                    navigate(ROUTES.profile + '/' + profile.url + '/edit')
-                  }
+                  onClick={openEditProfile}
                 >
                   {t('PROFILE_EDIT')}
                 </Button>
