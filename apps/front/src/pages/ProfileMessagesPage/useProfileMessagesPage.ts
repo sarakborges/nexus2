@@ -17,6 +17,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useProfileMessagesPage() {
+  const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const queryClient = useQueryClient()
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
