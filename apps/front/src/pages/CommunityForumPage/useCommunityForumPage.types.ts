@@ -23,6 +23,7 @@ export type UseCommunityForumPageResult = {
   relationshipsQuery: UseQueryResult<CommunityRelationship[]>
   ownedProfilesQuery: UseQueryResult<Profile[]>
   canPublish: boolean
+  openCreateTopic: () => void
   topicsQuery: UseQueryResult<Awaited<ReturnType<typeof getCommunityForumTopics>>>
   topics: CommunityForumTopicSummary[]
   authorsQuery: UseQueryResult<Profile[]>
