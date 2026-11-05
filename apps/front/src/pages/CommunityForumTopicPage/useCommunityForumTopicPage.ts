@@ -20,6 +20,7 @@ import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import { uploadEditorImage } from '@/Services/Uploads'
 
 import type { CommunityForumTopicModerationChanges } from './useCommunityForumTopicPage.types'
 
@@ -231,6 +232,7 @@ export function useCommunityForumTopicPage() {
     moderationMutation,
     deleteTopicMutation,
     deleteReplyMutation,
-    submitReply
+    submitReply,
+    uploadEditorImage
   }
 }

@@ -13,7 +13,6 @@ import {
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
-import { uploadFile } from '@/Services/Uploads'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -50,7 +49,8 @@ export function CommunityForumTopicPage() {
     moderationMutation,
     deleteTopicMutation,
     deleteReplyMutation,
-    submitReply
+    submitReply,
+    uploadEditorImage
   } = useCommunityForumTopicPage()
   if (!normalized || !topicId) return <NotFoundPage />
   if (communityQuery.isLoading || topicQuery.isLoading)
@@ -329,9 +329,7 @@ export function CommunityForumTopicPage() {
                 maxTextLength={8000}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
+                onUploadImage={uploadEditorImage}
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
             </div>
