@@ -35,22 +35,27 @@ export function CommunityForumTopicPage() {
     community,
     relationshipsQuery,
     ownedProfilesQuery,
-    forumProfileId,
     isMember,
     isStaff,
     canInteract,
     topicQuery,
     detail,
     topic,
-    replies,
     authorsQuery,
-    authorsById,
-    replyMutation,
-    moderationMutation,
-    deleteTopicMutation,
-    deleteReplyMutation,
     submitReply,
-    uploadEditorImage
+    uploadEditorImage,
+    topicAuthor,
+    canDeleteTopic,
+    replyItems,
+    hasReplyError,
+    isSendingReply,
+    isUpdatingTopic,
+    isDeletingTopic,
+    isDeletingReply,
+    togglePinned,
+    toggleLocked,
+    deleteTopic,
+    deleteReply
   } = useCommunityForumTopicPage()
   if (!normalized || !topicId) return <NotFoundPage />
   if (communityQuery.isLoading || topicQuery.isLoading)
@@ -78,13 +83,6 @@ export function CommunityForumTopicPage() {
       </main>
     )
   if (!community || !detail || !topic) return <NotFoundPage />
-
-  const topicAuthor = authorsById.get(topic.profileId)
-  const canDeleteTopic = Boolean(
-    canInteract &&
-    forumProfileId &&
-    (topic.profileId === forumProfileId || isStaff)
-  )
 
   return (
     <SocialPageLayout
@@ -149,24 +147,24 @@ export function CommunityForumTopicPage() {
               className="community-forum__post-content rich-text-content"
               dangerouslySetInnerHTML={{ __html: topic.content }}
             />
-            {canInteract && (isStaff || topic.profileId === forumProfileId) && (
+            {canDeleteTopic && (
               <div className="community-forum__actions">
                 {isStaff && (
                   <>
                     <Button
                       variation="secondary"
-                      disabled={moderationMutation.isPending}
+                      disabled={isUpdatingTopic}
                       onClick={() =>
-                        moderationMutation.mutate({ isPinned: !topic.isPinned })
+                        togglePinned()
                       }
                     >
                       {t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}
                     </Button>
                     <Button
                       variation="secondary"
-                      disabled={moderationMutation.isPending}
+                      disabled={isUpdatingTopic}
                       onClick={() =>
-                        moderationMutation.mutate({ isLocked: !topic.isLocked })
+                        toggleLocked()
                       }
                     >
                       {t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}
@@ -176,8 +174,8 @@ export function CommunityForumTopicPage() {
                 {canDeleteTopic && (
                   <Button
                     variation="cancel"
-                    disabled={deleteTopicMutation.isPending}
-                    onClick={() => deleteTopicMutation.mutate()}
+                    disabled={isDeletingTopic}
+                    onClick={deleteTopic}
                   >
                     {t('FORUM_DELETE')}
                   </Button>
@@ -213,14 +211,7 @@ export function CommunityForumTopicPage() {
               void relationshipsQuery.refetch()
             }}
           >
-            {replies.map((reply) => {
-              const author = authorsById.get(reply.profileId)
-              const canDelete = Boolean(
-                canInteract &&
-                forumProfileId &&
-                (reply.profileId === forumProfileId || isStaff)
-              )
-              return (
+            {replyItems.map(({ reply, author, canDelete }) => (
                 <article
                   className="community-forum__reply community-forum__entry"
                   key={reply.id}
@@ -275,8 +266,8 @@ export function CommunityForumTopicPage() {
                       <div className="community-forum__actions">
                         <Button
                           variation="cancel"
-                          disabled={deleteReplyMutation.isPending}
-                          onClick={() => deleteReplyMutation.mutate(reply.id)}
+                          disabled={isDeletingReply}
+                          onClick={() => deleteReply(reply.id)}
                         >
                           {t('FORUM_DELETE')}
                         </Button>
@@ -284,8 +275,7 @@ export function CommunityForumTopicPage() {
                     )}
                   </div>
                 </article>
-              )
-            })}
+            ))}
           </RequestState>
           <Pagination
             page={page}
@@ -333,7 +323,7 @@ export function CommunityForumTopicPage() {
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
             </div>
-            {replyMutation.isError && (
+            {hasReplyError && (
               <p className="auth-card__error" role="alert">
                 {t('FORUM_TOPIC_ERROR')}
               </p>
@@ -341,7 +331,7 @@ export function CommunityForumTopicPage() {
             <Button
               type="submit"
               disabled={
-                !hasRichTextContent(replyContent) || replyMutation.isPending
+                !hasRichTextContent(replyContent) || isSendingReply
               }
             >
               {t('FORUM_PUBLISH_REPLY')}
