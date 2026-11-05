@@ -383,7 +383,7 @@ test('owned profile listing reflects account ownership from the same snapshot as
     about: '',
     type: 'social'
   }
-  const { service, collections } = createHarness({
+  const { service, collections, account } = createHarness({
     beforeTransaction(_names, current) {
       current.set('accounts', [{
         ...account,
