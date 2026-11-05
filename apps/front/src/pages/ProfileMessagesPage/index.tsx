@@ -30,7 +30,6 @@ export function ProfileMessagesPage() {
     typeCompatibility,
     isProfileOwner,
     messagesQuery,
-    messages,
     totalItems,
     senderProfilesQuery,
     messageItems,
