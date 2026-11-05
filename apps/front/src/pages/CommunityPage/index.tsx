@@ -1,7 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { useMemo } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { RequestState } from '@/Components'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
@@ -9,129 +6,35 @@ import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { getCommunityByUrl } from '@/Services/Community'
-import { getCommunityForumTopics } from '@/Services/CommunityForum'
-import {
-  getCommunityMembers,
-  getCommunityRelationships,
-  getPendingCommunityMembers
-} from '@/Services/CommunityRelationship'
-import { getProfilesByIds } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useCommunityPage } from './useCommunityPage'
 
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 import './CommunityPage.style.scss'
 
-import { PreviewAvatar } from './PreviewAvatar.component'
-
 export function CommunityPage() {
-  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
   const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
-  const currentProfileId = session?.user.currentProfile ?? null
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
-
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(requestedUrl, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
-  const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
-  const canInteract =
-    !session ||
-    (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
-    enabled: Boolean(community?.id)
-  })
-  const privateMembership =
-    relationshipsQuery.data?.some((record) =>
-      ['owner', 'moderator', 'connection'].includes(record.type)
-    ) ?? false
-  const canViewMembers = community?.privacy !== 'private' || privateMembership
-  const pendingActor =
-    relationshipsQuery.data?.find(
-      (record) =>
-        (record.type === 'owner' || record.type === 'moderator') &&
-        (session?.user.profiles.includes(record.profiles[0]) ?? false)
-    ) ?? null
-  const pendingRequestsQuery = useQuery({
-    queryKey: queryKeys.pendingCommunityMembers(
-      community?.id ?? '',
-      pendingActor?.profiles[0] ?? '',
-      1,
-      1,
-      session?.user.id ?? null
-    ),
-    queryFn: () =>
-      getPendingCommunityMembers(community!.id, pendingActor!.profiles[0], {
-        page: 1,
-        pageSize: 1
-      }),
-    enabled: Boolean(community?.id && pendingActor)
-  })
-  const membersQuery = useQuery({
-    queryKey: queryKeys.communityMembers(
-      community?.id ?? '',
-      'all',
-      1,
-      16,
-      currentProfileId ?? undefined,
-      session?.user.id ?? null
-    ),
-    queryFn: () =>
-      getCommunityMembers(
-        community!.id,
-        'all',
-        { page: 1, pageSize: 16 },
-        currentProfileId ?? undefined
-      ),
-    enabled: Boolean(
-      community?.id && relationshipsQuery.isSuccess && canViewMembers
-    )
-  })
-
-  const forumTopicsQuery = useQuery({
-    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20, session?.user.id ?? null),
-    queryFn: () =>
-      getCommunityForumTopics(community!.id, { page: 1, pageSize: 20 }),
-    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
-  })
-  const forumTopics = useMemo(
-    () => forumTopicsQuery.data?.items ?? [],
-    [forumTopicsQuery.data?.items]
-  )
-  const forumAuthorIds = useMemo(
-    () => [...new Set(forumTopics.map((topic) => topic.profileId))].sort(),
-    [forumTopics]
-  )
-  const forumAuthorsQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(forumAuthorIds),
-    queryFn: () => getProfilesByIds(forumAuthorIds),
-    enabled: forumAuthorIds.length > 0
-  })
-  const forumAuthorsById = useMemo(
-    () =>
-      new Map(
-        (forumAuthorsQuery.data ?? []).map(
-          (profile) => [profile.id, profile] as const
-        )
-      ),
-    [forumAuthorsQuery.data]
-  )
-
+  const {
+    session,
+    requestedUrl,
+    communityQuery,
+    community,
+    typeCompatibility,
+    canInteract,
+    relationshipsQuery,
+    privateMembership,
+    canViewMembers,
+    pendingActor,
+    pendingRequestsQuery,
+    membersQuery,
+    forumTopicsQuery,
+    forumTopics,
+    forumAuthorIds,
+    forumAuthorsQuery,
+    forumAuthorsById
+  } = useCommunityPage()
   if (!requestedUrl) return <NotFoundPage />
   if (communityQuery.isLoading) {
     return (
