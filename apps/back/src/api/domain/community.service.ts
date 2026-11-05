@@ -17,6 +17,7 @@ import type {
   Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import type { CommunityMemberProfile } from './domain.types'
 import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
@@ -240,7 +241,7 @@ export class CommunityService {
     q: PaginationDto,
     userId: string | null,
     actorProfileId?: string
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
+  ): Promise<PaginatedResult<CommunityMemberProfile>> {
     return this.membership.listCommunityMembers(communityId, tab, q, userId, actorProfileId)
   }
 
@@ -249,7 +250,7 @@ export class CommunityService {
     communityId: string,
     actorProfileId: string,
     q: PaginationDto
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
+  ): Promise<PaginatedResult<CommunityMemberProfile>> {
     return this.membership.listPendingMembers(userId, communityId, actorProfileId, q)
   }
 
