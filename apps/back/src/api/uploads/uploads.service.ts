@@ -11,64 +11,29 @@ import { ConfigService } from '@nestjs/config'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
+import {
+  AVATAR_BUCKET,
+  AVATAR_MAX_SIZE,
+  DELETE_CLAIM_LEASE_MS,
+  EDITOR_BUCKET,
+  EDITOR_MAX_SIZE,
+  EDITOR_RETENTION_MS,
+  MIME_EXTENSIONS,
+  ORPHAN_AVATAR_RETENTION_MS,
+  PENDING_MAX_AGE,
+  SIGNED_UPLOAD_DELETE_GRACE_MS,
+  STORAGE_DELETE_BATCH_SIZE,
+  UPLOAD_DELETE_SAFE_AGE_MS,
+  UPLOAD_REFERENCE
+} from './uploads.constants'
+import { isWithinAvatarDraftRetention } from './uploads.utils'
+import type {
+  CreateUploadInput,
+  SignedUploadResponse,
+  UploadResourceType,
+  UploadedFileRecord
+} from './uploads.types'
 
-export type UploadPurpose = 'profile-avatar' | 'community-avatar' | 'editor-image'
-export type UploadResourceType = 'profile' | 'community' | 'profile-message' | 'community-forum-topic' | 'community-forum-reply'
-
-export type UploadedFileRecord = {
-  id: string
-  ownerUserId: string
-  purpose: UploadPurpose
-  bucket: string
-  path: string
-  contentType: string
-  expectedSize: number
-  size: number | null
-  status: 'pending' | 'ready' | 'deleting'
-  deletingAt?: number | null
-  deleteAfter?: number | null
-  createdAt: number
-  completedAt: number | null
-  expiresAt: number | null
-  resourceType: UploadResourceType | null
-  resourceId: string | null
-  messageFromProfileId: string | null
-  messageToProfileId: string | null
-}
-
-export type CreateUploadInput = {
-  purpose: UploadPurpose
-  contentType: string
-  size: number
-  targetId?: string
-  actorProfileId?: string
-}
-
-type SignedUploadResponse = { url?: string }
-
-const AVATAR_BUCKET = 'nexus-avatars'
-const EDITOR_BUCKET = 'nexus-editor-images'
-const AVATAR_MAX_SIZE = 5 * 1024 * 1024
-const EDITOR_MAX_SIZE = 10 * 1024 * 1024
-const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
-const SIGNED_UPLOAD_DELETE_GRACE_MS = 60 * 60 * 1000
-const UPLOAD_DELETE_SAFE_AGE_MS = PENDING_MAX_AGE + SIGNED_UPLOAD_DELETE_GRACE_MS
-const DELETE_CLAIM_LEASE_MS = 5 * 60 * 1000
-const STORAGE_DELETE_BATCH_SIZE = 1000
-const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
-const ORPHAN_AVATAR_RETENTION_MS = 24 * 60 * 60 * 1000
-
-function isWithinAvatarDraftRetention(record: UploadedFileRecord, now = Date.now()): boolean {
-  return (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS > now
-}
-const MIME_EXTENSIONS: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-  'image/avif': 'avif'
-}
-const UPLOAD_REFERENCE = /<img\b[^>]*\bsrc=(["'])\/api\/uploads\/([0-9a-f-]{36})\/content\1/gi
 
 @Injectable()
 export class UploadsService {

@@ -15,7 +15,8 @@ import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
 import type { Response } from 'express'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
-import { UploadsService, type UploadPurpose } from './uploads.service'
+import { UploadsService } from './uploads.service'
+import type { UploadPurpose } from './uploads.types'
 
 class CreateUploadDto {
   @IsIn(['profile-avatar', 'community-avatar', 'editor-image'])

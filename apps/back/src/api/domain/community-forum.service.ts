@@ -20,7 +20,8 @@ import type {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
-import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
+import { UploadsService } from '../uploads/uploads.service'
+import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import type { AccountRecord } from '../auth/auth.types'
 
