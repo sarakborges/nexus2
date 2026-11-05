@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useParams } from 'react-router'
 
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
