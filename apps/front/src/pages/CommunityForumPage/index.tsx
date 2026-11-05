@@ -4,7 +4,6 @@ import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
