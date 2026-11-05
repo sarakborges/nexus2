@@ -1,4 +1,5 @@
 import type { LanguagePreference } from '@/Constants/languages'
+import type { UseTranslationsResult } from './useTranslations.types'
 import { translate } from '@/Helpers/Language'
 import { useUpdateSettings } from '@/Hooks/Settings/useUpdateSettings.hook'
 import { useSystemPreferences } from '@/Hooks/System/useSystemPreferences.hook'
@@ -8,7 +9,7 @@ import type {
   TranslationReplacements
 } from '@/Types/Translation.type'
 
-export function useTranslations() {
+export function useTranslations(): UseTranslationsResult {
   const languagePreference = useSettingsStore(
     (state) => state.settings.language
   )
