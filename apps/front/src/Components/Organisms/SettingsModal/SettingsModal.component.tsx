@@ -1,5 +1,5 @@
 import type { SettingsModalProps } from './SettingsModal.types'
-import { useSettingsModal } from './useSettingsModal.hook'
+import { useSettingsModal } from './useSettingsModal'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { LanguageSelector } from '@/Components/Organisms/LanguageSelector'
