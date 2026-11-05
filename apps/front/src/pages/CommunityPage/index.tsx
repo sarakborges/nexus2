@@ -4,8 +4,12 @@ import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { RequestState } from '@/Components'
+import { IdentityAvatar } from '@/Components/Molecules'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
-import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
+import {
+  CommunitySidebar,
+  SocialPageLayout
+} from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -25,23 +29,6 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 import './CommunityPage.style.scss'
-
-type PreviewAvatarProps = {
-  name: string
-  picture: string
-}
-
-function PreviewAvatar({ name, picture }: PreviewAvatarProps) {
-  return (
-    <span className="social-preview-avatar">
-      {picture ? (
-        <img src={picture} alt="" />
-      ) : (
-        <span aria-hidden="true">{name.trim().charAt(0).toUpperCase()}</span>
-      )}
-    </span>
-  )
-}
 
 export function CommunityPage() {
   const { url } = useParams<{ url: string }>()
@@ -197,17 +184,67 @@ export function CommunityPage() {
     ) ?? null
 
   return (
-    <main className="social-page social-page--community">
-      <div className="social-page__layout">
-        <aside className="social-page__left-column">
-          <CommunitySidebar
-            community={community}
-            active="about"
-            canInteract={canInteract}
-          />
-        </aside>
-
-        <section className="social-page__main-column">
+    <SocialPageLayout
+      className="social-page--community"
+      sidebar={
+        <CommunitySidebar
+          community={community}
+          active="about"
+          canInteract={canInteract}
+        />
+      }
+      rightSidebar={
+        <section className="social-preview-panel">
+          <header className="social-preview-panel__header">
+            <h2>
+              {t('COMMUNITY_MEMBERS_TITLE')}
+              <span className="social-preview-panel__count">
+                ({memberCount ?? '—'})
+              </span>
+            </h2>
+            <Link
+              className="social-preview-panel__all"
+              to={ROUTES.community + '/' + community.url + '/members'}
+            >
+              {t('COMMUNITY_MEMBERS_LINK')}
+            </Link>
+          </header>
+          <RequestState
+            isLoading={canViewMembers && membersQuery.isLoading}
+            isFetching={canViewMembers && membersQuery.isFetching}
+            isError={canViewMembers && membersQuery.isError}
+            isEmpty={
+              !canViewMembers ||
+              (membersQuery.isSuccess && members.length === 0)
+            }
+            emptyMessage={
+              canViewMembers
+                ? t('COMMUNITY_MEMBERS_EMPTY')
+                : t('COMMUNITY_PRIVATE_RESTRICTED')
+            }
+            onRetry={() => void membersQuery.refetch()}
+          >
+            <div className="social-preview-grid">
+              {members.map((member) => (
+                <Link
+                  className="social-preview-link"
+                  key={member.id}
+                  to={ROUTES.profile + '/' + member.url}
+                  aria-label={member.name}
+                  title={member.name}
+                >
+                  <IdentityAvatar
+                    className="social-preview-avatar"
+                    name={member.name}
+                    picture={member.picture}
+                  />
+                </Link>
+              ))}
+            </div>
+          </RequestState>
+        </section>
+      }
+    >
           <RequestState
             isFetching={
               communityQuery.isFetching || relationshipsQuery.isFetching
@@ -294,59 +331,6 @@ export function CommunityPage() {
               />
             </RequestState>
           </section>
-        </section>
-
-        <aside className="social-page__right-column">
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('COMMUNITY_MEMBERS_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({memberCount ?? '—'})
-                </span>
-              </h2>
-              <Link
-                className="social-preview-panel__all"
-                to={ROUTES.community + '/' + community.url + '/members'}
-              >
-                {t('COMMUNITY_MEMBERS_LINK')}
-              </Link>
-            </header>
-            <RequestState
-              isLoading={canViewMembers && membersQuery.isLoading}
-              isFetching={canViewMembers && membersQuery.isFetching}
-              isError={canViewMembers && membersQuery.isError}
-              isEmpty={
-                !canViewMembers ||
-                (membersQuery.isSuccess && members.length === 0)
-              }
-              emptyMessage={
-                canViewMembers
-                  ? t('COMMUNITY_MEMBERS_EMPTY')
-                  : t('COMMUNITY_PRIVATE_RESTRICTED')
-              }
-              onRetry={() => void membersQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {members.map((member) => (
-                  <Link
-                    className="social-preview-link"
-                    key={member.id}
-                    to={ROUTES.profile + '/' + member.url}
-                    aria-label={member.name}
-                    title={member.name}
-                  >
-                    <PreviewAvatar
-                      name={member.name}
-                      picture={member.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
-        </aside>
-      </div>
-    </main>
+    </SocialPageLayout>
   )
 }
