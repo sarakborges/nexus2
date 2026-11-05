@@ -1135,6 +1135,98 @@ test('deleteUpload can reclaim a deletion claim after its lease expires', async 
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('cancelling a pending upload keeps a tombstone until its signed URL expires plus grace', async t => {
+  const createdAt = Date.now()
+  let now = createdAt
+  const originalNow = Date.now
+  Date.now = () => now
+  t.after(() => { Date.now = originalNow })
+
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174099',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/cancelled-in-flight.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt,
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  const deletedPaths = []
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletedPaths.push(JSON.parse(init.body).prefixes[0])
+    return new Response(null, { status: 200 })
+  })
+
+  await service.deleteUpload('user-1', file.id)
+
+  const tombstone = collections.get('media_files')[0]
+  assert.equal(tombstone.status, 'deleting')
+  assert.equal(tombstone.deleteAfter, createdAt + 3 * 60 * 60 * 1000)
+  assert.deepEqual(deletedPaths, [])
+
+  now = createdAt + 2 * 60 * 60 * 1000 + 1
+  const beforeExpiry = await service.cleanupExpired(cronSecret)
+  assert.deepEqual(beforeExpiry, { deleted: 0 })
+  assert.equal(collections.get('media_files').length, 1)
+  assert.deepEqual(deletedPaths, [])
+
+  // Simulate the upload finishing after cancellation but before the token's
+  // expiry-plus-grace deadline. The final cleanup must still remove it.
+  now = createdAt + 3 * 60 * 60 * 1000 + 1
+  const afterExpiry = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(afterExpiry, { deleted: 1 })
+  assert.deepEqual(deletedPaths, [file.path])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('expired completion schedules pending cleanup instead of revoking metadata before token expiry', async t => {
+  const createdAt = Date.now() - 2 * 60 * 60 * 1000 - 1
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174098',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/late-completion.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt,
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new Error('An expired completion must schedule cleanup without touching Storage')
+  })
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_EXPIRED'
+  )
+
+  const [saved] = collections.get('media_files')
+  assert.equal(saved.status, 'deleting')
+  assert.ok(saved.deleteAfter > Date.now())
+})
+
 test('Storage unavailability during upload completion remains retryable', async t => {
   const file = {
     id: 'f23e4567-e89b-42d3-a456-426614174003',

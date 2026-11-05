@@ -26,6 +26,7 @@ export type UploadedFileRecord = {
   size: number | null
   status: 'pending' | 'ready' | 'deleting'
   deletingAt?: number | null
+  deleteAfter?: number | null
   createdAt: number
   completedAt: number | null
   expiresAt: number | null
@@ -50,6 +51,8 @@ const EDITOR_BUCKET = 'nexus-editor-images'
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
+const PENDING_CLEANUP_GRACE_MS = 60 * 60 * 1000
+const PENDING_CLEANUP_MAX_AGE = PENDING_MAX_AGE + PENDING_CLEANUP_GRACE_MS
 const DELETE_CLAIM_LEASE_MS = 5 * 60 * 1000
 const STORAGE_DELETE_BATCH_SIZE = 1000
 const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
@@ -207,7 +210,7 @@ export class UploadsService {
     }
     if (record.status !== 'pending') throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.createdAt + PENDING_MAX_AGE <= Date.now()) {
-      await this.deleteRecord(id, userId, 'pending')
+      await this.schedulePendingDeletion(id, userId)
       throw new NotFoundException('UPLOAD_EXPIRED')
     }
 
@@ -273,6 +276,7 @@ export class UploadsService {
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
+    if (await this.schedulePendingDeletion(id, userId)) return
     await this.deleteRecord(id, userId)
   }
 
@@ -589,9 +593,11 @@ export class UploadsService {
       collections => {
         const currentRecords = collections.media_files as UploadedFileRecord[]
         const candidates = currentRecords.filter(item =>
-          (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - DELETE_CLAIM_LEASE_MS) ||
+          (item.status === 'deleting' &&
+            (item.deletingAt ?? 0) <= now - DELETE_CLAIM_LEASE_MS &&
+            (item.deleteAfter == null || item.deleteAfter <= now)) ||
           (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
-          (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
+          (item.status === 'pending' && item.createdAt + PENDING_CLEANUP_MAX_AGE <= now) ||
           (item.purpose !== 'editor-image' && item.status === 'ready' &&
             !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
         )
@@ -601,7 +607,8 @@ export class UploadsService {
         const claimed = candidates.map(item => ({
           ...item,
           status: 'deleting' as const,
-          deletingAt: now
+          deletingAt: now,
+          deleteAfter: null
         }))
         const claimedById = new Map(claimed.map(item => [item.id, item] as const))
         return {
@@ -774,6 +781,48 @@ export class UploadsService {
         item.status !== 'deleting' ||
         item.deletingAt !== old.deletingAt
       )
+    )
+  }
+
+
+  private async schedulePendingDeletion(id: string, userId: string): Promise<boolean> {
+    const scheduledAt = Date.now()
+    return this.data.transaction<boolean>(
+      ['media_files'],
+      collections => {
+        const current = collections.media_files as UploadedFileRecord[]
+        const latest = current.find(item => item.id === id && item.ownerUserId === userId)
+        if (!latest) return { records: collections, result: false }
+
+        if (latest.status === 'deleting' && latest.deleteAfter != null) {
+          return { records: collections, result: true }
+        }
+        if (latest.status !== 'pending') {
+          return { records: collections, result: false }
+        }
+        if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+
+        // Signed upload tokens remain usable for two hours. Keep a tombstone
+        // long enough for any in-flight or retried transfer to finish, then let
+        // the normal cleanup remove both the object and its metadata.
+        const deleteAfter = Math.max(
+          latest.createdAt + PENDING_CLEANUP_MAX_AGE,
+          scheduledAt + DELETE_CLAIM_LEASE_MS
+        )
+        const scheduled: UploadedFileRecord = {
+          ...latest,
+          status: 'deleting',
+          deletingAt: scheduledAt,
+          deleteAfter
+        }
+        return {
+          records: {
+            ...collections,
+            media_files: current.map(item => item.id === latest.id ? scheduled : item)
+          },
+          result: true
+        }
+      }
     )
   }
 
