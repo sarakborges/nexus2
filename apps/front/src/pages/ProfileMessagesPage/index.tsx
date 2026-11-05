@@ -33,7 +33,7 @@ export function ProfileMessagesPage() {
     messages,
     totalItems,
     senderProfilesQuery,
-    sendersById,
+    messageItems,
     canSendMessage,
     canSubmitMessage,
     uploadEditorImage,
@@ -160,9 +160,7 @@ export function ProfileMessagesPage() {
             onRetry={() => void senderProfilesQuery.refetch()}
           >
             <div className="profile-message-list">
-              {messages.map((message) => {
-                const sender = sendersById.get(message.fromProfileId)
-                return (
+              {messageItems.map(({ message, sender }) => (
                   <article className="profile-message" key={message.id}>
                     <header className="profile-message__header">
                       {sender ? (
@@ -193,8 +191,7 @@ export function ProfileMessagesPage() {
                       dangerouslySetInnerHTML={{ __html: message.content }}
                     />
                   </article>
-                )
-              })}
+              ))}
             </div>
           </RequestState>
         </RequestState>
