@@ -16,15 +16,13 @@ import './CommunityPage.style.scss'
 
 export function CommunityPage() {
   const { t } = useTranslations()
-    const {
-    session,
+  const {
     requestedUrl,
     communityQuery,
     community,
     typeCompatibility,
     canInteract,
     relationshipsQuery,
-    privateMembership,
     canViewMembers,
     canEditCommunity,
     openEditCommunity,
