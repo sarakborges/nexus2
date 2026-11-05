@@ -24,6 +24,10 @@ export type UseCommunityPageResult = {
   relationshipsQuery: UseQueryResult<CommunityRelationship[]>
   privateMembership: boolean
   canViewMembers: boolean
+  canEditCommunity: boolean
+  openEditCommunity: () => void
+  members: Profile[]
+  memberCount: number | undefined
   pendingActor: CommunityRelationship | null
   pendingRequestsQuery: UseQueryResult<Awaited<ReturnType<typeof getPendingCommunityMembers>>>
   membersQuery: UseQueryResult<Awaited<ReturnType<typeof getCommunityMembers>>>
