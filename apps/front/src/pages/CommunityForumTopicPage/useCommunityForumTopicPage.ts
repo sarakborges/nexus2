@@ -18,7 +18,6 @@ import {
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { uploadFile } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 
@@ -146,7 +145,7 @@ export function useCommunityForumTopicPage() {
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
   const moderationMutation = useMutation({
-    mutationFn: (changes: { isPinned?: boolean; isLocked?: boolean }) =>
+    mutationFn: (changes: CommunityForumTopicModerationChanges) =>
       moderateCommunityForumTopic(
         community!.id,
         topicId!,
@@ -199,10 +198,8 @@ export function useCommunityForumTopicPage() {
 
 
   return {
-    url,
     topicId,
     t,
-    navigate,
     session,
     isAuthInitialized,
     normalized,

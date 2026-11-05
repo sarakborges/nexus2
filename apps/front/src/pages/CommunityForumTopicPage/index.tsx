@@ -12,6 +12,7 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
+import { uploadFile } from '@/Services/Uploads'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
