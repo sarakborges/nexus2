@@ -1,52 +1,24 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { type FormEvent, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 
 import { AuthPageLayout } from '@/Components/Organisms/AuthPageLayout/AuthPageLayout.component'
-import { AUTH_ERROR_TRANSLATION_KEYS } from '@/Constants/auth'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { AuthError } from '@/Services/Auth'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useSignInPage } from './useSignInPage'
 
 import '../AuthPage.style.scss'
 
 export function SignInPage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const signIn = useAuthStore((state) => state.signIn)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [errorMessage, setErrorMessage] = useState('')
-  const signInMutation = useMutation({
-    mutationFn: signIn,
-    onSuccess: (user) =>
-      queryClient.setQueryData(queryKeys.auth.session, {
-        user,
-        authenticatedAt: Date.now()
-      })
-  })
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setErrorMessage('')
-    try {
-      const user = await signInMutation.mutateAsync({ email, password })
-      navigate(user.profiles.length > 0 ? ROUTES.home : ROUTES.gettingStarted, {
-        replace: true
-      })
-    } catch (error) {
-      const translationKey =
-        error instanceof AuthError
-          ? AUTH_ERROR_TRANSLATION_KEYS[error.code]
-          : 'AUTH_ERROR_GENERIC'
-      setErrorMessage(t(translationKey))
-    }
-  }
+  const {
+    email,
+    setEmail,
+    password,
+    setPassword,
+    errorMessage,
+    isSubmitting,
+    handleSubmit
+  } = useSignInPage()
 
   return (
     <AuthPageLayout>
@@ -83,10 +55,8 @@ export function SignInPage() {
               {errorMessage}
             </p>
           )}
-          <Button type="submit" disabled={signInMutation.isPending}>
-            {signInMutation.isPending
-              ? t('AUTH_SUBMITTING')
-              : t('AUTH_SIGN_IN_ACTION')}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_IN_ACTION')}
           </Button>
         </form>
         <p className="auth-card__footer">

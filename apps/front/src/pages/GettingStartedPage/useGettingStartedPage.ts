@@ -1,0 +1,25 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+import { useNavigate } from 'react-router'
+
+import { ROUTES } from '@/Constants/routes'
+import { useAuthStore } from '@/Stores/Auth.store'
+
+export function useGettingStartedPage() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const signOut = useAuthStore((state) => state.signOut)
+  const signOutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      queryClient.clear()
+      navigate(ROUTES.signIn, { replace: true })
+    }
+  })
+
+  return {
+    isSigningOut: signOutMutation.isPending,
+    hasSignOutError: signOutMutation.isError,
+    signOut: () => signOutMutation.mutate()
+  }
+}
