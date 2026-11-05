@@ -9,8 +9,9 @@ import { useTranslations } from '@/Hooks/Language'
 import { AuthError } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseSignInPageResult } from './useSignInPage.types'
 
-export function useSignInPage() {
+export function useSignInPage(): UseSignInPageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
