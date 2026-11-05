@@ -1,15 +1,9 @@
+import type { InsertImageButtonProps } from './InsertImageButton.types'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { FiImage } from 'react-icons/fi'
 import { useEditorState } from 'react-simple-wysiwyg'
 
 import { type ChangeEvent, type MouseEvent, useRef, useState } from 'react'
-
-type InsertImageButtonProps = {
-  label: string
-  uploadErrorLabel: string
-  onUploadImage: (file: File) => Promise<string>
-  onUploadingChange: (isUploading: boolean) => void
-}
 
 export function InsertImageButton({
   label,

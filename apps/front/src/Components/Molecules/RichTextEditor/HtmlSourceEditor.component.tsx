@@ -1,13 +1,7 @@
+import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
 import { renderHtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
 
 import { type UIEvent, useRef } from 'react'
-
-type HtmlSourceEditorProps = {
-  id: string
-  value: string
-  onChange: (value: string) => void
-  disabled: boolean
-}
 
 export function HtmlSourceEditor({
   id,
