@@ -1255,11 +1255,16 @@ test('expired pending upload metadata is recovered when Storage signing rollback
     }
   )
   withFetch(t, async (_url, init) => {
-    assert.equal(init.method, 'POST')
-    return new Response(JSON.stringify({ message: 'Storage unavailable' }), {
-      status: 503,
-      headers: { 'content-type': 'application/json' }
-    })
+    if (init.method === 'POST') {
+      return new Response(JSON.stringify({ message: 'Storage unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' }
+      })
+    }
+    assert.equal(init.method, 'DELETE')
+    const body = JSON.parse(init.body)
+    assert.deepEqual(body.prefixes, [orphaned.path])
+    return new Response(null, { status: 200 })
   })
 
   await assert.rejects(
@@ -1277,12 +1282,6 @@ test('expired pending upload metadata is recovered when Storage signing rollback
   const originalNow = Date.now
   Date.now = () => now + 3 * 60 * 60 * 1000
   t.after(() => { Date.now = originalNow })
-  withFetch(t, async (_url, init) => {
-    assert.equal(init.method, 'DELETE')
-    const body = JSON.parse(init.body)
-    assert.deepEqual(body.prefixes, [orphaned.path])
-    return new Response(null, { status: 200 })
-  })
 
   const cleanup = await service.cleanupExpired(cronSecret)
 
