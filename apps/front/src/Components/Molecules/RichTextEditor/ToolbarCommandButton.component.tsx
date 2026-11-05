@@ -1,20 +1,12 @@
 import type { ToolbarCommandButtonProps } from './ToolbarCommandButton.types'
-import { useEditorState } from 'react-simple-wysiwyg'
-
-import type { MouseEvent } from 'react'
+import { useToolbarCommandButton } from './useToolbarCommandButton'
 
 export function ToolbarCommandButton({
   title,
   command,
   children
 }: ToolbarCommandButtonProps) {
-  const editorState = useEditorState()
-
-  const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-    editorState.$el?.focus()
-    document.execCommand(command)
-  }
+  const { handleMouseDown } = useToolbarCommandButton({ command })
 
   return (
     <button
