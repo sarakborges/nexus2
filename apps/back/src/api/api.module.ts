@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AuthController } from './auth/auth.controller'
 import { AuthService } from './auth/auth.service'
+import { AccountService } from './auth/account.service'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from './auth/jwt-access.guard'
 import { DomainController } from './domain/domain.controller'
 import { DomainService } from './domain/domain.service'
@@ -21,6 +22,6 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}
