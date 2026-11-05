@@ -1,11 +1,12 @@
 import { useLayoutEffect } from 'react'
 
 import type { ThemePreference } from '@/Constants/themes'
+import type { UseThemePreferenceResult } from './useThemePreference.types'
 import { useUpdateSettings } from '@/Hooks/Settings/useUpdateSettings.hook'
 import { useSystemPreferences } from '@/Hooks/System/useSystemPreferences.hook'
 import { useSettingsStore } from '@/Stores/Settings.store'
 
-export function useThemePreference() {
+export function useThemePreference(): UseThemePreferenceResult {
   const themePreference = useSettingsStore((state) => state.settings.theme)
   const { updateSettings, isUpdating } = useUpdateSettings()
   const { theme: systemTheme } = useSystemPreferences()
