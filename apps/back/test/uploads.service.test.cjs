@@ -327,6 +327,42 @@ test('forum reply images are public when their community is public', async t => 
   assert.deepEqual(image.body, pngHeader)
 })
 
+test('deleteUpload does not repeat Storage deletion when another request already claimed the record', async t => {
+  const file = {
+    id: 'a23e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/deleting.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const claimed = { ...file, status: 'deleting', deletingAt: Date.now() }
+  const { service, collections } = createHarness(
+    { media_files: [file] },
+    null,
+    (names, current) => {
+      if (names.includes('media_files')) current.set('media_files', [claimed])
+    }
+  )
+  withFetch(t, async () => {
+    throw new Error('A deletion already claimed by another request must not hit Storage again')
+  })
+
+  await service.deleteUpload('user-1', file.id)
+
+  assert.deepEqual(collections.get('media_files'), [claimed])
+})
+
 test('daily cleanup removes expired editor objects and unattached avatar drafts', async t => {
   const now = Date.now()
   const editor = {
@@ -464,7 +500,11 @@ test('avatar draft validation rejects uploads after 24 hours from completion', a
     messageFromProfileId: null,
     messageToProfileId: null
   }
-  const { service } = createHarness({ media_files: [file] })
+  const { service } = createHarness({
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['profile-1'], currentProfile: 'profile-1' }],
+    profiles: [{ id: 'profile-1', picture: '', type: 'social' }],
+    media_files: [file]
+  })
   const url = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
 
   await assert.rejects(

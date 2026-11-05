@@ -572,22 +572,37 @@ export class UploadsService {
     this.assertStorageConfigured()
 
     const now = Date.now()
-    let expired: UploadedFileRecord[] = []
-    let expiredIds = new Set<string>()
-    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-      expired = currentRecords.filter(item =>
-        (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - 5 * 60 * 1000) ||
-        (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
-        (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
-        (item.purpose !== 'editor-image' && item.status === 'ready' &&
-          !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
-      )
-      if (!expired.length) return currentRecords
-      expiredIds = new Set(expired.map(item => item.id))
-      return currentRecords.map(item => expiredIds.has(item.id)
-        ? { ...item, status: 'deleting', deletingAt: now }
-        : item)
-    })
+    const expired = await this.data.transaction<UploadedFileRecord[]>(
+      ['media_files'],
+      collections => {
+        const currentRecords = collections.media_files as UploadedFileRecord[]
+        const candidates = currentRecords.filter(item =>
+          (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - 5 * 60 * 1000) ||
+          (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
+          (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
+          (item.purpose !== 'editor-image' && item.status === 'ready' &&
+            !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
+        )
+        if (!candidates.length) return { records: collections, result: [] }
+
+        const candidateIds = new Set(candidates.map(item => item.id))
+        const claimed = candidates.map(item => ({
+          ...item,
+          status: 'deleting' as const,
+          deletingAt: now
+        }))
+        const claimedById = new Map(claimed.map(item => [item.id, item] as const))
+        return {
+          records: {
+            ...collections,
+            media_files: currentRecords.map(item => candidateIds.has(item.id)
+              ? claimedById.get(item.id)!
+              : item)
+          },
+          result: claimed
+        }
+      }
+    )
     if (!expired.length) return { deleted: 0 }
 
     for (const bucket of [AVATAR_BUCKET, EDITOR_BUCKET]) {
@@ -595,8 +610,12 @@ export class UploadsService {
       if (paths.length) await this.removeObjects(bucket, paths)
     }
 
+    const expiredById = new Map(expired.map(item => [item.id, item] as const))
     await this.data.update<UploadedFileRecord>('media_files', currentRecords =>
-      currentRecords.filter(item => !expiredIds.has(item.id) || item.status !== 'deleting')
+      currentRecords.filter(item => {
+        const claimed = expiredById.get(item.id)
+        return !claimed || item.status !== 'deleting' || item.deletingAt !== claimed.deletingAt
+      })
     )
     return { deleted: expired.length }
   }
@@ -699,33 +718,61 @@ export class UploadsService {
   private async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
     const path = this.getAvatarPath(previousUrl)
     if (!path) return
-    let old: UploadedFileRecord | undefined
-    await this.data.update<UploadedFileRecord>('media_files', current => {
-      const latest = current.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-      if (!latest || latest.id === keepId || latest.status === 'deleting') return current
-      old = { ...latest, status: 'deleting', deletingAt: Date.now() }
-      return current.map(item => item.id === latest.id ? old! : item)
-    })
+    const deletingAt = Date.now()
+    const old = await this.data.transaction<UploadedFileRecord | null>(
+      ['media_files'],
+      collections => {
+        const current = collections.media_files as UploadedFileRecord[]
+        const latest = current.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
+        if (!latest || latest.id === keepId || latest.status === 'deleting') {
+          return { records: collections, result: null }
+        }
+        const claimed: UploadedFileRecord = {
+          ...latest,
+          status: 'deleting',
+          deletingAt
+        }
+        return {
+          records: {
+            ...collections,
+            media_files: current.map(item => item.id === latest.id ? claimed : item)
+          },
+          result: claimed
+        }
+      }
+    )
     if (!old) return
     await this.removeObjects(AVATAR_BUCKET, [old.path])
     await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item => item.id !== old!.id)
+      current.filter(item => item.id !== old.id)
     )
   }
 
   private async deleteRecord(record: UploadedFileRecord): Promise<void> {
-    let deleting: UploadedFileRecord | undefined
-    await this.data.update<UploadedFileRecord>('media_files', current => {
-      const latest = current.find(item => item.id === record.id)
-      if (!latest || latest.status === 'deleting') return current
-      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
-      deleting = { ...latest, status: 'deleting', deletingAt: Date.now() }
-      return current.map(item => item.id === latest.id ? deleting! : item)
-    })
+    const deletingAt = Date.now()
+    const deleting = await this.data.transaction<UploadedFileRecord | null>(
+      ['media_files'],
+      collections => {
+        const current = collections.media_files as UploadedFileRecord[]
+        const latest = current.find(item => item.id === record.id)
+        if (!latest || latest.status === 'deleting') {
+          return { records: collections, result: null }
+        }
+        if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+        const claimed: UploadedFileRecord = { ...latest, status: 'deleting', deletingAt }
+        return {
+          records: {
+            ...collections,
+            media_files: current.map(item => item.id === latest.id ? claimed : item)
+          },
+          result: claimed
+        }
+      }
+    )
     if (!deleting) return
     await this.removeObjects(deleting.bucket, [deleting.path])
     await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item => item.id !== deleting!.id)
+      current.filter(item => item.id !== deleting.id)
     )
   }
 
