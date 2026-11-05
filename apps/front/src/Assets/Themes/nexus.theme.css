@@ -3,7 +3,6 @@
   --nexus-card-radius: 0;
   --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 30%);
   --nexus-control-radius: 0;
-  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 30%);
   --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
@@ -55,7 +54,7 @@
   --nexus-card-shadow: 0 5px 14px rgb(19 13 31 / 8%);
 }
 
-/* Square, edged surfaces and controls follow the Asteria WebUI language. */
+/* Square, edged surfaces and controls follow the Nexus visual language. */
 .account-card,
 .social-sidebar-card,
 .social-panel,
