@@ -1,5 +1,3 @@
-import { useNavigate } from 'react-router'
-
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import {
@@ -17,7 +15,6 @@ import './CommunityForumPage.style.scss'
 
 export function CommunityForumPage() {
   const { t } = useTranslations()
-  const navigate = useNavigate()
   const {
     normalized,
     session,
@@ -30,6 +27,7 @@ export function CommunityForumPage() {
     relationshipsQuery,
     ownedProfilesQuery,
     canPublish,
+    openCreateTopic,
     topicsQuery,
     topics,
     authorsQuery,
@@ -79,9 +77,7 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button
               type="button"
-              onClick={() =>
-                navigate(ROUTES.community + '/' + community.url + '/forum/new')
-              }
+              onClick={openCreateTopic}
             >
               {t('FORUM_NEW_TOPIC')}
             </Button>
