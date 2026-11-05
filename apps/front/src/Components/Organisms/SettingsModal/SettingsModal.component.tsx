@@ -1,3 +1,4 @@
+import type { SettingsModalProps } from './SettingsModal.types'
 import { useQuery } from '@tanstack/react-query'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
@@ -11,11 +12,6 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 
 import './SettingsModal.style.scss'
-
-type SettingsModalProps = {
-  open: boolean
-  onClose: () => void
-}
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
