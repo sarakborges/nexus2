@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type { CommunityRelationship, RecentActivity, Relationship } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
@@ -13,55 +13,65 @@ export class ActivityService {
   ) {}
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
-    const user = await this.auth.getUser(userId)
-    const ownedProfileIds = new Set(user.profiles)
-    if (!ownedProfileIds.size) return []
+    await this.auth.getUser(userId)
+    await this.access.readCommunities()
 
-    const [profiles, communities, relationships, communityRelationships] = await Promise.all([
-      this.access.readProfiles(),
-      this.access.readCommunities(),
-      this.data.read<Relationship>('relationships'),
-      this.data.read<CommunityRelationship>('community_relationships')
-    ])
-    const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
-    const communitiesById = new Map(communities.map(community => [community.id, community] as const))
-    const activities: RecentActivity[] = []
+    return this.data.transaction<RecentActivity[]>(
+      ['accounts', 'profiles', 'communities', 'relationships', 'community_relationships'],
+      collections => {
+        const account = (collections.accounts as Array<{
+          id: string; profiles: string[]
+        }>).find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const ownedProfileIds = new Set(account.profiles)
+        if (!ownedProfileIds.size) return { records: collections, result: [] }
 
-    for (const relationship of relationships) {
-      if (relationship.type !== 'connection') continue
-      const ownedParticipants = relationship.profiles.filter(id => ownedProfileIds.has(id))
-      if (ownedParticipants.length !== 1) continue
-      const profile = profilesById.get(ownedParticipants[0])
-      const friendId = relationship.profiles.find(id => id !== ownedParticipants[0])
-      const friend = friendId ? profilesById.get(friendId) : undefined
-      if (!profile || !friend || profile.type !== friend.type) continue
-      activities.push({
-        id: 'friend:' + relationship.profiles[0] + ':' + relationship.profiles[1],
-        type: 'friend_connected',
-        updatedAt: relationship.updatedAt,
-        profile,
-        friend
-      })
-    }
+        const profiles = collections.profiles as import('@nexus/common').Profile[]
+        const communities = collections.communities as import('@nexus/common').Community[]
+        const relationships = collections.relationships as Relationship[]
+        const communityRelationships = collections.community_relationships as CommunityRelationship[]
+        const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
+        const communitiesById = new Map(communities.map(community => [community.id, community] as const))
+        const activities: RecentActivity[] = []
 
-    for (const relationship of communityRelationships) {
-      if (!ownedProfileIds.has(relationship.profiles[0])) continue
-      if (relationship.type !== 'owner' && relationship.type !== 'moderator' && relationship.type !== 'connection') continue
-      const profile = profilesById.get(relationship.profiles[0])
-      const community = communitiesById.get(relationship.profiles[1])
-      if (!profile || !community || profile.type !== community.type) continue
-      activities.push({
-        id: 'community:' + profile.id + ':' + community.id,
-        type: 'community_membership',
-        updatedAt: relationship.updatedAt,
-        profile,
-        community,
-        role: relationship.type
-      })
-    }
+        for (const relationship of relationships) {
+          if (relationship.type !== 'connection') continue
+          const ownedParticipants = relationship.profiles.filter(id => ownedProfileIds.has(id))
+          if (ownedParticipants.length !== 1) continue
+          const profile = profilesById.get(ownedParticipants[0])
+          const friendId = relationship.profiles.find(id => id !== ownedParticipants[0])
+          const friend = friendId ? profilesById.get(friendId) : undefined
+          if (!profile || !friend || profile.type !== friend.type) continue
+          activities.push({
+            id: 'friend:' + relationship.profiles[0] + ':' + relationship.profiles[1],
+            type: 'friend_connected',
+            updatedAt: relationship.updatedAt,
+            profile,
+            friend
+          })
+        }
 
-    return activities
-      .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-      .slice(0, 10)
+        for (const relationship of communityRelationships) {
+          if (!ownedProfileIds.has(relationship.profiles[0])) continue
+          if (relationship.type !== 'owner' && relationship.type !== 'moderator' && relationship.type !== 'connection') continue
+          const profile = profilesById.get(relationship.profiles[0])
+          const community = communitiesById.get(relationship.profiles[1])
+          if (!profile || !community || profile.type !== community.type) continue
+          activities.push({
+            id: 'community:' + profile.id + ':' + community.id,
+            type: 'community_membership',
+            updatedAt: relationship.updatedAt,
+            profile,
+            community,
+            role: relationship.type
+          })
+        }
+
+        const result = activities
+          .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
+          .slice(0, 10)
+        return { records: collections, result }
+      }
+    )
   }
 }

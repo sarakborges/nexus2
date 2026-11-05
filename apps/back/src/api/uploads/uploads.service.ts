@@ -208,14 +208,119 @@ export class UploadsService {
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
     this.assertStorageConfigured()
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const record = records.find(item =>
+    const initialRecords = await this.data.read<UploadedFileRecord>('media_files')
+    const locator = initialRecords.find(item =>
       item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
     )
-    if (!record || (record.expiresAt !== null && record.expiresAt <= Date.now())) {
+    if (!locator || (locator.expiresAt !== null && locator.expiresAt <= Date.now())) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
-    await this.assertCanReadEditorImage(userId, record)
+
+    const resourceType = locator.resourceType
+    const resourceId = locator.resourceId
+    const collections = ['media_files']
+    if (resourceType === 'profile') collections.push('profiles')
+    if (resourceType === 'community' ||
+        resourceType === 'community-forum-topic' ||
+        resourceType === 'community-forum-reply') {
+      collections.push('accounts', 'communities', 'community_relationships')
+      if (resourceType === 'community-forum-topic') collections.push('community_forum_topics')
+      if (resourceType === 'community-forum-reply') collections.push('community_forum_replies')
+    }
+    if (resourceType === 'profile-message') collections.push('accounts', 'profile_messages')
+
+    const record = await this.data.transaction<UploadedFileRecord>(
+      collections,
+      current => {
+        const latest = (current.media_files as UploadedFileRecord[]).find(item => item.id === id)
+        if (
+          !latest ||
+          latest.purpose !== 'editor-image' ||
+          latest.status !== 'ready' ||
+          (latest.expiresAt !== null && latest.expiresAt <= Date.now()) ||
+          latest.resourceType !== resourceType ||
+          latest.resourceId !== resourceId
+        ) {
+          throw new NotFoundException('UPLOAD_NOT_FOUND')
+        }
+
+        if (!latest.resourceType) {
+          if (userId !== latest.ownerUserId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+          return { records: current, result: latest }
+        }
+
+        if (latest.resourceType === 'profile') {
+          const profiles = current.profiles as Array<{ id: string }>
+          if (!profiles.some(profile => profile.id === latest.resourceId)) {
+            throw new NotFoundException('UPLOAD_NOT_FOUND')
+          }
+          return { records: current, result: latest }
+        }
+
+        if (
+          latest.resourceType === 'community' ||
+          latest.resourceType === 'community-forum-topic' ||
+          latest.resourceType === 'community-forum-reply'
+        ) {
+          let communityId = latest.resourceId!
+          if (latest.resourceType === 'community-forum-topic' ||
+              latest.resourceType === 'community-forum-reply') {
+            const resourceCollection = latest.resourceType === 'community-forum-topic'
+              ? current.community_forum_topics as Array<{ id: string; communityId: string }>
+              : current.community_forum_replies as Array<{ id: string; communityId: string }>
+            const resource = resourceCollection.find(item => item.id === latest.resourceId)
+            if (!resource) throw new NotFoundException('UPLOAD_NOT_FOUND')
+            communityId = resource.communityId
+          }
+
+          const communities = current.communities as Array<{ id: string; privacy?: string }>
+          const community = communities.find(item => item.id === communityId)
+          if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
+          if (community.privacy === 'private') {
+            if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
+            const accounts = current.accounts as AccountRecord[]
+            const account = accounts.find(item => item.id === userId)
+            if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+            const ownedProfiles = new Set(account.profiles)
+            const relationships = current.community_relationships as Array<{
+              profiles: [string, string]; type: string
+            }>
+            const canRead = relationships.some(relationship =>
+              relationship.profiles[1] === communityId &&
+              ownedProfiles.has(relationship.profiles[0]) &&
+              ['owner', 'moderator', 'connection'].includes(relationship.type)
+            )
+            if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
+          }
+          return { records: current, result: latest }
+        }
+
+        if (latest.resourceType === 'profile-message') {
+          if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+          const accounts = current.accounts as AccountRecord[]
+          const account = accounts.find(item => item.id === userId)
+          if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+          const messages = current.profile_messages as Array<{
+            id: string
+            fromProfileId: string
+            toProfileId: string
+          }>
+          const message = messages.find(item => item.id === latest.resourceId)
+          if (!message ||
+              message.fromProfileId !== latest.messageFromProfileId ||
+              message.toProfileId !== latest.messageToProfileId) {
+            throw new NotFoundException('UPLOAD_NOT_FOUND')
+          }
+          const participants = [message.fromProfileId, message.toProfileId]
+          if (!account.profiles.some(profileId => participants.includes(profileId))) {
+            throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+          }
+          return { records: current, result: latest }
+        }
+
+        throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+    )
 
     const response = await this.storageRequest(
       '/object/' + record.bucket + '/' + this.encodePath(record.path),
@@ -490,88 +595,6 @@ export class UploadsService {
       currentRecords.filter(item => !expiredIds.has(item.id) || item.status !== 'deleting')
     )
     return { deleted: expired.length }
-  }
-
-  private async assertCanReadEditorImage(userId: string | null, record: UploadedFileRecord): Promise<void> {
-    if (!record.resourceType) {
-      if (userId === record.ownerUserId) return
-      throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
-    }
-    if (record.resourceType === 'profile') {
-      const profiles = await this.data.read<{ id: string }>('profiles')
-      if (profiles.some(item => item.id === record.resourceId)) return
-      throw new NotFoundException('UPLOAD_NOT_FOUND')
-    }
-    if (record.resourceType === 'community') {
-      await this.assertCanReadCommunityResource(userId, record.resourceId!)
-      return
-    }
-    if (record.resourceType === 'community-forum-topic' || record.resourceType === 'community-forum-reply') {
-      const collection = record.resourceType === 'community-forum-topic'
-        ? 'community_forum_topics'
-        : 'community_forum_replies'
-      const resources = await this.data.read<{ id: string; communityId: string }>(collection)
-      const resource = resources.find(item => item.id === record.resourceId)
-      if (!resource) throw new NotFoundException('UPLOAD_NOT_FOUND')
-      await this.assertCanReadCommunityResource(userId, resource.communityId)
-      return
-    }
-
-    if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
-    await this.auth.getUser(userId)
-    await this.data.transaction(
-      ['accounts', 'profile_messages'],
-      collections => {
-        const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
-        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        const messages = collections.profile_messages as Array<{
-          id: string
-          fromProfileId: string
-          toProfileId: string
-        }>
-        const message = messages.find(item => item.id === record.resourceId)
-        if (!message ||
-          message.fromProfileId !== record.messageFromProfileId ||
-          message.toProfileId !== record.messageToProfileId) {
-          throw new NotFoundException('UPLOAD_NOT_FOUND')
-        }
-        const participants = [message.fromProfileId, message.toProfileId]
-        if (!account.profiles.some(profileId => participants.includes(profileId))) {
-          throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
-        }
-        return { records: collections, result: undefined }
-      }
-    )
-  }
-
-  private async assertCanReadCommunityResource(userId: string | null, communityId: string): Promise<void> {
-    await this.data.transaction(
-      ['accounts', 'communities', 'community_relationships'],
-      collections => {
-        const communities = collections.communities as Array<{ id: string; privacy?: string }>
-        const community = communities.find(item => item.id === communityId)
-        if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
-        if (community.privacy !== 'private') {
-          return { records: collections, result: undefined }
-        }
-        if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
-
-        const accounts = collections.accounts as AccountRecord[]
-        const account = accounts.find(item => item.id === userId)
-        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        const ownedProfiles = new Set(account.profiles)
-        const relationships = collections.community_relationships as Array<{
-          profiles: [string, string]; type: string
-        }>
-        const canRead = relationships.some(record =>
-          record.profiles[1] === communityId &&
-          ownedProfiles.has(record.profiles[0]) &&
-          ['owner', 'moderator', 'connection'].includes(record.type)
-        )
-        if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
-        return { records: collections, result: undefined }
-      }
-    )
   }
 
   private assertOwnsProfileInRecords(

@@ -10,8 +10,14 @@ function community(id) {
   return { id, name: id, url: id, picture: '', about: '', type: 'social' }
 }
 
-function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships }) {
+function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, beforeTransaction }) {
   const collections = new Map([
+    ['accounts', [{
+      id: 'user',
+      email: 'user@example.com',
+      profiles: [...ownedProfiles],
+      currentProfile: ownedProfiles[0] ?? null
+    }]],
     ['profiles', profiles],
     ['communities', communities],
     ['relationships', relationships],
@@ -23,6 +29,19 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
+    }
+    async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
+      const snapshot = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(snapshot)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
@@ -74,6 +93,29 @@ test('recent activity returns an empty list when the account has no profiles', a
     communities: [],
     relationships: [],
     communityRelationships: []
+  })
+
+  assert.deepEqual(await service.getRecentActivity('user'), [])
+})
+
+
+test('recent activity does not include relationships after profile ownership is revoked', async () => {
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: ['owned-a', 'friend-a'].map(profile),
+    communities: [],
+    relationships: [
+      { profiles: ['owned-a', 'friend-a'], type: 'connection', updatedAt: 100 }
+    ],
+    communityRelationships: [],
+    beforeTransaction(_names, current) {
+      current.set('accounts', [{
+        id: 'user',
+        email: 'user@example.com',
+        profiles: [],
+        currentProfile: null
+      }])
+    }
   })
 
   assert.deepEqual(await service.getRecentActivity('user'), [])
