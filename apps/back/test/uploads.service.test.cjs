@@ -356,7 +356,8 @@ test('forum reply images are public when their community is public', async t => 
   assert.deepEqual(image.body, pngHeader)
 })
 
-test('avatar deletion does not clear a newer cleanup claim', async t => {
+test('avatar replacement keeps the old object tombstone until its signed upload token is safe', async t => {
+  const completedAt = Date.now()
   const file = {
     id: 'e23e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'user-1',
@@ -367,8 +368,8 @@ test('avatar deletion does not clear a newer cleanup claim', async t => {
     expectedSize: pngHeader.length,
     size: pngHeader.length,
     status: 'ready',
-    createdAt: Date.now(),
-    completedAt: Date.now(),
+    createdAt: completedAt - 1000,
+    completedAt,
     expiresAt: null,
     resourceType: 'profile',
     resourceId: 'profile-1',
@@ -384,20 +385,16 @@ test('avatar deletion does not clear a newer cleanup claim', async t => {
     profiles: [{ id: 'profile-1', picture, type: 'social' }],
     media_files: [file]
   })
-  let newerClaim
-  withFetch(t, async (_url, init) => {
-    assert.equal(init.method, 'DELETE')
-    const claimed = collections.get('media_files')[0]
-    assert.equal(claimed.status, 'deleting')
-    newerClaim = { ...claimed, deletingAt: claimed.deletingAt + 5 * 60 * 1000 }
-    collections.set('media_files', [newerClaim])
-    return new Response(null, { status: 200 })
+  withFetch(t, async () => {
+    throw new Error('Avatar replacement must schedule deletion instead of removing Storage immediately')
   })
 
   const result = await service.setProfileAvatar('user-1', 'profile-1', null)
 
   assert.equal(result.picture, '')
-  assert.deepEqual(collections.get('media_files'), [newerClaim])
+  const [scheduled] = collections.get('media_files')
+  assert.equal(scheduled.status, 'deleting')
+  assert.equal(scheduled.deleteAfter, completedAt + 3 * 60 * 60 * 1000)
 })
 
 test('deleteUpload rechecks ownership inside the deletion claim snapshot', async t => {
@@ -1225,6 +1222,40 @@ test('expired completion schedules pending cleanup instead of revoking metadata 
   const [saved] = collections.get('media_files')
   assert.equal(saved.status, 'deleting')
   assert.ok(saved.deleteAfter > Date.now())
+})
+
+
+test('deleting a recently completed upload defers Storage removal until its signed token is safe', async t => {
+  const createdAt = Date.now()
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174097',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/recently-deleted.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: createdAt - 1000,
+    completedAt: createdAt,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'DELETE')
+    return new Response(null, { status: 200 })
+  })
+
+  await service.deleteUpload('user-1', file.id)
+
+  const [scheduled] = collections.get('media_files')
+  assert.equal(scheduled.status, 'deleting')
+  assert.equal(scheduled.deleteAfter, createdAt + 3 * 60 * 60 * 1000)
 })
 
 test('Storage unavailability during upload completion remains retryable', async t => {

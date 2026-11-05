@@ -51,8 +51,8 @@ const EDITOR_BUCKET = 'nexus-editor-images'
 const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
-const PENDING_CLEANUP_GRACE_MS = 60 * 60 * 1000
-const PENDING_CLEANUP_MAX_AGE = PENDING_MAX_AGE + PENDING_CLEANUP_GRACE_MS
+const SIGNED_UPLOAD_DELETE_GRACE_MS = 60 * 60 * 1000
+const UPLOAD_DELETE_SAFE_AGE_MS = PENDING_MAX_AGE + SIGNED_UPLOAD_DELETE_GRACE_MS
 const DELETE_CLAIM_LEASE_MS = 5 * 60 * 1000
 const STORAGE_DELETE_BATCH_SIZE = 1000
 const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
@@ -210,7 +210,7 @@ export class UploadsService {
     }
     if (record.status !== 'pending') throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.createdAt + PENDING_MAX_AGE <= Date.now()) {
-      await this.schedulePendingDeletion(id, userId)
+      await this.scheduleUploadDeletion(id, userId)
       throw new NotFoundException('UPLOAD_EXPIRED')
     }
 
@@ -240,7 +240,7 @@ export class UploadsService {
       totalSize !== record.expectedSize ||
       detectedMime !== record.contentType
     ) {
-      await this.deleteRecord(id, userId, 'pending')
+      await this.scheduleUploadDeletion(id, userId)
       throw new BadRequestException('INVALID_UPLOAD_CONTENT')
     }
 
@@ -276,7 +276,7 @@ export class UploadsService {
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
-    if (await this.schedulePendingDeletion(id, userId)) return
+    if (await this.scheduleUploadDeletion(id, userId)) return
     await this.deleteRecord(id, userId)
   }
 
@@ -597,7 +597,7 @@ export class UploadsService {
             (item.deletingAt ?? 0) <= now - DELETE_CLAIM_LEASE_MS &&
             (item.deleteAfter == null || item.deleteAfter <= now)) ||
           (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
-          (item.status === 'pending' && item.createdAt + PENDING_CLEANUP_MAX_AGE <= now) ||
+          (item.status === 'pending' && item.createdAt + UPLOAD_DELETE_SAFE_AGE_MS <= now) ||
           (item.purpose !== 'editor-image' && item.status === 'ready' &&
             !item.resourceType && (item.completedAt ?? item.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= now)
         )
@@ -743,11 +743,12 @@ export class UploadsService {
       .filter((id, index, ids) => ids.indexOf(id) === index)
   }
 
+
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
     const path = this.getAvatarPath(previousUrl)
     if (!path) return
     const deletingAt = Date.now()
-    const old = await this.data.transaction<UploadedFileRecord | null>(
+    await this.data.transaction<UploadedFileRecord | null>(
       ['media_files'],
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
@@ -759,33 +760,29 @@ export class UploadsService {
         if (!latest || latest.id === keepId || hasActiveClaim) {
           return { records: collections, result: null }
         }
-        const claimed: UploadedFileRecord = {
+
+        const safeFrom = latest.completedAt ?? latest.createdAt
+        const scheduled: UploadedFileRecord = {
           ...latest,
           status: 'deleting',
-          deletingAt
+          deletingAt,
+          deleteAfter: Math.max(
+            safeFrom + UPLOAD_DELETE_SAFE_AGE_MS,
+            deletingAt + DELETE_CLAIM_LEASE_MS
+          )
         }
         return {
           records: {
             ...collections,
-            media_files: current.map(item => item.id === latest.id ? claimed : item)
+            media_files: current.map(item => item.id === latest.id ? scheduled : item)
           },
-          result: claimed
+          result: scheduled
         }
       }
     )
-    if (!old) return
-    await this.removeObjects(AVATAR_BUCKET, [old.path])
-    await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item =>
-        item.id !== old.id ||
-        item.status !== 'deleting' ||
-        item.deletingAt !== old.deletingAt
-      )
-    )
   }
 
-
-  private async schedulePendingDeletion(id: string, userId: string): Promise<boolean> {
+  private async scheduleUploadDeletion(id: string, userId: string): Promise<boolean> {
     const scheduledAt = Date.now()
     return this.data.transaction<boolean>(
       ['media_files'],
@@ -797,16 +794,19 @@ export class UploadsService {
         if (latest.status === 'deleting' && latest.deleteAfter != null) {
           return { records: collections, result: true }
         }
-        if (latest.status !== 'pending') {
+        if (latest.status !== 'pending' && latest.status !== 'ready') {
           return { records: collections, result: false }
         }
         if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
 
-        // Signed upload tokens remain usable for two hours. Keep a tombstone
-        // long enough for any in-flight or retried transfer to finish, then let
-        // the normal cleanup remove both the object and its metadata.
+        // Signed upload tokens stay usable for two hours, even after a failed
+        // transfer. A completed object can also be recreated if it is deleted
+        // while its token is still valid, so retain a tombstone for both states.
+        const safeFrom = latest.status === 'ready'
+          ? (latest.completedAt ?? latest.createdAt)
+          : latest.createdAt
         const deleteAfter = Math.max(
-          latest.createdAt + PENDING_CLEANUP_MAX_AGE,
+          safeFrom + UPLOAD_DELETE_SAFE_AGE_MS,
           scheduledAt + DELETE_CLAIM_LEASE_MS
         )
         const scheduled: UploadedFileRecord = {
