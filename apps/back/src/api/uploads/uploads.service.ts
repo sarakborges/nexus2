@@ -588,7 +588,7 @@ export class UploadsService {
       collections => {
         const currentRecords = collections.media_files as UploadedFileRecord[]
         const candidates = currentRecords.filter(item =>
-          (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - 5 * 60 * 1000) ||
+          (item.status === 'deleting' && (item.deletingAt ?? 0) <= now - DELETE_CLAIM_LEASE_MS) ||
           (item.purpose === 'editor-image' && item.status === 'ready' && item.expiresAt !== null && item.expiresAt <= now) ||
           (item.status === 'pending' && item.createdAt + PENDING_MAX_AGE <= now) ||
           (item.purpose !== 'editor-image' && item.status === 'ready' &&
