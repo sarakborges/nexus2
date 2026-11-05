@@ -2,7 +2,8 @@ import {
   ConflictException,
   ForbiddenException,
   Inject,
-  Injectable
+  Injectable,
+  NotFoundException
 } from '@nestjs/common'
 import type {
   PaginatedResult,
