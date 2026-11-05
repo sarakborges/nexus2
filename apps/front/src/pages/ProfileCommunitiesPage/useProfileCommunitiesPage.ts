@@ -7,9 +7,10 @@ import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getProfileCommunities } from '@/Services/Community'
 import { getProfileByUrl } from '@/Services/Profile'
+import type { UseProfileCommunitiesPageResult } from './useProfileCommunitiesPage.types'
 import { queryKeys } from '@/Services/Query/queryKeys'
 
-export function useProfileCommunitiesPage() {
+export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const profileQuery = useQuery({
