@@ -10,7 +10,6 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { saveUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
-import type { SettingsType } from '@/Types/Settings.type'
 
 export function useUpdateSettings() {
   const queryClient = useQueryClient()
