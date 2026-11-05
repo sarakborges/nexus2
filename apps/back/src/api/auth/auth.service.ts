@@ -1,5 +1,7 @@
 import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { Optional } from '@nestjs/common'
+import { AccountService } from './account.service'
 import { JwtService } from '@nestjs/jwt'
 import { createHash, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
@@ -16,12 +18,15 @@ import type {
 export class AuthService {
   private readonly accessTtl: number
   private readonly refreshTtl: number
+  private readonly accounts: AccountService
 
   constructor(
     @Inject(DATA_REPOSITORY) private readonly repository: DataRepository,
     private readonly jwt: JwtService,
-    private readonly config: ConfigService
+    private readonly config: ConfigService,
+    @Optional() accounts?: AccountService
   ) {
+    this.accounts = accounts ?? new AccountService(repository)
     this.accessTtl = Number(config.get('JWT_ACCESS_TTL_SECONDS') ?? 900)
     this.refreshTtl = Number(config.get('JWT_REFRESH_TTL_SECONDS') ?? 2592000)
   }
@@ -89,86 +94,36 @@ export class AuthService {
     )
   }
 
-  async getUser(userId: string): Promise<AuthenticatedUser> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.id === userId)
-    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-    return this.toPublicUser(account)
+  getUser(userId: string): Promise<AuthenticatedUser> {
+    return this.accounts.getUser(userId)
   }
 
-  async updateCurrentProfile(userId: string, profileId: string): Promise<AuthenticatedUser> {
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account || !account.profiles.includes(profileId)) {
-        throw new UnauthorizedException('PROFILE_NOT_OWNED')
-      }
-      updated = { ...account, currentProfile: profileId }
-      return accounts.map(item => item.id === userId ? updated! : item)
-    })
-    return this.toPublicUser(updated!)
+  updateCurrentProfile(userId: string, profileId: string): Promise<AuthenticatedUser> {
+    return this.accounts.updateCurrentProfile(userId, profileId)
   }
 
-  async addProfile(userId: string, profileId: string, makeCurrent = false): Promise<AuthenticatedUser> {
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      updated = {
-        ...account,
-        profiles: account.profiles.includes(profileId) ? account.profiles : [...account.profiles, profileId],
-        currentProfile: makeCurrent ? profileId : account.currentProfile ?? profileId
-      }
-      return accounts.map(item => item.id === userId ? updated! : item)
-    })
-    return this.toPublicUser(updated!)
+  addProfile(userId: string, profileId: string, makeCurrent = false): Promise<AuthenticatedUser> {
+    return this.accounts.addProfile(userId, profileId, makeCurrent)
   }
 
-  async removeProfile(
+  removeProfile(
     userId: string,
     profileId: string,
     previousCurrentProfileId: string | null = null
   ): Promise<void> {
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account || !account.profiles.includes(profileId)) return accounts
-
-      const profiles = account.profiles.filter(id => id !== profileId)
-      const currentProfile = account.currentProfile === profileId
-        ? (previousCurrentProfileId && profiles.includes(previousCurrentProfileId)
-          ? previousCurrentProfileId
-          : profiles[0] ?? null)
-        : account.currentProfile
-
-      const updated = { ...account, profiles, currentProfile }
-      return accounts.map(item => item.id === userId ? updated : item)
-    })
+    return this.accounts.removeProfile(userId, profileId, previousCurrentProfileId)
   }
 
-  async getPreferences(userId: string): Promise<UserPreferences> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.id === userId)
-    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-    return account.preferences ?? { language: 'system', theme: 'system' }
+  getPreferences(userId: string): Promise<UserPreferences> {
+    return this.accounts.getPreferences(userId)
   }
 
-  async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences> {
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      updated = {
-        ...account,
-        preferences: { language: 'system', theme: 'system', ...account.preferences, ...preferences }
-      }
-      return accounts.map(item => item.id === userId ? updated! : item)
-    })
-    return updated!.preferences!
+  updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences> {
+    return this.accounts.updatePreferences(userId, preferences)
   }
 
-  async ownsProfile(userId: string, profileId: string): Promise<boolean> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    return accounts.some(item => item.id === userId && item.profiles.includes(profileId))
+  ownsProfile(userId: string, profileId: string): Promise<boolean> {
+    return this.accounts.ownsProfile(userId, profileId)
   }
 
   private async issueTokens(
