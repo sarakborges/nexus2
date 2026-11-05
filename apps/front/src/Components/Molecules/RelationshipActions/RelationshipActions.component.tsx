@@ -1,25 +1,23 @@
+import type { RelationshipActionsProps } from './RelationshipActions.types'
 import { useRelationshipActions } from './useRelationshipActions'
+
+import { Link } from 'react-router'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
-type RelationshipActionsViewProps = {
-  targetId: string
-  targetKind?: 'profile' | 'community'
-}
-
 export function RelationshipActions({
   targetId,
   targetKind = 'profile'
-}: RelationshipActionsViewProps) {
+}: RelationshipActionsProps) {
   const { t } = useTranslations()
   const actions = useRelationshipActions({ targetId, targetKind })
 
   if (!actions.isAuthenticated) {
     return (
       <p className="account-card__description">
-        <a href="/sign-in">{t('RELATIONSHIP_SIGN_IN')}</a>
+        <Link to="/sign-in">{t('RELATIONSHIP_SIGN_IN')}</Link>
       </p>
     )
   }
