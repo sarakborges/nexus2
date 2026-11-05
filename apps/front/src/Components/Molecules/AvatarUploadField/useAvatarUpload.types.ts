@@ -5,3 +5,10 @@ export type UseAvatarUploadOptions = {
   actorProfileId?: string
   errorLabel: string
 }
+
+export type UseAvatarUploadController = {
+  busy: boolean
+  error: string
+  handleFileChange: (file: File) => Promise<void>
+  handleRemove: () => Promise<void>
+}

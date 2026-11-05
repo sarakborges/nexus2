@@ -1,6 +1,9 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
-import type { UseAvatarUploadOptions } from './useAvatarUpload.types'
+import type {
+  UseAvatarUploadController,
+  UseAvatarUploadOptions
+} from './useAvatarUpload.types'
 
 import { useState } from 'react'
 
@@ -13,14 +16,13 @@ import {
 } from '@/Services/Uploads'
 import { useToastStore } from '@/Stores/Toast.store'
 
-
 export function useAvatarUpload({
   purpose,
   onChange,
   targetId,
   actorProfileId,
   errorLabel
-}: UseAvatarUploadOptions) {
+}: UseAvatarUploadOptions): UseAvatarUploadController {
   const { t } = useTranslations()
   const showToast = useToastStore((state) => state.showToast)
   const isFetching = useIsFetching() > 0

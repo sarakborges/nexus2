@@ -11,7 +11,8 @@ import { useLocation, useNavigate } from 'react-router'
 
 import type {
   OpenPanel,
-  UseFloatingNavigationBarOptions
+  UseFloatingNavigationBarOptions,
+  UseFloatingNavigationBarResult
 } from './useFloatingNavigationBar.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -22,7 +23,7 @@ import { useToastStore } from '@/Stores/Toast.store'
 
 export function useFloatingNavigationBar({
   onOpenSettings
-}: UseFloatingNavigationBarOptions) {
+}: UseFloatingNavigationBarOptions): UseFloatingNavigationBarResult {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const location = useLocation()
@@ -72,7 +73,7 @@ export function useFloatingNavigationBar({
     setIsProfileSwitcherOpen(false)
   }
 
-  const togglePanel = (panel: 'navigation' | 'account') => {
+  const togglePanel = (panel: NavigationPanel) => {
     setIsProfileSwitcherOpen(false)
     setOpenPanel((current) =>
       current?.pathname === location.pathname && current.panel === panel
