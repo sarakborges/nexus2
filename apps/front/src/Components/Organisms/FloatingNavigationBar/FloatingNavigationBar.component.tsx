@@ -41,6 +41,7 @@ export function FloatingNavigationBar({
     toggleProfileSwitcher,
     profiles,
     currentProfileId,
+    isProfileSwitcherOpen,
     profilesLoading,
     profilesError,
     profilesSuccess,

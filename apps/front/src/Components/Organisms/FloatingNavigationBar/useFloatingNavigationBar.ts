@@ -152,6 +152,7 @@ export function useFloatingNavigationBar({
       setIsProfileSwitcherOpen((open) => !open),
     profiles,
     currentProfileId,
+    isProfileSwitcherOpen,
     profilesLoading: profilesQuery.isLoading,
     profilesError: profilesQuery.isError,
     profilesSuccess: profilesQuery.isSuccess,
