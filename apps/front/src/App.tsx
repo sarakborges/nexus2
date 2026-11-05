@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 
-import { FloatingNavigationBar, SettingsModal } from '@/Components'
+import { FloatingNavigationBar } from '@/Components/Organisms/FloatingNavigationBar'
 import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 import { ToastViewport } from '@/Components/Organisms/Toast/ToastViewport.component'
 import { ROUTES } from '@/Constants/routes'
@@ -15,6 +15,12 @@ import { getUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import { AppRoutes } from '@/routes'
+
+const SettingsModal = lazy(() =>
+  import('@/Components/Organisms/SettingsModal').then(module => ({
+    default: module.SettingsModal
+  }))
+)
 
 export function App() {
   const { language } = useTranslations()
@@ -71,10 +77,14 @@ export function App() {
       )}
       <AppRoutes />
       <ToastViewport />
-      <SettingsModal
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
+      {isSettingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            open
+            onClose={() => setIsSettingsOpen(false)}
+          />
+        </Suspense>
+      )}
     </>
   )
 }
