@@ -16,3 +16,13 @@ export type CommunityMemberOperation =
   | { type: 'remove' }
   | { type: 'demote' }
   | { type: 'transfer' }
+
+export type CommunityMemberActionsController = {
+  confirmTransfer: boolean
+  pending: boolean
+  hasError: boolean
+  retryLastOperation?: () => void
+  run: (operation: CommunityMemberOperation) => void
+  confirmOwnershipTransfer: () => void
+  cancelOwnershipTransfer: () => void
+}
