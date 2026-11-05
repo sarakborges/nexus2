@@ -18,7 +18,8 @@ import type {
   Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import { paginate, type PaginationDto } from '../pagination/pagination.dto'
+import { paginate } from '../pagination/pagination.helper'
+import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
