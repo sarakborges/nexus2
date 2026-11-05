@@ -205,7 +205,7 @@ export class UploadsService {
     }
     if (record.status !== 'pending') throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.createdAt + PENDING_MAX_AGE <= Date.now()) {
-      await this.deleteRecord(record)
+      await this.deleteRecord(id, userId, 'pending')
       throw new NotFoundException('UPLOAD_EXPIRED')
     }
 
@@ -230,7 +230,7 @@ export class UploadsService {
       totalSize !== record.expectedSize ||
       detectedMime !== record.contentType
     ) {
-      await this.deleteRecord(record)
+      await this.deleteRecord(id, userId, 'pending')
       throw new BadRequestException('INVALID_UPLOAD_CONTENT')
     }
 
@@ -266,11 +266,7 @@ export class UploadsService {
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const record = records.find(item => item.id === id && item.ownerUserId === userId)
-    if (!record || record.status === 'deleting') return
-    if (record.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
-    await this.deleteRecord(record)
+    await this.deleteRecord(id, userId)
   }
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
@@ -720,14 +716,19 @@ export class UploadsService {
     )
   }
 
-  private async deleteRecord(record: UploadedFileRecord): Promise<void> {
+  private async deleteRecord(
+    id: string,
+    userId: string,
+    expectedStatus?: 'pending'
+  ): Promise<void> {
     const deletingAt = Date.now()
     const deleting = await this.data.transaction<UploadedFileRecord | null>(
       ['media_files'],
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
-        const latest = current.find(item => item.id === record.id)
-        if (!latest || latest.status === 'deleting') {
+        const latest = current.find(item => item.id === id && item.ownerUserId === userId)
+        if (!latest || latest.status === 'deleting' ||
+          (expectedStatus && latest.status !== expectedStatus)) {
           return { records: collections, result: null }
         }
         if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
@@ -744,7 +745,12 @@ export class UploadsService {
     if (!deleting) return
     await this.removeObjects(deleting.bucket, [deleting.path])
     await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item => item.id !== deleting.id)
+      current.filter(item =>
+        item.id !== deleting.id ||
+        item.ownerUserId !== userId ||
+        item.status !== 'deleting' ||
+        item.deletingAt !== deleting.deletingAt
+      )
     )
   }
 
