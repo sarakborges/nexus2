@@ -68,11 +68,6 @@ export class DomainAccessService {
     return communities
   }
 
-  async readCommunityRelationships(communityId: string): Promise<CommunityRelationship[]> {
-    return (await this.data.read<CommunityRelationship>('community_relationships'))
-      .filter(record => record.profiles[1] === communityId)
-  }
-
   assertOwnsInRecords(
     userId: string,
     profileId: string,
@@ -189,16 +184,6 @@ export class DomainAccessService {
     return records.find(record => record.profiles[0] === profileId)?.type ?? null
   }
 
-  async isCommunityMember(communityId: string, userId: string | null): Promise<boolean> {
-    if (!userId) return false
-    const user = await this.auth.getUser(userId)
-    const ownedProfileIds = new Set(user.profiles)
-    const relationships = await this.readCommunityRelationships(communityId)
-    return relationships.some(record =>
-      ownedProfileIds.has(record.profiles[0]) && ['owner', 'moderator', 'connection'].includes(record.type)
-    )
-  }
-
   isCommunityMemberInRecords(
     communityId: string,
     userId: string | null,
@@ -236,67 +221,4 @@ export class DomainAccessService {
     }
   }
 
-  async assertCommunityReadable(communityId: string, userId: string | null): Promise<void> {
-    const community = (await this.readCommunities()).find(item => item.id === communityId)
-    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    if (community.privacy === 'private' && !(await this.isCommunityMember(communityId, userId))) {
-      throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    }
-  }
-
-  async ensureCommunity(id: string): Promise<void> {
-    if (!(await this.readCommunities()).some(community => community.id === id)) {
-      throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    }
-  }
-
-  async assertStaff(profileId: string, communityId: string): Promise<void> {
-    await this.ensureCommunity(communityId)
-    const [profiles, communities, records] = await Promise.all([
-      this.readProfiles(),
-      this.readCommunities(),
-      this.readCommunityRelationships(communityId)
-    ])
-    this.assertSameType(
-      profiles.find(profile => profile.id === profileId),
-      communities.find(community => community.id === communityId)
-    )
-    if (!['owner', 'moderator'].includes(this.role(profileId, records) ?? '')) {
-      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-    }
-  }
-
-  async assertForumMember(userId: string, profileId: string, communityId: string): Promise<void> {
-    await this.assertOwns(userId, profileId, { allowDifferentActiveType: true })
-    await this.ensureCommunity(communityId)
-    const [profiles, communities, records] = await Promise.all([
-      this.readProfiles(),
-      this.readCommunities(),
-      this.readCommunityRelationships(communityId)
-    ])
-    this.assertSameType(
-      profiles.find(profile => profile.id === profileId),
-      communities.find(community => community.id === communityId)
-    )
-    if (!['owner', 'moderator', 'connection'].includes(this.role(profileId, records) ?? '')) {
-      throw new ForbiddenException('COMMUNITY_MEMBER_REQUIRED')
-    }
-  }
-
-  async assertForumStaff(userId: string, profileId: string, communityId: string): Promise<void> {
-    await this.assertOwns(userId, profileId, { allowDifferentActiveType: true })
-    await this.ensureCommunity(communityId)
-    const [profiles, communities, records] = await Promise.all([
-      this.readProfiles(),
-      this.readCommunities(),
-      this.readCommunityRelationships(communityId)
-    ])
-    this.assertSameType(
-      profiles.find(profile => profile.id === profileId),
-      communities.find(community => community.id === communityId)
-    )
-    if (!['owner', 'moderator'].includes(this.role(profileId, records) ?? '')) {
-      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-    }
-  }
 }
