@@ -1,4 +1,3 @@
-import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
 import { CommunityMemberEntry } from './CommunityMemberEntry.component'
