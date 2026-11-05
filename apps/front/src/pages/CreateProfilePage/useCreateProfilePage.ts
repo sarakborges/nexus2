@@ -12,8 +12,9 @@ import { createUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseCreateProfilePageResult } from './useCreateProfilePage.types'
 
-export function useCreateProfilePage() {
+export function useCreateProfilePage(): UseCreateProfilePageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
