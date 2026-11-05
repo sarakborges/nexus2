@@ -1,24 +1,16 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { IsEmail, IsIn, IsString, MinLength, ValidateIf } from 'class-validator'
-import type { AuthTokenPair, UserPreferences } from '@nexus/common'
+import type { AuthTokenPair } from '@nexus/common'
 import { AuthService } from './auth.service'
 import { CurrentUser } from './current-user.decorator'
 import { JwtAccessGuard } from './jwt-access.guard'
 
-class CredentialsDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(1) password!: string
-}
-class SignUpDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(8) password!: string
-}
-class RefreshDto { @IsString() refreshToken!: string }
-class CurrentProfileDto { @IsString() profileId!: string }
-class PreferencesDto implements Partial<UserPreferences> {
-  @ValidateIf((_object, value) => value !== undefined) @IsIn(['system', 'pt-BR', 'en-US']) language?: UserPreferences['language']
-  @ValidateIf((_object, value) => value !== undefined) @IsIn(['system', 'light', 'dark']) theme?: UserPreferences['theme']
-}
+import {
+  CredentialsDto,
+  CurrentProfileDto,
+  PreferencesDto,
+  RefreshDto,
+  SignUpDto
+} from './auth.dto'
 
 @Controller('auth')
 export class AuthController {
