@@ -15,8 +15,9 @@ import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseEditCommunityPageResult } from './useEditCommunityPage.types'
 
-export function useEditCommunityPage() {
+export function useEditCommunityPage(): UseEditCommunityPageResult {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
   const navigate = useNavigate()
