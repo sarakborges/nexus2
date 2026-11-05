@@ -12,8 +12,9 @@ import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseCreateCommunityPageResult } from './useCreateCommunityPage.types'
 
-export function useCreateCommunityPage() {
+export function useCreateCommunityPage(): UseCreateCommunityPageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { t } = useTranslations()
