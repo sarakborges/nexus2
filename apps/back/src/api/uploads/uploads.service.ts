@@ -19,7 +19,7 @@ import {
   PENDING_MAX_AGE,
   UPLOAD_REFERENCE
 } from './uploads.constants'
-import { getTotalSize } from './uploads.utils'
+import { detectMime, getTotalSize } from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
@@ -185,7 +185,7 @@ export class UploadsService {
       response.headers.get('content-length'),
       bytes.length
     )
-    const detectedMime = this.storage.detectMime(bytes)
+    const detectedMime = detectMime(bytes)
     const maxSize = record.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
 
     if (
