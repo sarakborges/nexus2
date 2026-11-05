@@ -1015,3 +1015,187 @@ test('private message image access rechecks participant profile links from the m
     error => error.getStatus() === 403 && error.message === 'UPLOAD_ACCESS_DENIED'
   )
 })
+
+
+test('partial upload cleanup continues across buckets and retries failed deletion claims', async t => {
+  const now = Date.now()
+  const editor = {
+    id: 'f23e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/expired.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: now - 24 * 60 * 60 * 1000,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const avatar = {
+    id: 'f23e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/abandoned.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [editor, avatar]
+  })
+  const requests = []
+  let failAvatarBucket = true
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    const target = String(url)
+    requests.push(target)
+    if (failAvatarBucket && target.endsWith('/nexus-avatars')) {
+      return new Response(JSON.stringify({ message: 'Storage unavailable' }), {
+        status: 503,
+        headers: { 'content-type': 'application/json' }
+      })
+    }
+    return new Response(null, { status: 200 })
+  })
+
+  await assert.rejects(
+    service.cleanupExpired(cronSecret),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_CLEANUP_PARTIAL_FAILURE'
+  )
+
+  assert.deepEqual(
+    requests.map(url => url.split('/').pop()),
+    ['nexus-avatars', 'nexus-editor-images']
+  )
+  assert.deepEqual(collections.get('media_files').map(item => ({
+    id: item.id,
+    status: item.status
+  })), [{ id: avatar.id, status: 'deleting' }])
+
+  const originalNow = Date.now
+  Date.now = () => now + 6 * 60 * 1000
+  t.after(() => { Date.now = originalNow })
+  failAvatarBucket = false
+
+  const retry = await service.cleanupExpired(cronSecret)
+
+  assert.equal(retry.deleted, 1)
+  assert.deepEqual(collections.get('media_files'), [])
+  assert.equal(requests.filter(url => url.endsWith('/nexus-avatars')).length, 2)
+})
+
+test('deleteUpload can reclaim a deletion claim after its lease expires', async t => {
+  const now = Date.now()
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174002',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/stale-delete.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'deleting',
+    deletingAt: now - 6 * 60 * 1000,
+    createdAt: now - 7 * 60 * 1000,
+    completedAt: now - 7 * 60 * 1000,
+    expiresAt: now + 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  let deletionCount = 0
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletionCount += 1
+    return new Response(null, { status: 200 })
+  })
+
+  await service.deleteUpload('user-1', file.id)
+
+  assert.equal(deletionCount, 1)
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('Storage unavailability during upload completion remains retryable', async t => {
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174003',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/retry-completion.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'GET')
+    return new Response(JSON.stringify({ message: 'Storage unavailable' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' }
+    })
+  })
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
+test('Storage network failures are normalized and do not silently complete uploads', async t => {
+  const file = {
+    id: 'f23e4567-e89b-42d3-a456-426614174004',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/network-failure.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new TypeError('fetch failed')
+  })
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
