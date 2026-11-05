@@ -51,6 +51,7 @@ const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
 const DELETE_CLAIM_LEASE_MS = 5 * 60 * 1000
+const STORAGE_DELETE_BATCH_SIZE = 1000
 const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
 const ORPHAN_AVATAR_RETENTION_MS = 24 * 60 * 60 * 1000
 
@@ -623,35 +624,47 @@ export class UploadsService {
       const bucketClaims = expired.filter(item => item.bucket === bucket)
       if (!bucketClaims.length) continue
 
-      try {
-        await this.removeObjects(
-          bucket,
-          bucketClaims.map(item => item.path)
+      for (
+        let offset = 0;
+        offset < bucketClaims.length;
+        offset += STORAGE_DELETE_BATCH_SIZE
+      ) {
+        const batchClaims = bucketClaims.slice(
+          offset,
+          offset + STORAGE_DELETE_BATCH_SIZE
         )
-
-        const claimsById = new Map(bucketClaims.map(item => [item.id, item] as const))
-        const remaining = await this.data.update<UploadedFileRecord>(
-          'media_files',
-          currentRecords => currentRecords.filter(item => {
-            const claimed = claimsById.get(item.id)
-            return (
-              !claimed ||
-              item.status !== 'deleting' ||
-              item.deletingAt !== claimed.deletingAt
-            )
-          })
-        )
-        deleted += bucketClaims.filter(claimed =>
-          !remaining.some(item =>
-            item.id === claimed.id &&
-            item.status === 'deleting' &&
-            item.deletingAt === claimed.deletingAt
+        try {
+          await this.removeObjects(
+            bucket,
+            batchClaims.map(item => item.path)
           )
-        ).length
-      } catch {
-        // Keep failed claims in "deleting". A later cleanup or delete retry
-        // can reclaim them after the lease expires.
-        hasFailures = true
+
+          const claimsById = new Map(
+            batchClaims.map(item => [item.id, item] as const)
+          )
+          const remaining = await this.data.update<UploadedFileRecord>(
+            'media_files',
+            currentRecords => currentRecords.filter(item => {
+              const claimed = claimsById.get(item.id)
+              return (
+                !claimed ||
+                item.status !== 'deleting' ||
+                item.deletingAt !== claimed.deletingAt
+              )
+            })
+          )
+          deleted += batchClaims.filter(claimed =>
+            !remaining.some(item =>
+              item.id === claimed.id &&
+              item.status === 'deleting' &&
+              item.deletingAt === claimed.deletingAt
+            )
+          ).length
+        } catch {
+          // Keep failed claims in "deleting". A later cleanup or delete retry
+          // can reclaim them after the lease expires. Continue with later batches.
+          hasFailures = true
+        }
       }
     }
 
