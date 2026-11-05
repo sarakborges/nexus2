@@ -4,18 +4,13 @@ import { JwtService } from '@nestjs/jwt'
 import { createHash, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import type { AccountRecord, JwtPayload, RefreshTokenRecord } from './auth.types'
-
-type RefreshRotation = {
-  id: string
-  userId: string
-  tokenHash: string
-}
-
-type TokenIssueContext =
-  | { kind: 'sign-up' }
-  | { kind: 'sign-in' }
-  | { kind: 'refresh'; rotation: RefreshRotation }
+import type {
+  AccountRecord,
+  JwtPayload,
+  RefreshRotation,
+  RefreshTokenRecord,
+  TokenIssueContext
+} from './auth.types'
 
 @Injectable()
 export class AuthService {
