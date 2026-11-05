@@ -127,47 +127,55 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
-    return this.data.transaction<Profile>(['accounts', 'profiles', 'media_files'], collections => {
-      const accounts = collections.accounts as AccountRecord[]
-      const currentProfiles = collections.profiles as Profile[]
-      const mediaFiles = collections.media_files as UploadedFileRecord[]
-      this.access.assertOwnsInRecords(userId, profileId, accounts, currentProfiles)
+    const result = await this.data.transaction<{ profile: Profile; previousPicture: string | null }>(
+      ['accounts', 'profiles', 'media_files'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const currentProfiles = collections.profiles as Profile[]
+        const mediaFiles = collections.media_files as UploadedFileRecord[]
+        this.access.assertOwnsInRecords(userId, profileId, accounts, currentProfiles)
 
-      const latest = currentProfiles.find(profile => profile.id === profileId)
-      if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
-      if (!name || about.length > 12000 || aboutText.length > 500 ||
-        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-        (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-      if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
-        throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
-      }
+        const latest = currentProfiles.find(profile => profile.id === profileId)
+        if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
+        if (!name || about.length > 12000 || aboutText.length > 500 ||
+          !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+          (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
+        if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
+          throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
+        }
 
-      let nextMediaFiles = mediaFiles
-      if (this.uploads) {
-        if (picture !== latest.picture) {
-          nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
-            nextMediaFiles, userId, picture, 'profile-avatar', 'profile', profileId
+        let nextMediaFiles = mediaFiles
+        if (this.uploads) {
+          if (picture !== latest.picture) {
+            nextMediaFiles = this.uploads.attachAvatarUrlToRecords(
+              nextMediaFiles, userId, picture, 'profile-avatar', 'profile', profileId
+            )
+          }
+          nextMediaFiles = this.uploads.attachEditorImagesToRecords(
+            nextMediaFiles,
+            userId,
+            getNewEditorImages(about, latest.about),
+            'profile',
+            profileId
           )
         }
-        nextMediaFiles = this.uploads.attachEditorImagesToRecords(
-          nextMediaFiles,
-          userId,
-          getNewEditorImages(about, latest.about),
-          'profile',
-          profileId
-        )
-      }
 
-      const updated: Profile = { ...latest, name, url, picture, about }
-      return {
-        records: {
-          ...collections,
-          profiles: currentProfiles.map(profile => profile.id === profileId ? updated : profile),
-          media_files: nextMediaFiles
-        },
-        result: updated
+        const updated: Profile = { ...latest, name, url, picture, about }
+        return {
+          records: {
+            ...collections,
+            profiles: currentProfiles.map(profile => profile.id === profileId ? updated : profile),
+            media_files: nextMediaFiles
+          },
+          result: {
+            profile: updated,
+            previousPicture: picture !== latest.picture ? latest.picture : null
+          }
+        }
       }
-    })
+    )
+    if (result.previousPicture) await this.uploads?.deletePreviousAvatar(result.previousPicture)
+    return result.profile
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {

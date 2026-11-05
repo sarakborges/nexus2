@@ -155,7 +155,7 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
-    return this.data.transaction<Community>(
+    const result = await this.data.transaction<{ community: Community; previousPicture: string | null }>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
       collections => {
         const accounts = collections.accounts as AccountRecord[]
@@ -212,12 +212,16 @@ export class CommunityService {
             communities: communities.map(community => community.id === communityId ? updated : community),
             media_files: nextMediaFiles
           },
-          result: updated
+          result: {
+            community: updated,
+            previousPicture: picture !== latest.picture ? latest.picture : null
+          }
         }
       }
     )
+    if (result.previousPicture) await this.uploads?.deletePreviousAvatar(result.previousPicture)
+    return result.community
   }
-
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
     return this.data.transaction<CommunityRelationship[]>(

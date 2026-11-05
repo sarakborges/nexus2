@@ -218,6 +218,43 @@ test('profile update keeps content and media metadata atomic when an attachment 
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('profile updates delete the previous managed avatar after the profile transaction commits', async () => {
+  const previousPicture = 'https://project.example.supabase.co/storage/v1/object/public/nexus-avatars/profiles/user-1/old.png'
+  const nextPicture = 'https://project.example.supabase.co/storage/v1/object/public/nexus-avatars/profiles/user-1/new.png'
+  let collections
+  const deleted = []
+  const uploads = {
+    attachAvatarUrlToRecords(records) { return records },
+    attachEditorImagesToRecords(records) { return records },
+    async deletePreviousAvatar(url) {
+      assert.equal(collections.get('profiles')[0].picture, nextPicture)
+      deleted.push(url)
+    }
+  }
+  const harness = createHarness({ uploads })
+  collections = harness.collections
+  const original = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: previousPicture,
+    about: '',
+    type: 'social'
+  }
+  collections.set('profiles', [original])
+
+  const updated = await harness.service.updateProfile(harness.account.id, original.id, {
+    name: 'Owner',
+    url: 'owner',
+    picture: nextPicture,
+    about: ''
+  })
+
+  assert.equal(updated.picture, nextPicture)
+  assert.deepEqual(deleted, [previousPicture])
+})
+
 test('community update keeps content and media metadata atomic when an attachment fails', async () => {
   const uploads = {
     attachAvatarUrlToRecords(records) {
@@ -271,6 +308,61 @@ test('community update keeps content and media metadata atomic when an attachmen
 })
 
 
+
+
+test('community updates delete the previous managed avatar after the community transaction commits', async () => {
+  const previousPicture = 'https://project.example.supabase.co/storage/v1/object/public/nexus-avatars/communities/user-1/old.png'
+  const nextPicture = 'https://project.example.supabase.co/storage/v1/object/public/nexus-avatars/communities/user-1/new.png'
+  let collections
+  const deleted = []
+  const uploads = {
+    attachAvatarUrlToRecords(records) { return records },
+    attachEditorImagesToRecords(records) { return records },
+    async deletePreviousAvatar(url) {
+      assert.equal(collections.get('communities')[0].picture, nextPicture)
+      deleted.push(url)
+    }
+  }
+  const harness = createHarness({ uploads })
+  collections = harness.collections
+  const owner = {
+    id: 'existing-profile',
+    name: 'Owner',
+    url: 'owner',
+    picture: '',
+    about: '',
+    type: 'social'
+  }
+  const original = {
+    id: 'community-1',
+    name: 'Community',
+    url: 'community',
+    picture: previousPicture,
+    about: '',
+    type: 'social',
+    privacy: 'public'
+  }
+  collections.set('profiles', [owner])
+  collections.set('communities', [original])
+  collections.set('community_relationships', [{
+    profiles: [owner.id, original.id],
+    type: 'owner',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  const updated = await harness.service.updateCommunity(harness.account.id, original.id, {
+    name: 'Community',
+    url: 'community',
+    picture: nextPicture,
+    about: '',
+    privacy: 'public'
+  })
+
+  assert.equal(updated.picture, nextPicture)
+  assert.deepEqual(deleted, [previousPicture])
+})
 
 test('profile update rechecks account ownership in the transaction that writes profile content', async () => {
   const original = {

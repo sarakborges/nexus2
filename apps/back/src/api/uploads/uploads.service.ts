@@ -736,7 +736,7 @@ export class UploadsService {
       .filter((id, index, ids) => ids.indexOf(id) === index)
   }
 
-  private async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
+  async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
     const path = this.getAvatarPath(previousUrl)
     if (!path) return
     const deletingAt = Date.now()
