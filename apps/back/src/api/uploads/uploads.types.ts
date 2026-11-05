@@ -10,6 +10,16 @@ export type UploadResourceType =
   | 'community-forum-topic'
   | 'community-forum-reply'
 
+export type EditorMessageParticipants = {
+  fromProfileId: string
+  toProfileId: string
+}
+
+export type UploadResourceReference = {
+  resourceType: UploadResourceType
+  resourceId: string
+}
+
 export type UploadedFileRecord = {
   id: string
   ownerUserId: string
