@@ -21,8 +21,8 @@ const PUBLIC_ENTRY_ROUTES = [
 export function useAppInitialization() {
   const { language } = useTranslations()
   const location = useLocation()
-  const shouldInitializeAuth = !PUBLIC_ENTRY_ROUTES.includes(
-    location.pathname as (typeof PUBLIC_ENTRY_ROUTES)[number]
+  const shouldInitializeAuth = !PUBLIC_ENTRY_ROUTES.some(
+    (route) => route === location.pathname
   )
   const setSession = useAuthStore((state) => state.setSession)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
