@@ -148,6 +148,36 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   assert.equal(saved.expiresAt - saved.completedAt, 24 * 60 * 60 * 1000)
 })
 
+test('ready editor completion does not return a URL after the 24-hour deadline', async t => {
+  const file = {
+    id: 'b23e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/expired-ready.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 24 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 1,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new Error('Idempotent completion of an expired upload must not contact Storage')
+  })
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_EXPIRED'
+  )
+})
+
 test('denies editor image access after the 24-hour deadline', async t => {
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174000',

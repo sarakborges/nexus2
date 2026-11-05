@@ -193,7 +193,16 @@ export class UploadsService {
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record = records.find(item => item.id === id && item.ownerUserId === userId)
     if (!record) throw new NotFoundException('UPLOAD_NOT_FOUND')
-    if (record.status === 'ready') return { id, url: this.getUploadUrl(record) }
+    if (record.status === 'ready') {
+      if (
+        record.purpose === 'editor-image' &&
+        record.expiresAt !== null &&
+        record.expiresAt <= Date.now()
+      ) {
+        throw new NotFoundException('UPLOAD_EXPIRED')
+      }
+      return { id, url: this.getUploadUrl(record) }
+    }
     if (record.status !== 'pending') throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.createdAt + PENDING_MAX_AGE <= Date.now()) {
       await this.deleteRecord(record)
