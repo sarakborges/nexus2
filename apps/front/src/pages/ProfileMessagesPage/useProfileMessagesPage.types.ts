@@ -11,6 +11,11 @@ import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatib
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
+export type ProfileMessageViewModel = {
+  message: ProfileMessage
+  sender: Profile | undefined
+}
+
 export type UseProfileMessagesPageResult = {
   requestedUrl: string
   session: AuthSession | null
@@ -27,7 +32,7 @@ export type UseProfileMessagesPageResult = {
   messages: ProfileMessage[]
   totalItems: number
   senderProfilesQuery: UseQueryResult<Profile[]>
-  sendersById: Map<string, Profile>
+  messageItems: ProfileMessageViewModel[]
   canSendMessage: boolean
   canSubmitMessage: boolean
   isSendingMessage: boolean
