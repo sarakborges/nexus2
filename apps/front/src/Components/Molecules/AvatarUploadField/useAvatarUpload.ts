@@ -1,5 +1,7 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
+import type { UseAvatarUploadOptions } from './useAvatarUpload.types'
+
 import { useState } from 'react'
 
 import { useTranslations } from '@/Hooks/Language'
@@ -11,13 +13,6 @@ import {
 } from '@/Services/Uploads'
 import { useToastStore } from '@/Stores/Toast.store'
 
-type UseAvatarUploadOptions = {
-  purpose: 'profile-avatar' | 'community-avatar'
-  onChange: (value: string) => void
-  targetId?: string
-  actorProfileId?: string
-  errorLabel: string
-}
 
 export function useAvatarUpload({
   purpose,
