@@ -2,7 +2,6 @@ import { ConflictException, Inject, Injectable, Optional, UnauthorizedException 
 import { randomUUID } from 'node:crypto'
 import type { PaginatedResult, Profile, ProfileMessage } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import { AuthService } from '../auth/auth.service'
 import { paginate, type PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService, type UploadedFileRecord } from '../uploads/uploads.service'
@@ -13,13 +12,11 @@ import type { AccountRecord } from '../auth/auth.types'
 export class ProfileMessageService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly auth: AuthService,
     private readonly access: DomainAccessService,
     @Optional() private readonly uploads?: UploadsService
   ) {}
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
-    if (userId) await this.auth.getUser(userId)
     return this.data.transaction<PaginatedResult<ProfileMessage>>(
       ['accounts', 'profile_messages'],
       collections => {
@@ -44,12 +41,6 @@ export class ProfileMessageService {
     )
   }
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
-    await this.access.assertOwns(userId, fromProfileId)
-    const initialProfiles = await this.access.readProfiles()
-    this.access.assertSameType(
-      initialProfiles.find(profile => profile.id === fromProfileId),
-      initialProfiles.find(profile => profile.id === toProfileId)
-    )
     const normalized = sanitizeRichText(content)
     const plainText = getRichTextPlainText(normalized)
     const hasImage = /<img\b/i.test(normalized)

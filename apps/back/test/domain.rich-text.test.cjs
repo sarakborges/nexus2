@@ -35,16 +35,11 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }
   }
   const auth = {
-    async ownsProfile(_userId, profileId) {
-      return ownedProfiles.includes(profileId)
+    async ownsProfile() {
+      throw new Error('Profile message flows must use repository snapshot authorization')
     },
-    async getUser(id) {
-      return {
-        id,
-        email: 'user@example.test',
-        profiles: ownedProfiles,
-        currentProfile: ownedProfiles[0] ?? null
-      }
+    async getUser() {
+      throw new Error('Profile message flows must not perform separate auth reads')
     }
   }
   return new DomainService(data, auth, uploads)

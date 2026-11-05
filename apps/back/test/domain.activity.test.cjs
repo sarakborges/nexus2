@@ -45,10 +45,12 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
     }
   }
   const auth = {
-    async getUser(userId) {
-      return { id: userId, email: 'user@example.com', profiles: ownedProfiles, currentProfile: ownedProfiles[0] ?? null }
+    async getUser() {
+      throw new Error('Activity reads must use the account in their repository snapshot')
     },
-    async ownsProfile(userId, profileId) { return ownedProfiles.includes(profileId) }
+    async ownsProfile() {
+      throw new Error('Activity reads must not perform separate profile ownership reads')
+    }
   }
   return new DomainService(data, auth)
 }

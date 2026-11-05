@@ -1,19 +1,16 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type { CommunityRelationship, RecentActivity, Relationship } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import { AuthService } from '../auth/auth.service'
 import { DomainAccessService } from './domain-access.service'
 
 @Injectable()
 export class ActivityService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly auth: AuthService,
     private readonly access: DomainAccessService
   ) {}
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
-    await this.auth.getUser(userId)
     return this.data.transaction<RecentActivity[]>(
       ['accounts', 'profiles', 'communities', 'relationships', 'community_relationships'],
       collections => {
