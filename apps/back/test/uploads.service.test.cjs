@@ -1199,3 +1199,41 @@ test('Storage network failures are normalized and do not silently complete uploa
   )
   assert.equal(collections.get('media_files')[0].status, 'pending')
 })
+
+
+test('expired upload cleanup splits Storage deletion requests at the 1000-object limit', async t => {
+  const now = Date.now()
+  const files = Array.from({ length: 1001 }, (_, index) => ({
+    id: 'a' + String(index).padStart(35, '0'),
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/expired-' + index + '.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: now - 24 * 60 * 60 * 1000,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }))
+  const { service, collections } = createHarness({ media_files: files })
+  const batchSizes = []
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'DELETE')
+    const prefixes = JSON.parse(init.body).prefixes
+    batchSizes.push(prefixes.length)
+    assert.ok(prefixes.length <= 1000)
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.equal(result.deleted, 1001)
+  assert.deepEqual(batchSizes, [1000, 1])
+  assert.deepEqual(collections.get('media_files'), [])
+})
