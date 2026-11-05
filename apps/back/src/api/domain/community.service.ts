@@ -221,6 +221,7 @@ export class CommunityService {
 
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
+    await this.access.readCommunities()
     return this.data.transaction<CommunityRelationship[]>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -259,6 +260,9 @@ export class CommunityService {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<Profile & { role: string }>> {
+    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
+  ): Promise<PaginatedResult<Profile & { role: string }>> {
+    await this.access.readCommunities()
     return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -311,6 +315,7 @@ export class CommunityService {
   }
 
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
+    await this.access.readCommunities()
     return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {

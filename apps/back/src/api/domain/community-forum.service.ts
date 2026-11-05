@@ -33,6 +33,7 @@ export class CommunityForumService {
   ) {}
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
+    await this.access.readCommunities()
     return this.data.transaction<PaginatedResult<CommunityForumTopicSummary>>(
       ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {
@@ -62,6 +63,7 @@ export class CommunityForumService {
   }
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
+    await this.access.readCommunities()
     return this.data.transaction<CommunityForumTopicDetail>(
       ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {
