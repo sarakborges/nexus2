@@ -1,70 +1,28 @@
-import type { Profile } from '@nexus/common'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-
-import { type FormEvent, useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
-
 import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
-import { ROUTES } from '@/Constants/routes'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { getApiErrorCode } from '@/Services/Http/api'
-import { getProfileByUrl, updateUserProfile } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadFile } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
-import { useToastStore } from '@/Stores/Toast.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useEditProfilePage } from './useEditProfilePage'
 
 import '../AuthPage.style.scss'
 
-import type { ProfileForm } from './EditProfilePage.types'
-
 export function EditProfilePage() {
-  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const session = useAuthStore((state) => state.session)
-  const showToast = useToastStore((state) => state.showToast)
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(requestedUrl),
-    queryFn: () => getProfileByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const initializedProfileId = useRef<string | null>(null)
-  const [form, setForm] = useState<ProfileForm | null>(null)
-  const [errorMessage, setErrorMessage] = useState('')
-
-  useEffect(() => {
-    if (!profile || initializedProfileId.current === profile.id) return
-    initializedProfileId.current = profile.id
-    setForm({ name: profile.name, url: profile.url, about: profile.about })
-  }, [profile])
-
-  const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!profile || !form) throw new Error('PROFILE_NOT_READY')
-      return updateUserProfile(profile.id, {
-        name: form.name,
-        url: form.url || undefined,
-        picture: profile.picture,
-        about: form.about
-      })
-    },
-    onSuccess: async (updated) => {
-      queryClient.setQueryData(queryKeys.profiles.byUrl(updated.url), updated)
-      await queryClient.invalidateQueries({ queryKey: ['profiles'] })
-      showToast(t('TOAST_PROFILE_UPDATED'))
-      navigate(ROUTES.profile + '/' + updated.url, { replace: true })
-    }
-  })
+  const {
+    requestedUrl,
+    session,
+    profileQuery,
+    profile,
+    typeCompatibility,
+    form,
+    errorMessage,
+    isSubmitting,
+    updateForm,
+    updateProfilePicture,
+    cancelEdit,
+    handleSubmit
+  } = useEditProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
   if (profileQuery.isLoading)
@@ -112,24 +70,6 @@ export function EditProfilePage() {
       </main>
     )
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setErrorMessage('')
-    try {
-      await updateMutation.mutateAsync()
-    } catch (error) {
-      const code = getApiErrorCode(error)
-      const key =
-        code === 'PROFILE_URL_ALREADY_IN_USE'
-          ? 'PROFILE_ERROR_URL_TAKEN'
-          : code === 'INVALID_PROFILE'
-            ? 'PROFILE_ERROR_INVALID'
-            : 'PROFILE_UPDATE_ERROR'
-      setErrorMessage(t(key))
-      showToast(t(key), 'error')
-    }
-  }
-
   return (
     <main className="auth-page">
       <section
@@ -153,10 +93,7 @@ export function EditProfilePage() {
               purpose="profile-avatar"
               targetId={profile.id}
               onChange={(picture) =>
-                queryClient.setQueryData<Profile>(
-                  queryKeys.profiles.byUrl(profile.url),
-                  (current) => (current ? { ...current, picture } : current)
-                )
+                updateProfilePicture(picture)
               }
               selectLabel={t('UPLOAD_SELECT_IMAGE')}
               changeLabel={t('UPLOAD_CHANGE_IMAGE')}
@@ -172,9 +109,7 @@ export function EditProfilePage() {
               autoComplete="nickname"
               value={form.name}
               onChange={(event) =>
-                setForm((current) =>
-                  current ? { ...current, name: event.target.value } : current
-                )
+                updateForm({ name: event.target.value })
               }
               maxLength={80}
               required
@@ -186,9 +121,7 @@ export function EditProfilePage() {
               placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')}
               value={form.url}
               onChange={(event) =>
-                setForm((current) =>
-                  current ? { ...current, url: event.target.value } : current
-                )
+                updateForm({ url: event.target.value })
               }
               autoComplete="off"
             />
@@ -203,9 +136,7 @@ export function EditProfilePage() {
                 id="profile-about"
                 value={form.about}
                 onChange={(about) =>
-                  setForm((current) =>
-                    current ? { ...current, about } : current
-                  )
+                  updateForm({ about })
                 }
                 maxTextLength={500}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
@@ -229,12 +160,12 @@ export function EditProfilePage() {
             <Button
               type="button"
               variation="secondary"
-              onClick={() => navigate(ROUTES.profile + '/' + profile.url)}
+              onClick={cancelEdit}
             >
               {t('ACTION_CANCEL')}
             </Button>
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
                 ? t('AUTH_SUBMITTING')
                 : t('PROFILE_UPDATE_ACTION')}
             </Button>
@@ -243,4 +174,3 @@ export function EditProfilePage() {
       </section>
     </main>
   )
-}

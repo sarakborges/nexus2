@@ -1,0 +1,126 @@
+import type { CommunityRelationship } from '@nexus/common'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+
+import type { CommunityForm } from './EditCommunityPage.types'
+import { ROUTES } from '@/Constants/routes'
+import { useTranslations } from '@/Hooks/Language'
+import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { getCommunityByUrl, updateCommunity } from '@/Services/Community'
+import { getCommunityRelationships } from '@/Services/CommunityRelationship'
+import { getApiErrorCode } from '@/Services/Http/api'
+import { queryKeys } from '@/Services/Query/queryKeys'
+import { useAuthStore } from '@/Stores/Auth.store'
+import { useToastStore } from '@/Stores/Toast.store'
+
+export function useEditCommunityPage() {
+  const { url } = useParams<{ url: string }>()
+  const { t } = useTranslations()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const session = useAuthStore((state) => state.session)
+  const showToast = useToastStore((state) => state.showToast)
+  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+
+  const communityQuery = useQuery({
+    queryKey: queryKeys.communities.byUrl(requestedUrl),
+    queryFn: () => getCommunityByUrl(requestedUrl),
+    enabled: Boolean(requestedUrl)
+  })
+  const community = communityQuery.data
+  const typeCompatibility = useProfileTypeCompatibility(
+    community?.type ?? 'social'
+  )
+  const relationshipsQuery = useQuery({
+    queryKey: queryKeys.communityRelationships(
+      community?.id ?? '',
+      session?.user.id ?? null
+    ),
+    queryFn: () => getCommunityRelationships(community!.id),
+    enabled: Boolean(community?.id && session?.user.id)
+  })
+  const ownerRelationship =
+    relationshipsQuery.data?.find(
+      (record: CommunityRelationship) => record.type === 'owner'
+    ) ?? null
+  const ownerProfileId = ownerRelationship?.profiles[0] ?? null
+  const initializedCommunityId = useRef<string | null>(null)
+  const [form, setForm] = useState<CommunityForm | null>(null)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (!community || initializedCommunityId.current === community.id) return
+    initializedCommunityId.current = community.id
+    setForm({
+      name: community.name,
+      url: community.url,
+      about: community.about,
+      privacy: community.privacy ?? 'public'
+    })
+  }, [community])
+
+  const updateMutation = useMutation({
+    mutationFn: () => {
+      if (!community || !form) throw new Error('COMMUNITY_NOT_READY')
+      return updateCommunity(community.id, {
+        name: form.name,
+        url: form.url || undefined,
+        picture: community.picture,
+        about: form.about,
+        privacy: form.privacy
+      })
+    },
+    onSuccess: async (updated) => {
+      queryClient.setQueryData(
+        queryKeys.communities.byUrl(updated.url),
+        updated
+      )
+      await queryClient.invalidateQueries({ queryKey: ['communities'] })
+      showToast(t('TOAST_COMMUNITY_UPDATED'))
+      navigate(ROUTES.community + '/' + updated.url, { replace: true })
+    }
+  })
+
+  const updateForm = (patch: Partial<CommunityForm>) => {
+    setForm((current) => current ? { ...current, ...patch } : current)
+  }
+
+  const cancelEdit = () => {
+    if (community) navigate(ROUTES.community + '/' + community.url)
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage('')
+    try {
+      await updateMutation.mutateAsync()
+    } catch (error) {
+      const code = getApiErrorCode(error)
+      const key =
+        code === 'COMMUNITY_URL_ALREADY_IN_USE'
+          ? 'COMMUNITY_ERROR_URL_TAKEN'
+          : code === 'INVALID_COMMUNITY'
+            ? 'COMMUNITY_ERROR_INVALID'
+            : 'COMMUNITY_UPDATE_ERROR'
+      setErrorMessage(t(key))
+      showToast(t(key), 'error')
+    }
+  }
+
+  return {
+    requestedUrl,
+    communityQuery,
+    community,
+    typeCompatibility,
+    relationshipsQuery,
+    ownerProfileId,
+    form,
+    errorMessage,
+    isSubmitting: updateMutation.isPending,
+    updateForm,
+    cancelEdit,
+    handleSubmit
+  }
+}
