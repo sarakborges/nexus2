@@ -9,6 +9,7 @@ import {
   RequestState,
   RichTextEditor
 } from '@/Components'
+import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import {
   CommunitySidebar,
   SocialPageLayout
@@ -35,14 +36,6 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
-
-function hasRichTextContent(value: string): boolean {
-  const text = value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .trim()
-  return Boolean(text || /<img\b/i.test(value))
-}
 
 export function CommunityForumTopicPage() {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
@@ -204,7 +197,7 @@ export function CommunityForumTopicPage() {
     onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
   })
 
-  const submitReply = async (event: FormEvent<HTMLFormElement>) => {
+  const submitReply = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (
       !hasRichTextContent(replyContent) ||
@@ -213,7 +206,7 @@ export function CommunityForumTopicPage() {
       topic?.isLocked
     )
       return
-    await replyMutation.mutateAsync()
+    replyMutation.mutate()
   }
 
   if (!normalized || !topicId) return <NotFoundPage />
