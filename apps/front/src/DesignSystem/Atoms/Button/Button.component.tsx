@@ -1,14 +1,8 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonProps } from './Button.types'
 
 import './Button.style.scss'
-
-export type ButtonVariation = 'primary' | 'secondary' | 'cancel' | 'transparent'
-
-type ButtonProps = {
-  variation?: ButtonVariation
-} & ButtonHTMLAttributes<HTMLButtonElement>
 
 export function Button({
   children,

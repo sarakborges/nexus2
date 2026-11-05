@@ -1,21 +1,13 @@
 import { FiX } from 'react-icons/fi'
 
 import { useEffect, useId, useRef } from 'react'
-import type { MouseEvent, ReactNode, SyntheticEvent } from 'react'
+import type { MouseEvent, SyntheticEvent } from 'react'
 
 import { Text } from '@/DesignSystem/Atoms/Text'
 
-import './Modal.style.scss'
+import type { ModalProps } from './Modal.types'
 
-export type ModalProps = {
-  open: boolean
-  title: string
-  children: ReactNode
-  onClose: () => void
-  closeOnBackdrop?: boolean
-  className?: string
-  closeLabel?: string
-}
+import './Modal.style.scss'
 
 export function Modal({
   open,

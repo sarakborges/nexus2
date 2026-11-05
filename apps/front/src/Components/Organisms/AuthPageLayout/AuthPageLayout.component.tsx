@@ -1,10 +1,10 @@
-import type { PropsWithChildren } from 'react'
-
 import { useTranslations } from '@/Hooks/Language'
+
+import type { AuthPageLayoutProps } from './AuthPageLayout.types'
 
 import './AuthPageLayout.style.scss'
 
-export function AuthPageLayout({ children }: PropsWithChildren) {
+export function AuthPageLayout({ children }: AuthPageLayoutProps) {
   const { t } = useTranslations()
 
   return (

@@ -1,8 +1,6 @@
-import type { LabelHTMLAttributes } from 'react'
+import type { LabelProps } from './Label.types'
 
 import './Label.style.scss'
-
-type LabelProps = LabelHTMLAttributes<HTMLLabelElement>
 
 export function Label({ children, className, ...props }: LabelProps) {
   const classNames = ['label', className].filter(Boolean).join(' ')

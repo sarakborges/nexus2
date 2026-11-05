@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
+
+import type { ToastProps } from './Toast.types'
 
 import './Toast.style.scss'
-
-export type ToastTone = 'info' | 'success' | 'warning' | 'error'
-
-export type ToastProps = {
-  children: ReactNode
-  duration?: number
-  tone?: ToastTone
-  role?: 'status' | 'alert'
-  onDismiss?: () => void
-  className?: string
-}
 
 export function Toast({
   children,

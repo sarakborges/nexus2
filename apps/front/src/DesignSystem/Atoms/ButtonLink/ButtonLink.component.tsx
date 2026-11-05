@@ -1,14 +1,11 @@
-import type { ButtonVariation } from '../Button/Button.component'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
 import type { MouseEvent } from 'react'
-import { Link, type LinkProps } from 'react-router'
+import { Link } from 'react-router'
+
+import type { ButtonLinkProps } from './ButtonLink.types'
 
 import '../Button/Button.style.scss'
-
-type ButtonLinkProps = LinkProps & {
-  variation?: ButtonVariation
-}
 
 export function ButtonLink({
   children,
