@@ -66,7 +66,12 @@ export function useSystemPreferences() {
     getSnapshot,
     getServerSnapshot
   )
-  const [language, theme] = snapshot.split('|') as [Language, Theme]
+  const [languageSnapshot, themeSnapshot] = snapshot.split('|')
+  const language =
+    SUPPORTED_LANGUAGES.find(
+      (supportedLanguage) => supportedLanguage === languageSnapshot
+    ) ?? DEFAULT_LANGUAGE
+  const theme: Theme = themeSnapshot === 'dark' ? 'dark' : 'light'
 
   return { language, theme }
 }

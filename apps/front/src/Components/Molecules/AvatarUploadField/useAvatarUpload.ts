@@ -33,6 +33,18 @@ export function useAvatarUpload({
   const [error, setError] = useState('')
   const [pendingUploadId, setPendingUploadId] = useState<string | null>(null)
 
+  const updateAvatar = (avatarTargetId: string, uploadId: string | null) => {
+    if (purpose === 'profile-avatar') {
+      return updateProfileAvatar(avatarTargetId, uploadId)
+    }
+
+    if (!actorProfileId) {
+      throw new Error('COMMUNITY_ACTOR_PROFILE_REQUIRED')
+    }
+
+    return updateCommunityAvatar(avatarTargetId, actorProfileId, uploadId)
+  }
+
   const handleFileChange = async (file: File) => {
     setError('')
     setIsUploading(true)
@@ -40,14 +52,7 @@ export function useAvatarUpload({
     try {
       const uploaded = await uploadFile(file, purpose, targetId, actorProfileId)
       if (targetId) {
-        const result =
-          purpose === 'profile-avatar'
-            ? await updateProfileAvatar(targetId, uploaded.id)
-            : await updateCommunityAvatar(
-                targetId,
-                actorProfileId!,
-                uploaded.id
-              )
+        const result = await updateAvatar(targetId, uploaded.id)
         setPendingUploadId(null)
         onChange(result.picture)
       } else {
@@ -70,10 +75,7 @@ export function useAvatarUpload({
 
     try {
       if (targetId) {
-        const result =
-          purpose === 'profile-avatar'
-            ? await updateProfileAvatar(targetId, null)
-            : await updateCommunityAvatar(targetId, actorProfileId!, null)
+        const result = await updateAvatar(targetId, null)
         onChange(result.picture)
       } else {
         if (pendingUploadId) await deleteUploadedFile(pendingUploadId)

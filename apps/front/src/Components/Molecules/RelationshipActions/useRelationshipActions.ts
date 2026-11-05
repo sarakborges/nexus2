@@ -47,10 +47,13 @@ export function useRelationshipActions({
     queryKey: isCommunity
       ? queryKeys.communityRelationships(targetId, session?.user.id ?? null)
       : queryKeys.relationships.byProfile(sourceId ?? ''),
-    queryFn: () =>
-      isCommunity
+    queryFn: () => {
+      if (!sourceId) throw new Error('SOURCE_PROFILE_REQUIRED')
+
+      return isCommunity
         ? getCommunityRelationships(targetId)
-        : getRelationships(sourceId!),
+        : getRelationships(sourceId)
+    },
     enabled: canQuery
   })
 
