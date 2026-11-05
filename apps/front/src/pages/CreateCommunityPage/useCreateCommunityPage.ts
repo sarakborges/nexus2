@@ -93,6 +93,7 @@ export function useCreateCommunityPage() {
     setPrivacy,
     errorMessage,
     isSubmitting: createCommunityMutation.isPending,
-    handleSubmit
+    handleSubmit,
+    handleCancel: () => navigate(ROUTES.home)
   }
 }

@@ -24,7 +24,8 @@ export function CreateProfilePage() {
     setType,
     errorMessage,
     isSubmitting,
-    handleSubmit
+    handleSubmit,
+    handleCancel
   } = useCreateProfilePage()
 
   if (!isAuthInitialized) {
@@ -138,11 +139,7 @@ export function CreateProfilePage() {
             <Button
               type="button"
               variation="secondary"
-              onClick={() =>
-                navigate(
-                  user?.profiles.length ? ROUTES.home : ROUTES.gettingStarted
-                )
-              }
+              onClick={handleCancel}
             >
               {t('ACTION_CANCEL')}
             </Button>

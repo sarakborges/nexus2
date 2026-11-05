@@ -23,7 +23,8 @@ export function CreateCommunityPage() {
     setPrivacy,
     errorMessage,
     isSubmitting,
-    handleSubmit
+    handleSubmit,
+    handleCancel
   } = useCreateCommunityPage()
 
   return (
@@ -128,7 +129,7 @@ export function CreateCommunityPage() {
             <Button
               type="button"
               variation="secondary"
-              onClick={() => navigate(ROUTES.home)}
+              onClick={handleCancel}
             >
               {t('ACTION_CANCEL')}
             </Button>

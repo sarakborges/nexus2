@@ -113,6 +113,8 @@ export function useCreateProfilePage() {
     setType,
     errorMessage,
     isSubmitting: createProfileMutation.isPending,
-    handleSubmit
+    handleSubmit,
+    handleCancel: () =>
+      navigate(user?.profiles.length ? ROUTES.home : ROUTES.gettingStarted)
   }
 }
