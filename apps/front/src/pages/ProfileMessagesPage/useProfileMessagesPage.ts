@@ -17,8 +17,9 @@ import {
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.types'
 
-export function useProfileMessagesPage() {
+export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const queryClient = useQueryClient()
@@ -127,7 +128,6 @@ export function useProfileMessagesPage() {
     isSendingMessage: sendMessageMutation.isPending,
     hasSendMessageError: sendMessageMutation.isError,
     isInvalidMessageError: sendMessageMutation.error instanceof ProfileMessageError && sendMessageMutation.error.code === 'INVALID_MESSAGE',
-    sendMessageMutation,
     handleSubmit,
     uploadEditorImage
   }
