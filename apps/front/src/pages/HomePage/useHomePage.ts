@@ -6,8 +6,9 @@ import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getProfileFriends } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseHomePageResult } from './useHomePage.types'
 
-export function useHomePage() {
+export function useHomePage(): UseHomePageResult {
   const session = useAuthStore((state) => state.session)
   const userId = session?.user.id ?? null
   const profileIds = session?.user.profiles ?? []
