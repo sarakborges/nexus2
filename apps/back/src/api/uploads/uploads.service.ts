@@ -788,8 +788,10 @@ export class UploadsService {
       ['media_files'],
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
-        const latest = current.find(item => item.id === id && item.ownerUserId === userId)
-        if (!latest) return { records: collections, result: false }
+        const latest = current.find(item => item.id === id)
+        if (!latest || latest.ownerUserId !== userId) {
+          return { records: collections, result: true }
+        }
 
         if (latest.status === 'deleting' && latest.deleteAfter != null) {
           return { records: collections, result: true }
