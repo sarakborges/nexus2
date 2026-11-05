@@ -1,6 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { useEffect } from 'react'
 import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
@@ -11,40 +8,22 @@ import {
 import { ROUTES } from '@/Constants/routes'
 import { ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunities } from '@/Services/Community'
-import { getProfilesByIds } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useCommunitiesPage } from './useCommunitiesPage'
 
 import '../AuthenticatedPage.style.scss'
 
 export function CommunitiesPage() {
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
-  const profileIds = session?.user.profiles ?? []
-  const currentProfileId = session?.user.currentProfile ?? null
-  const profilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0
-  })
-  const currentProfile =
-    profilesQuery.data?.find((profile) => profile.id === currentProfileId) ??
-    profilesQuery.data?.[0] ??
-    null
-  const { page, pageSize, setPage } = useUrlPagination()
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.list(page, pageSize),
-    queryFn: () => getCommunities({ page, pageSize })
-  })
-  const communities = communitiesQuery.data?.items ?? []
-  const totalItems = communitiesQuery.data?.totalItems ?? 0
-
-  useEffect(() => {
-    if (communitiesQuery.data && communitiesQuery.data.page !== page)
-      setPage(communitiesQuery.data.page)
-  }, [communitiesQuery.data, page, setPage])
+  const {
+    profilesQuery,
+    currentProfile,
+    page,
+    pageSize,
+    setPage,
+    communitiesQuery,
+    communities,
+    totalItems
+  } = useCommunitiesPage()
 
   if (!currentProfile)
     return (

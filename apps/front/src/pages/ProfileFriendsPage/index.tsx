@@ -1,7 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { useEffect } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link } from 'react-router'
 
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import {
@@ -10,47 +7,26 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getProfileByUrl } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfileFriendsPage } from './useProfileFriendsPage'
 
 import '../AuthenticatedPage.style.scss'
 
 export function ProfileFriendsPage() {
-  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(normalized),
-    queryFn: () => getProfileByUrl(normalized),
-    enabled: Boolean(normalized)
-  })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const canInteract =
-    typeCompatibility.isCompatible && !typeCompatibility.isChecking
-  const { page, pageSize, setPage } = useUrlPagination()
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(
-      profile?.id ?? '',
-      page,
-      pageSize
-    ),
-    queryFn: () => getProfileFriends(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
-  })
-  const friends = friendsQuery.data?.items ?? []
-  const totalItems = friendsQuery.data?.totalItems ?? 0
-
-  useEffect(() => {
-    if (friendsQuery.data && friendsQuery.data.page !== page)
-      setPage(friendsQuery.data.page)
-  }, [friendsQuery.data, page, setPage])
+  const {
+    normalized,
+    profileQuery,
+    profile,
+    typeCompatibility,
+    canInteract,
+    page,
+    pageSize,
+    setPage,
+    friendsQuery,
+    friends,
+    totalItems
+  } = useProfileFriendsPage()
 
   if (!normalized) return <NotFoundPage />
   if (profileQuery.isLoading)
