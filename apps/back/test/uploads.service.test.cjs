@@ -3,6 +3,7 @@ const assert = require('node:assert/strict')
 const { UploadsService } = require('../dist/api/uploads/uploads.service.js')
 const { UploadsStorageService } = require('../dist/api/uploads/uploads.storage.service.js')
 const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.service.js')
+const { UploadsContentService } = require('../dist/api/uploads/uploads.content.service.js')
 
 const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 const supabaseUrl = 'https://project.example.supabase.co'
@@ -56,8 +57,9 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
   }
   const storage = new UploadsStorageService(config)
   const cleanup = new UploadsCleanupService(data, config, storage)
+  const content = new UploadsContentService(data, storage)
   return {
-    service: new UploadsService(data, storage, cleanup),
+    service: new UploadsService(data, storage, cleanup, content),
     collections
   }
 }
