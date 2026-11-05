@@ -2,12 +2,10 @@ import { lazy, Suspense } from 'react'
 
 import { Navigate, Route, Routes } from 'react-router'
 
-import {
-  AuthenticatedRoute,
-  OnboardingRoute,
-  ProfileRequiredRoute,
-  RouteLoadingState
-} from './RouteGuards.component'
+import { AuthenticatedRoute } from './AuthenticatedRoute.component'
+import { OnboardingRoute } from './OnboardingRoute.component'
+import { ProfileRequiredRoute } from './ProfileRequiredRoute.component'
+import { RouteLoadingState } from './RouteLoadingState.component'
 
 import { ROUTES } from '@/Constants/routes'
 
