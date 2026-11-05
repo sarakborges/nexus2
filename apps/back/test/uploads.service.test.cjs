@@ -472,7 +472,10 @@ test('avatar draft retention starts when the upload is completed', async () => {
   })
 
   const url = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
-  await service.validateAvatarUrl('user-1', url, 'profile-avatar')
+  const attached = service.attachAvatarUrlToRecords(
+    [file], 'user-1', url, 'profile-avatar', 'profile', 'profile-1'
+  )
+  assert.equal(attached[0].resourceType, 'profile')
   const result = await service.setProfileAvatar('user-1', 'profile-1', file.id)
 
   assert.equal(result.picture, url)
@@ -507,8 +510,10 @@ test('avatar draft validation rejects uploads after 24 hours from completion', a
   })
   const url = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
 
-  await assert.rejects(
-    service.validateAvatarUrl('user-1', url, 'profile-avatar'),
+  assert.throws(
+    () => service.attachAvatarUrlToRecords(
+      [file], 'user-1', url, 'profile-avatar', 'profile', 'profile-1'
+    ),
     error => error.getStatus() === 400 && error.message === 'INVALID_AVATAR_UPLOAD'
   )
   await assert.rejects(

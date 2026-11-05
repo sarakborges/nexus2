@@ -51,7 +51,6 @@ export class ProfileMessageService {
       initialProfiles.find(profile => profile.id === toProfileId)
     )
     const normalized = sanitizeRichText(content)
-    await this.uploads?.validateEditorImages(userId, normalized)
     const plainText = getRichTextPlainText(normalized)
     const hasImage = /<img\b/i.test(normalized)
     const message: ProfileMessage = {
@@ -74,10 +73,6 @@ export class ProfileMessageService {
           profiles.find(profile => profile.id === fromProfileId),
           profiles.find(profile => profile.id === toProfileId)
         )
-        if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
-          throw new ConflictException('INVALID_MESSAGE')
-        }
-
         const nextMediaFiles = this.uploads
           ? this.uploads.attachEditorImagesToRecords(
               mediaFiles,
@@ -88,6 +83,10 @@ export class ProfileMessageService {
               { fromProfileId, toProfileId }
             )
           : mediaFiles
+
+        if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
+          throw new ConflictException('INVALID_MESSAGE')
+        }
         return {
           records: {
             ...collections,

@@ -338,22 +338,6 @@ export class UploadsService {
     return { body, contentType: record.contentType }
   }
 
-  async validateAvatarUrl(
-    userId: string,
-    url: string,
-    purpose: 'profile-avatar' | 'community-avatar'
-  ): Promise<void> {
-    const path = this.getAvatarPath(url)
-    if (!path) return
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
-    if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
-      record.status !== 'ready' || record.resourceType ||
-      !isWithinAvatarDraftRetention(record)) {
-      throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-    }
-  }
-
   attachAvatarUrlToRecords(
     records: UploadedFileRecord[],
     userId: string,
@@ -383,18 +367,6 @@ export class UploadsService {
   ): UploadedFileRecord[] {
     const record = this.getReadyAvatar(records, userId, uploadId, purpose)
     return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
-  }
-
-  async attachAvatarUrl(
-    userId: string,
-    url: string,
-    purpose: 'profile-avatar' | 'community-avatar',
-    resourceType: 'profile' | 'community',
-    resourceId: string
-  ): Promise<void> {
-    await this.data.update<UploadedFileRecord>('media_files', records =>
-      this.attachAvatarUrlToRecords(records, userId, url, purpose, resourceType, resourceId)
-    )
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
@@ -496,13 +468,6 @@ export class UploadsService {
     return { picture: result.picture }
   }
 
-  async validateEditorImages(userId: string, html: string): Promise<void> {
-    const ids = this.extractEditorImageIds(html)
-    if (!ids.length) return
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    for (const id of ids) this.getReadyEditorImage(records, userId, id)
-  }
-
   attachEditorImagesToRecords(
     records: UploadedFileRecord[],
     userId: string,
@@ -540,28 +505,6 @@ export class UploadsService {
       resourceKeys.has(JSON.stringify([item.resourceType, item.resourceId]))
         ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
         : item
-    )
-  }
-
-  async attachEditorImages(
-    userId: string,
-    html: string,
-    resourceType: UploadResourceType,
-    resourceId: string,
-    messageParticipants?: { fromProfileId: string; toProfileId: string }
-  ): Promise<void> {
-    await this.data.update<UploadedFileRecord>('media_files', records =>
-      this.attachEditorImagesToRecords(records, userId, html, resourceType, resourceId, messageParticipants)
-    )
-  }
-
-  async detachResourceAttachments(
-    userId: string | null,
-    resourceType: UploadResourceType,
-    resourceId: string
-  ): Promise<void> {
-    await this.data.update<UploadedFileRecord>('media_files', records =>
-      this.detachResourceAttachmentsFromRecords(records, userId, [{ resourceType, resourceId }])
     )
   }
 
