@@ -1,11 +1,11 @@
 import { Link } from 'react-router'
 
-import { CommunityMemberActions, Pagination, RequestState } from '@/Components'
+import { Pagination, RequestState } from '@/Components'
+import { CommunityMemberEntry } from './CommunityMemberEntry.component'
 import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -14,7 +14,7 @@ import { useCommunityMembersPage } from './useCommunityMembersPage'
 import '../AuthenticatedPage.style.scss'
 import './CommunityMembersPage.style.scss'
 
-import type { Member, MemberTab } from './CommunityMembersPage.types'
+import type { MemberTab } from './CommunityMembersPage.types'
 
 export function CommunityMembersPage() {
   const { t } = useTranslations()
@@ -83,59 +83,6 @@ export function CommunityMembersPage() {
       </main>
     )
 
-  const renderMember = (profile: Member) => {
-    const roleKey =
-      profile.role === 'owner'
-        ? 'COMMUNITY_ROLE_OWNER'
-        : profile.role === 'moderator'
-          ? 'COMMUNITY_ROLE_MODERATOR'
-          : profile.role === 'connection'
-            ? 'COMMUNITY_ROLE_MEMBER'
-            : null
-    const relationship =
-      relationships.find(
-        (record) =>
-          record.profiles[0] === profile.id &&
-          record.profiles[1] === community.id
-      ) ?? null
-    return (
-      <article className="account-card__profile-entry" key={profile.id}>
-        <Link
-          className="account-card__profile-entry-identity"
-          to={ROUTES.profile + '/' + profile.url}
-        >
-          <span className="account-card__profile-entry-avatar">
-            {profile.picture ? (
-              <img src={profile.picture} alt="" />
-            ) : (
-              <span aria-hidden="true">
-                {profile.name.trim().charAt(0).toUpperCase()}
-              </span>
-            )}
-          </span>
-          <span className="account-card__profile-entry-copy">
-            <span className="account-card__link">{profile.name}</span>
-            <span className="account-card__profile-entry-secondary">
-              @{profile.url}
-            </span>
-            {roleKey && (
-              <span className="community-member__role">{t(roleKey)}</span>
-            )}
-          </span>
-        </Link>
-        {isStaff && actorProfileId && profile.role !== 'owner' && (
-          <CommunityMemberActions
-            memberProfileId={profile.id}
-            communityId={community.id}
-            actorProfileId={actorProfileId}
-            actorRole={currentRole as 'owner' | 'moderator'}
-            relationship={relationship}
-          />
-        )}
-      </article>
-    )
-  }
-
   const tabs: Array<{ id: MemberTab; label: string }> = [
     { id: 'all', label: t('COMMUNITY_TAB_ALL') },
     ...(isStaff
@@ -180,7 +127,17 @@ export function CommunityMembersPage() {
               onRetry={() => void pendingQuery.refetch()}
             >
               <div className="account-card__profile-list account-card__profile-list--grid">
-                {pending.map(renderMember)}
+                {pending.map((profile) => (
+                  <CommunityMemberEntry
+                    key={profile.id}
+                    profile={profile}
+                    relationships={relationships}
+                    communityId={community.id}
+                    actorProfileId={actorProfileId}
+                    actorRole={currentRole}
+                    isStaff={isStaff}
+                  />
+                ))}
               </div>
             </RequestState>
             {totalPending > pendingPageSize && (
@@ -239,7 +196,17 @@ export function CommunityMembersPage() {
             onRetry={() => void membersQuery.refetch()}
           >
             <div className="account-card__profile-list account-card__profile-list--grid">
-              {members.map(renderMember)}
+              {members.map((profile) => (
+                <CommunityMemberEntry
+                  key={profile.id}
+                  profile={profile}
+                  relationships={relationships}
+                  communityId={community.id}
+                  actorProfileId={actorProfileId}
+                  actorRole={currentRole}
+                  isStaff={isStaff}
+                />
+              ))}
             </div>
           </RequestState>
           <Pagination
