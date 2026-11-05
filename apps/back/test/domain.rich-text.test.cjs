@@ -101,14 +101,11 @@ test('sanitizes legacy profile, community, and message HTML on reads', async () 
   assert.doesNotMatch(messages.items[0].content, /iframe|unsafe/i)
 })
 
-test('validates and attaches uploaded image references when saving a profile message', async () => {
+test('validates and attaches uploaded image references in the message transaction', async () => {
   const imageId = '123e4567-e89b-42d3-a456-426614174000'
   const imageReference = '/api/uploads/' + imageId + '/content'
   const calls = []
   const uploads = {
-    async validateEditorImages(userId, html) {
-      calls.push({ method: 'validate', userId, html })
-    },
     attachEditorImagesToRecords(records, userId, html, resourceType, resourceId, participants) {
       calls.push({ method: 'attach', userId, html, resourceType, resourceId, participants })
       return records
@@ -130,12 +127,12 @@ test('validates and attaches uploaded image references when saving a profile mes
     '<p>Hello</p><img src="' + imageReference + '" alt="Uploaded">'
   )
 
-  assert.equal(calls[0].method, 'validate')
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].method, 'attach')
   assert.ok(calls[0].html.includes(imageReference))
-  assert.equal(calls[1].method, 'attach')
-  assert.equal(calls[1].resourceType, 'profile-message')
-  assert.equal(calls[1].resourceId, message.id)
-  assert.deepEqual(calls[1].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
+  assert.equal(calls[0].resourceType, 'profile-message')
+  assert.equal(calls[0].resourceId, message.id)
+  assert.deepEqual(calls[0].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
 })
 
 
