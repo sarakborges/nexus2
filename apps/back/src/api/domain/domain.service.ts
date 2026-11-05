@@ -18,6 +18,7 @@ import type {
   RelationshipType
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import type { CommunityMemberProfile, ForumTopicModerationChanges } from './domain.types'
 import { AuthService } from '../auth/auth.service'
 import { PaginationDto } from '../pagination/pagination.dto'
 import { UploadsService } from '../uploads/uploads.service'
@@ -129,7 +130,7 @@ export class DomainService {
     q: PaginationDto,
     userId: string | null,
     actorProfileId?: string
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
+  ): Promise<PaginatedResult<CommunityMemberProfile>> {
     return this.communities.listCommunityMembers(communityId, tab, q, userId, actorProfileId)
   }
 
@@ -138,7 +139,7 @@ export class DomainService {
     communityId: string,
     actorProfileId: string,
     q: PaginationDto
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
+  ): Promise<PaginatedResult<CommunityMemberProfile>> {
     return this.communities.listPendingMembers(userId, communityId, actorProfileId, q)
   }
 
@@ -210,7 +211,7 @@ export class DomainService {
     communityId: string,
     topicId: string,
     profileId: string,
-    changes: { isPinned?: boolean; isLocked?: boolean }
+    changes: ForumTopicModerationChanges
   ): Promise<CommunityForumTopic> {
     return this.forum.moderateCommunityForumTopic(userId, communityId, topicId, profileId, changes)
   }
