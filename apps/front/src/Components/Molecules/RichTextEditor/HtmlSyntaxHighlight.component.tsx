@@ -1,8 +1,10 @@
 import { Fragment, type ReactNode } from 'react'
 
+import type { HtmlSyntaxHighlightProps } from './HtmlSyntaxHighlight.types'
+
 function highlightTag(tag: string, key: number): ReactNode {
   const match = tag.match(/^(<\/?)([A-Za-z][\w:-]*)([\s\S]*?)(\/?>)$/)
-  if (!match)
+  if (!match) {
     return (
       <span
         className="rich-text-editor__token rich-text-editor__token--tag"
@@ -11,6 +13,7 @@ function highlightTag(tag: string, key: number): ReactNode {
         {tag}
       </span>
     )
+  }
 
   const [, opening, name, rawAttributes, closing] = match
   const attributes: ReactNode[] = []
@@ -21,7 +24,10 @@ function highlightTag(tag: string, key: number): ReactNode {
 
   for (const attribute of rawAttributes.matchAll(attributePattern)) {
     const start = attribute.index ?? 0
-    if (start > cursor) attributes.push(rawAttributes.slice(cursor, start))
+    if (start > cursor) {
+      attributes.push(rawAttributes.slice(cursor, start))
+    }
+
     attributes.push(
       <Fragment key={attributeIndex++}>
         <span className="rich-text-editor__token rich-text-editor__token--attribute">
@@ -38,8 +44,10 @@ function highlightTag(tag: string, key: number): ReactNode {
     cursor = start + attribute[0].length
   }
 
-  if (cursor < rawAttributes.length)
+  if (cursor < rawAttributes.length) {
     attributes.push(rawAttributes.slice(cursor))
+  }
+
   return (
     <Fragment key={key}>
       <span className="rich-text-editor__token rich-text-editor__token--tag">
@@ -56,7 +64,7 @@ function highlightTag(tag: string, key: number): ReactNode {
   )
 }
 
-export function renderHtmlSyntaxHighlight(source: string): ReactNode[] {
+export function HtmlSyntaxHighlight({ source }: HtmlSyntaxHighlightProps) {
   const pattern =
     /<!--[\s\S]*?-->|<!doctype\b[^>]*>|<\/?[A-Za-z][^>]*>|&(?:#\d+|#x[\da-f]+|[A-Za-z][\w]+);/gi
   const pieces: ReactNode[] = []
@@ -66,6 +74,7 @@ export function renderHtmlSyntaxHighlight(source: string): ReactNode[] {
   for (const match of source.matchAll(pattern)) {
     const start = match.index ?? 0
     if (start > cursor) pieces.push(source.slice(cursor, start))
+
     const token = match[0]
     if (token.startsWith('<!--')) {
       pieces.push(
@@ -97,10 +106,12 @@ export function renderHtmlSyntaxHighlight(source: string): ReactNode[] {
     } else {
       pieces.push(highlightTag(token, key++))
     }
+
     cursor = start + token.length
   }
 
   if (cursor < source.length) pieces.push(source.slice(cursor))
   if (source.endsWith('\n')) pieces.push('\u200b')
-  return pieces
+
+  return <>{pieces}</>
 }

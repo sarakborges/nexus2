@@ -1,5 +1,5 @@
 import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
-import { renderHtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
+import { HtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
 
 import { type UIEvent, useRef } from 'react'
 
@@ -39,7 +39,7 @@ export function HtmlSourceEditor({
           className="rich-text-editor__highlight"
           aria-hidden="true"
         >
-          {renderHtmlSyntaxHighlight(value)}
+          <HtmlSyntaxHighlight source={value} />
         </pre>
         <textarea
           id={id + '-html-source'}
