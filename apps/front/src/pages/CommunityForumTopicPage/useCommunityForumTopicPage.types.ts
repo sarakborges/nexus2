@@ -15,10 +15,8 @@ import type { Dispatch, FormEvent, SetStateAction } from 'react'
 
 import type { useTranslations } from '@/Hooks/Language'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
-import type { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import type { getCommunityByUrl } from '@/Services/Community'
-import type { getCommunityForumTopic, createCommunityForumReply, moderateCommunityForumTopic, deleteCommunityForumTopic, deleteCommunityForumReply } from '@/Services/CommunityForum'
-import type { getProfilesByIds } from '@/Services/Profile'
+import type { createCommunityForumReply, moderateCommunityForumTopic, deleteCommunityForumTopic, deleteCommunityForumReply } from '@/Services/CommunityForum'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
 export type CommunityForumTopicModerationChanges = {
