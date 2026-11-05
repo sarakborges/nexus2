@@ -14,8 +14,9 @@ import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseCreateCommunityForumTopicPageResult } from './useCreateCommunityForumTopicPage.types'
 
-export function useCreateCommunityForumTopicPage() {
+export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopicPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
