@@ -17,16 +17,21 @@ import {
   EDITOR_RETENTION_MS,
   MIME_EXTENSIONS,
   PENDING_MAX_AGE,
-  UPLOAD_REFERENCE
 } from './uploads.constants'
 import { detectMime, getTotalSize } from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
 import { UploadsAvatarService } from './uploads.avatar.service'
+import {
+  attachEditorImages,
+  detachResourceAttachments
+} from './uploads.attachments'
 import type {
   CreateUploadInput,
   SignedUploadResponse,
+  EditorMessageParticipants,
+  UploadResourceReference,
   UploadResourceType,
   UploadedFileRecord
 } from './uploads.types'
@@ -282,62 +287,21 @@ export class UploadsService {
     html: string,
     resourceType: UploadResourceType,
     resourceId: string,
-    messageParticipants?: { fromProfileId: string; toProfileId: string }
+    messageParticipants?: EditorMessageParticipants
   ): UploadedFileRecord[] {
-    const ids = this.extractEditorImageIds(html)
-    if (!ids.length) return records
-    const idSet = new Set(ids)
-    for (const id of ids) this.getReadyEditorImage(records, userId, id)
-    return records.map(item => idSet.has(item.id)
-      ? {
-          ...item,
-          resourceType,
-          resourceId,
-          messageFromProfileId: messageParticipants?.fromProfileId ?? null,
-          messageToProfileId: messageParticipants?.toProfileId ?? null
-        }
-      : item)
+    return attachEditorImages(records, userId, html, resourceType, resourceId, messageParticipants)
   }
 
   detachResourceAttachmentsFromRecords(
     records: UploadedFileRecord[],
     userId: string | null,
-    resources: Array<{ resourceType: UploadResourceType; resourceId: string }>
+    resources: UploadResourceReference[]
   ): UploadedFileRecord[] {
-    if (!resources.length) return records
-    const resourceKeys = new Set(resources.map(resource =>
-      JSON.stringify([resource.resourceType, resource.resourceId])
-    ))
-    return records.map(item =>
-      (!userId || item.ownerUserId === userId) &&
-      resourceKeys.has(JSON.stringify([item.resourceType, item.resourceId]))
-        ? { ...item, resourceType: null, resourceId: null, messageFromProfileId: null, messageToProfileId: null }
-        : item
-    )
+    return detachResourceAttachments(records, userId, resources)
   }
 
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {
     return this.cleanup.cleanupExpired(suppliedSecret)
-  }
-
-  private getReadyEditorImage(records: UploadedFileRecord[], userId: string, id: string): UploadedFileRecord {
-    const file = records.find(item =>
-      item.id === id &&
-      item.ownerUserId === userId &&
-      item.purpose === 'editor-image' &&
-      item.status === 'ready'
-    )
-    if (!file || (file.expiresAt !== null && file.expiresAt <= Date.now())) {
-      throw new BadRequestException('INVALID_EDITOR_IMAGE')
-    }
-    if (file.resourceType) throw new BadRequestException('EDITOR_IMAGE_ALREADY_ATTACHED')
-    return file
-  }
-
-  private extractEditorImageIds(html: string): string[] {
-    return [...html.matchAll(UPLOAD_REFERENCE)]
-      .map(match => match[2])
-      .filter((id, index, ids) => ids.indexOf(id) === index)
   }
 
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
