@@ -659,7 +659,7 @@ test('private message image access rechecks participant profile links from the m
       ])
     }
   })
-  withFetch({ after() {} }, async () => {
+  withFetch(t, async () => {
     throw new Error('Unauthorized storage objects must not be fetched')
   })
 
