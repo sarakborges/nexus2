@@ -8,7 +8,6 @@ import type {
   Profile
 } from '@nexus/common'
 import type {
-  UseMutationResult,
   UseQueryResult
 } from '@tanstack/react-query'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
@@ -16,7 +15,6 @@ import type { Dispatch, FormEvent, SetStateAction } from 'react'
 import type { useTranslations } from '@/Hooks/Language'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { getCommunityByUrl } from '@/Services/Community'
-import type { createCommunityForumReply, moderateCommunityForumTopic, deleteCommunityForumTopic, deleteCommunityForumReply } from '@/Services/CommunityForum'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
 export type CommunityForumTopicModerationChanges = {
@@ -24,22 +22,11 @@ export type CommunityForumTopicModerationChanges = {
   isLocked?: boolean
 }
 
-type ReplyMutation = Pick<
-  UseMutationResult<Awaited<ReturnType<typeof createCommunityForumReply>>, Error, void, unknown>,
-  'isError' | 'isPending'
->
-type ModerationMutation = Pick<
-  UseMutationResult<Awaited<ReturnType<typeof moderateCommunityForumTopic>>, Error, CommunityForumTopicModerationChanges, unknown>,
-  'mutate' | 'isPending'
->
-type DeleteTopicMutation = Pick<
-  UseMutationResult<Awaited<ReturnType<typeof deleteCommunityForumTopic>>, Error, void, unknown>,
-  'mutate' | 'isPending'
->
-type DeleteReplyMutation = Pick<
-  UseMutationResult<Awaited<ReturnType<typeof deleteCommunityForumReply>>, Error, string, unknown>,
-  'mutate' | 'isPending'
->
+export type CommunityForumReplyViewModel = {
+  reply: CommunityForumReply
+  author: Profile | undefined
+  canDelete: boolean
+}
 
 export type UseCommunityForumTopicPageResult = {
   topicId: string | undefined
@@ -63,13 +50,19 @@ export type UseCommunityForumTopicPageResult = {
   topicQuery: UseQueryResult<CommunityForumTopicDetail>
   detail: CommunityForumTopicDetail | undefined
   topic: CommunityForumTopic | undefined
-  replies: CommunityForumReply[]
+  topicAuthor: Profile | undefined
+  canDeleteTopic: boolean
+  replyItems: CommunityForumReplyViewModel[]
   authorsQuery: UseQueryResult<Profile[]>
-  authorsById: Map<string, Profile>
-  replyMutation: ReplyMutation
-  moderationMutation: ModerationMutation
-  deleteTopicMutation: DeleteTopicMutation
-  deleteReplyMutation: DeleteReplyMutation
+  hasReplyError: boolean
+  isSendingReply: boolean
+  isUpdatingTopic: boolean
+  isDeletingTopic: boolean
+  isDeletingReply: boolean
+  togglePinned: () => void
+  toggleLocked: () => void
+  deleteTopic: () => void
+  deleteReply: (replyId: string) => void
   submitReply: (event: FormEvent<HTMLFormElement>) => Promise<void>
   uploadEditorImage: typeof uploadEditorImage
 }
