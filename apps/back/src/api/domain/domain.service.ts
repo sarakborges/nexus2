@@ -47,7 +47,7 @@ export class DomainService {
     @Optional() messages?: ProfileMessageService,
     @Optional() activity?: ActivityService
   ) {
-    const domainAccess = access ?? new DomainAccessService(data, auth)
+    const domainAccess = access ?? new DomainAccessService(data)
     this.profiles = profiles ?? new ProfileService(data, auth, domainAccess, uploads)
     this.communities = communities ?? new CommunityService(data, auth, domainAccess, uploads)
     this.forum = forum ?? new CommunityForumService(data, domainAccess, uploads)

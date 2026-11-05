@@ -1,15 +1,13 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import type { Community, CommunityRelationship, CommunityRelationshipType, Profile } from '@nexus/common'
 import { DATA_REPOSITORY, type CollectionRecordMap, type DataRepository } from '../../storage/repository.interface'
-import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
 @Injectable()
 export class DomainAccessService {
   constructor(
-    @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly auth: AuthService
+    @Inject(DATA_REPOSITORY) private readonly data: DataRepository
   ) {}
 
   async readProfiles(): Promise<Profile[]> {
@@ -159,21 +157,6 @@ export class DomainAccessService {
     }
   }
 
-  async assertOwns(
-    userId: string,
-    profileId: string,
-    options: { allowDifferentActiveType?: boolean } = {}
-  ): Promise<void> {
-    if (!await this.auth.ownsProfile(userId, profileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
-    const user = await this.auth.getUser(userId)
-    if (!user.currentProfile || options.allowDifferentActiveType) return
-    const profiles = await this.readProfiles()
-    const currentProfile = profiles.find(profile => profile.id === user.currentProfile)
-    const targetProfile = profiles.find(profile => profile.id === profileId)
-    if (currentProfile && targetProfile && currentProfile.type !== targetProfile.type) {
-      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-    }
-  }
 
   assertSameType(source?: Profile, target?: Profile | Community): void {
     if (!source || !target) throw new NotFoundException('PROFILE_NOT_FOUND')
