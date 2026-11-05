@@ -8,7 +8,18 @@ const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
 
 function createHarness(initial = {}, activeProfileId = null, beforeTransaction) {
-  const collections = new Map(Object.entries(initial))
+  const defaultAccounts = [
+    { id: 'sender-user', email: 'sender@example.test', profiles: ['sender-profile'], currentProfile: 'sender-profile' },
+    { id: 'recipient-user', email: 'recipient@example.test', profiles: ['recipient-profile'], currentProfile: 'recipient-profile' },
+    { id: 'community-member-user', email: 'member@example.test', profiles: ['community-member-profile'], currentProfile: 'community-member-profile' },
+    { id: 'outsider-user', email: 'outsider@example.test', profiles: [], currentProfile: null },
+    { id: 'author-user', email: 'author@example.test', profiles: [], currentProfile: null },
+    { id: 'user-1', email: 'user@example.test', profiles: activeProfileId ? [activeProfileId] : [], currentProfile: activeProfileId }
+  ]
+  const collections = new Map(Object.entries({
+    accounts: defaultAccounts,
+    ...initial
+  }))
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
@@ -574,4 +585,86 @@ test('community avatar write rechecks staff role in the community/media transact
     error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
   )
   assert.deepEqual(collections.get('communities'), [original])
+})
+
+
+test('private community image access rechecks membership from the storage-read snapshot', async () => {
+  const file = {
+    id: '623e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/private.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community',
+    resourceId: 'private-community',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    communities: [{ id: 'private-community', privacy: 'private' }],
+    community_relationships: [
+      { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
+    ]
+  }, null, (names, current) => {
+    if (names.includes('communities')) {
+      current.set('community_relationships', [])
+    }
+  })
+  withFetch({ after() {} }, async () => {
+    throw new Error('Unauthorized storage objects must not be fetched')
+  })
+
+  await assert.rejects(
+    service.getEditorImage('community-member-user', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
+  )
+})
+
+test('private message image access rechecks participant profile links from the message snapshot', async () => {
+  const file = {
+    id: '723e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'sender-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/sender-user/private-message.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'profile-message',
+    resourceId: 'message-2',
+    messageFromProfileId: 'sender-profile',
+    messageToProfileId: 'recipient-profile'
+  }
+  const message = { id: 'message-2', fromProfileId: 'sender-profile', toProfileId: 'recipient-profile' }
+  const { service } = createHarness({
+    media_files: [file],
+    profile_messages: [message]
+  }, null, (names, current) => {
+    if (names.includes('profile_messages')) {
+      current.set('accounts', [
+        { id: 'sender-user', email: 'sender@example.test', profiles: [], currentProfile: null },
+        { id: 'recipient-user', email: 'recipient@example.test', profiles: ['recipient-profile'], currentProfile: 'recipient-profile' }
+      ])
+    }
+  })
+  withFetch({ after() {} }, async () => {
+    throw new Error('Unauthorized storage objects must not be fetched')
+  })
+
+  await assert.rejects(
+    service.getEditorImage('sender-user', file.id),
+    error => error.getStatus() === 403 && error.message === 'UPLOAD_ACCESS_DENIED'
+  )
 })

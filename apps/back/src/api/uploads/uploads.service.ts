@@ -4,7 +4,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException
+  ServiceUnavailableException,
+  UnauthorizedException
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
@@ -517,41 +518,60 @@ export class UploadsService {
     }
 
     if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
-    const user = await this.auth.getUser(userId)
-    const messages = await this.data.read<{
-      id: string
-      fromProfileId: string
-      toProfileId: string
-    }>('profile_messages')
-    const message = messages.find(item => item.id === record.resourceId)
-    if (!message ||
-      message.fromProfileId !== record.messageFromProfileId ||
-      message.toProfileId !== record.messageToProfileId) {
-      throw new NotFoundException('UPLOAD_NOT_FOUND')
-    }
-    const participants = [message.fromProfileId, message.toProfileId]
-    if (!user.profiles.some(profileId => participants.includes(profileId))) {
-      throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
-    }
+    await this.auth.getUser(userId)
+    await this.data.transaction(
+      ['accounts', 'profile_messages'],
+      collections => {
+        const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const messages = collections.profile_messages as Array<{
+          id: string
+          fromProfileId: string
+          toProfileId: string
+        }>
+        const message = messages.find(item => item.id === record.resourceId)
+        if (!message ||
+          message.fromProfileId !== record.messageFromProfileId ||
+          message.toProfileId !== record.messageToProfileId) {
+          throw new NotFoundException('UPLOAD_NOT_FOUND')
+        }
+        const participants = [message.fromProfileId, message.toProfileId]
+        if (!account.profiles.some(profileId => participants.includes(profileId))) {
+          throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+        }
+        return { records: collections, result: undefined }
+      }
+    )
   }
 
   private async assertCanReadCommunityResource(userId: string | null, communityId: string): Promise<void> {
-    const communities = await this.data.read<{ id: string; privacy?: string }>('communities')
-    const community = communities.find(item => item.id === communityId)
-    if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
-    if (community.privacy !== 'private') return
-    if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    await this.data.transaction(
+      ['accounts', 'communities', 'community_relationships'],
+      collections => {
+        const communities = collections.communities as Array<{ id: string; privacy?: string }>
+        const community = communities.find(item => item.id === communityId)
+        if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        if (community.privacy !== 'private') {
+          return { records: collections, result: undefined }
+        }
+        if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
 
-    const [user, relationships] = await Promise.all([
-      this.auth.getUser(userId),
-      this.data.read<{ profiles: [string, string]; type: string }>('community_relationships')
-    ])
-    const canRead = relationships.some(record =>
-      record.profiles[1] === communityId &&
-      user.profiles.includes(record.profiles[0]) &&
-      ['owner', 'moderator', 'connection'].includes(record.type)
+        const accounts = collections.accounts as AccountRecord[]
+        const account = accounts.find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const ownedProfiles = new Set(account.profiles)
+        const relationships = collections.community_relationships as Array<{
+          profiles: [string, string]; type: string
+        }>
+        const canRead = relationships.some(record =>
+          record.profiles[1] === communityId &&
+          ownedProfiles.has(record.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(record.type)
+        )
+        if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        return { records: collections, result: undefined }
+      }
     )
-    if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
   }
 
   private assertOwnsProfileInRecords(
