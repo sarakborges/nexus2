@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
 import type { Member, MemberTab } from './CommunityMembersPage.types'
+import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
@@ -16,7 +17,7 @@ import {
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 
-export function useCommunityMembersPage() {
+export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const session = useAuthStore((state) => state.session)
