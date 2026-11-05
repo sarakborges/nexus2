@@ -8,8 +8,9 @@ import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getProfileFriends } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseProfilePageResult } from './useProfilePage.types'
 
-export function useProfilePage() {
+export function useProfilePage(): UseProfilePageResult {
   const { url } = useParams<{ url: string }>()
   const session = useAuthStore((state) => state.session)
   const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
