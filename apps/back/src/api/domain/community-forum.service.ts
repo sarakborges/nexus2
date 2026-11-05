@@ -18,6 +18,7 @@ import type {
   Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import type { ForumTopicModerationChanges, ForumTopicModerationChanges } from './domain.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
@@ -194,7 +195,7 @@ export class CommunityForumService {
     return reply
   }
 
-  async moderateCommunityForumTopic(userId: string, communityId: string, topicId: string, profileId: string, changes: { isPinned?: boolean; isLocked?: boolean }): Promise<CommunityForumTopic> {
+  async moderateCommunityForumTopic(userId: string, communityId: string, topicId: string, profileId: string, changes: ForumTopicModerationChanges): Promise<CommunityForumTopic> {
     const now = Date.now()
     return this.data.transaction<CommunityForumTopic>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics'],
