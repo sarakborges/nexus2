@@ -14,8 +14,9 @@ import {
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseCommunityPageResult } from './useCommunityPage.types'
 
-export function useCommunityPage() {
+export function useCommunityPage(): UseCommunityPageResult {
   const { url } = useParams<{ url: string }>()
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
