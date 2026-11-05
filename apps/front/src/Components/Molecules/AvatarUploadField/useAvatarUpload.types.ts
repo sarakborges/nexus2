@@ -6,9 +6,12 @@ export type UseAvatarUploadOptions = {
   errorLabel: string
 }
 
+import type { ChangeEvent } from 'react'
+
 export type UseAvatarUploadController = {
   busy: boolean
   error: string
   handleFileChange: (file: File) => Promise<void>
+  handleInputChange: (event: ChangeEvent<HTMLInputElement>) => void
   handleRemove: () => Promise<void>
 }
