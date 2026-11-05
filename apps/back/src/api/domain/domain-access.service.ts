@@ -199,6 +199,32 @@ export class DomainAccessService {
     )
   }
 
+  assertCommunityReadableInRecords(
+    communityId: string,
+    userId: string | null,
+    accounts: readonly AccountRecord[],
+    communities: readonly Community[],
+    relationships: readonly CommunityRelationship[]
+  ): void {
+    const community = communities.find(item => item.id === communityId)
+    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+      ? community.privacy
+      : 'public'
+    if (privacy !== 'private') return
+    if (!userId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+
+    const account = accounts.find(item => item.id === userId)
+    if (!account) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    const ownedProfiles = new Set(account.profiles)
+    const canRead = relationships.some(record =>
+      record.profiles[1] === communityId &&
+      ownedProfiles.has(record.profiles[0]) &&
+      ['owner', 'moderator', 'connection'].includes(record.type)
+    )
+    if (!canRead) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+  }
+
   async assertCommunityReadable(communityId: string, userId: string | null): Promise<void> {
     const community = (await this.readCommunities()).find(item => item.id === communityId)
     if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')

@@ -272,3 +272,23 @@ test('sending a profile message rechecks sender ownership in the message transac
   )
   assert.deepEqual(collections.get('profile_messages'), [])
 })
+
+test('private forum listing reads membership and topics from the same snapshot', async () => {
+  const { service, collections } = harness(
+    { memberUser: ['member'] },
+    null,
+    (names, current) => {
+      if (names.includes('community_forum_topics')) {
+        current.set('communities', [{ ...community, privacy: 'private' }])
+        current.set('community_relationships', [relationship('owner', 'owner')])
+      }
+    }
+  )
+  collections.set('communities', [{ ...community, privacy: 'private' }])
+
+  await assert.rejects(
+    service.listCommunityForumTopics(communityId, page, 'memberUser'),
+    error => error.getStatus() === 404 && error.message === 'COMMUNITY_NOT_FOUND'
+  )
+})
+

@@ -33,25 +33,62 @@ export class CommunityForumService {
   ) {}
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
-    await this.access.assertCommunityReadable(communityId, userId)
-    const [topics, replies] = await Promise.all([this.data.read<CommunityForumTopic>('community_forum_topics'), this.data.read<CommunityForumReply>('community_forum_replies')])
-    const replyCounts = new Map<string, number>()
-    for (const reply of replies) replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
-    const visible = topics.filter(topic => topic.communityId === communityId)
-      .map(topic => ({ ...topic, replyCount: replyCounts.get(topic.id) ?? 0 }))
-      .sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-    return paginate(visible, q)
+    return this.data.transaction<PaginatedResult<CommunityForumTopicSummary>>(
+      ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
+      collections => {
+        this.access.assertCommunityReadableInRecords(
+          communityId,
+          userId,
+          collections.accounts as AccountRecord[],
+          collections.communities as Community[],
+          collections.community_relationships as CommunityRelationship[]
+        )
+        const topics = collections.community_forum_topics as CommunityForumTopic[]
+        const replies = collections.community_forum_replies as CommunityForumReply[]
+        const replyCounts = new Map<string, number>()
+        for (const reply of replies) {
+          replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
+        }
+        const visible = topics.filter(topic => topic.communityId === communityId)
+          .map(topic => ({ ...topic, replyCount: replyCounts.get(topic.id) ?? 0 }))
+          .sort((a, b) =>
+            Number(b.isPinned) - Number(a.isPinned) ||
+            b.updatedAt - a.updatedAt ||
+            a.id.localeCompare(b.id)
+          )
+        return { records: collections, result: paginate(visible, q) }
+      }
+    )
   }
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
-    await this.access.assertCommunityReadable(communityId, userId)
-    const topics = await this.data.read<CommunityForumTopic>('community_forum_topics')
-    const topic = topics.find(record => record.id === topicId && record.communityId === communityId)
-    if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
-    const replies = (await this.data.read<CommunityForumReply>('community_forum_replies'))
-      .filter(reply => reply.topicId === topicId && reply.communityId === communityId)
-      .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
-    return { topic: { ...topic, replyCount: replies.length }, replies: paginate(replies, q) }
+    return this.data.transaction<CommunityForumTopicDetail>(
+      ['accounts', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
+      collections => {
+        this.access.assertCommunityReadableInRecords(
+          communityId,
+          userId,
+          collections.accounts as AccountRecord[],
+          collections.communities as Community[],
+          collections.community_relationships as CommunityRelationship[]
+        )
+        const topics = collections.community_forum_topics as CommunityForumTopic[]
+        const topic = topics.find(record =>
+          record.id === topicId && record.communityId === communityId
+        )
+        if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
+        const replies = (collections.community_forum_replies as CommunityForumReply[])
+          .filter(reply => reply.topicId === topicId && reply.communityId === communityId)
+          .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
+        return {
+          records: collections,
+          result: {
+            topic: { ...topic, replyCount: replies.length },
+            replies: paginate(replies, q)
+          }
+        }
+      }
+    )
   }
 
   async createCommunityForumTopic(userId: string, communityId: string, profileId: string, rawTitle: string, rawContent: string): Promise<CommunityForumTopic> {
