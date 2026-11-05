@@ -22,9 +22,12 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
 
-import type { CommunityForumTopicModerationChanges } from './useCommunityForumTopicPage.types'
+import type {
+  CommunityForumTopicModerationChanges,
+  UseCommunityForumTopicPageResult
+} from './useCommunityForumTopicPage.types'
 
-export function useCommunityForumTopicPage() {
+export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
   const { t } = useTranslations()
   const navigate = useNavigate()
@@ -213,11 +216,7 @@ export function useCommunityForumTopicPage() {
     community,
     relationshipsQuery,
     ownedProfilesQuery,
-    rolesByProfileId,
-    eligibleProfiles,
-    forumProfile,
     forumProfileId,
-    currentRole,
     isMember,
     isStaff,
     canInteract,
@@ -225,7 +224,6 @@ export function useCommunityForumTopicPage() {
     detail,
     topic,
     replies,
-    authorIds,
     authorsQuery,
     authorsById,
     replyMutation,
