@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { useMemo } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
@@ -15,6 +16,7 @@ import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
 
 export function useCommunityForumPage(): UseCommunityForumPageResult {
   const { url } = useParams<{ url: string }>()
+  const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
@@ -67,6 +69,12 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     null
   const canPublish = Boolean(forumProfile)
 
+  const openCreateTopic = () => {
+    if (community) {
+      navigate(ROUTES.community + '/' + community.url + '/forum/new')
+    }
+  }
+
   const topicsQuery = useQuery({
     queryKey: queryKeys.communityForumTopics(
       community?.id ?? '',
@@ -113,6 +121,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     relationshipsQuery,
     ownedProfilesQuery,
     canPublish,
+    openCreateTopic,
     topicsQuery,
     topics,
     authorsQuery,
