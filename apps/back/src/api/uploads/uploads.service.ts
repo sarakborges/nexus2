@@ -235,19 +235,15 @@ export class UploadsService {
     }
 
     const completedAt = Date.now()
-    let saved: UploadedFileRecord | undefined
-    await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
+    const savedRecords = await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
       const latest = currentRecords.find(item => item.id === id && item.ownerUserId === userId)
       if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
-      if (latest.status === 'ready') {
-        saved = latest
-        return currentRecords
-      }
+      if (latest.status === 'ready') return currentRecords
       if (latest.status !== 'pending' || latest.createdAt + PENDING_MAX_AGE <= Date.now()) {
         throw new NotFoundException('UPLOAD_EXPIRED')
       }
 
-      saved = {
+      const saved: UploadedFileRecord = {
         ...latest,
         size: totalSize,
         status: 'ready',
@@ -255,9 +251,18 @@ export class UploadsService {
         completedAt,
         expiresAt: latest.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null
       }
-      return currentRecords.map(item => item.id === id ? saved! : item)
+      return currentRecords.map(item => item.id === id ? saved : item)
     })
-    return { id, url: this.getUploadUrl(saved!) }
+    const saved = savedRecords.find(item => item.id === id && item.ownerUserId === userId)
+    if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    if (
+      saved.purpose === 'editor-image' &&
+      saved.expiresAt !== null &&
+      saved.expiresAt <= Date.now()
+    ) {
+      throw new NotFoundException('UPLOAD_EXPIRED')
+    }
+    return { id, url: this.getUploadUrl(saved) }
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
