@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
+  Community,
   CommunityForumReply,
   CommunityForumTopic,
   CommunityForumTopicDetail,
