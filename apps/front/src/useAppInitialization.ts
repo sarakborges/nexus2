@@ -11,6 +11,7 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { getUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
+import type { UseAppInitializationResult } from './useAppInitialization.types'
 
 const PUBLIC_ENTRY_ROUTES = [
   ROUTES.landing,
@@ -18,7 +19,7 @@ const PUBLIC_ENTRY_ROUTES = [
   ROUTES.signUp
 ] as const
 
-export function useAppInitialization() {
+export function useAppInitialization(): UseAppInitializationResult {
   const { language } = useTranslations()
   const location = useLocation()
   const shouldInitializeAuth = !PUBLIC_ENTRY_ROUTES.some(
