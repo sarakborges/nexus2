@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { createCommunity } from '@/Services/Community'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -94,6 +95,7 @@ export function useCreateCommunityPage() {
     errorMessage,
     isSubmitting: createCommunityMutation.isPending,
     handleSubmit,
-    handleCancel: () => navigate(ROUTES.home)
+    handleCancel: () => navigate(ROUTES.home),
+    uploadEditorImage
   }
 }

@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router'
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { getCommunityByUrl } from '@/Services/Community'
 import { createCommunityForumTopic } from '@/Services/CommunityForum'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
@@ -111,6 +112,7 @@ export function useCreateCommunityForumTopicPage() {
     setContent,
     createMutation,
     submit,
-    canSubmit: Boolean(title.trim() && hasRichTextContent(content))
+    canSubmit: Boolean(title.trim() && hasRichTextContent(content)),
+    uploadEditorImage
   }
 }

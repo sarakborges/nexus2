@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import type { ProfileType } from '@/Models/Profile.model'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { createUserProfile } from '@/Services/Profile'
@@ -115,6 +116,7 @@ export function useCreateProfilePage() {
     isSubmitting: createProfileMutation.isPending,
     handleSubmit,
     handleCancel: () =>
-      navigate(user?.profiles.length ? ROUTES.home : ROUTES.gettingStarted)
+      navigate(user?.profiles.length ? ROUTES.home : ROUTES.gettingStarted),
+    uploadEditorImage
   }
 }

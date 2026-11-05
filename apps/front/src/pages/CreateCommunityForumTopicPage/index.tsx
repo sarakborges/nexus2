@@ -5,7 +5,6 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { Button, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { uploadFile } from '@/Services/Uploads'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useCreateCommunityForumTopicPage } from './useCreateCommunityForumTopicPage'
 
@@ -111,9 +110,7 @@ export function CreateCommunityForumTopicPage() {
                 maxTextLength={8000}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
+                onUploadImage={uploadEditorImage}
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
             </div>
