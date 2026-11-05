@@ -1,13 +1,12 @@
 import { Toast } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useToastStore } from '@/Stores/Toast.store'
+import { useToastViewport } from './useToastViewport'
 
 import './ToastViewport.style.scss'
 
 export function ToastViewport() {
   const { t } = useTranslations()
-  const items = useToastStore((state) => state.items)
-  const dismissToast = useToastStore((state) => state.dismissToast)
+  const { items, dismissToast } = useToastViewport()
 
   if (!items.length) return null
 
