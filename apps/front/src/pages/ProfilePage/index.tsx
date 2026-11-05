@@ -15,7 +15,6 @@ export function ProfilePage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
-    session,
     profileQuery,
     profile,
     typeCompatibility,
