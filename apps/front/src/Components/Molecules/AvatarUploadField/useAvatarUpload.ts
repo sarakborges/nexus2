@@ -6,6 +6,7 @@ import type {
 } from './useAvatarUpload.types'
 
 import { useState } from 'react'
+import type { ChangeEvent } from 'react'
 
 import { useTranslations } from '@/Hooks/Language'
 import {
@@ -69,6 +70,12 @@ export function useAvatarUpload({
     }
   }
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (file) void handleFileChange(file)
+  }
+
   const handleRemove = async () => {
     setError('')
     setIsRemoving(true)
@@ -95,6 +102,7 @@ export function useAvatarUpload({
     busy: isUploading || isRemoving || isRequestPending,
     error,
     handleFileChange,
+    handleInputChange,
     handleRemove
   }
 }
