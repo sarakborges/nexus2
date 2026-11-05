@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router'
 
 import { RequestState } from '@/Components'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
+import { PreviewAvatar } from './PreviewAvatar.component'
 import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
@@ -31,7 +32,6 @@ export function CommunityPage() {
     membersQuery,
     forumTopicsQuery,
     forumTopics,
-    forumAuthorIds,
     forumAuthorsQuery,
     forumAuthorsById
   } = useCommunityPage()
