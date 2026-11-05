@@ -19,7 +19,7 @@ import {
   PENDING_MAX_AGE,
   UPLOAD_REFERENCE
 } from './uploads.constants'
-import { isWithinAvatarDraftRetention } from './uploads.utils'
+import { getTotalSize, isWithinAvatarDraftRetention } from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
@@ -178,7 +178,7 @@ export class UploadsService {
     }
 
     const bytes = Buffer.from(await response.arrayBuffer())
-    const totalSize = this.storage.getTotalSize(
+    const totalSize = getTotalSize(
       response.headers.get('content-range'),
       response.headers.get('content-length'),
       bytes.length
