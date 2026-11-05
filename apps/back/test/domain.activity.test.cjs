@@ -29,7 +29,7 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
-    }
+    },
     async transaction(names, updater) {
       beforeTransaction?.(names, collections)
       const snapshot = Object.fromEntries(names.map(name => [
