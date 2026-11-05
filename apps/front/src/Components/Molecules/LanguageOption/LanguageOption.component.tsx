@@ -1,3 +1,4 @@
+import type { LanguageOptionProps } from './LanguageOption.types'
 import { LanguageFlag } from '@/Components/Atoms/LanguageFlag'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import {
@@ -6,9 +7,6 @@ import {
 } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
-type LanguageOptionProps = {
-  language: LanguagePreference
-}
 
 export function LanguageOption({ language }: LanguageOptionProps) {
   const {

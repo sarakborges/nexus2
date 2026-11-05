@@ -1,22 +1,8 @@
+import type { AccountIdentityLinkProps } from './AccountIdentityLink.types'
 import { IdentityAvatar } from '../IdentityAvatar'
 
-import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 
-type AccountIdentityLinkProps = {
-  to: string
-  name: string
-  picture: string
-  className: string
-  avatarClassName: string
-  copyClassName: string
-  nameClassName: string
-  secondary?: ReactNode
-  secondaryClassName?: string
-  children?: ReactNode
-  title?: string
-  ariaLabel?: string
-}
 
 export function AccountIdentityLink({
   to,

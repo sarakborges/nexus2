@@ -1,11 +1,6 @@
+import type { IdentityAvatarProps } from './IdentityAvatar.types'
 import './IdentityAvatar.style.scss'
 
-type IdentityAvatarProps = {
-  name: string
-  picture: string
-  className: string
-  imageClassName?: string
-}
 
 export function IdentityAvatar({
   name,
