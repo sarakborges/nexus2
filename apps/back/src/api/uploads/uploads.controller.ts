@@ -11,43 +11,11 @@ import {
   Res,
   UseGuards
 } from '@nestjs/common'
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
 import type { Response } from 'express'
 import { CurrentUser } from '../auth/current-user.decorator'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
+import { CreateUploadDto, UpdateAvatarDto } from './uploads.dto'
 import { UploadsService } from './uploads.service'
-import type { UploadPurpose } from './uploads.types'
-
-class CreateUploadDto {
-  @IsIn(['profile-avatar', 'community-avatar', 'editor-image'])
-  purpose!: UploadPurpose
-
-  @IsString()
-  contentType!: string
-
-  @IsInt()
-  @Min(1)
-  @Max(10 * 1024 * 1024)
-  size!: number
-
-  @IsOptional()
-  @IsString()
-  targetId?: string
-
-  @IsOptional()
-  @IsString()
-  actorProfileId?: string
-}
-
-class UpdateAvatarDto {
-  @IsOptional()
-  @IsString()
-  uploadId?: string | null
-
-  @IsOptional()
-  @IsString()
-  actorProfileId?: string
-}
 
 @Controller('uploads')
 export class UploadsController {
