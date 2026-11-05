@@ -5,7 +5,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  Optional
+  Optional,
+  UnauthorizedException
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -38,12 +39,45 @@ export class CommunityService {
     return paginate((await this.access.readCommunities()).filter(community => community.privacy === 'public'), q)
   }
   async getCommunity(url: string, userId: string | null = null): Promise<Community> {
-    const found = (await this.access.readCommunities()).find(community => community.url === normalizeEntityUrl(url))
-    if (!found) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    if (found.privacy === 'private' && !(await this.access.isCommunityMember(found.id, userId))) {
-      return { ...found, picture: '', about: '' }
-    }
-    return found
+    // Keep legacy type/privacy normalization, then authorize and read the preview from one snapshot.
+    await this.access.readCommunities()
+    return this.data.transaction<Community>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const found = (collections.communities as Community[])
+          .find(community => community.url === normalizeEntityUrl(url))
+        if (!found) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        const profiles = collections.profiles as Profile[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const ownerProfileId = relationships.find(record =>
+          record.profiles[1] === found.id && record.type === 'owner'
+        )?.profiles[0]
+        const ownerProfile = ownerProfileId
+          ? profiles.find(profile => profile.id === ownerProfileId)
+          : undefined
+        const privacy = ['public', 'private', 'unlisted'].includes(found.privacy)
+          ? found.privacy
+          : 'public'
+        const normalized: Community = {
+          ...found,
+          ...(ownerProfile ? { type: ownerProfile.type } : {}),
+          privacy,
+          about: sanitizeRichText(found.about ?? '')
+        }
+        if (
+          privacy === 'private' &&
+          !this.access.isCommunityMemberInRecords(
+            found.id,
+            userId,
+            collections.accounts as AccountRecord[],
+            relationships
+          )
+        ) {
+          return { ...normalized, picture: '', about: '' }
+        }
+        return normalized
+      }
+    )
   }
   async getCommunitiesByIds(ids: string[]): Promise<Community[]> {
     const set = new Set(ids)
@@ -187,20 +221,37 @@ export class CommunityService {
 
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
-    await this.access.ensureCommunity(communityId)
-    if (!userId) return []
-    const user = await this.auth.getUser(userId)
-    const ownedProfileIds = new Set(user.profiles)
-    const [records, community, profiles] = await Promise.all([
-      this.access.readCommunityRelationships(communityId),
-      this.access.readCommunities().then(items => items.find(item => item.id === communityId)),
-      this.access.readProfiles()
-    ])
-    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    return records.filter(record => ownedProfileIds.has(record.profiles[0]) && profileTypes.get(record.profiles[0]) === community.type)
-  }
+    return this.data.transaction<CommunityRelationship[]>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const communities = collections.communities as Community[]
+        const community = communities.find(item => item.id === communityId)
+        if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (!userId) return { records: collections, result: [] }
 
+        const accounts = collections.accounts as AccountRecord[]
+        const account = accounts.find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const profiles = collections.profiles as Profile[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const ownerProfileId = relationships.find(record =>
+          record.profiles[1] === communityId && record.type === 'owner'
+        )?.profiles[0]
+        const ownerProfile = ownerProfileId
+          ? profiles.find(profile => profile.id === ownerProfileId)
+          : undefined
+        const communityType = ownerProfile?.type ?? community.type
+        const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
+        const ownedProfileIds = new Set(account.profiles)
+        const visible = relationships.filter(record =>
+          record.profiles[1] === communityId &&
+          ownedProfileIds.has(record.profiles[0]) &&
+          profileTypes.get(record.profiles[0]) === communityType
+        )
+        return { records: collections, result: visible }
+      }
+    )
+  }
   async listCommunityMembers(
     communityId: string,
     tab: string,
@@ -208,29 +259,86 @@ export class CommunityService {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<Profile & { role: string }>> {
-    await this.access.assertCommunityReadable(communityId, userId)
-    if (!['all', 'staff', 'banned'].includes(tab)) throw new BadRequestException('INVALID_MEMBER_TAB')
-    if (tab !== 'all') {
-      if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-      await this.access.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
-      await this.access.assertStaff(actorProfileId, communityId)
-    }
-    const records = await this.access.readCommunityRelationships(communityId)
-    const types = tab === 'staff' ? ['owner', 'moderator'] : tab === 'banned' ? ['blocked'] : ['owner', 'moderator', 'connection']
-    const matching = records.filter(r => types.includes(r.type))
-    const byId = new Map(matching.map(r => [r.profiles[0], r.type]))
-    const [profiles, community] = await Promise.all([this.access.readProfiles(), this.access.readCommunities().then(items => items.find(item => item.id === communityId))])
-    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    return paginate(profiles.filter(profile => byId.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, role: byId.get(profile.id)! })), q)
+    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        this.access.assertCommunityReadableInRecords(
+          communityId, userId, accounts, communities, relationships
+        )
+        if (!['all', 'staff', 'banned'].includes(tab)) {
+          throw new BadRequestException('INVALID_MEMBER_TAB')
+        }
+        if (tab !== 'all') {
+          if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+          const context = this.access.assertCommunityProfileInRecords(
+            userId, actorProfileId, communityId, accounts, profiles, communities, relationships,
+            { allowDifferentActiveType: true }
+          )
+          if (!['owner', 'moderator'].includes(context.role ?? '')) {
+            throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+          }
+        }
+
+        const community = communities.find(item => item.id === communityId)!
+        const ownerProfileId = relationships.find(record =>
+          record.profiles[1] === communityId && record.type === 'owner'
+        )?.profiles[0]
+        const ownerProfile = ownerProfileId
+          ? profiles.find(profile => profile.id === ownerProfileId)
+          : undefined
+        const communityType = ownerProfile?.type ?? community.type
+        const types = tab === 'staff'
+          ? ['owner', 'moderator']
+          : tab === 'banned' ? ['blocked'] : ['owner', 'moderator', 'connection']
+        const roleByProfile = new Map(
+          relationships
+            .filter(record => record.profiles[1] === communityId && types.includes(record.type))
+            .map(record => [record.profiles[0], record.type] as const)
+        )
+        const result = paginate(
+          profiles
+            .filter(profile => roleByProfile.has(profile.id) && profile.type === communityType)
+            .map(profile => ({ ...profile, role: roleByProfile.get(profile.id)! })),
+          q
+        )
+        return { records: collections, result }
+      }
+    )
   }
+
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<Profile & { role: string }>> {
-    await this.access.assertOwns(userId, actorProfileId, { allowDifferentActiveType: true })
-    await this.access.assertStaff(actorProfileId, communityId)
-    const records = (await this.access.readCommunityRelationships(communityId)).filter(r => r.type === 'requested')
-    const ids = new Set(records.map(r => r.profiles[0]))
-    const [profiles, community] = await Promise.all([this.access.readProfiles(), this.access.readCommunities().then(items => items.find(item => item.id === communityId))])
-    if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    return paginate(profiles.filter(profile => ids.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, role: 'requested' })), q)
+    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const communities = collections.communities as Community[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const context = this.access.assertCommunityProfileInRecords(
+          userId, actorProfileId, communityId, accounts, profiles, communities, relationships,
+          { allowDifferentActiveType: true }
+        )
+        if (!['owner', 'moderator'].includes(context.role ?? '')) {
+          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+        }
+        const pendingIds = new Set(
+          relationships
+            .filter(record => record.profiles[1] === communityId && record.type === 'requested')
+            .map(record => record.profiles[0])
+        )
+        const result = paginate(
+          profiles
+            .filter(profile => pendingIds.has(profile.id) && profile.type === context.community.type)
+            .map(profile => ({ ...profile, role: 'requested' })),
+          q
+        )
+        return { records: collections, result }
+      }
+    )
   }
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     const now = Date.now()

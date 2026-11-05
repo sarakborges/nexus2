@@ -332,3 +332,65 @@ test('transferring community ownership rechecks the current owner role transacti
   assert.deepEqual(collections.get('community_relationships'), afterTransfer)
 })
 
+test('private community member details are not returned after membership is revoked before the read snapshot', async () => {
+  const { service, collections } = createDomainHarness({
+    privacy: 'private',
+    userProfiles: { memberUser: ['member-1'] },
+    relationships: [
+      relationship('owner-1', 'owner'),
+      relationship('member-1', 'connection')
+    ],
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', [relationship('owner-1', 'owner')])
+    }
+  })
+  await assert.rejects(
+    service.listCommunityMembers(communityId, 'all', page, 'memberUser'),
+    error => error.getStatus() === 404 && error.message === 'COMMUNITY_NOT_FOUND'
+  )
+})
+
+test('staff-only member tabs recheck the actor role in the member-list snapshot', async () => {
+  const { service, collections } = createDomainHarness({
+    userProfiles: { moderatorUser: ['moderator-1'] },
+    relationships: [
+      relationship('owner-1', 'owner'),
+      relationship('moderator-1', 'moderator'),
+      relationship('banned-1', 'blocked')
+    ],
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', [
+        relationship('owner-1', 'owner'),
+        relationship('moderator-1', 'connection'),
+        relationship('banned-1', 'blocked')
+      ])
+    }
+  })
+  await assert.rejects(
+    service.listCommunityMembers(communityId, 'banned', page, 'moderatorUser', 'moderator-1'),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
+  )
+})
+
+test('pending member lists recheck staff role in the same snapshot as pending requests', async () => {
+  const { service } = createDomainHarness({
+    userProfiles: { moderatorUser: ['moderator-1'] },
+    relationships: [
+      relationship('owner-1', 'owner'),
+      relationship('moderator-1', 'moderator'),
+      relationship('pending-1', 'requested')
+    ],
+    beforeTransaction(_names, current) {
+      current.set('community_relationships', [
+        relationship('owner-1', 'owner'),
+        relationship('moderator-1', 'connection'),
+        relationship('pending-1', 'requested')
+      ])
+    }
+  })
+  await assert.rejects(
+    service.listPendingMembers('moderatorUser', communityId, 'moderator-1', page),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
+  )
+})
+

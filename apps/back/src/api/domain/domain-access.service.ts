@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import type { Community, CommunityRelationship, CommunityRelationshipType, Profile } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { AuthService } from '../auth/auth.service'
@@ -199,6 +199,23 @@ export class DomainAccessService {
     )
   }
 
+  isCommunityMemberInRecords(
+    communityId: string,
+    userId: string | null,
+    accounts: readonly AccountRecord[],
+    relationships: readonly CommunityRelationship[]
+  ): boolean {
+    if (!userId) return false
+    const account = accounts.find(item => item.id === userId)
+    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    const ownedProfiles = new Set(account.profiles)
+    return relationships.some(record =>
+      record.profiles[1] === communityId &&
+      ownedProfiles.has(record.profiles[0]) &&
+      ['owner', 'moderator', 'connection'].includes(record.type)
+    )
+  }
+
   assertCommunityReadableInRecords(
     communityId: string,
     userId: string | null,
@@ -214,15 +231,9 @@ export class DomainAccessService {
     if (privacy !== 'private') return
     if (!userId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
 
-    const account = accounts.find(item => item.id === userId)
-    if (!account) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    const ownedProfiles = new Set(account.profiles)
-    const canRead = relationships.some(record =>
-      record.profiles[1] === communityId &&
-      ownedProfiles.has(record.profiles[0]) &&
-      ['owner', 'moderator', 'connection'].includes(record.type)
-    )
-    if (!canRead) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (!this.isCommunityMemberInRecords(communityId, userId, accounts, relationships)) {
+      throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    }
   }
 
   async assertCommunityReadable(communityId: string, userId: string | null): Promise<void> {
