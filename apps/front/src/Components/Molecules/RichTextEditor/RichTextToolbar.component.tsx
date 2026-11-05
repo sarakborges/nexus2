@@ -1,47 +1,8 @@
+import type { RichTextToolbarProps } from './RichTextToolbar.types'
 import { InsertImageButton } from './InsertImageButton.component'
-import { Toolbar, useEditorState } from 'react-simple-wysiwyg'
+import { ToolbarCommandButton } from './ToolbarCommandButton.component'
+import { Toolbar } from 'react-simple-wysiwyg'
 
-import type { MouseEvent, ReactNode } from 'react'
-
-type ToolbarCommandButtonProps = {
-  title: string
-  command: string
-  children: ReactNode
-}
-
-function ToolbarCommandButton({
-  title,
-  command,
-  children
-}: ToolbarCommandButtonProps) {
-  const editorState = useEditorState()
-
-  const handleMouseDown = (event: MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-    editorState.$el?.focus()
-    document.execCommand(command)
-  }
-
-  return (
-    <button
-      className="rsw-btn rich-text-editor__toolbar-button"
-      type="button"
-      title={title}
-      aria-label={title}
-      onMouseDown={handleMouseDown}
-    >
-      {children}
-    </button>
-  )
-}
-
-type RichTextToolbarProps = {
-  imageButtonLabel: string
-  imageUploadErrorLabel: string
-  onUploadImage: (file: File) => Promise<string>
-  onUploadingChange: (isUploading: boolean) => void
-  onOpenHtmlMode: () => void
-}
 
 export function RichTextToolbar({
   imageButtonLabel,

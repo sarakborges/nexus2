@@ -1,3 +1,4 @@
+import type { RichTextEditorProps } from './RichTextEditor.types'
 import { HtmlSourceEditor } from './HtmlSourceEditor.component'
 import { RichTextToolbar } from './RichTextToolbar.component'
 import { getRichTextPlainText } from './richText.utils'
@@ -7,17 +8,6 @@ import Editor from 'react-simple-wysiwyg'
 import { useState } from 'react'
 
 import './RichTextEditor.style.scss'
-
-export type RichTextEditorProps = {
-  id: string
-  value: string
-  onChange: (value: string) => void
-  imageButtonLabel: string
-  imageUploadErrorLabel: string
-  onUploadImage: (file: File) => Promise<string>
-  maxTextLength?: number
-  placeholder?: string
-}
 
 export function RichTextEditor({
   id,
