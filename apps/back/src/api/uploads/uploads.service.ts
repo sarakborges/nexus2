@@ -53,6 +53,10 @@ const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
 const EDITOR_RETENTION_MS = 24 * 60 * 60 * 1000
 const ORPHAN_AVATAR_RETENTION_MS = 24 * 60 * 60 * 1000
+
+function isWithinAvatarDraftRetention(record: UploadedFileRecord, now = Date.now()): boolean {
+  return (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS > now
+}
 const MIME_EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
@@ -345,7 +349,7 @@ export class UploadsService {
     const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
       record.status !== 'ready' || record.resourceType ||
-      record.createdAt + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
+      !isWithinAvatarDraftRetention(record)) {
       throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     }
   }
@@ -363,7 +367,7 @@ export class UploadsService {
     const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
       record.status !== 'ready' || record.resourceType ||
-      (record.completedAt ?? record.createdAt) + ORPHAN_AVATAR_RETENTION_MS <= Date.now()) {
+      !isWithinAvatarDraftRetention(record)) {
       throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     }
     return records.map(item => item.id === record.id ? { ...item, resourceType, resourceId } : item)
@@ -666,7 +670,7 @@ export class UploadsService {
       item.purpose === purpose &&
       item.status === 'ready' &&
       !item.resourceType &&
-      item.createdAt + ORPHAN_AVATAR_RETENTION_MS > Date.now()
+      isWithinAvatarDraftRetention(item)
     )
     if (!file) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     return file

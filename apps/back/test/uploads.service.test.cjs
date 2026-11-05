@@ -409,6 +409,74 @@ test('community avatar uploads reject staff profiles with a different type', asy
   )
 })
 
+test('avatar draft retention starts when the upload is completed', async () => {
+  const now = Date.now()
+  const file = {
+    id: '823e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/recently-completed.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 30 * 60 * 60 * 1000,
+    completedAt: now - 23 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    accounts: [{ id: 'user-1', email: 'user@example.test', profiles: ['profile-1'], currentProfile: 'profile-1' }],
+    profiles: [{ id: 'profile-1', picture: '', type: 'social' }],
+    media_files: [file]
+  })
+
+  const url = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
+  await service.validateAvatarUrl('user-1', url, 'profile-avatar')
+  const result = await service.setProfileAvatar('user-1', 'profile-1', file.id)
+
+  assert.equal(result.picture, url)
+  assert.equal(collections.get('media_files')[0].resourceType, 'profile')
+  assert.equal(collections.get('media_files')[0].resourceId, 'profile-1')
+})
+
+test('avatar draft validation rejects uploads after 24 hours from completion', async () => {
+  const now = Date.now()
+  const file = {
+    id: '923e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/expired-draft.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 24 * 60 * 60 * 1000 - 1,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  const url = supabaseUrl + '/storage/v1/object/public/nexus-avatars/' + file.path
+
+  await assert.rejects(
+    service.validateAvatarUrl('user-1', url, 'profile-avatar'),
+    error => error.getStatus() === 400 && error.message === 'INVALID_AVATAR_UPLOAD'
+  )
+  await assert.rejects(
+    service.setProfileAvatar('user-1', 'profile-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_AVATAR_UPLOAD'
+  )
+})
+
 test('profile avatar upload cannot target a profile of another type than the active profile', async () => {
   const { service } = createHarness({
     profiles: [
