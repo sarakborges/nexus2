@@ -7,7 +7,7 @@ const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
 
-function createHarness(initial = {}, activeProfileId = null, beforeTransaction) {
+function createHarness(initial = {}, activeProfileId = null, beforeTransaction, beforeUpdate) {
   const defaultAccounts = [
     { id: 'sender-user', email: 'sender@example.test', profiles: ['sender-profile'], currentProfile: 'sender-profile' },
     { id: 'recipient-user', email: 'recipient@example.test', profiles: ['recipient-profile'], currentProfile: 'recipient-profile' },
@@ -24,6 +24,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction) 
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
+      beforeUpdate?.(name, collections)
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
       return structuredClone(next)
@@ -1235,5 +1236,56 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
 
   assert.equal(result.deleted, 1001)
   assert.deepEqual(batchSizes, [1000, 1])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+
+test('expired pending upload metadata is recovered when Storage signing rollback fails', async t => {
+  const now = Date.now()
+  let failRollback = true
+  const { service, collections } = createHarness(
+    {},
+    null,
+    undefined,
+    name => {
+      if (name === 'media_files' && failRollback) {
+        failRollback = false
+        throw new Error('Temporary metadata write failure')
+      }
+    }
+  )
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'POST')
+    return new Response(JSON.stringify({ message: 'Storage unavailable' }), {
+      status: 503,
+      headers: { 'content-type': 'application/json' }
+    })
+  })
+
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'editor-image',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+
+  const [orphaned] = collections.get('media_files')
+  assert.equal(orphaned.status, 'pending')
+
+  const originalNow = Date.now
+  Date.now = () => now + 3 * 60 * 60 * 1000
+  t.after(() => { Date.now = originalNow })
+  withFetch(t, async (_url, init) => {
+    assert.equal(init.method, 'DELETE')
+    const body = JSON.parse(init.body)
+    assert.deepEqual(body.prefixes, [orphaned.path])
+    return new Response(null, { status: 200 })
+  })
+
+  const cleanup = await service.cleanupExpired(cronSecret)
+
+  assert.equal(cleanup.deleted, 1)
   assert.deepEqual(collections.get('media_files'), [])
 })
