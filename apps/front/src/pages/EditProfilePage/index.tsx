@@ -1,7 +1,6 @@
 import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { uploadFile } from '@/Services/Uploads'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useEditProfilePage } from './useEditProfilePage'
 
@@ -19,6 +18,7 @@ export function EditProfilePage() {
     errorMessage,
     isSubmitting,
     updateForm,
+    uploadEditorImage,
     updateProfilePicture,
     cancelEdit,
     handleSubmit
@@ -141,9 +141,7 @@ export function EditProfilePage() {
                 maxTextLength={500}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
+                onUploadImage={uploadEditorImage}
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
               <p className="account-card__description">

@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router'
 import type { CommunityForm } from './EditCommunityPage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getCommunityByUrl, updateCommunity } from '@/Services/Community'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
@@ -131,6 +132,7 @@ export function useEditCommunityPage() {
     updateForm,
     updateCommunityPicture,
     cancelEdit,
-    handleSubmit
+    handleSubmit,
+    uploadEditorImage
   }
 }

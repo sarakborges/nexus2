@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router'
 import type { ProfileForm } from './EditProfilePage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { getProfileByUrl, updateUserProfile } from '@/Services/Profile'
@@ -106,6 +107,7 @@ export function useEditProfilePage() {
     updateForm,
     updateProfilePicture,
     cancelEdit,
-    handleSubmit
+    handleSubmit,
+    uploadEditorImage
   }
 }

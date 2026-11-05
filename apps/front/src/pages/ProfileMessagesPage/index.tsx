@@ -11,8 +11,6 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfileMessageError } from '@/Services/ProfileMessage'
-import { uploadFile } from '@/Services/Uploads'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 
 import '../AuthenticatedPage.style.scss'
@@ -38,7 +36,10 @@ export function ProfileMessagesPage() {
     sendersById,
     canSendMessage,
     canSubmitMessage,
-    sendMessageMutation,
+    uploadEditorImage,
+    isSendingMessage,
+    hasSendMessageError,
+    isInvalidMessageError,
     handleSubmit
   } = useProfileMessagesPage()
 
@@ -102,20 +103,17 @@ export function ProfileMessagesPage() {
                 maxTextLength={4000}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
+                onUploadImage={uploadEditorImage}
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
               <p className="account-card__description">
                 {t('PROFILE_MESSAGES_MAX_LENGTH')}
               </p>
             </div>
-            {sendMessageMutation.isError && (
+            {hasSendMessageError && (
               <p className="auth-card__error" role="alert">
                 {t(
-                  sendMessageMutation.error instanceof ProfileMessageError &&
-                    sendMessageMutation.error.code === 'INVALID_MESSAGE'
+                  isInvalidMessageError
                     ? 'PROFILE_MESSAGES_ERROR_INVALID'
                     : 'PROFILE_MESSAGES_ERROR_STORAGE'
                 )}
@@ -124,10 +122,10 @@ export function ProfileMessagesPage() {
             <Button
               type="submit"
               disabled={
-                !canSubmitMessage || sendMessageMutation.isPending
+                !canSubmitMessage || isSendingMessage
               }
             >
-              {sendMessageMutation.isPending
+              {isSendingMessage
                 ? t('AUTH_SUBMITTING')
                 : t('PROFILE_MESSAGES_SEND')}
             </Button>

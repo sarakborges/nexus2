@@ -3,7 +3,6 @@ import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { Button, FormField, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { uploadFile } from '@/Services/Uploads'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
@@ -22,6 +21,7 @@ export function EditCommunityPage() {
     errorMessage,
     isSubmitting,
     updateForm,
+    uploadEditorImage,
     updateCommunityPicture,
     cancelEdit,
     handleSubmit
@@ -144,9 +144,7 @@ export function EditCommunityPage() {
                 maxTextLength={500}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
+                onUploadImage={uploadEditorImage}
                 placeholder={t('RICH_TEXT_PLACEHOLDER')}
               />
               <p className="account-card__description">

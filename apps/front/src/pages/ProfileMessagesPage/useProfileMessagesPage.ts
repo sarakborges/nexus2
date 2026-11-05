@@ -5,10 +5,12 @@ import { useParams } from 'react-router'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getProfileByUrl, getProfilesByIds } from '@/Services/Profile'
 import {
+  ProfileMessageError,
   createProfileMessage,
   getProfileMessages
 } from '@/Services/ProfileMessage'
@@ -122,7 +124,11 @@ export function useProfileMessagesPage() {
     sendersById,
     canSendMessage,
     canSubmitMessage: hasRichTextContent(content),
+    isSendingMessage: sendMessageMutation.isPending,
+    hasSendMessageError: sendMessageMutation.isError,
+    isInvalidMessageError: sendMessageMutation.error instanceof ProfileMessageError && sendMessageMutation.error.code === 'INVALID_MESSAGE',
     sendMessageMutation,
-    handleSubmit
+    handleSubmit,
+    uploadEditorImage
   }
 }
