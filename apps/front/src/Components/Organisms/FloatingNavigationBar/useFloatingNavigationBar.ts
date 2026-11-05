@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import type {
+  NavigationPanel,
   OpenPanel,
   UseFloatingNavigationBarOptions,
   UseFloatingNavigationBarResult
