@@ -1,3 +1,4 @@
+import type { UseCommunityMemberActionsOptions } from './useCommunityMemberActions.types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { useState } from 'react'
@@ -14,12 +15,6 @@ import {
   transferCommunityOwnership
 } from '@/Services/CommunityRelationship'
 import { useToastStore } from '@/Stores/Toast.store'
-
-type UseCommunityMemberActionsOptions = {
-  memberProfileId: string
-  communityId: string
-  actorProfileId: string
-}
 
 export function useCommunityMemberActions({
   memberProfileId,
