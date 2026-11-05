@@ -276,7 +276,7 @@ export class UploadsService {
   }
 
   async deleteUpload(userId: string, id: string): Promise<void> {
-    if (await this.scheduleUploadDeletion(id, userId)) return
+    if (await this.scheduleUploadDeletion(id, userId, true)) return
     await this.deleteRecord(id, userId)
   }
 
@@ -782,7 +782,11 @@ export class UploadsService {
     )
   }
 
-  private async scheduleUploadDeletion(id: string, userId: string): Promise<boolean> {
+  private async scheduleUploadDeletion(
+    id: string,
+    userId: string,
+    allowReady = false
+  ): Promise<boolean> {
     const scheduledAt = Date.now()
     return this.data.transaction<boolean>(
       ['media_files'],
@@ -796,7 +800,7 @@ export class UploadsService {
         if (latest.status === 'deleting' && latest.deleteAfter != null) {
           return { records: collections, result: true }
         }
-        if (latest.status !== 'pending' && latest.status !== 'ready') {
+        if (latest.status !== 'pending' && !(allowReady && latest.status === 'ready')) {
           return { records: collections, result: false }
         }
         if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
