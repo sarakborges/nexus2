@@ -1,120 +1,33 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { Link } from 'react-router'
 
-import { AccountIdentityLink, IdentityAvatar, RequestState } from '@/Components'
+import { IdentityAvatar, RequestState } from '@/Components'
+import { HomePagePreviewEntry } from './HomePagePreviewEntry.component'
 import {
   ProfileSidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { getRecentActivity } from '@/Services/Activity'
-import { getCommunities, getProfileCommunities } from '@/Services/Community'
-import { getProfilesByIds } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useHomePage } from './useHomePage'
 
 import './HomePage.style.scss'
 
-type PreviewEntryProps = {
-  name: string
-  picture: string
-  href: string
-  secondary?: string
-}
-
-function PreviewEntry({ name, picture, href, secondary }: PreviewEntryProps) {
-  return (
-    <AccountIdentityLink
-      to={href}
-      name={name}
-      picture={picture}
-      secondary={secondary}
-      title={name}
-      className="home-page__preview-entry account-card__profile-entry-identity"
-      avatarClassName="home-page__preview-avatar account-card__profile-entry-avatar"
-      copyClassName="home-page__preview-copy account-card__profile-entry-copy"
-      nameClassName="account-card__link"
-      secondaryClassName="account-card__profile-entry-secondary"
-    />
-  )
-}
-
 export function HomePage() {
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
-  const userId = session?.user.id ?? null
-  const profileIds = session?.user.profiles ?? []
-  const currentProfileId = session?.user.currentProfile ?? null
-
-  const activityQuery = useQuery({
-    queryKey: queryKeys.activity.recent(userId ?? ''),
-    queryFn: getRecentActivity,
-    enabled: Boolean(userId),
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: true
-  })
-  const profilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0
-  })
-  const profiles = profilesQuery.data ?? []
-  const currentProfile =
-    profiles.find((profile) => profile.id === currentProfileId) ??
-    profiles[0] ??
-    null
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(currentProfile?.id ?? '', 1, 8),
-    queryFn: () =>
-      getProfileFriends(currentProfile!.id, { page: 1, pageSize: 8 }),
-    enabled: Boolean(currentProfile)
-  })
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(currentProfile?.id ?? '', 1, 8),
-    queryFn: () =>
-      getProfileCommunities(currentProfile!.id, { page: 1, pageSize: 8 }),
-    enabled: Boolean(currentProfile)
-  })
-  const allCommunitiesQuery = useQuery({
-    queryKey: queryKeys.communities.list(1, 50),
-    queryFn: () => getCommunities({ page: 1, pageSize: 50 }),
-    enabled: Boolean(currentProfile)
-  })
-  const ownedCommunityIdsQuery = useQuery({
-    queryKey: ['communities', 'owned-memberships', ...[...profileIds].sort()],
-    queryFn: async () => {
-      const memberships = await Promise.all(
-        profileIds.map((profileId) =>
-          getProfileCommunities(profileId, { page: 1, pageSize: 100 })
-        )
-      )
-      return memberships.flatMap((result) =>
-        result.items.map((community) => community.id)
-      )
-    },
-    enabled: profileIds.length > 0,
-    staleTime: 30 * 1000
-  })
-
-  const activities = activityQuery.data ?? []
-  const friends = friendsQuery.data?.items ?? []
-  const communities = communitiesQuery.data?.items ?? []
-  const ownedCommunityIds = new Set(ownedCommunityIdsQuery.data ?? [])
-  const suggestions = (allCommunitiesQuery.data?.items ?? [])
-    .filter(
-      (community) =>
-        community.type === currentProfile?.type &&
-        !ownedCommunityIds.has(community.id)
-    )
-    .slice(0, 8)
-  const formatDate = (timestamp: number) =>
-    new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    }).format(timestamp)
+  const {
+    activityQuery,
+    profilesQuery,
+    friendsQuery,
+    communitiesQuery,
+    allCommunitiesQuery,
+    ownedCommunityIdsQuery,
+    currentProfile,
+    activities,
+    friends,
+    communities,
+    suggestions,
+    formatDate
+  } = useHomePage()
 
   const rightSidebar = (
     <div className="home-page__previews">
@@ -145,7 +58,7 @@ export function HomePage() {
         >
           <div className="home-page__preview-list">
             {friends.map((friend) => (
-              <PreviewEntry
+              <HomePagePreviewEntry
                 key={friend.id}
                 name={friend.name}
                 picture={friend.picture}
@@ -184,7 +97,7 @@ export function HomePage() {
         >
           <div className="home-page__preview-list">
             {communities.map((community) => (
-              <PreviewEntry
+              <HomePagePreviewEntry
                 key={community.id}
                 name={community.name}
                 picture={community.picture}
@@ -225,7 +138,7 @@ export function HomePage() {
         >
           <div className="home-page__preview-list">
             {suggestions.map((community) => (
-              <PreviewEntry
+              <HomePagePreviewEntry
                 key={community.id}
                 name={community.name}
                 picture={community.picture}
