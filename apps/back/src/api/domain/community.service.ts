@@ -64,18 +64,16 @@ export class CommunityService {
           privacy,
           about: sanitizeRichText(found.about ?? '')
         }
-        if (
-          privacy === 'private' &&
+        const result = privacy === 'private' &&
           !this.access.isCommunityMemberInRecords(
             found.id,
             userId,
             collections.accounts as AccountRecord[],
             relationships
           )
-        ) {
-          return { ...normalized, picture: '', about: '' }
-        }
-        return normalized
+          ? { ...normalized, picture: '', about: '' }
+          : normalized
+        return { records: collections, result }
       }
     )
   }
@@ -259,8 +257,6 @@ export class CommunityService {
     q: PaginationDto,
     userId: string | null,
     actorProfileId?: string
-  ): Promise<PaginatedResult<Profile & { role: string }>> {
-    return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
   ): Promise<PaginatedResult<Profile & { role: string }>> {
     await this.access.readCommunities()
     return this.data.transaction<PaginatedResult<Profile & { role: string }>>(
