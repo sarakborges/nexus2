@@ -14,8 +14,9 @@ import { getProfileByUrl, updateUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { UseEditProfilePageResult } from './useEditProfilePage.types'
 
-export function useEditProfilePage() {
+export function useEditProfilePage(): UseEditProfilePageResult {
   const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
   const navigate = useNavigate()
