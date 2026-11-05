@@ -186,12 +186,23 @@ export class ProfileService {
     )
   }
   async getProfileFriends(profileId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
-    const profile = (await this.access.readProfiles()).find(item => item.id === profileId)
-    if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
-    const relations = await this.data.read<Relationship>('relationships')
-    const ids = relations.filter(r => r.type === 'connection' && r.profiles.includes(profileId))
-      .map(r => r.profiles.find(id => id !== profileId)!)
-    return paginate((await this.getProfilesByIds(ids)).filter(friend => friend.type === profile.type), q)
+    return this.data.transaction<PaginatedResult<Profile>>(
+      ['profiles', 'relationships'],
+      collections => {
+        const profiles = collections.profiles as Profile[]
+        const profile = profiles.find(item => item.id === profileId)
+        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+        const friendIds = new Set(
+          (collections.relationships as Relationship[])
+            .filter(record => record.type === 'connection' && record.profiles.includes(profileId))
+            .map(record => record.profiles.find(id => id !== profileId)!)
+        )
+        const friends = profiles
+          .filter(friend => friendIds.has(friend.id) && friend.type === profile.type)
+          .map(friend => ({ ...friend, about: sanitizeRichText(friend.about ?? '') }))
+        return { records: collections, result: paginate(friends, q) }
+      }
+    )
   }
 
   async updateProfileRelationship(userId: string, source: string, target: string, type: RelationshipType): Promise<Relationship> {

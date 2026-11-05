@@ -425,3 +425,61 @@ test('private profile relationships recheck ownership in the relationship read s
     error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
+
+test('friend list reads relationships and profiles from the same snapshot', async () => {
+  const { service, collections } = createHarness({
+    beforeTransaction(names, current) {
+      if (names.includes('relationships')) current.set('relationships', [])
+    }
+  })
+  collections.set('profiles', [
+    { id: 'existing-profile', name: 'Profile', url: 'profile', picture: '', about: '', type: 'social' },
+    { id: 'friend-profile', name: 'Friend', url: 'friend', picture: '', about: '', type: 'social' }
+  ])
+  collections.set('relationships', [{
+    profiles: ['existing-profile', 'friend-profile'],
+    type: 'connection',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  const result = await service.getProfileFriends('existing-profile', { page: 1, pageSize: 20 })
+  assert.deepEqual(result.items, [])
+})
+
+test('profile community list reads membership and community privacy from the same snapshot', async () => {
+  const { service, collections } = createHarness({
+    beforeTransaction(names, current) {
+      if (names.includes('community_relationships')) current.set('community_relationships', [])
+    }
+  })
+  collections.set('profiles', [{
+    id: 'existing-profile',
+    name: 'Profile',
+    url: 'profile',
+    picture: '',
+    about: '',
+    type: 'social'
+  }])
+  collections.set('communities', [{
+    id: 'community-1',
+    name: 'Community',
+    url: 'community',
+    picture: '',
+    about: '',
+    type: 'social',
+    privacy: 'public'
+  }])
+  collections.set('community_relationships', [{
+    profiles: ['existing-profile', 'community-1'],
+    type: 'connection',
+    requestedBy: null,
+    blockedBy: null,
+    updatedAt: 1
+  }])
+
+  const result = await service.listProfileCommunities('existing-profile', { page: 1, pageSize: 20 })
+  assert.deepEqual(result.items, [])
+})
+

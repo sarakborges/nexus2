@@ -82,11 +82,60 @@ export class CommunityService {
     return (await this.access.readCommunities()).filter(community => set.has(community.id) && community.privacy === 'public')
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
-    const profile = (await this.access.readProfiles()).find(item => item.id === profileId)
-    if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
-    const links = await this.data.read<CommunityRelationship>('community_relationships')
-    const ids = new Set(links.filter(r => r.profiles[0] === profileId && ['owner', 'moderator', 'connection'].includes(r.type)).map(r => r.profiles[1]))
-    return paginate((await this.access.readCommunities()).filter(community => ids.has(community.id) && community.type === profile.type && community.privacy === 'public'), q)
+    await this.access.readCommunities()
+    return this.data.transaction<PaginatedResult<Community>>(
+      ['profiles', 'communities', 'community_relationships'],
+      collections => {
+        const profiles = collections.profiles as Profile[]
+        const profile = profiles.find(item => item.id === profileId)
+        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+        const communities = collections.communities as Community[]
+        const relationships = collections.community_relationships as CommunityRelationship[]
+        const ownedCommunityIds = new Set(
+          relationships
+            .filter(record =>
+              record.profiles[0] === profileId &&
+              ['owner', 'moderator', 'connection'].includes(record.type)
+            )
+            .map(record => record.profiles[1])
+        )
+        const communitiesById = new Map(communities.map(community => [community.id, community] as const))
+        const profileTypes = new Map(profiles.map(item => [item.id, item.type] as const))
+        const ownerProfileByCommunity = new Map<string, string>()
+        for (const relationship of relationships) {
+          if (
+            relationship.type === 'owner' &&
+            !ownerProfileByCommunity.has(relationship.profiles[1])
+          ) {
+            ownerProfileByCommunity.set(relationship.profiles[1], relationship.profiles[0])
+          }
+        }
+        const result = communities
+          .filter(community => {
+            if (!ownedCommunityIds.has(community.id)) return false
+            const ownerId = ownerProfileByCommunity.get(community.id)
+            const communityType = ownerId
+              ? profileTypes.get(ownerId) ?? community.type
+              : community.type
+            const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+              ? community.privacy
+              : 'public'
+            return communityType === profile.type && privacy === 'public' &&
+              communitiesById.has(community.id)
+          })
+          .map(community => ({
+            ...community,
+            about: sanitizeRichText(community.about ?? ''),
+            privacy: ['public', 'private', 'unlisted'].includes(community.privacy)
+              ? community.privacy
+              : 'public',
+            ...(ownerProfileByCommunity.has(community.id)
+              ? { type: profileTypes.get(ownerProfileByCommunity.get(community.id)!) ?? community.type }
+              : {})
+          }))
+        return { records: collections, result: paginate(result, q) }
+      }
+    )
   }
   async createCommunity(userId: string, ownerProfileId: string, input: CreateCommunityInput): Promise<Community> {
     const name = input.name.trim()
