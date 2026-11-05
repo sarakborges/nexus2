@@ -6,7 +6,6 @@ import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatib
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type {
   getCommunityMembers,
-  getCommunityRelationships,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
 import type { Member, MemberTab } from './CommunityMembersPage.types'
