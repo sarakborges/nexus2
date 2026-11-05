@@ -34,12 +34,6 @@ export function useProfilePage(): UseProfilePageResult {
     queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
-  const friends = friendsQuery.data?.items ?? []
-  const communities = communitiesQuery.data?.items ?? []
-  const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
-  const openEditProfile = () => {
-    if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')
-  }
 
   const communitiesQuery = useQuery({
     queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 16),
@@ -47,6 +41,13 @@ export function useProfilePage(): UseProfilePageResult {
       getProfileCommunities(profile!.id, { page: 1, pageSize: 16 }),
     enabled: Boolean(profile?.id)
   })
+
+  const friends = friendsQuery.data?.items ?? []
+  const communities = communitiesQuery.data?.items ?? []
+  const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
+  const openEditProfile = () => {
+    if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')
+  }
 
 
   return {
