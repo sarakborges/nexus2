@@ -48,8 +48,5 @@ export function useProfilePage() {
     canInteract,
     friendsQuery,
     communitiesQuery,
-    friends,
-    communities,
-    isOwner
   }
 }

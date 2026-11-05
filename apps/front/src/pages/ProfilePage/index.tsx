@@ -23,9 +23,6 @@ export function ProfilePage() {
     canInteract,
     friendsQuery,
     communitiesQuery,
-    friends,
-    communities,
-    isOwner
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
