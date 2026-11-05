@@ -27,6 +27,7 @@ import {
   UPLOAD_REFERENCE
 } from './uploads.constants'
 import { isWithinAvatarDraftRetention } from './uploads.utils'
+import { UploadsStorageService } from './uploads.storage.service'
 import type {
   CreateUploadInput,
   SignedUploadResponse,
@@ -37,21 +38,18 @@ import type {
 
 @Injectable()
 export class UploadsService {
-  private readonly supabaseUrl: string
-  private readonly storageSecret: string
   private readonly cronSecret: string
 
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly config: ConfigService
+    config: ConfigService,
+    private readonly storage: UploadsStorageService
   ) {
-    this.supabaseUrl = (config.get<string>('SUPABASE_URL') ?? '').replace(/\/+$/, '')
-    this.storageSecret = config.get<string>('SUPABASE_STORAGE_SECRET_KEY') ?? ''
     this.cronSecret = config.get<string>('CRON_SECRET') ?? ''
   }
 
   async createUpload(userId: string, input: CreateUploadInput): Promise<{ id: string; uploadUrl: string }> {
-    this.assertStorageConfigured()
+    this.storage.assertConfigured()
     const extension = MIME_EXTENSIONS[input.contentType]
     const maxSize = input.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
     if (!extension || !Number.isSafeInteger(input.size) || input.size < 1 || input.size > maxSize) {
@@ -135,11 +133,11 @@ export class UploadsService {
 
     let signedData: SignedUploadResponse
     try {
-      const signedResponse = await this.storageRequest(
-        '/object/upload/sign/' + bucket + '/' + this.encodePath(path),
+      const signedResponse = await this.storage.request(
+        '/object/upload/sign/' + bucket + '/' + this.storage.encodePath(path),
         { method: 'POST', body: JSON.stringify({}) }
       )
-      signedData = await this.readJson<SignedUploadResponse>(signedResponse)
+      signedData = await this.storage.readJson<SignedUploadResponse>(signedResponse)
       if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
     } catch (error) {
       try {
@@ -152,14 +150,12 @@ export class UploadsService {
       throw error
     }
 
-    const uploadUrl = signedData.url.startsWith('http')
-      ? signedData.url
-      : this.supabaseUrl + '/storage/v1' + signedData.url
+    const uploadUrl = this.storage.resolveUploadUrl(signedData.url)
     return { id, uploadUrl }
   }
 
   async completeUpload(userId: string, id: string): Promise<{ id: string; url: string }> {
-    this.assertStorageConfigured()
+    this.storage.assertConfigured()
     const records = await this.data.read<UploadedFileRecord>('media_files')
     const record = records.find(item => item.id === id && item.ownerUserId === userId)
     if (!record) throw new NotFoundException('UPLOAD_NOT_FOUND')
@@ -179,8 +175,8 @@ export class UploadsService {
       throw new NotFoundException('UPLOAD_EXPIRED')
     }
 
-    const response = await this.storageRequest(
-      '/object/' + record.bucket + '/' + this.encodePath(record.path),
+    const response = await this.storage.request(
+      '/object/' + record.bucket + '/' + this.storage.encodePath(record.path),
       { method: 'GET', headers: { Range: 'bytes=0-63' } }
     )
     if (response.status === 404) {
@@ -191,12 +187,12 @@ export class UploadsService {
     }
 
     const bytes = Buffer.from(await response.arrayBuffer())
-    const totalSize = this.getTotalSize(
+    const totalSize = this.storage.getTotalSize(
       response.headers.get('content-range'),
       response.headers.get('content-length'),
       bytes.length
     )
-    const detectedMime = this.detectMime(bytes)
+    const detectedMime = this.storage.detectMime(bytes)
     const maxSize = record.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
 
     if (
@@ -246,7 +242,7 @@ export class UploadsService {
   }
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
-    this.assertStorageConfigured()
+    this.storage.assertConfigured()
     const initialRecords = await this.data.read<UploadedFileRecord>('media_files')
     const locator = initialRecords.find(item =>
       item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
@@ -361,8 +357,8 @@ export class UploadsService {
       }
     )
 
-    const response = await this.storageRequest(
-      '/object/' + record.bucket + '/' + this.encodePath(record.path),
+    const response = await this.storage.request(
+      '/object/' + record.bucket + '/' + this.storage.encodePath(record.path),
       { method: 'GET' }
     )
     if (response.status === 404) throw new NotFoundException('UPLOAD_NOT_FOUND')
@@ -370,7 +366,7 @@ export class UploadsService {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     }
     const body = Buffer.from(await response.arrayBuffer())
-    if (body.length !== record.size || this.detectMime(body) !== record.contentType) {
+    if (body.length !== record.size || this.storage.detectMime(body) !== record.contentType) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
     return { body, contentType: record.contentType }
@@ -384,7 +380,7 @@ export class UploadsService {
     resourceType: 'profile' | 'community',
     resourceId: string
   ): UploadedFileRecord[] {
-    const path = this.getAvatarPath(url)
+    const path = this.storage.getAvatarPath(url)
     if (!path) return records
     const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
@@ -422,7 +418,7 @@ export class UploadsService {
         const next = uploadId
           ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
           : null
-        const picture = next ? this.publicUrl(next.path) : ''
+        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
         const nextRecords = next
           ? records.map(item => item.id === next.id
             ? { ...item, resourceType: 'profile' as const, resourceId: profileId }
@@ -484,7 +480,7 @@ export class UploadsService {
         const next = uploadId
           ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
           : null
-        const picture = next ? this.publicUrl(next.path) : ''
+        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
         const nextRecords = next
           ? records.map(item => item.id === next.id
             ? { ...item, resourceType: 'community' as const, resourceId: communityId }
@@ -550,7 +546,7 @@ export class UploadsService {
     if (!this.secretsMatch(this.cronSecret, suppliedSecret)) {
       throw new ForbiddenException('CRON_SECRET_INVALID')
     }
-    this.assertStorageConfigured()
+    this.storage.assertConfigured()
 
     const now = Date.now()
     const expired = await this.data.transaction<UploadedFileRecord[]>(
@@ -710,7 +706,7 @@ export class UploadsService {
 
 
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
-    const path = this.getAvatarPath(previousUrl)
+    const path = this.storage.getAvatarPath(previousUrl)
     if (!path) return
     const deletingAt = Date.now()
     await this.data.transaction<UploadedFileRecord | null>(
@@ -840,7 +836,7 @@ export class UploadsService {
   }
 
   private async removeObjects(bucket: string, paths: string[]): Promise<void> {
-    const response = await this.storageRequest('/object/' + bucket, {
+    const response = await this.storage.request('/object/' + bucket, {
       method: 'DELETE',
       body: JSON.stringify({ prefixes: paths })
     })
@@ -850,68 +846,7 @@ export class UploadsService {
   private getUploadUrl(record: UploadedFileRecord): string {
     return record.purpose === 'editor-image'
       ? '/api/uploads/' + record.id + '/content'
-      : this.publicUrl(record.path)
-  }
-
-  private publicUrl(path: string): string {
-    return this.supabaseUrl + '/storage/v1/object/public/' +
-      AVATAR_BUCKET + '/' + this.encodePath(path)
-  }
-
-  private getAvatarPath(url: string): string | null {
-    if (!url) return null
-    const prefix = this.supabaseUrl + '/storage/v1/object/public/' + AVATAR_BUCKET + '/'
-    if (!url.startsWith(prefix)) return null
-    try {
-      return url.slice(prefix.length).split('/').map(segment => decodeURIComponent(segment)).join('/')
-    } catch {
-      throw new BadRequestException('INVALID_AVATAR_URL')
-    }
-  }
-
-  private getTotalSize(contentRange: string | null, contentLength: string | null, bodySize: number): number {
-    const total = contentRange?.split('/').pop()
-    const parsedTotal = total ? Number(total) : Number(contentLength)
-    return Number.isSafeInteger(parsedTotal) && parsedTotal > 0 ? parsedTotal : bodySize
-  }
-
-  private detectMime(bytes: Buffer): string | null {
-    if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg'
-    if (bytes.length >= 8 && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return 'image/png'
-    const prefix = bytes.subarray(0, 6).toString('ascii')
-    if (prefix === 'GIF87a' || prefix === 'GIF89a') return 'image/gif'
-    if (bytes.length >= 12 && bytes.subarray(0, 4).toString('ascii') === 'RIFF' &&
-      bytes.subarray(8, 12).toString('ascii') === 'WEBP') return 'image/webp'
-    if (bytes.length >= 12 && bytes.subarray(4, 12).toString('ascii').startsWith('ftypavif')) return 'image/avif'
-    return null
-  }
-
-  private encodePath(path: string): string {
-    return path.split('/').map(segment => encodeURIComponent(segment)).join('/')
-  }
-
-  private async storageRequest(path: string, init: RequestInit): Promise<Response> {
-    this.assertStorageConfigured()
-    const headers = new Headers(init.headers)
-    headers.set('apikey', this.storageSecret)
-    headers.delete('authorization')
-    if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
-    try {
-      return await fetch(this.supabaseUrl + '/storage/v1' + path, { ...init, headers })
-    } catch {
-      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
-    }
-  }
-
-  private async readJson<T>(response: Response): Promise<T> {
-    if (!response.ok) throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
-    return await response.json() as T
-  }
-
-  private assertStorageConfigured(): void {
-    if (!this.supabaseUrl || !this.storageSecret) {
-      throw new ServiceUnavailableException('UPLOAD_STORAGE_NOT_CONFIGURED')
-    }
+      : this.storage.publicAvatarUrl(record.path)
   }
 
   private secretsMatch(expected: string, actual?: string): boolean {
