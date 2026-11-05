@@ -42,26 +42,6 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction) 
       return structuredClone(outcome.result)
     }
   }
-  const auth = {
-    async ownsProfile(_userId, profileId) { return profileId === 'profile-1' || profileId === activeProfileId },
-    async getUser(id) {
-      const profiles = id === 'sender-user'
-        ? ['sender-profile']
-        : id === 'recipient-user'
-          ? ['recipient-profile']
-          : id === 'community-member-user'
-            ? ['community-member-profile']
-            : activeProfileId
-              ? [activeProfileId]
-              : []
-      return {
-        id,
-        email: 'user@example.test',
-        profiles,
-        currentProfile: profiles[0] ?? null
-      }
-    }
-  }
   const config = {
     get(name) {
       return {
@@ -72,7 +52,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction) 
     }
   }
   return {
-    service: new UploadsService(data, auth, config),
+    service: new UploadsService(data, config),
     collections
   }
 }
@@ -423,8 +403,55 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+test('community avatar presign checks ownership and staff role in one snapshot', async t => {
+  let transactionCount = 0
+  const { service } = createHarness({
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['moderator-profile'], currentProfile: 'moderator-profile'
+    }],
+    profiles: [
+      { id: 'owner-profile', type: 'social' },
+      { id: 'moderator-profile', type: 'social' }
+    ],
+    communities: [{ id: 'community-1', type: 'social' }],
+    community_relationships: [
+      { profiles: ['owner-profile', 'community-1'], type: 'owner' },
+      { profiles: ['moderator-profile', 'community-1'], type: 'moderator' }
+    ]
+  }, 'moderator-profile', (names, current) => {
+    transactionCount += 1
+    assert.deepEqual([...names].sort(), [
+      'accounts', 'communities', 'community_relationships', 'profiles'
+    ])
+    current.set('community_relationships', [
+      { profiles: ['owner-profile', 'community-1'], type: 'owner' },
+      { profiles: ['moderator-profile', 'community-1'], type: 'connection' }
+    ])
+  })
+  withFetch(t, async () => {
+    throw new Error('Unauthorized avatar presigns must not create a Storage upload URL')
+  })
+
+  await assert.rejects(
+    service.createUpload('user-1', {
+      purpose: 'community-avatar',
+      targetId: 'community-1',
+      actorProfileId: 'moderator-profile',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error.getStatus() === 403 && error.message === 'COMMUNITY_STAFF_REQUIRED'
+  )
+  assert.equal(transactionCount, 1)
+})
+
 test('community avatar uploads reject staff profiles with a different type', async () => {
   const { service } = createHarness({
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['profile-1'], currentProfile: 'profile-1'
+    }],
     community_relationships: [
       { profiles: ['owner-profile', 'community-1'], type: 'owner' },
       { profiles: ['profile-1', 'community-1'], type: 'moderator' }
@@ -524,6 +551,10 @@ test('avatar draft validation rejects uploads after 24 hours from completion', a
 
 test('profile avatar upload cannot target a profile of another type than the active profile', async () => {
   const { service } = createHarness({
+    accounts: [{
+      id: 'user-1', email: 'user@example.test',
+      profiles: ['profile-1', 'profile-2'], currentProfile: 'profile-2'
+    }],
     profiles: [
       { id: 'profile-1', type: 'rp' },
       { id: 'profile-2', type: 'social' }

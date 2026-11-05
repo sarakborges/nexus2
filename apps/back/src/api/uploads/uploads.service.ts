@@ -10,7 +10,6 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { timingSafeEqual, randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 
 export type UploadPurpose = 'profile-avatar' | 'community-avatar' | 'editor-image'
@@ -74,7 +73,6 @@ export class UploadsService {
 
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly auth: AuthService,
     private readonly config: ConfigService
   ) {
     this.supabaseUrl = (config.get<string>('SUPABASE_URL') ?? '').replace(/\/+$/, '')
@@ -586,38 +584,53 @@ export class UploadsService {
   }
 
   private async assertOwnsProfile(userId: string, profileId: string): Promise<void> {
-    if (!await this.auth.ownsProfile(userId, profileId)) {
-      throw new ForbiddenException('PROFILE_NOT_OWNED')
-    }
-    const user = await this.auth.getUser(userId)
-    if (!user.currentProfile) return
-    const profiles = await this.data.read<{ id: string; type: string }>('profiles')
-    const currentProfile = profiles.find(profile => profile.id === user.currentProfile)
-    const targetProfile = profiles.find(profile => profile.id === profileId)
-    if (currentProfile && targetProfile && currentProfile.type !== targetProfile.type) {
-      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-    }
+    await this.data.transaction<void>(
+      ['accounts', 'profiles'],
+      collections => {
+        this.assertOwnsProfileInRecords(
+          userId,
+          profileId,
+          collections.accounts as AccountRecord[],
+          collections.profiles as Array<{ id: string; type?: string }>
+        )
+        return { records: collections, result: undefined }
+      }
+    )
   }
 
   private async assertCommunityStaff(userId: string, communityId: string, actorProfileId: string): Promise<void> {
-    await this.assertOwnsProfile(userId, actorProfileId)
-    const [relationships, profiles, communities] = await Promise.all([
-      this.data.read<{ profiles: [string, string]; type: string }>('community_relationships'),
-      this.data.read<{ id: string; type: string }>('profiles'),
-      this.data.read<{ id: string }>('communities')
-    ])
-    const actor = profiles.find(item => item.id === actorProfileId)
-    const community = communities.find(item => item.id === communityId)
-    const ownerProfileId = relationships.find(item => item.profiles[1] === communityId && item.type === 'owner')?.profiles[0]
-    const owner = ownerProfileId ? profiles.find(item => item.id === ownerProfileId) : undefined
-    if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-    const role = relationships.find(item =>
-      item.profiles[0] === actorProfileId && item.profiles[1] === communityId
-    )?.type
-    if (role !== 'owner' && role !== 'moderator') {
-      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-    }
+    await this.data.transaction<void>(
+      ['accounts', 'profiles', 'communities', 'community_relationships'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Array<{ id: string; type: string }>
+        const communities = collections.communities as Array<{ id: string }>
+        const relationships = collections.community_relationships as Array<{
+          profiles: [string, string]; type: string
+        }>
+        this.assertOwnsProfileInRecords(userId, actorProfileId, accounts, profiles)
+
+        const actor = profiles.find(item => item.id === actorProfileId)
+        const community = communities.find(item => item.id === communityId)
+        const ownerProfileId = relationships.find(item =>
+          item.profiles[1] === communityId && item.type === 'owner'
+        )?.profiles[0]
+        const owner = ownerProfileId
+          ? profiles.find(item => item.id === ownerProfileId)
+          : undefined
+        if (!actor || !community || !owner) {
+          throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        }
+        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+        const role = relationships.find(item =>
+          item.profiles[0] === actorProfileId && item.profiles[1] === communityId
+        )?.type
+        if (role !== 'owner' && role !== 'moderator') {
+          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+        }
+        return { records: collections, result: undefined }
+      }
+    )
   }
 
   private getReadyAvatar(
