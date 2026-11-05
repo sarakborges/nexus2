@@ -12,9 +12,10 @@ import { ProfileService } from './domain/profile.service'
 import { CommunityService } from './domain/community.service'
 import { UploadsController, UploadsInternalController } from './uploads/uploads.controller'
 import { UploadsService } from './uploads/uploads.service'
+import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AuthService, DomainAccessService, ProfileService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AuthService, DomainAccessService, ProfileService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, UploadsService, UploadsStorageService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}
