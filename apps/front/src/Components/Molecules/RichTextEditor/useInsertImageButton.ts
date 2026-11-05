@@ -18,7 +18,9 @@ export function useInsertImageButton({
   const selectionRef = useRef<Range | null>(null)
   const [error, setError] = useState('')
   const [isUploading, setIsUploading] = useState(false)
-  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const isFetching = useIsFetching() > 0
+  const isMutating = useIsMutating() > 0
+  const isRequestPending = isFetching || isMutating
 
   const handleMouseDown: UseInsertImageButtonController['handleMouseDown'] = event => {
     event.preventDefault()
