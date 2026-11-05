@@ -14,7 +14,9 @@ export function useRichTextEditor({
 }: UseRichTextEditorOptions): UseRichTextEditorController {
   const [isImageUploading, setIsImageUploading] = useState(false)
   const [isHtmlMode, setIsHtmlMode] = useState(false)
-  const isRequestPending = useIsFetching() > 0 || useIsMutating() > 0
+  const isFetching = useIsFetching() > 0
+  const isMutating = useIsMutating() > 0
+  const isRequestPending = isFetching || isMutating
 
   const handleChange = (nextValue: string) => {
     if (
