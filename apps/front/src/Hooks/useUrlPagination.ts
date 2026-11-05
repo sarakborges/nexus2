@@ -1,4 +1,5 @@
 import { DEFAULT_PAGE, DEFAULT_PAGE_SIZE } from '@nexus/common'
+import type { UseUrlPaginationResult } from './useUrlPagination.types'
 
 import { useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router'
@@ -8,7 +9,7 @@ function positiveInteger(value: string | null, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
-export function useUrlPagination(pageKey = 'page') {
+export function useUrlPagination(pageKey = 'page'): UseUrlPaginationResult {
   const [searchParams, setSearchParams] = useSearchParams()
   const serialized = searchParams.toString()
   const page = positiveInteger(searchParams.get(pageKey), DEFAULT_PAGE)
