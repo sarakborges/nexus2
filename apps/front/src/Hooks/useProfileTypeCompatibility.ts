@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseProfileTypeCompatibilityResult } from './useProfileTypeCompatibility.types'
 
-export function useProfileTypeCompatibility(targetType: ProfileType) {
+export function useProfileTypeCompatibility(targetType: ProfileType): UseProfileTypeCompatibilityResult {
   const currentProfileId = useAuthStore(
     (state) => state.session?.user.currentProfile ?? null
   )
