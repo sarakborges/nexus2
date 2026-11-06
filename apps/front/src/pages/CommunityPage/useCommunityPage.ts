@@ -136,14 +136,12 @@ export function useCommunityPage(): UseCommunityPageResult {
 
 
   return {
-    session,
     requestedUrl,
     communityQuery,
     community,
     typeCompatibility,
     canInteract,
     relationshipsQuery,
-    privateMembership,
     canViewMembers,
     canEditCommunity,
     openEditCommunity,
