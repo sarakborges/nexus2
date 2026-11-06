@@ -1,17 +1,16 @@
 import { Link } from 'react-router'
 
 import { RequestState } from '@/Components'
-import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
-import { PreviewAvatar } from './PreviewAvatar.component'
 import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useCommunityPage } from './useCommunityPage'
+import { CommunityPageForumPreview } from './CommunityPageForumPreview.component'
+import { CommunityPageMembersPreview } from './CommunityPageMembersPreview.component'
 
 import '../AuthenticatedPage.style.scss'
-import '../CommunityForumPage/CommunityForumPage.style.scss'
 import './CommunityPage.style.scss'
 
 export function CommunityPage() {
@@ -36,6 +35,7 @@ export function CommunityPage() {
     forumAuthorsQuery,
     forumAuthorsById
   } = useCommunityPage()
+
   if (!requestedUrl) return <NotFoundPage />
   if (communityQuery.isLoading) {
     return (
@@ -142,89 +142,23 @@ export function CommunityPage() {
             )}
           </article>
 
-          <section className="community-forum social-page__content-stack community-page__forum">
-            <header className="account-card__header">
-              <h2 className="account-card__title">{t('FORUM_TITLE')}</h2>
-              <Link to={ROUTES.community + '/' + community.url + '/forum'}>
-                {t('FORUM_VIEW_ALL')}
-              </Link>
-            </header>
-            <RequestState
-              isLoading={
-                forumTopicsQuery.isLoading || forumAuthorsQuery.isLoading
-              }
-              isFetching={
-                forumTopicsQuery.isFetching || forumAuthorsQuery.isFetching
-              }
-              isError={forumTopicsQuery.isError || forumAuthorsQuery.isError}
-              isEmpty={
-                forumTopicsQuery.isSuccess &&
-                forumTopicsQuery.data.totalItems === 0
-              }
-              emptyMessage={t('FORUM_EMPTY')}
-              onRetry={() => {
-                void forumTopicsQuery.refetch()
-                void forumAuthorsQuery.refetch()
-              }}
-            >
-              <CommunityForumTopicList
-                communityUrl={community.url}
-                topics={forumTopics}
-                authorsById={forumAuthorsById}
-              />
-            </RequestState>
-          </section>
+          <CommunityPageForumPreview
+            communityUrl={community.url}
+            topicsQuery={forumTopicsQuery}
+            authorsQuery={forumAuthorsQuery}
+            topics={forumTopics}
+            authorsById={forumAuthorsById}
+          />
         </section>
 
         <aside className="social-page__right-column">
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('COMMUNITY_MEMBERS_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({memberCount ?? '—'})
-                </span>
-              </h2>
-              <Link
-                className="social-preview-panel__all"
-                to={ROUTES.community + '/' + community.url + '/members'}
-              >
-                {t('COMMUNITY_MEMBERS_LINK')}
-              </Link>
-            </header>
-            <RequestState
-              isLoading={canViewMembers && membersQuery.isLoading}
-              isFetching={canViewMembers && membersQuery.isFetching}
-              isError={canViewMembers && membersQuery.isError}
-              isEmpty={
-                !canViewMembers ||
-                (membersQuery.isSuccess && members.length === 0)
-              }
-              emptyMessage={
-                canViewMembers
-                  ? t('COMMUNITY_MEMBERS_EMPTY')
-                  : t('COMMUNITY_PRIVATE_RESTRICTED')
-              }
-              onRetry={() => void membersQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {members.map((member) => (
-                  <Link
-                    className="social-preview-link"
-                    key={member.id}
-                    to={ROUTES.profile + '/' + member.url}
-                    aria-label={member.name}
-                    title={member.name}
-                  >
-                    <PreviewAvatar
-                      name={member.name}
-                      picture={member.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
+          <CommunityPageMembersPreview
+            communityUrl={community.url}
+            canViewMembers={canViewMembers}
+            membersQuery={membersQuery}
+            members={members}
+            memberCount={memberCount}
+          />
         </aside>
       </div>
     </main>
