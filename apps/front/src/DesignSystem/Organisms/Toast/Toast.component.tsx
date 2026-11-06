@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
-
 import type { ToastProps } from './Toast.types'
+import { useToast } from './useToast'
 
 import './Toast.style.scss'
 
@@ -12,25 +11,10 @@ export function Toast({
   onDismiss,
   className
 }: ToastProps) {
-  const [isVisible, setIsVisible] = useState(true)
+  const { isVisible } = useToast({ duration, onDismiss })
   const classNames = ['toast', className].filter(Boolean).join(' ')
 
-  useEffect(() => {
-    if (!Number.isFinite(duration) || duration <= 0) {
-      return
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setIsVisible(false)
-      onDismiss?.()
-    }, duration)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [duration, onDismiss])
-
-  if (!isVisible) {
-    return null
-  }
+  if (!isVisible) return null
 
   return (
     <div
