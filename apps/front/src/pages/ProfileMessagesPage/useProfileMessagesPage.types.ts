@@ -10,11 +10,7 @@ import type { Dispatch, SetStateAction, FormEvent } from 'react'
 import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
-
-export type ProfileMessageViewModel = {
-  message: ProfileMessage
-  sender: Profile | undefined
-}
+import type { ProfileMessageViewModel } from './ProfileMessageList.types'
 
 export type UseProfileMessagesPageResult = {
   requestedUrl: string
