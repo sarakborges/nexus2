@@ -1,17 +1,13 @@
-import { Link } from 'react-router'
-
 import {
   Pagination,
-  RequestState,
-  RichTextEditor
+  RequestState
 } from '@/Components'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
-import { Button, Label } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { useProfileMessagesPage } from './useProfileMessagesPage'
+import { ProfileMessageComposer } from './ProfileMessageComposer.component'
 import { ProfileMessageList } from './ProfileMessageList.component'
+import { useProfileMessagesPage } from './useProfileMessagesPage'
 
 import '../AuthenticatedPage.style.scss'
 
@@ -86,61 +82,19 @@ export function ProfileMessagesPage() {
             </p>
           </div>
         </header>
-        {canSendMessage ? (
-          <form className="profile-message-form" onSubmit={handleSubmit}>
-            <div className="form-field">
-              <Label
-                id="profile-message-content-label"
-                htmlFor="profile-message-content"
-              >
-                {t('PROFILE_MESSAGES_COMPOSE_LABEL')}
-              </Label>
-              <RichTextEditor
-                id="profile-message-content"
-                value={content}
-                onChange={setContent}
-                maxTextLength={4000}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={uploadEditorImage}
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-              <p className="account-card__description">
-                {t('PROFILE_MESSAGES_MAX_LENGTH')}
-              </p>
-            </div>
-            {hasSendMessageError && (
-              <p className="auth-card__error" role="alert">
-                {t(
-                  isInvalidMessageError
-                    ? 'PROFILE_MESSAGES_ERROR_INVALID'
-                    : 'PROFILE_MESSAGES_ERROR_STORAGE'
-                )}
-              </p>
-            )}
-            <Button
-              type="submit"
-              disabled={!canSubmitMessage || isSendingMessage}
-            >
-              {isSendingMessage
-                ? t('AUTH_SUBMITTING')
-                : t('PROFILE_MESSAGES_SEND')}
-            </Button>
-          </form>
-        ) : (
-          !isProfileOwner && (
-            <p className="account-card__description">
-              {session ? (
-                t('PROFILE_MESSAGES_NEED_PROFILE')
-              ) : (
-                <>
-                  {t('PROFILE_MESSAGES_SIGN_IN')}{' '}
-                  <Link to={ROUTES.signIn}>{t('AUTH_SIGN_IN_LINK')}</Link>
-                </>
-              )}
-            </p>
-          )
-        )}
+        <ProfileMessageComposer
+          hasSession={Boolean(session)}
+          isProfileOwner={isProfileOwner}
+          canSendMessage={canSendMessage}
+          content={content}
+          onContentChange={setContent}
+          canSubmitMessage={canSubmitMessage}
+          isSendingMessage={isSendingMessage}
+          hasSendMessageError={hasSendMessageError}
+          isInvalidMessageError={isInvalidMessageError}
+          onUploadImage={uploadEditorImage}
+          onSubmit={handleSubmit}
+        />
         <RequestState
           isLoading={messagesQuery.isLoading}
           isFetching={messagesQuery.isFetching}
