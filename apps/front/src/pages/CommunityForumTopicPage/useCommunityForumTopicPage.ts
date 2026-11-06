@@ -103,7 +103,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   })
   const detail = topicQuery.data
   const topic = detail?.topic
-  const replies = detail?.replies.items ?? []
   const authorIds = useMemo(
     () =>
       [
@@ -140,7 +139,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   )
   const replyItems = useMemo(
     () =>
-      replies.map((reply) => ({
+      (detail?.replies.items ?? []).map((reply) => ({
         reply,
         author: authorsById.get(reply.profileId),
         canDelete: Boolean(
@@ -149,7 +148,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
           (reply.profileId === forumProfileId || isStaff)
         )
       })),
-    [replies, authorsById, canInteract, forumProfileId, isStaff]
+    [detail?.replies.items, authorsById, canInteract, forumProfileId, isStaff]
   )
 
   const replyMutation = useMutation({
