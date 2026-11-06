@@ -4,7 +4,7 @@ import type { Profile } from '@nexus/common'
 export type CommunityForumEntryProps = {
   author: Profile | undefined
   content: string
-  createdAt: string
+  createdAt: number
   className: string
   unknownAuthorLabel: string
   children?: ReactNode
