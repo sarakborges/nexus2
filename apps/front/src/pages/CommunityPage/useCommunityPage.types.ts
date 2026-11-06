@@ -1,5 +1,4 @@
 import type {
-  AuthSession,
   Community,
   CommunityForumTopicSummary,
   CommunityRelationship,
@@ -15,14 +14,12 @@ import type {
 import type { getCommunityForumTopics } from '@/Services/CommunityForum'
 
 export type UseCommunityPageResult = {
-  session: AuthSession | null
   requestedUrl: string
   communityQuery: UseQueryResult<Community | null>
   community: Community | null | undefined
   typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
   canInteract: boolean
   relationshipsQuery: UseQueryResult<CommunityRelationship[]>
-  privateMembership: boolean
   canViewMembers: boolean
   canEditCommunity: boolean
   openEditCommunity: () => void
