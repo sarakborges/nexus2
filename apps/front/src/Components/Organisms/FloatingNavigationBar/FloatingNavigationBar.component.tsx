@@ -1,22 +1,16 @@
-import { AccountMenu } from './AccountMenu.component'
-import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
-import { useFloatingNavigationBar } from './useFloatingNavigationBar'
-
+import { createPortal } from 'react-dom'
 import {
   FiChevronDown,
-  FiHome,
   FiMenu,
-  FiMessageCircle,
-  FiUsers,
   FiX
 } from 'react-icons/fi'
 
-import { createPortal } from 'react-dom'
-import { Link } from 'react-router'
-
 import { IdentityAvatar } from '@/Components/Molecules'
-import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { AccountMenu } from './AccountMenu.component'
+import { FloatingNavigationLinks } from './FloatingNavigationLinks.component'
+import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
+import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 
 import './FloatingNavigationBar.style.scss'
 
@@ -60,67 +54,15 @@ export function FloatingNavigationBar({
     <div className="floating-navigation" ref={navigationRef}>
       <div className="floating-navigation__bar">
         <div className="floating-navigation__content">
-          <nav
-            className="floating-navigation__desktop-links"
-            aria-label={t('NAVIGATION_LABEL')}
-          >
-            {currentProfile?.url && (
-              <>
-                <Link
-                  className="floating-navigation__desktop-link"
-                  to={ROUTES.home}
-                  aria-current={
-                    pathname === ROUTES.home ? 'page' : undefined
-                  }
-                  onClick={closePanels}
-                >
-                  <FiHome aria-hidden="true" />
-                  <span>{t('HOME_TITLE')}</span>
-                </Link>
-                {profileRoute && (
-                  <Link
-                    className="floating-navigation__desktop-link"
-                    to={profileRoute}
-                    aria-current={
-                      pathname === profileRoute ? 'page' : undefined
-                    }
-                    onClick={closePanels}
-                  >
-                    <FiUsers aria-hidden="true" />
-                    <span>{t('NAVIGATION_PROFILE')}</span>
-                  </Link>
-                )}
-                {messagesRoute && (
-                  <Link
-                    className="floating-navigation__desktop-link"
-                    to={messagesRoute}
-                    aria-current={
-                      pathname === messagesRoute ? 'page' : undefined
-                    }
-                    onClick={closePanels}
-                  >
-                    <FiMessageCircle aria-hidden="true" />
-                    <span>{t('NAVIGATION_MESSAGES')}</span>
-                  </Link>
-                )}
-                {communitiesRoute && (
-                  <Link
-                    className="floating-navigation__desktop-link"
-                    to={communitiesRoute}
-                    aria-current={
-                      pathname === communitiesRoute
-                        ? 'page'
-                        : undefined
-                    }
-                    onClick={closePanels}
-                  >
-                    <FiUsers aria-hidden="true" />
-                    <span>{t('COMMUNITIES_TITLE')}</span>
-                  </Link>
-                )}
-              </>
-            )}
-          </nav>
+          <FloatingNavigationLinks
+            variant="desktop"
+            pathname={pathname}
+            hasCurrentProfile={Boolean(currentProfile?.url)}
+            profileRoute={profileRoute}
+            messagesRoute={messagesRoute}
+            communitiesRoute={communitiesRoute}
+            onNavigate={closePanels}
+          />
 
           <button
             className="floating-navigation__icon-button"
@@ -164,48 +106,15 @@ export function FloatingNavigationBar({
       </div>
 
       {activePanel === 'navigation' && (
-        <nav
-          className="floating-navigation__menu floating-navigation__menu--navigation"
-          id="floating-navigation-menu"
-          aria-label={t('NAVIGATION_LABEL')}
-        >
-          <Link
-            className="floating-navigation__menu-item"
-            to={ROUTES.home}
-            onClick={closePanels}
-          >
-            <FiHome aria-hidden="true" />
-            <span>{t('HOME_TITLE')}</span>
-          </Link>
-          {profileRoute && (
-            <Link
-              className="floating-navigation__menu-item"
-              to={profileRoute}
-              onClick={closePanels}
-            >
-              <FiUsers aria-hidden="true" />
-              <span>{t('NAVIGATION_PROFILE')}</span>
-            </Link>
-          )}
-          {messagesRoute && (
-            <Link
-              className="floating-navigation__menu-item"
-              to={messagesRoute}
-              onClick={closePanels}
-            >
-              <FiMessageCircle aria-hidden="true" />
-              <span>{t('NAVIGATION_MESSAGES')}</span>
-            </Link>
-          )}
-          <Link
-            className="floating-navigation__menu-item"
-            to={ROUTES.communities}
-            onClick={closePanels}
-          >
-            <FiUsers aria-hidden="true" />
-            <span>{t('COMMUNITIES_TITLE')}</span>
-          </Link>
-        </nav>
+        <FloatingNavigationLinks
+          variant="mobile"
+          pathname={pathname}
+          hasCurrentProfile={Boolean(currentProfile?.url)}
+          profileRoute={profileRoute}
+          messagesRoute={messagesRoute}
+          communitiesRoute={null}
+          onNavigate={closePanels}
+        />
       )}
 
       {activePanel === 'account' && (
