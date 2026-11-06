@@ -1,7 +1,6 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
 import { useState } from 'react'
-import type { MouseEvent } from 'react'
 
 import { getRichTextPlainText } from './richText.utils'
 import type {
