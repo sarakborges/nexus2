@@ -29,7 +29,6 @@ export type UseProfileMessagesPageResult = {
   typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
   isProfileOwner: boolean
   messagesQuery: UseQueryResult<PaginatedResult<ProfileMessage>>
-  messages: ProfileMessage[]
   totalItems: number
   senderProfilesQuery: UseQueryResult<Profile[]>
   messageItems: ProfileMessageViewModel[]
