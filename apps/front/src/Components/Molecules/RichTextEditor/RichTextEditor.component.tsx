@@ -23,7 +23,8 @@ export function RichTextEditor({
     setImageUploading,
     openHtmlMode,
     closeHtmlMode,
-    handleChange
+    handleChange,
+    handleHtmlModeMouseDown
   } = useRichTextEditor({ onChange, maxTextLength })
 
   return (
@@ -71,6 +72,7 @@ export function RichTextEditor({
               onUploadImage={onUploadImage}
               onUploadingChange={setImageUploading}
               onOpenHtmlMode={openHtmlMode}
+              onHtmlModeMouseDown={handleHtmlModeMouseDown}
             />
           </Editor>
         </fieldset>
