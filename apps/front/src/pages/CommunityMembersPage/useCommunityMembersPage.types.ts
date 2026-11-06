@@ -32,7 +32,6 @@ export type UseCommunityMembersPageResult = {
   actorProfileId: string | null
   currentRole: CommunityRelationship['type'] | null
   isStaff: boolean
-  tabs: Array<{ id: MemberTab; label: string }>
   visibleTab: MemberTab
   membersQuery: UseQueryResult<MembersQueryData>
   pendingQuery: UseQueryResult<PendingQueryData>

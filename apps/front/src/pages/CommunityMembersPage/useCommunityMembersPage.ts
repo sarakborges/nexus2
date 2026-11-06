@@ -7,7 +7,6 @@ import { useParams } from 'react-router'
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
 import {
@@ -19,7 +18,6 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 
 export function useCommunityMembersPage(): UseCommunityMembersPageResult {
-  const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
   const session = useAuthStore((state) => state.session)
@@ -60,15 +58,6 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const actorProfileId = managementRelationship?.profiles[0] ?? null
   const currentRole = managementRelationship?.type ?? null
   const isStaff = Boolean(actorProfileId)
-  const tabs: Array<{ id: MemberTab; label: string }> = [
-    { id: 'all', label: t('COMMUNITY_TAB_ALL') },
-    ...(isStaff
-      ? [
-          { id: 'staff' as const, label: t('COMMUNITY_TAB_STAFF') },
-          { id: 'banned' as const, label: t('COMMUNITY_TAB_BANNED') }
-        ]
-      : [])
-  ]
   const visibleTab: MemberTab = isStaff ? activeTab : 'all'
   const membersQuery = useQuery({
     queryKey: queryKeys.communityMembers(
@@ -138,7 +127,6 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
     actorProfileId,
     currentRole,
     isStaff,
-    tabs,
     visibleTab,
     membersQuery,
     pendingQuery,
