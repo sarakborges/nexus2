@@ -1,7 +1,8 @@
-import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
-import { Button, FormField, Label } from '@/DesignSystem'
+import { RequestState } from '@/Components'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ProfileDetailsFields } from './ProfileDetailsFields.component'
 import { useEditProfilePage } from './useEditProfilePage'
 
 import '../AuthPage.style.scss'
@@ -85,75 +86,18 @@ export function EditProfilePage() {
           </p>
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <div className="entity-form-page__card">
-            <AvatarUploadField
-              label={t('PROFILE_PICTURE_LABEL')}
-              value={profile.picture}
-              fallbackName={form.name}
-              purpose="profile-avatar"
-              targetId={profile.id}
-              onChange={(picture) =>
-                updateProfilePicture(picture)
-              }
-              selectLabel={t('UPLOAD_SELECT_IMAGE')}
-              changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-              removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-              uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-              errorLabel={t('UPLOAD_FAILED')}
-              emptyLabel={t('UPLOAD_EMPTY')}
-            />
-            <FormField
-              id="profile-name"
-              label={t('PROFILE_NAME_LABEL')}
-              type="text"
-              autoComplete="nickname"
-              value={form.name}
-              onChange={(event) =>
-                updateForm({ name: event.target.value })
-              }
-              maxLength={80}
-              required
-            />
-            <FormField
-              id="profile-url"
-              label={t('PROFILE_URL_LABEL')}
-              type="text"
-              placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')}
-              value={form.url}
-              onChange={(event) =>
-                updateForm({ url: event.target.value })
-              }
-              autoComplete="off"
-            />
-            <p className="account-card__description">
-              {t('PROFILE_URL_AUTO_HELP')}
+          <ProfileDetailsFields
+            profile={profile}
+            form={form}
+            onChange={updateForm}
+            onPictureChange={updateProfilePicture}
+            onUploadImage={uploadEditorImage}
+          />
+          {errorMessage && (
+            <p className="auth-card__error" role="alert">
+              {errorMessage}
             </p>
-            <div className="form-field">
-              <Label id="profile-about-label" htmlFor="profile-about">
-                {t('PROFILE_ABOUT_LABEL')}
-              </Label>
-              <RichTextEditor
-                id="profile-about"
-                value={form.about}
-                onChange={(about) =>
-                  updateForm({ about })
-                }
-                maxTextLength={500}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={uploadEditorImage}
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-              <p className="account-card__description">
-                {t('PROFILE_ABOUT_MAX_LENGTH')}
-              </p>
-            </div>
-            {errorMessage && (
-              <p className="auth-card__error" role="alert">
-                {errorMessage}
-              </p>
-            )}
-          </div>
+          )}
           <div className="entity-form-page__actions">
             <Button
               type="button"
