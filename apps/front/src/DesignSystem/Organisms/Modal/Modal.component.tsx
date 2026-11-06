@@ -1,11 +1,10 @@
 import { FiX } from 'react-icons/fi'
 
-import { useEffect, useId, useRef } from 'react'
-import type { MouseEvent, SyntheticEvent } from 'react'
 
 import { Text } from '@/DesignSystem/Atoms/Text'
 
 import type { ModalProps } from './Modal.types'
+import { useModalDialog } from './useModalDialog'
 
 import './Modal.style.scss'
 
@@ -18,34 +17,14 @@ export function Modal({
   className,
   closeLabel = 'Close'
 }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const titleId = useId()
+  const { dialogRef, titleId, handleCancel, handleBackdropClick } = useModalDialog({
+    open,
+    onClose,
+    closeOnBackdrop
+  })
   const classNames = ['modal', className].filter(Boolean).join(' ')
 
-  useEffect(() => {
-    const dialog = dialogRef.current
 
-    if (!dialog) {
-      return
-    }
-
-    if (open && !dialog.open) {
-      dialog.showModal()
-    } else if (!open && dialog.open) {
-      dialog.close()
-    }
-  }, [open])
-
-  const handleCancel = (event: SyntheticEvent<HTMLDialogElement>) => {
-    event.preventDefault()
-    onClose()
-  }
-
-  const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>) => {
-    if (closeOnBackdrop && event.target === event.currentTarget) {
-      onClose()
-    }
-  }
 
   return (
     <dialog
