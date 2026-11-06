@@ -120,9 +120,7 @@ export function ProfileMessagesPage() {
             )}
             <Button
               type="submit"
-              disabled={
-                !canSubmitMessage || isSendingMessage
-              }
+              disabled={!canSubmitMessage || isSendingMessage}
             >
               {isSendingMessage
                 ? t('AUTH_SUBMITTING')
@@ -158,7 +156,7 @@ export function ProfileMessagesPage() {
             errorMessage={t('PROFILE_MESSAGES_SENDERS_ERROR')}
             onRetry={() => void senderProfilesQuery.refetch()}
           >
-            <ProfileMessageList items={messageItems} />      </div>
+            <ProfileMessageList items={messageItems} />
           </RequestState>
         </RequestState>
         <Pagination
