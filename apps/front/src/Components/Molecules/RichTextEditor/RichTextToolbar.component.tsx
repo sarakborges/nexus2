@@ -9,7 +9,8 @@ export function RichTextToolbar({
   imageUploadErrorLabel,
   onUploadImage,
   onUploadingChange,
-  onOpenHtmlMode
+  onOpenHtmlMode,
+  onHtmlModeMouseDown
 }: RichTextToolbarProps) {
   return (
     <Toolbar>
@@ -54,7 +55,7 @@ export function RichTextToolbar({
         type="button"
         title="Edit HTML source"
         aria-label="Edit HTML source"
-        onMouseDown={(event) => event.preventDefault()}
+        onMouseDown={onHtmlModeMouseDown}
         onClick={onOpenHtmlMode}
       >
         <span aria-hidden="true">{'</>'}</span>
