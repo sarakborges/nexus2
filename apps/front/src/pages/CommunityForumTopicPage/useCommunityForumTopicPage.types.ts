@@ -12,7 +12,6 @@ import type {
 } from '@tanstack/react-query'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 
-import type { useTranslations } from '@/Hooks/Language'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { getCommunityByUrl } from '@/Services/Community'
 import type { uploadEditorImage } from '@/Services/Uploads'
@@ -30,7 +29,6 @@ export type CommunityForumReplyViewModel = {
 
 export type UseCommunityForumTopicPageResult = {
   topicId: string | undefined
-  t: ReturnType<typeof useTranslations>['t']
   session: AuthSession | null
   isAuthInitialized: boolean
   normalized: string
@@ -54,6 +52,7 @@ export type UseCommunityForumTopicPageResult = {
   replyItems: CommunityForumReplyViewModel[]
   authorsQuery: UseQueryResult<Profile[]>
   hasReplyError: boolean
+  canSubmitReply: boolean
   isSendingReply: boolean
   isUpdatingTopic: boolean
   isDeletingTopic: boolean

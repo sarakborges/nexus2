@@ -232,7 +232,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
 
   return {
     topicId,
-    t,
     session,
     isAuthInitialized,
     normalized,
@@ -256,6 +255,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     replyItems,
     authorsQuery,
     hasReplyError: replyMutation.isError,
+    canSubmitReply: hasRichTextContent(replyContent),
     isSendingReply: replyMutation.isPending,
     isUpdatingTopic: moderationMutation.isPending,
     isDeletingTopic: deleteTopicMutation.isPending,

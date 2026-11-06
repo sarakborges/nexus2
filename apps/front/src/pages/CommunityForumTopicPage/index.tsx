@@ -1,19 +1,13 @@
-import { Link } from 'react-router'
-
 import { CommunityForumEntry } from './CommunityForumEntry.component'
-import {
-  Pagination,
-  RelationshipActions,
-  RequestState,
-  RichTextEditor
-} from '@/Components'
+import { CommunityForumReplyComposer } from './CommunityForumReplyComposer.component'
+import { CommunityForumTopicModerationActions } from './CommunityForumTopicModerationActions.component'
+import { Pagination, RequestState } from '@/Components'
+import { Button } from '@/DesignSystem'
 import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
-import { Button, Label } from '@/DesignSystem'
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
+import { useTranslations } from '@/Hooks/Language'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
@@ -21,9 +15,9 @@ import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CommunityForumTopicPage() {
+  const { t } = useTranslations()
   const {
     topicId,
-    t,
     session,
     isAuthInitialized,
     normalized,
@@ -49,6 +43,7 @@ export function CommunityForumTopicPage() {
     canDeleteTopic,
     replyItems,
     hasReplyError,
+    canSubmitReply,
     isSendingReply,
     isUpdatingTopic,
     isDeletingTopic,
@@ -108,35 +103,17 @@ export function CommunityForumTopicPage() {
           createdAt={topic.createdAt}
           unknownAuthorLabel={t('FORUM_UNKNOWN_AUTHOR')}
         >
-          {canDeleteTopic && (
-            <div className="community-forum__actions">
-              {isStaff && (
-                <>
-                  <Button
-                    variation="secondary"
-                    disabled={isUpdatingTopic}
-                    onClick={togglePinned}
-                  >
-                    {t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}
-                  </Button>
-                  <Button
-                    variation="secondary"
-                    disabled={isUpdatingTopic}
-                    onClick={toggleLocked}
-                  >
-                    {t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}
-                  </Button>
-                </>
-              )}
-              <Button
-                variation="cancel"
-                disabled={isDeletingTopic}
-                onClick={deleteTopic}
-              >
-                {t('FORUM_DELETE')}
-              </Button>
-            </div>
-          )}
+          <CommunityForumTopicModerationActions
+            canDeleteTopic={canDeleteTopic}
+            isStaff={isStaff}
+            isPinned={topic.isPinned}
+            isLocked={topic.isLocked}
+            isUpdatingTopic={isUpdatingTopic}
+            isDeletingTopic={isDeletingTopic}
+            onTogglePinned={togglePinned}
+            onToggleLocked={toggleLocked}
+            onDeleteTopic={deleteTopic}
+          />
           {topic.isLocked && (
             <p className="account-card__description">{t('FORUM_LOCKED')}</p>
           )}
@@ -197,74 +174,30 @@ export function CommunityForumTopicPage() {
         </section>
       </section>
 
-      <section className="account-card community-forum community-forum__reply-composer-card">
-        {!isAuthInitialized ||
-        relationshipsQuery.isLoading ||
-        ownedProfilesQuery.isLoading ||
-        relationshipsQuery.isError ||
-        ownedProfilesQuery.isError ? (
-          <RequestState
-            isLoading={
-              !isAuthInitialized ||
-              relationshipsQuery.isLoading ||
-              ownedProfilesQuery.isLoading
-            }
-            isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
-          />
-        ) : canInteract && isMember && !topic.isLocked ? (
-          <form
-            className="community-forum__reply-composer"
-            onSubmit={submitReply}
-          >
-            <div className="form-field">
-              <Label
-                id="forum-reply-content-label"
-                htmlFor="forum-reply-content"
-              >
-                {t('FORUM_REPLY')}
-              </Label>
-              <RichTextEditor
-                id="forum-reply-content"
-                value={replyContent}
-                onChange={setReplyContent}
-                maxTextLength={8000}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={uploadEditorImage}
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-            </div>
-            {hasReplyError && (
-              <p className="auth-card__error" role="alert">
-                {t('FORUM_TOPIC_ERROR')}
-              </p>
-            )}
-            <Button
-              type="submit"
-              disabled={
-                !hasRichTextContent(replyContent) || isSendingReply
-              }
-            >
-              {t('FORUM_PUBLISH_REPLY')}
-            </Button>
-          </form>
-        ) : (
-          <div className="community-forum__join">
-            <p className="account-card__description">
-              {topic.isLocked ? t('FORUM_LOCKED') : t('FORUM_MEMBERS_ONLY')}
-            </p>
-            {!session && (
-              <Link to={ROUTES.signIn}>{t('AUTH_SIGN_IN_LINK')}</Link>
-            )}
-            {session && !isMember && (
-              <RelationshipActions
-                targetId={community.id}
-                targetKind="community"
-              />
-            )}
-          </div>
-        )}
-      </section>
+      <CommunityForumReplyComposer
+        isLoading={
+          !isAuthInitialized ||
+          relationshipsQuery.isLoading ||
+          ownedProfilesQuery.isLoading
+        }
+        isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
+        onRetry={() => {
+          void relationshipsQuery.refetch()
+          void ownedProfilesQuery.refetch()
+        }}
+        canReply={canInteract && isMember && !topic.isLocked}
+        hasSession={Boolean(session)}
+        isMember={isMember}
+        isTopicLocked={topic.isLocked}
+        communityId={community.id}
+        value={replyContent}
+        canSubmit={canSubmitReply}
+        isSending={isSendingReply}
+        hasError={hasReplyError}
+        onChange={setReplyContent}
+        onSubmit={submitReply}
+        onUploadImage={uploadEditorImage}
+      />
     </SocialPageLayout>
   )
 }
