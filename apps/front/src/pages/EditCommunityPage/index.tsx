@@ -1,9 +1,9 @@
-import { RequestState, AvatarUploadField, RichTextEditor } from '@/Components'
-import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
-import { Button, FormField, Label } from '@/DesignSystem'
+import { RequestState } from '@/Components'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { CommunityDetailsFields } from './CommunityDetailsFields.component'
+import { CommunityPrivacySelector } from './CommunityPrivacySelector.component'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
 import '../AuthPage.style.scss'
@@ -90,99 +90,23 @@ export function EditCommunityPage() {
           </p>
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <div className="entity-form-page__card">
-            <AvatarUploadField
-              label={t('COMMUNITY_PICTURE_LABEL')}
-              value={community.picture}
-              fallbackName={form.name}
-              purpose="community-avatar"
-              targetId={community.id}
-              actorProfileId={ownerProfileId}
-              onChange={updateCommunityPicture}
-              selectLabel={t('UPLOAD_SELECT_IMAGE')}
-              changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-              removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-              uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-              errorLabel={t('UPLOAD_FAILED')}
-              emptyLabel={t('UPLOAD_EMPTY')}
-            />
-            <FormField
-              id="community-name"
-              label={t('COMMUNITY_NAME_LABEL')}
-              type="text"
-              value={form.name}
-              onChange={(event) =>
-                updateForm({ name: event.target.value })
-              }
-              maxLength={80}
-              required
-            />
-            <FormField
-              id="community-url"
-              label={t('COMMUNITY_URL_LABEL')}
-              type="text"
-              placeholder={t('COMMUNITY_URL_AUTO_PLACEHOLDER')}
-              value={form.url}
-              onChange={(event) =>
-                updateForm({ url: event.target.value })
-              }
-              autoComplete="off"
-            />
-            <p className="account-card__description">
-              {t('COMMUNITY_URL_AUTO_HELP')}
+          <CommunityDetailsFields
+            community={community}
+            ownerProfileId={ownerProfileId}
+            form={form}
+            onChange={updateForm}
+            onPictureChange={updateCommunityPicture}
+            onUploadImage={uploadEditorImage}
+          />
+          {errorMessage && (
+            <p className="auth-card__error" role="alert">
+              {errorMessage}
             </p>
-            <div className="form-field">
-              <Label id="community-about-label" htmlFor="community-about">
-                {t('COMMUNITY_ABOUT_LABEL')}
-              </Label>
-              <RichTextEditor
-                id="community-about"
-                value={form.about}
-                onChange={(about) =>
-                  updateForm({ about })
-                }
-                maxTextLength={500}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={uploadEditorImage}
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-              <p className="account-card__description">
-                {t('COMMUNITY_ABOUT_MAX_LENGTH')}
-              </p>
-            </div>
-            {errorMessage && (
-              <p className="auth-card__error" role="alert">
-                {errorMessage}
-              </p>
-            )}
-          </div>
-          <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_PUBLIC')}
-              description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')}
-              isSelected={form.privacy === 'public'}
-              onSelect={() =>
-                updateForm({ privacy: 'public' })
-              }
-            />
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_PRIVATE')}
-              description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')}
-              isSelected={form.privacy === 'private'}
-              onSelect={() =>
-                updateForm({ privacy: 'private' })
-              }
-            />
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_UNLISTED')}
-              description={t('COMMUNITY_PRIVACY_UNLISTED_DESCRIPTION')}
-              isSelected={form.privacy === 'unlisted'}
-              onSelect={() =>
-                updateForm({ privacy: 'unlisted' })
-              }
-            />
-          </PreferenceSelector>
+          )}
+          <CommunityPrivacySelector
+            value={form.privacy}
+            onChange={(privacy) => updateForm({ privacy })}
+          />
           <div className="entity-form-page__actions">
             <Button
               type="button"
