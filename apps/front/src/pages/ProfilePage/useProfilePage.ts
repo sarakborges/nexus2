@@ -52,7 +52,6 @@ export function useProfilePage(): UseProfilePageResult {
 
   return {
     requestedUrl,
-    session,
     profileQuery,
     profile,
     typeCompatibility,
