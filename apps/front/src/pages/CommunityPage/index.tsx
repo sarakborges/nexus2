@@ -1,14 +1,11 @@
-import { Link } from 'react-router'
-
 import { RequestState } from '@/Components'
 import { CommunitySidebar } from '@/Components/Organisms/SocialPageLayout'
-import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { useCommunityPage } from './useCommunityPage'
+import { CommunityPageAboutPreview } from './CommunityPageAboutPreview.component'
 import { CommunityPageForumPreview } from './CommunityPageForumPreview.component'
 import { CommunityPageMembersPreview } from './CommunityPageMembersPreview.component'
+import { useCommunityPage } from './useCommunityPage'
 
 import '../AuthenticatedPage.style.scss'
 import './CommunityPage.style.scss'
@@ -100,47 +97,15 @@ export function CommunityPage() {
               {t('PROFILE_TYPE_MISMATCH_NOTICE')}
             </p>
           )}
-          <article className="social-panel social-panel--about">
-            <header className="social-panel__header">
-              <div>
-                <h2 className="social-panel__title">
-                  {t('COMMUNITY_ABOUT_LABEL')}
-                </h2>
-              </div>
-              {canEditCommunity && (
-                <Button
-                  type="button"
-                  variation="primary"
-                  onClick={openEditCommunity}
-                >
-                  {t('COMMUNITY_EDIT')}
-                </Button>
-              )}
-            </header>
-            {pendingActor &&
-              (pendingRequestsQuery.data?.totalItems ?? 0) > 0 && (
-                <Link
-                  className="community-pending-notice"
-                  to={ROUTES.community + '/' + community.url + '/members'}
-                >
-                  {t('COMMUNITY_PENDING_ABOUT_NOTICE', {
-                    count: pendingRequestsQuery.data?.totalItems ?? 0
-                  })}
-                </Link>
-              )}
-            {!canViewMembers ? (
-              <p className="social-panel__body">
-                {t('COMMUNITY_PRIVATE_RESTRICTED')}
-              </p>
-            ) : community.about ? (
-              <div
-                className="social-panel__body rich-text-content"
-                dangerouslySetInnerHTML={{ __html: community.about }}
-              />
-            ) : (
-              <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>
-            )}
-          </article>
+          <CommunityPageAboutPreview
+            community={community}
+            canViewMembers={canViewMembers}
+            canEditCommunity={canEditCommunity}
+            pendingRequestCount={
+              pendingActor ? (pendingRequestsQuery.data?.totalItems ?? 0) : 0
+            }
+            onEdit={openEditCommunity}
+          />
 
           <CommunityPageForumPreview
             communityUrl={community.url}
