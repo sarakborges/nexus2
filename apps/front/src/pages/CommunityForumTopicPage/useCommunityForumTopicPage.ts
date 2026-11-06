@@ -246,7 +246,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     community,
     relationshipsQuery,
     ownedProfilesQuery,
-    forumProfileId,
     isMember,
     isStaff,
     canInteract,
