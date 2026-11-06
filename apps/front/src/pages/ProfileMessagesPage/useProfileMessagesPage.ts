@@ -53,7 +53,6 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     queryFn: () => getProfileMessages(profile!.id, { page, pageSize }),
     enabled: Boolean(profile?.id)
   })
-  const messages = messagesQuery.data?.items ?? []
   const totalItems = messagesQuery.data?.totalItems ?? 0
   const senderIds = useMemo(
     () =>
@@ -82,11 +81,11 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   )
   const messageItems = useMemo(
     () =>
-      messages.map((message) => ({
+      (messagesQuery.data?.items ?? []).map((message) => ({
         message,
         sender: sendersById.get(message.fromProfileId)
       })),
-    [messages, sendersById]
+    [messagesQuery.data?.items, sendersById]
   )
   const messageSenderProfileId =
     currentProfileId ?? (isProfileOwner ? (profile?.id ?? null) : null)
@@ -127,7 +126,6 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     typeCompatibility,
     isProfileOwner,
     messagesQuery,
-    messages,
     totalItems,
     senderProfilesQuery,
     messageItems,
