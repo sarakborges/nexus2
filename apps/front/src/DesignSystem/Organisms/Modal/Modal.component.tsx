@@ -1,6 +1,5 @@
 import { FiX } from 'react-icons/fi'
 
-
 import { Text } from '@/DesignSystem/Atoms/Text'
 
 import type { ModalProps } from './Modal.types'
@@ -23,8 +22,6 @@ export function Modal({
     closeOnBackdrop
   })
   const classNames = ['modal', className].filter(Boolean).join(' ')
-
-
 
   return (
     <dialog
