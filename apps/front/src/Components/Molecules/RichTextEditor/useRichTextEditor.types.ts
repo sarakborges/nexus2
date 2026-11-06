@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { RichTextEditorProps } from './RichTextEditor.types'
 
 export type UseRichTextEditorOptions = Pick<
@@ -13,4 +14,5 @@ export type UseRichTextEditorController = {
   openHtmlMode: () => void
   closeHtmlMode: () => void
   handleChange: (value: string) => void
+  handleHtmlModeMouseDown: (event: MouseEvent<HTMLButtonElement>) => void
 }
