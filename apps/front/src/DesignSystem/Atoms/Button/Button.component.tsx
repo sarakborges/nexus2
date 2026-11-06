@@ -1,6 +1,5 @@
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-
 import type { ButtonProps } from './Button.types'
+import { useGlobalRequestStatus } from '../../Hooks/useGlobalRequestStatus'
 
 import './Button.style.scss'
 
@@ -11,9 +10,7 @@ export function Button({
   variation = 'primary',
   ...props
 }: ButtonProps) {
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
+  const isRequestPending = useGlobalRequestStatus()
   const classNames = ['button', `button--${variation}`, className]
     .filter(Boolean)
     .join(' ')
