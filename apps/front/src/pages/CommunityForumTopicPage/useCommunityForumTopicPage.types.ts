@@ -43,7 +43,6 @@ export type UseCommunityForumTopicPageResult = {
   community: Community | null | undefined
   relationshipsQuery: UseQueryResult<CommunityRelationship[]>
   ownedProfilesQuery: UseQueryResult<Profile[]>
-  forumProfileId: string | null
   isMember: boolean
   isStaff: boolean
   canInteract: boolean
