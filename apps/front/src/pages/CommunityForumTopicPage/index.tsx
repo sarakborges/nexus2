@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 
+import { CommunityForumEntry } from './CommunityForumEntry.component'
 import {
   Pagination,
   RelationshipActions,
@@ -100,93 +101,46 @@ export function CommunityForumTopicPage() {
           </div>
         </header>
 
-        <article className="community-forum__post community-forum__entry">
-          <aside className="community-forum__author-column">
-            {topicAuthor ? (
-              <Link
-                className="community-forum__author-link"
-                to={ROUTES.profile + '/' + topicAuthor.url}
-                aria-label={topicAuthor.name}
-                title={topicAuthor.name}
-              >
-                <span className="community-forum__author-avatar">
-                  {topicAuthor.picture ? (
-                    <img src={topicAuthor.picture} alt="" />
-                  ) : (
-                    <span aria-hidden="true">
-                      {topicAuthor.name.trim().charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            ) : (
-              <span
-                className="community-forum__author-avatar"
-                aria-hidden="true"
-              >
-                ?
-              </span>
-            )}
-          </aside>
-          <div className="community-forum__entry-main">
-            <header className="community-forum__post-header">
-              <span>
-                {topicAuthor ? (
-                  <Link to={ROUTES.profile + '/' + topicAuthor.url}>
-                    {topicAuthor.name}
-                  </Link>
-                ) : (
-                  t('FORUM_UNKNOWN_AUTHOR')
-                )}
-              </span>
-              <time dateTime={new Date(topic.createdAt).toISOString()}>
-                {new Date(topic.createdAt).toLocaleString()}
-              </time>
-            </header>
-            <div
-              className="community-forum__post-content rich-text-content"
-              dangerouslySetInnerHTML={{ __html: topic.content }}
-            />
-            {canDeleteTopic && (
-              <div className="community-forum__actions">
-                {isStaff && (
-                  <>
-                    <Button
-                      variation="secondary"
-                      disabled={isUpdatingTopic}
-                      onClick={() =>
-                        togglePinned()
-                      }
-                    >
-                      {t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}
-                    </Button>
-                    <Button
-                      variation="secondary"
-                      disabled={isUpdatingTopic}
-                      onClick={() =>
-                        toggleLocked()
-                      }
-                    >
-                      {t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}
-                    </Button>
-                  </>
-                )}
-                {canDeleteTopic && (
+        <CommunityForumEntry
+          className="community-forum__post community-forum__entry"
+          author={topicAuthor}
+          content={topic.content}
+          createdAt={topic.createdAt}
+          unknownAuthorLabel={t('FORUM_UNKNOWN_AUTHOR')}
+        >
+          {canDeleteTopic && (
+            <div className="community-forum__actions">
+              {isStaff && (
+                <>
                   <Button
-                    variation="cancel"
-                    disabled={isDeletingTopic}
-                    onClick={deleteTopic}
+                    variation="secondary"
+                    disabled={isUpdatingTopic}
+                    onClick={togglePinned}
                   >
-                    {t('FORUM_DELETE')}
+                    {t(topic.isPinned ? 'FORUM_UNPIN' : 'FORUM_PIN')}
                   </Button>
-                )}
-              </div>
-            )}
-            {topic.isLocked && (
-              <p className="account-card__description">{t('FORUM_LOCKED')}</p>
-            )}
-          </div>
-        </article>
+                  <Button
+                    variation="secondary"
+                    disabled={isUpdatingTopic}
+                    onClick={toggleLocked}
+                  >
+                    {t(topic.isLocked ? 'FORUM_UNLOCK' : 'FORUM_LOCK')}
+                  </Button>
+                </>
+              )}
+              <Button
+                variation="cancel"
+                disabled={isDeletingTopic}
+                onClick={deleteTopic}
+              >
+                {t('FORUM_DELETE')}
+              </Button>
+            </div>
+          )}
+          {topic.isLocked && (
+            <p className="account-card__description">{t('FORUM_LOCKED')}</p>
+          )}
+        </CommunityForumEntry>
 
         <section className="community-forum__replies">
           <h2>
@@ -212,69 +166,26 @@ export function CommunityForumTopicPage() {
             }}
           >
             {replyItems.map(({ reply, author, canDelete }) => (
-                <article
-                  className="community-forum__reply community-forum__entry"
-                  key={reply.id}
-                >
-                  <aside className="community-forum__author-column">
-                    {author ? (
-                      <Link
-                        className="community-forum__author-link"
-                        to={ROUTES.profile + '/' + author.url}
-                        aria-label={author.name}
-                        title={author.name}
-                      >
-                        <span className="community-forum__author-avatar">
-                          {author.picture ? (
-                            <img src={author.picture} alt="" />
-                          ) : (
-                            <span aria-hidden="true">
-                              {author.name.trim().charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </span>
-                      </Link>
-                    ) : (
-                      <span
-                        className="community-forum__author-avatar"
-                        aria-hidden="true"
-                      >
-                        ?
-                      </span>
-                    )}
-                  </aside>
-                  <div className="community-forum__entry-main">
-                    <header className="community-forum__post-header">
-                      <span>
-                        {author ? (
-                          <Link to={ROUTES.profile + '/' + author.url}>
-                            {author.name}
-                          </Link>
-                        ) : (
-                          t('FORUM_UNKNOWN_AUTHOR')
-                        )}
-                      </span>
-                      <time dateTime={new Date(reply.createdAt).toISOString()}>
-                        {new Date(reply.createdAt).toLocaleString()}
-                      </time>
-                    </header>
-                    <div
-                      className="community-forum__post-content rich-text-content"
-                      dangerouslySetInnerHTML={{ __html: reply.content }}
-                    />
-                    {canDelete && (
-                      <div className="community-forum__actions">
-                        <Button
-                          variation="cancel"
-                          disabled={isDeletingReply}
-                          onClick={() => deleteReply(reply.id)}
-                        >
-                          {t('FORUM_DELETE')}
-                        </Button>
-                      </div>
-                    )}
+              <CommunityForumEntry
+                key={reply.id}
+                className="community-forum__reply community-forum__entry"
+                author={author}
+                content={reply.content}
+                createdAt={reply.createdAt}
+                unknownAuthorLabel={t('FORUM_UNKNOWN_AUTHOR')}
+              >
+                {canDelete && (
+                  <div className="community-forum__actions">
+                    <Button
+                      variation="cancel"
+                      disabled={isDeletingReply}
+                      onClick={() => deleteReply(reply.id)}
+                    >
+                      {t('FORUM_DELETE')}
+                    </Button>
                   </div>
-                </article>
+                )}
+              </CommunityForumEntry>
             ))}
           </RequestState>
           <Pagination
