@@ -1,5 +1,3 @@
-import { Link } from 'react-router'
-
 import { AccountIdentityLink } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
