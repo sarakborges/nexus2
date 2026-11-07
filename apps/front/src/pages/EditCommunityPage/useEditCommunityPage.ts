@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-import type { CommunityForm } from './EditCommunityPage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useEntityFormDraft } from '@/Hooks/Forms'

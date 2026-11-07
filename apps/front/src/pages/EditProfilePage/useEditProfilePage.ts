@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-import type { ProfileForm } from './EditProfilePage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useUpdateProfileMutation } from '@/Hooks/Profile'
 import { useEntityFormDraft } from '@/Hooks/Forms'
