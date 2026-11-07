@@ -16,6 +16,7 @@ import {
   moderateCommunityForumTopic
 } from '@/Services/CommunityForum'
 import { useCommunityForumAccess } from '@/Hooks/Community'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
