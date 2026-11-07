@@ -15,3 +15,8 @@ export type {
   UpdateCommunityMutationVariables,
   UseUpdateCommunityMutationResult
 } from './useUpdateCommunityMutation.types'
+export { useCommunityForumAccess } from './useCommunityForumAccess.hook'
+export type {
+  UseCommunityForumAccessOptions,
+  UseCommunityForumAccessResult
+} from './useCommunityForumAccess.types'

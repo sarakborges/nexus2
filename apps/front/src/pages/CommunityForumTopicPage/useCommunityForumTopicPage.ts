@@ -15,8 +15,7 @@ import {
   getCommunityForumTopic,
   moderateCommunityForumTopic
 } from '@/Services/CommunityForum'
-import { getCommunityRelationships } from '@/Services/CommunityRelationship'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { useCommunityForumAccess } from '@/Hooks/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -47,44 +46,20 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     enabled: Boolean(normalized)
   })
   const community = communityQuery.data
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
-    enabled: Boolean(community?.id)
+  const {
+    relationshipsQuery,
+    ownedProfilesQuery,
+    forumProfileId,
+    isMember,
+    isStaff
+  } = useCommunityForumAccess({
+    communityId: community?.id ?? null,
+    communityType: community?.type ?? null,
+    viewerUserId: session?.user.id ?? null,
+    profileIds,
+    currentProfileId
   })
-  const { profilesQuery: ownedProfilesQuery } = useProfilesByIds(profileIds)
-  const rolesByProfileId = new Map(
-    (relationshipsQuery.data ?? [])
-      .filter((record) => record.profiles[1] === community?.id)
-      .map((record) => [record.profiles[0], record.type] as const)
-  )
-  const eligibleProfiles = (ownedProfilesQuery.data ?? []).filter(
-    (profile) =>
-      profile.type === community?.type &&
-      ['owner', 'moderator', 'connection'].includes(
-        rolesByProfileId.get(profile.id) ?? ''
-      )
-  )
-  const forumProfile =
-    eligibleProfiles.find((profile) => profile.id === currentProfileId) ??
-    eligibleProfiles.find(
-      (profile) => rolesByProfileId.get(profile.id) === 'owner'
-    ) ??
-    eligibleProfiles.find(
-      (profile) => rolesByProfileId.get(profile.id) === 'moderator'
-    ) ??
-    eligibleProfiles[0] ??
-    null
-  const forumProfileId = forumProfile?.id ?? null
-  const currentRole = forumProfileId
-    ? (rolesByProfileId.get(forumProfileId) ?? null)
-    : null
-  const isMember = Boolean(forumProfileId)
-  const isStaff = currentRole === 'owner' || currentRole === 'moderator'
-  const canInteract = Boolean(forumProfileId)
+  const canInteract = isMember
   const topicQuery = useQuery({
     queryKey: queryKeys.communityForumTopic(
       community?.id ?? '',
