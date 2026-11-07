@@ -16,7 +16,7 @@ import {
   moderateCommunityForumTopic
 } from '@/Services/CommunityForum'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
-import { getProfilesByIds } from '@/Services/Profile'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -55,11 +55,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     queryFn: () => getCommunityRelationships(community!.id),
     enabled: Boolean(community?.id)
   })
-  const ownedProfilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0
-  })
+  const { profilesQuery: ownedProfilesQuery } = useProfilesByIds(profileIds)
   const rolesByProfileId = new Map(
     (relationshipsQuery.data ?? [])
       .filter((record) => record.profiles[1] === community?.id)
@@ -115,20 +111,10 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
       ].sort(),
     [topic?.profileId, detail?.replies.items]
   )
-  const authorsQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(authorIds),
-    queryFn: () => getProfilesByIds(authorIds),
-    enabled: authorIds.length > 0
-  })
-  const authorsById = useMemo(
-    () =>
-      new Map(
-        (authorsQuery.data ?? []).map(
-          (profile) => [profile.id, profile] as const
-        )
-      ),
-    [authorsQuery.data]
-  )
+  const {
+    profilesQuery: authorsQuery,
+    profilesById: authorsById
+  } = useProfilesByIds(authorIds)
 
   const topicAuthor = topic ? authorsById.get(topic.profileId) : undefined
   const canDeleteTopic = Boolean(

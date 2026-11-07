@@ -12,7 +12,7 @@ import {
   getCommunityMembers,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
-import { getProfilesByIds } from '@/Services/Profile'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunityPageResult } from './useCommunityPage.types'
@@ -107,20 +107,10 @@ export function useCommunityPage(): UseCommunityPageResult {
     () => [...new Set(forumTopics.map((topic) => topic.profileId))].sort(),
     [forumTopics]
   )
-  const forumAuthorsQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(forumAuthorIds),
-    queryFn: () => getProfilesByIds(forumAuthorIds),
-    enabled: forumAuthorIds.length > 0
-  })
-  const forumAuthorsById = useMemo(
-    () =>
-      new Map(
-        (forumAuthorsQuery.data ?? []).map(
-          (profile) => [profile.id, profile] as const
-        )
-      ),
-    [forumAuthorsQuery.data]
-  )
+  const {
+    profilesQuery: forumAuthorsQuery,
+    profilesById: forumAuthorsById
+  } = useProfilesByIds(forumAuthorIds)
 
   return {
     requestedUrl,

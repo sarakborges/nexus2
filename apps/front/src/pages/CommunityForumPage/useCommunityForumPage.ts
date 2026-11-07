@@ -9,7 +9,7 @@ import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
-import { getProfilesByIds } from '@/Services/Profile'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
@@ -40,11 +40,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     queryFn: () => getCommunityRelationships(community!.id),
     enabled: Boolean(community?.id && session?.user.id)
   })
-  const ownedProfilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0
-  })
+  const { profilesQuery: ownedProfilesQuery } = useProfilesByIds(profileIds)
   const rolesByProfileId = new Map(
     (relationshipsQuery.data ?? [])
       .filter((record) => record.profiles[1] === community?.id)
@@ -93,20 +89,10 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     () => [...new Set(topics.map((topic) => topic.profileId))].sort(),
     [topics]
   )
-  const authorsQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(authorIds),
-    queryFn: () => getProfilesByIds(authorIds),
-    enabled: authorIds.length > 0
-  })
-  const authorsById = useMemo(
-    () =>
-      new Map(
-        (authorsQuery.data ?? []).map(
-          (profile) => [profile.id, profile] as const
-        )
-      ),
-    [authorsQuery.data]
-  )
+  const {
+    profilesQuery: authorsQuery,
+    profilesById: authorsById
+  } = useProfilesByIds(authorIds)
 
 
   return {

@@ -8,7 +8,8 @@ import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getProfileByUrl, getProfilesByIds } from '@/Services/Profile'
+import { getProfileByUrl } from '@/Services/Profile'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import {
   ProfileMessageError,
   createProfileMessage,
@@ -64,20 +65,10 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       ].sort(),
     [messagesQuery.data?.items]
   )
-  const senderProfilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(senderIds),
-    queryFn: () => getProfilesByIds(senderIds),
-    enabled: senderIds.length > 0
-  })
-  const sendersById = useMemo(
-    () =>
-      new Map(
-        (senderProfilesQuery.data ?? []).map(
-          (sender) => [sender.id, sender] as const
-        )
-      ),
-    [senderProfilesQuery.data]
-  )
+  const {
+    profilesQuery: senderProfilesQuery,
+    profilesById: sendersById
+  } = useProfilesByIds(senderIds)
   const messageItems = useMemo(
     () =>
       (messagesQuery.data?.items ?? []).map((message) => ({
