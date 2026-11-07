@@ -1,11 +1,8 @@
 import type { CommunityRelationship } from '@nexus/common'
-import { useQuery } from '@tanstack/react-query'
-
 import { useMemo } from 'react'
 
+import { useCommunityAccess } from '@/Hooks/Community/useCommunityAccess.hook'
 import { useProfilesByIds } from '@/Hooks/Profile'
-import { getCommunityRelationships } from '@/Services/CommunityRelationship'
-import { queryKeys } from '@/Services/Query/queryKeys'
 import type {
   UseCommunityForumAccessOptions,
   UseCommunityForumAccessResult
@@ -25,21 +22,22 @@ export function useCommunityForumAccess({
   currentProfileId,
   relationshipsEnabled = true
 }: UseCommunityForumAccessOptions): UseCommunityForumAccessResult {
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(communityId ?? '', viewerUserId),
-    queryFn: () => getCommunityRelationships(communityId!),
-    enabled: Boolean(communityId && relationshipsEnabled)
+  const { relationshipsQuery, relationships } = useCommunityAccess({
+    communityId,
+    viewerUserId,
+    profileIds,
+    enabled: relationshipsEnabled
   })
   const { profilesQuery: ownedProfilesQuery } = useProfilesByIds(profileIds)
 
   const rolesByProfileId = useMemo(
     () =>
       new Map(
-        (relationshipsQuery.data ?? [])
+        relationships
           .filter((record) => record.profiles[1] === communityId)
           .map((record) => [record.profiles[0], record.type] as const)
       ),
-    [relationshipsQuery.data, communityId]
+    [relationships, communityId]
   )
   const eligibleProfiles = useMemo(
     () =>
