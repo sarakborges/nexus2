@@ -3,15 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-import { useCommunityByUrl } from '@/Hooks/Community'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
-import { useCommunityForumAccess } from '@/Hooks/Community'
-import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
+import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
@@ -74,7 +73,6 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     profilesQuery: authorsQuery,
     profilesById: authorsById
   } = useProfilesByIds(authorIds)
-
 
   return {
     normalized,

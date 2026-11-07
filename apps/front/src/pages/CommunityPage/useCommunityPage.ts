@@ -13,7 +13,7 @@ import {
   getCommunityMembers,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
-import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunityPageResult } from './useCommunityPage.types'

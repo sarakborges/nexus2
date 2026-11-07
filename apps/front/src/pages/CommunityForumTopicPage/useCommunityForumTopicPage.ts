@@ -3,7 +3,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-import { useCommunityByUrl } from '@/Hooks/Community'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
@@ -17,8 +16,8 @@ import {
   getCommunityForumTopic,
   moderateCommunityForumTopic
 } from '@/Services/CommunityForum'
-import { useCommunityForumAccess } from '@/Hooks/Community'
-import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
+import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
+import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -191,7 +190,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
       return
     await replyMutation.mutateAsync()
   }
-
 
   return {
     topicId,
