@@ -11,8 +11,13 @@ import type {
 export function useCreateCommunityForumReplyMutation(): UseCreateCommunityForumReplyMutationResult {
   const queryClient = useQueryClient()
 
-  return useMutation<CommunityForumReply, unknown, CreateCommunityForumReplyMutationVariables>({
-    mutationFn: ({ communityId, topicId, profileId, content }) => createCommunityForumReply(communityId, topicId, profileId, content),
+  return useMutation<
+    CommunityForumReply,
+    unknown,
+    CreateCommunityForumReplyMutationVariables
+  >({
+    mutationFn: ({ communityId, topicId, profileId, content }) =>
+      createCommunityForumReply(communityId, topicId, profileId, content),
     onSuccess: async (_result, variables) => {
       await invalidateCommunityForumQueries(queryClient, variables.communityId)
     }

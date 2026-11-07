@@ -11,8 +11,13 @@ import type {
 export function useModerateCommunityForumTopicMutation(): UseModerateCommunityForumTopicMutationResult {
   const queryClient = useQueryClient()
 
-  return useMutation<CommunityForumTopic, unknown, ModerateCommunityForumTopicMutationVariables>({
-    mutationFn: ({ communityId, topicId, profileId, changes }) => moderateCommunityForumTopic(communityId, topicId, profileId, changes),
+  return useMutation<
+    CommunityForumTopic,
+    unknown,
+    ModerateCommunityForumTopicMutationVariables
+  >({
+    mutationFn: ({ communityId, topicId, profileId, changes }) =>
+      moderateCommunityForumTopic(communityId, topicId, profileId, changes),
     onSuccess: async (_result, variables) => {
       await invalidateCommunityForumQueries(queryClient, variables.communityId)
     }

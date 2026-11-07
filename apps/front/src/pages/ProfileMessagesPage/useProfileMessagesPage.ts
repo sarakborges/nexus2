@@ -83,7 +83,13 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!hasRichTextContent(content) || !canSendMessage || !profile || !messageSenderProfileId) return
+    if (
+      !hasRichTextContent(content) ||
+      !canSendMessage ||
+      !profile ||
+      !messageSenderProfileId
+    )
+      return
 
     await sendMessageMutation.mutateAsync(
       {
