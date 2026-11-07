@@ -25,9 +25,6 @@ export function useProfilePage(): UseProfilePageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-  const canInteract =
-    !session ||
-    (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
 
   const friendsQuery = useQuery({
     queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 16),
@@ -49,18 +46,17 @@ export function useProfilePage(): UseProfilePageResult {
     if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')
   }
 
-
   return {
     requestedUrl,
     profileQuery,
     profile,
     typeCompatibility,
-    canInteract,
+    canInteract: typeCompatibility.canInteract,
     friendsQuery,
     communitiesQuery,
     friends,
     communities,
     isOwner,
-    openEditProfile,
+    openEditProfile
   }
 }

@@ -33,9 +33,6 @@ export function useCommunityPage(): UseCommunityPageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     community?.type ?? 'social'
   )
-  const canInteract =
-    !session ||
-    (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
   const {
     relationshipsQuery,
     relationships,
@@ -125,13 +122,12 @@ export function useCommunityPage(): UseCommunityPageResult {
     [forumAuthorsQuery.data]
   )
 
-
   return {
     requestedUrl,
     communityQuery,
     community,
     typeCompatibility,
-    canInteract,
+    canInteract: typeCompatibility.canInteract,
     relationshipsQuery,
     canViewMembers,
     canEditCommunity,
