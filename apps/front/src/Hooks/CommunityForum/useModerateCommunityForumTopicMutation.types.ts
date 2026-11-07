@@ -13,8 +13,8 @@ export type ModerateCommunityForumTopicMutationVariables = {
   changes: CommunityForumTopicModerationChanges
 }
 
-export type ModerateCommunityForumTopicMutationResult = UseMutationResult<
+export type UseModerateCommunityForumTopicMutationResult = UseMutationResult<
   CommunityForumTopic,
   unknown,
-  CommunityForumTopicModerationChanges
+  ModerateCommunityForumTopicMutationVariables
 >

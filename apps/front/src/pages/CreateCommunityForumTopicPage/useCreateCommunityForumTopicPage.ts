@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
@@ -49,7 +47,13 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const createMutation = useCreateCommunityForumTopicMutation()
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!title.trim() || !hasRichTextContent(content) || !community || !forumProfile) return
+    if (
+      !title.trim() ||
+      !hasRichTextContent(content) ||
+      !community ||
+      !forumProfile
+    )
+      return
 
     try {
       const topic = await createMutation.mutateAsync({
@@ -66,7 +70,6 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
       showToast(t('TOAST_ACTION_FAILED'), 'error')
     }
   }
-
 
   return {
     normalized,

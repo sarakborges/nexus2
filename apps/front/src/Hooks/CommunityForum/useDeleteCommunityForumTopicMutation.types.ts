@@ -6,7 +6,7 @@ export type DeleteCommunityForumTopicMutationVariables = {
   profileId: string
 }
 
-export type DeleteCommunityForumTopicMutationResult = UseMutationResult<
+export type UseDeleteCommunityForumTopicMutationResult = UseMutationResult<
   void,
   unknown,
   DeleteCommunityForumTopicMutationVariables

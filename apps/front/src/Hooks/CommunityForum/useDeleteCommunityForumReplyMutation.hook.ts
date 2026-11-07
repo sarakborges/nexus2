@@ -4,10 +4,10 @@ import { deleteCommunityForumReply } from '@/Services/CommunityForum'
 import { invalidateCommunityForumQueries } from './communityForumQuery.utils'
 import type {
   DeleteCommunityForumReplyMutationVariables,
-  DeleteCommunityForumReplyMutationResult
+  UseDeleteCommunityForumReplyMutationResult
 } from './useDeleteCommunityForumReplyMutation.types'
 
-export function useDeleteCommunityForumReplyMutation(): DeleteCommunityForumReplyMutationResult {
+export function useDeleteCommunityForumReplyMutation(): UseDeleteCommunityForumReplyMutationResult {
   const queryClient = useQueryClient()
 
   return useMutation<void, unknown, DeleteCommunityForumReplyMutationVariables>({

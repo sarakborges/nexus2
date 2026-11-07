@@ -5,10 +5,10 @@ import { createCommunityForumTopic } from '@/Services/CommunityForum'
 import { invalidateCommunityForumQueries } from './communityForumQuery.utils'
 import type {
   CreateCommunityForumTopicMutationVariables,
-  CreateCommunityForumTopicMutationResult
+  UseCreateCommunityForumTopicMutationResult
 } from './useCreateCommunityForumTopicMutation.types'
 
-export function useCreateCommunityForumTopicMutation(): CreateCommunityForumTopicMutationResult {
+export function useCreateCommunityForumTopicMutation(): UseCreateCommunityForumTopicMutationResult {
   const queryClient = useQueryClient()
 
   return useMutation<CommunityForumTopic, unknown, CreateCommunityForumTopicMutationVariables>({

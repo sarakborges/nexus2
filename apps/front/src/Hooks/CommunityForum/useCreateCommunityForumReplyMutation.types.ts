@@ -8,7 +8,7 @@ export type CreateCommunityForumReplyMutationVariables = {
   content: string
 }
 
-export type CreateCommunityForumReplyMutationResult = UseMutationResult<
+export type UseCreateCommunityForumReplyMutationResult = UseMutationResult<
   CommunityForumReply,
   unknown,
   CreateCommunityForumReplyMutationVariables
