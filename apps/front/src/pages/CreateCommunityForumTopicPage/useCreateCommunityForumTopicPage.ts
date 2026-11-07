@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
-import { useCommunityByUrl } from '@/Hooks/Community'
+import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
@@ -11,9 +11,6 @@ import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { createCommunityForumTopic } from '@/Services/CommunityForum'
-import { getCommunityRelationships } from '@/Services/CommunityRelationship'
-import { getProfilesByIds } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateCommunityForumTopicPageResult } from './useCreateCommunityForumTopicPage.types'
@@ -37,41 +34,18 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
     viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
-    enabled: Boolean(community?.id && session?.user.id)
+  const {
+    relationshipsQuery,
+    ownedProfilesQuery,
+    forumProfile
+  } = useCommunityForumAccess({
+    communityId: community?.id ?? null,
+    communityType: community?.type ?? null,
+    viewerUserId: session?.user.id ?? null,
+    profileIds,
+    currentProfileId,
+    relationshipsEnabled: Boolean(session?.user.id)
   })
-  const ownedProfilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0
-  })
-  const rolesByProfileId = new Map(
-    (relationshipsQuery.data ?? [])
-      .filter((record) => record.profiles[1] === community?.id)
-      .map((record) => [record.profiles[0], record.type] as const)
-  )
-  const eligibleProfiles = (ownedProfilesQuery.data ?? []).filter(
-    (profile) =>
-      profile.type === community?.type &&
-      ['owner', 'moderator', 'connection'].includes(
-        rolesByProfileId.get(profile.id) ?? ''
-      )
-  )
-  const forumProfile =
-    eligibleProfiles.find((profile) => profile.id === currentProfileId) ??
-    eligibleProfiles.find(
-      (profile) => rolesByProfileId.get(profile.id) === 'owner'
-    ) ??
-    eligibleProfiles.find(
-      (profile) => rolesByProfileId.get(profile.id) === 'moderator'
-    ) ??
-    eligibleProfiles[0] ??
-    null
 
   const createMutation = useMutation({
     mutationFn: () =>

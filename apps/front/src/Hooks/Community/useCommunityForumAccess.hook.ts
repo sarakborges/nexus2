@@ -74,6 +74,7 @@ export function useCommunityForumAccess({
   return {
     relationshipsQuery,
     ownedProfilesQuery,
+    forumProfile,
     forumProfileId,
     isMember,
     isStaff,
