@@ -1,4 +1,3 @@
-import type { Community, CommunityForumTopic } from '@nexus/common'
 import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
