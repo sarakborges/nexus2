@@ -1,6 +1,6 @@
 import { RequestState } from '@/Components'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
-import { CommunityPrivacySelector } from './CommunityPrivacySelector.component'
+import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'

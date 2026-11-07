@@ -1,6 +1,5 @@
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
-import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
+import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateCommunityPage } from './useCreateCommunityPage'
@@ -58,26 +57,10 @@ export function CreateCommunityPage() {
               {errorMessage}
             </p>
           )}
-          <PreferenceSelector title={t('COMMUNITY_PRIVACY_LABEL')}>
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_PUBLIC')}
-              description={t('COMMUNITY_PRIVACY_PUBLIC_DESCRIPTION')}
-              isSelected={privacy === 'public'}
-              onSelect={() => setPrivacy('public')}
-            />
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_PRIVATE')}
-              description={t('COMMUNITY_PRIVACY_PRIVATE_DESCRIPTION')}
-              isSelected={privacy === 'private'}
-              onSelect={() => setPrivacy('private')}
-            />
-            <PreferenceOption
-              label={t('COMMUNITY_PRIVACY_UNLISTED')}
-              description={t('COMMUNITY_PRIVACY_UNLISTED_DESCRIPTION')}
-              isSelected={privacy === 'unlisted'}
-              onSelect={() => setPrivacy('unlisted')}
-            />
-          </PreferenceSelector>
+          <CommunityPrivacySelector
+            value={privacy}
+            onChange={setPrivacy}
+          />
           <div className="entity-form-page__actions">
             <Button
               type="button"

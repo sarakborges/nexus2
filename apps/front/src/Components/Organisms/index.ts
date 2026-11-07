@@ -1,4 +1,5 @@
 export { CommunityDetailsFields } from './CommunityDetailsFields'
+export { CommunityPrivacySelector } from './CommunityPrivacySelector'
 export { FloatingNavigationBar } from './FloatingNavigationBar'
 export { LanguageSelector } from './LanguageSelector'
 export { PreferenceSelector } from './PreferenceSelector'
