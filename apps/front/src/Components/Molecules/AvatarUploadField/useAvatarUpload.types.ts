@@ -1,12 +1,13 @@
+import type { AvatarPurpose } from '@/Hooks/Uploads'
+import type { ChangeEvent } from 'react'
+
 export type UseAvatarUploadOptions = {
-  purpose: 'profile-avatar' | 'community-avatar'
+  purpose: AvatarPurpose
   onChange: (value: string) => void
   targetId?: string
   actorProfileId?: string
   errorLabel: string
 }
-
-import type { ChangeEvent } from 'react'
 
 export type UseAvatarUploadController = {
   busy: boolean
