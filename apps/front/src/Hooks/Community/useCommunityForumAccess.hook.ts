@@ -43,11 +43,14 @@ export function useCommunityForumAccess({
   )
   const eligibleProfiles = useMemo(
     () =>
-      (ownedProfilesQuery.data ?? []).filter(
-        (profile) =>
+      (ownedProfilesQuery.data ?? []).filter((profile) => {
+        const role = rolesByProfileId.get(profile.id)
+        return (
           profile.type === communityType &&
-          PUBLISH_ROLES.includes(rolesByProfileId.get(profile.id) ?? '')
-      ),
+          role !== undefined &&
+          PUBLISH_ROLES.includes(role)
+        )
+      }),
     [ownedProfilesQuery.data, communityType, rolesByProfileId]
   )
   const forumProfile = useMemo(

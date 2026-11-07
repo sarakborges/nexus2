@@ -1,4 +1,3 @@
-import type { Profile } from '@nexus/common'
 import { useQuery } from '@tanstack/react-query'
 
 import { useMemo } from 'react'
