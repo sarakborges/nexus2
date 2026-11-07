@@ -1,13 +1,20 @@
-import { AvatarUploadField, RichTextEditor } from '@/Components'
-import { FormField, Label } from '@/DesignSystem'
-import { useTranslations } from '@/Hooks/Language'
 import type { ProfileDetailsFieldsProps } from './ProfileDetailsFields.types'
 
+import { AvatarUploadField } from '@/Components/Molecules/AvatarUploadField'
+import { RichTextEditor } from '@/Components/Molecules/RichTextEditor'
+import { FormField, Label } from '@/DesignSystem'
+import { useTranslations } from '@/Hooks/Language'
+
 export function ProfileDetailsFields({
-  profile,
-  form,
-  onChange,
+  name,
+  url,
+  picture,
+  about,
+  onNameChange,
+  onUrlChange,
   onPictureChange,
+  onAboutChange,
+  targetId,
   onUploadImage
 }: ProfileDetailsFieldsProps) {
   const { t } = useTranslations()
@@ -16,10 +23,10 @@ export function ProfileDetailsFields({
     <div className="entity-form-page__card">
       <AvatarUploadField
         label={t('PROFILE_PICTURE_LABEL')}
-        value={profile.picture}
-        fallbackName={form.name}
+        value={picture}
+        fallbackName={name}
         purpose="profile-avatar"
-        targetId={profile.id}
+        targetId={targetId}
         onChange={onPictureChange}
         selectLabel={t('UPLOAD_SELECT_IMAGE')}
         changeLabel={t('UPLOAD_CHANGE_IMAGE')}
@@ -33,8 +40,8 @@ export function ProfileDetailsFields({
         label={t('PROFILE_NAME_LABEL')}
         type="text"
         autoComplete="nickname"
-        value={form.name}
-        onChange={(event) => onChange({ name: event.target.value })}
+        value={name}
+        onChange={(event) => onNameChange(event.target.value)}
         maxLength={80}
         required
       />
@@ -43,8 +50,8 @@ export function ProfileDetailsFields({
         label={t('PROFILE_URL_LABEL')}
         type="text"
         placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')}
-        value={form.url}
-        onChange={(event) => onChange({ url: event.target.value })}
+        value={url}
+        onChange={(event) => onUrlChange(event.target.value)}
         autoComplete="off"
       />
       <p className="account-card__description">
@@ -56,8 +63,8 @@ export function ProfileDetailsFields({
         </Label>
         <RichTextEditor
           id="profile-about"
-          value={form.about}
-          onChange={(about) => onChange({ about })}
+          value={about}
+          onChange={onAboutChange}
           maxTextLength={500}
           imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
           imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}

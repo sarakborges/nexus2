@@ -1,7 +1,7 @@
-import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
+import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
-import { Button, FormField, Label } from '@/DesignSystem'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateProfilePage } from './useCreateProfilePage'
 
@@ -53,66 +53,22 @@ export function CreateProfilePage() {
           </p>
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <div className="entity-form-page__card">
-            <FormField
-              id="profile-name"
-              label={t('PROFILE_NAME_LABEL')}
-              type="text"
-              autoComplete="nickname"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              maxLength={80}
-              required
-            />
-            <FormField
-              id="profile-url"
-              label={t('PROFILE_URL_LABEL')}
-              type="text"
-              placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')}
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              autoComplete="off"
-            />
-            <p className="account-card__description">
-              {t('PROFILE_URL_AUTO_HELP')}
+          <ProfileDetailsFields
+            name={name}
+            url={url}
+            picture={picture}
+            about={about}
+            onNameChange={setName}
+            onUrlChange={setUrl}
+            onPictureChange={setPicture}
+            onAboutChange={setAbout}
+            onUploadImage={uploadEditorImage}
+          />
+          {errorMessage && (
+            <p className="auth-card__error" role="alert">
+              {errorMessage}
             </p>
-            <AvatarUploadField
-              label={t('PROFILE_PICTURE_LABEL')}
-              value={picture}
-              fallbackName={name}
-              purpose="profile-avatar"
-              onChange={setPicture}
-              selectLabel={t('UPLOAD_SELECT_IMAGE')}
-              changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-              removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-              uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-              errorLabel={t('UPLOAD_FAILED')}
-              emptyLabel={t('UPLOAD_EMPTY')}
-            />
-            <div className="form-field">
-              <Label id="profile-about-label" htmlFor="profile-about">
-                {t('PROFILE_ABOUT_LABEL')}
-              </Label>
-              <RichTextEditor
-                id="profile-about"
-                value={about}
-                onChange={setAbout}
-                maxTextLength={500}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={uploadEditorImage}
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-              <p className="account-card__description">
-                {t('PROFILE_ABOUT_MAX_LENGTH')}
-              </p>
-            </div>
-            {errorMessage && (
-              <p className="auth-card__error" role="alert">
-                {errorMessage}
-              </p>
-            )}
-          </div>
+          )}
           <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
             <PreferenceOption
               label={t('PROFILE_TYPE_SOCIAL')}

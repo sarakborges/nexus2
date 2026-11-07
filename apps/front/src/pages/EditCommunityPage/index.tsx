@@ -1,9 +1,9 @@
 import { RequestState } from '@/Components'
+import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
+import { CommunityPrivacySelector } from './CommunityPrivacySelector.component'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityDetailsFields } from './CommunityDetailsFields.component'
-import { CommunityPrivacySelector } from './CommunityPrivacySelector.component'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
 import '../AuthPage.style.scss'
@@ -91,11 +91,16 @@ export function EditCommunityPage() {
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <CommunityDetailsFields
-            community={community}
-            ownerProfileId={ownerProfileId}
-            form={form}
-            onChange={updateForm}
+            name={form.name}
+            url={form.url}
+            picture={community.picture}
+            about={form.about}
+            onNameChange={(name) => updateForm({ name })}
+            onUrlChange={(url) => updateForm({ url })}
             onPictureChange={updateCommunityPicture}
+            onAboutChange={(about) => updateForm({ about })}
+            targetId={community.id}
+            actorProfileId={ownerProfileId}
             onUploadImage={uploadEditorImage}
           />
           {errorMessage && (

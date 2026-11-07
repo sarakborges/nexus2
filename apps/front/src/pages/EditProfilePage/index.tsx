@@ -1,8 +1,8 @@
 import { RequestState } from '@/Components'
+import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfileDetailsFields } from './ProfileDetailsFields.component'
 import { useEditProfilePage } from './useEditProfilePage'
 
 import '../AuthPage.style.scss'
@@ -87,10 +87,15 @@ export function EditProfilePage() {
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <ProfileDetailsFields
-            profile={profile}
-            form={form}
-            onChange={updateForm}
+            name={form.name}
+            url={form.url}
+            picture={profile.picture}
+            about={form.about}
+            onNameChange={(name) => updateForm({ name })}
+            onUrlChange={(url) => updateForm({ url })}
             onPictureChange={updateProfilePicture}
+            onAboutChange={(about) => updateForm({ about })}
+            targetId={profile.id}
             onUploadImage={uploadEditorImage}
           />
           {errorMessage && (

@@ -1,14 +1,21 @@
-import { AvatarUploadField, RichTextEditor } from '@/Components'
-import { FormField, Label } from '@/DesignSystem'
-import { useTranslations } from '@/Hooks/Language'
 import type { CommunityDetailsFieldsProps } from './CommunityDetailsFields.types'
 
+import { AvatarUploadField } from '@/Components/Molecules/AvatarUploadField'
+import { RichTextEditor } from '@/Components/Molecules/RichTextEditor'
+import { FormField, Label } from '@/DesignSystem'
+import { useTranslations } from '@/Hooks/Language'
+
 export function CommunityDetailsFields({
-  community,
-  ownerProfileId,
-  form,
-  onChange,
+  name,
+  url,
+  picture,
+  about,
+  onNameChange,
+  onUrlChange,
   onPictureChange,
+  onAboutChange,
+  targetId,
+  actorProfileId,
   onUploadImage
 }: CommunityDetailsFieldsProps) {
   const { t } = useTranslations()
@@ -17,11 +24,11 @@ export function CommunityDetailsFields({
     <div className="entity-form-page__card">
       <AvatarUploadField
         label={t('COMMUNITY_PICTURE_LABEL')}
-        value={community.picture}
-        fallbackName={form.name}
+        value={picture}
+        fallbackName={name}
         purpose="community-avatar"
-        targetId={community.id}
-        actorProfileId={ownerProfileId}
+        targetId={targetId}
+        actorProfileId={actorProfileId}
         onChange={onPictureChange}
         selectLabel={t('UPLOAD_SELECT_IMAGE')}
         changeLabel={t('UPLOAD_CHANGE_IMAGE')}
@@ -34,8 +41,8 @@ export function CommunityDetailsFields({
         id="community-name"
         label={t('COMMUNITY_NAME_LABEL')}
         type="text"
-        value={form.name}
-        onChange={(event) => onChange({ name: event.target.value })}
+        value={name}
+        onChange={(event) => onNameChange(event.target.value)}
         maxLength={80}
         required
       />
@@ -44,8 +51,8 @@ export function CommunityDetailsFields({
         label={t('COMMUNITY_URL_LABEL')}
         type="text"
         placeholder={t('COMMUNITY_URL_AUTO_PLACEHOLDER')}
-        value={form.url}
-        onChange={(event) => onChange({ url: event.target.value })}
+        value={url}
+        onChange={(event) => onUrlChange(event.target.value)}
         autoComplete="off"
       />
       <p className="account-card__description">
@@ -57,8 +64,8 @@ export function CommunityDetailsFields({
         </Label>
         <RichTextEditor
           id="community-about"
-          value={form.about}
-          onChange={(about) => onChange({ about })}
+          value={about}
+          onChange={onAboutChange}
           maxTextLength={500}
           imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
           imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}

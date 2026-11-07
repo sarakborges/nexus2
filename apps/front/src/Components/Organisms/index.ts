@@ -1,7 +1,7 @@
+export { CommunityDetailsFields } from './CommunityDetailsFields'
 export { FloatingNavigationBar } from './FloatingNavigationBar'
 export { LanguageSelector } from './LanguageSelector'
 export { PreferenceSelector } from './PreferenceSelector'
+export { ProfileDetailsFields } from './ProfileDetailsFields'
 export { SettingsModal } from './SettingsModal'
 export { ThemeSelector } from './ThemeSelector'
-
-export { ToastViewport } from './Toast/ToastViewport.component'
