@@ -1,9 +1,7 @@
 import {
   useIsFetching,
   useIsMutating,
-  useMutation,
   useQuery,
-  useQueryClient
 } from '@tanstack/react-query'
 
 import { useEffect, useRef, useState } from 'react'
@@ -15,6 +13,7 @@ import type {
   UseFloatingNavigationBarOptions,
   UseFloatingNavigationBarResult
 } from './useFloatingNavigationBar.types'
+import { useSetCurrentProfileMutation, useSignOutMutation } from '@/Hooks/Auth'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
@@ -28,7 +27,6 @@ export function useFloatingNavigationBar({
   const { t } = useTranslations()
   const navigate = useNavigate()
   const location = useLocation()
-  const queryClient = useQueryClient()
   const navigationRef = useRef<HTMLDivElement>(null)
   const isFetching = useIsFetching() > 0
   const isMutating = useIsMutating() > 0
@@ -38,9 +36,7 @@ export function useFloatingNavigationBar({
   const activePanel =
     openPanel?.pathname === location.pathname ? openPanel.panel : null
   const session = useAuthStore((state) => state.session)
-  const signOut = useAuthStore((state) => state.signOut)
   const showToast = useToastStore((state) => state.showToast)
-  const setCurrentProfile = useAuthStore((state) => state.setCurrentProfile)
   const profileIds = session?.user.profiles ?? []
 
   const profilesQuery = useQuery({
@@ -83,28 +79,8 @@ export function useFloatingNavigationBar({
     )
   }
 
-  const signOutMutation = useMutation({
-    mutationFn: signOut,
-    onSuccess: () => {
-      queryClient.clear()
-      navigate(ROUTES.signIn, { replace: true })
-    }
-  })
-
-  const profileSelectionMutation = useMutation({
-    mutationFn: async (profileId: string) => {
-      const success = await setCurrentProfile(profileId)
-      if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
-    },
-    onSuccess: () => {
-      queryClient.setQueryData(
-        queryKeys.auth.session,
-        useAuthStore.getState().session
-      )
-      showToast(t('TOAST_PROFILE_SWITCHED'))
-      closePanels()
-    }
-  })
+  const signOutMutation = useSignOutMutation()
+  const profileSelectionMutation = useSetCurrentProfileMutation()
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -137,7 +113,9 @@ export function useFloatingNavigationBar({
 
   const handleSignOut = () => {
     closePanels()
-    signOutMutation.mutate()
+    signOutMutation.mutate(undefined, {
+      onSuccess: () => navigate(ROUTES.signIn, { replace: true })
+    })
   }
 
   return {
@@ -167,7 +145,12 @@ export function useFloatingNavigationBar({
     isSigningOut: signOutMutation.isPending,
     retryProfiles: () => void profilesQuery.refetch(),
     selectProfile: (profileId: string) =>
-      profileSelectionMutation.mutate(profileId),
+      profileSelectionMutation.mutate(profileId, {
+        onSuccess: () => {
+          showToast(t('TOAST_PROFILE_SWITCHED'))
+          closePanels()
+        }
+      }),
     handleOpenSettings,
     handleSignOut
   }
