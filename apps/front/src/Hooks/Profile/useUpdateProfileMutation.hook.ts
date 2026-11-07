@@ -3,9 +3,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { updateUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import type { UpdateProfileMutationVariables } from './useUpdateProfileMutation.types'
+import type {
+  UpdateProfileMutationVariables,
+  UseUpdateProfileMutationResult
+} from './useUpdateProfileMutation.types'
 
-export function useUpdateProfileMutation() {
+export function useUpdateProfileMutation(): UseUpdateProfileMutationResult {
   const queryClient = useQueryClient()
 
   return useMutation<Profile, unknown, UpdateProfileMutationVariables>({

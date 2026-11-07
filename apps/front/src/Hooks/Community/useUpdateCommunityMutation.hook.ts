@@ -1,11 +1,14 @@
-import type { Community, CreateCommunityInput } from '@nexus/common'
+import type { Community } from '@nexus/common'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { updateCommunity } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import type { UpdateCommunityMutationVariables } from './useUpdateCommunityMutation.types'
+import type {
+  UpdateCommunityMutationVariables,
+  UseUpdateCommunityMutationResult
+} from './useUpdateCommunityMutation.types'
 
-export function useUpdateCommunityMutation() {
+export function useUpdateCommunityMutation(): UseUpdateCommunityMutationResult {
   const queryClient = useQueryClient()
 
   return useMutation<Community, unknown, UpdateCommunityMutationVariables>({
