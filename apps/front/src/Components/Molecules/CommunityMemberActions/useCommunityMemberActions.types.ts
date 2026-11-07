@@ -1,4 +1,4 @@
-import type { CommunityRelationshipType } from '@nexus/common'
+import type { CommunityRelationshipOperation } from '@/Hooks/CommunityRelationship'
 
 export type UseCommunityMemberActionsOptions = {
   memberProfileId: string
@@ -6,11 +6,7 @@ export type UseCommunityMemberActionsOptions = {
   actorProfileId: string
 }
 
-export type CommunityMemberOperation =
-  | { type: 'update'; relationshipType: CommunityRelationshipType }
-  | { type: 'remove' }
-  | { type: 'demote' }
-  | { type: 'transfer' }
+export type CommunityMemberOperation = CommunityRelationshipOperation
 
 export type CommunityMemberActionsController = {
   confirmTransfer: boolean

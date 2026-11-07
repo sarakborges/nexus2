@@ -1,25 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { useState } from 'react'
 
 import type {
-  RelationshipAction,
   RelationshipActionsController,
   UseRelationshipActionsOptions
 } from './useRelationshipActions.types'
+import { useRelationshipMutation } from '@/Hooks/Relationship'
+import { useCommunityRelationshipMutation } from '@/Hooks/CommunityRelationship'
 import { useTranslations } from '@/Hooks/Language'
-import {
-  getCommunityRelationships,
-  removeCommunityRelationship,
-  setCommunityRelationship
-} from '@/Services/CommunityRelationship'
+import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import {
-  getRelationships,
-  removeRelationship,
-  setRelationship
-} from '@/Services/Relationship'
+import { getRelationships } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { RelationshipAction } from './useRelationshipActions.types'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useRelationshipActions({
@@ -27,7 +21,6 @@ export function useRelationshipActions({
   targetKind = 'profile'
 }: UseRelationshipActionsOptions): RelationshipActionsController {
   const { t } = useTranslations()
-  const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
   const sourceId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
@@ -68,53 +61,60 @@ export function useRelationshipActions({
       ) ?? null)
 
   const [lastAction, setLastAction] = useState<RelationshipAction | null>(null)
-  const mutation = useMutation({
-    mutationFn: async (action: RelationshipAction) => {
-      if (!sourceId) throw new Error('SOURCE_PROFILE_REQUIRED')
-      if (action.type === 'remove') {
-        if (isCommunity) {
-          await removeCommunityRelationship(sourceId, targetId, sourceId)
-        } else {
-          await removeRelationship(sourceId, targetId)
-        }
-        return
-      }
-      if (isCommunity) {
-        await setCommunityRelationship(sourceId, targetId, action.type, sourceId)
-        return
-      }
-      await setRelationship(sourceId, targetId, action.type)
-    },
-    onSuccess: async (_data, action) => {
-      const toastKey =
-        action.type === 'remove'
-          ? isCommunity
-            ? 'TOAST_COMMUNITY_LEFT'
-            : 'TOAST_RELATIONSHIP_REMOVED'
-          : action.type === 'requested'
-            ? isCommunity
-              ? 'TOAST_COMMUNITY_JOINED'
-              : 'TOAST_RELATIONSHIP_REQUESTED'
-            : action.type === 'blocked'
-              ? 'TOAST_RELATIONSHIP_BLOCKED'
-              : action.type === 'connection'
-                ? isCommunity
-                  ? 'TOAST_COMMUNITY_ACCEPTED'
-                  : 'TOAST_RELATIONSHIP_CONNECTED'
-                : 'TOAST_COMMUNITY_MODERATION'
-
-      showToast(t(toastKey))
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['relationships'] }),
-        queryClient.invalidateQueries({ queryKey: ['community-relationships'] })
-      ])
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
+  const relationshipMutation = useRelationshipMutation()
+  const communityRelationshipMutation = useCommunityRelationshipMutation()
+  const isMutationPending = isCommunity
+    ? communityRelationshipMutation.isPending
+    : relationshipMutation.isPending
+  const isMutationError = isCommunity
+    ? communityRelationshipMutation.isError
+    : relationshipMutation.isError
 
   const run = (action: RelationshipAction) => {
+    if (!sourceId) return
     setLastAction(action)
-    mutation.mutate(action)
+
+    const toastKey =
+      action.type === 'remove'
+        ? isCommunity
+          ? 'TOAST_COMMUNITY_LEFT'
+          : 'TOAST_RELATIONSHIP_REMOVED'
+        : action.type === 'requested'
+          ? isCommunity
+            ? 'TOAST_COMMUNITY_JOINED'
+            : 'TOAST_RELATIONSHIP_REQUESTED'
+          : action.type === 'blocked'
+            ? 'TOAST_RELATIONSHIP_BLOCKED'
+            : action.type === 'connection'
+              ? isCommunity
+                ? 'TOAST_COMMUNITY_ACCEPTED'
+                : 'TOAST_RELATIONSHIP_CONNECTED'
+              : 'TOAST_COMMUNITY_MODERATION'
+    const callbacks = {
+      onSuccess: () => showToast(t(toastKey)),
+      onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+    }
+
+    if (isCommunity) {
+      communityRelationshipMutation.mutate(
+        {
+          profileId: sourceId,
+          communityId: targetId,
+          actorProfileId: sourceId,
+          operation:
+            action.type === 'remove'
+              ? { type: 'remove' }
+              : { type: 'update', relationshipType: action.type }
+        },
+        callbacks
+      )
+      return
+    }
+
+    relationshipMutation.mutate(
+      { sourceProfileId: sourceId, targetProfileId: targetId, action },
+      callbacks
+    )
   }
 
   const isOwnerOrModerator =
@@ -150,8 +150,8 @@ export function useRelationshipActions({
     isLoading: relationshipsQuery.isLoading,
     isFetching: relationshipsQuery.isFetching,
     isQueryError: relationshipsQuery.isError,
-    isMutationPending: mutation.isPending,
-    isMutationError: mutation.isError,
+    isMutationPending,
+    isMutationError,
     isOwnerOrModerator: Boolean(isOwnerOrModerator),
     isBlockedByOther,
     isLegacyBlock,
@@ -165,7 +165,7 @@ export function useRelationshipActions({
     handleRequestOrAccept,
     refetch: () => void relationshipsQuery.refetch(),
     retryLastAction: lastAction
-      ? () => mutation.mutate(lastAction)
+      ? () => run(lastAction)
       : undefined
   }
 }

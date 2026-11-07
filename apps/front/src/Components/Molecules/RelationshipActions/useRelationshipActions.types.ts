@@ -1,12 +1,10 @@
-import type { RelationshipType } from '@nexus/common'
+import type { RelationshipMutationAction } from '@/Hooks/Relationship'
 
 import type { RelationshipActionsProps } from './RelationshipActions.types'
 
 export type UseRelationshipActionsOptions = RelationshipActionsProps
 
-export type RelationshipAction =
-  | { type: 'remove' }
-  | { type: RelationshipType }
+export type RelationshipAction = RelationshipMutationAction
 
 export type RelationshipActionsController = {
   isAuthenticated: boolean
