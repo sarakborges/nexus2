@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useProfileByUrl } from '@/Hooks/Profile'
 
 import { useNavigate, useParams } from 'react-router'
+
+import { useProfileByUrl } from '@/Hooks/Profile'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'

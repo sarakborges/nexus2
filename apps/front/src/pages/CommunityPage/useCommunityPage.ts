@@ -1,19 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useCommunityAccess } from '@/Hooks/Community'
+import { useCommunityAccess, useCommunityByUrl } from '@/Hooks/Community'
 import { ROUTES } from '@/Constants/routes'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import {
   getCommunityMembers,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunityPageResult } from './useCommunityPage.types'

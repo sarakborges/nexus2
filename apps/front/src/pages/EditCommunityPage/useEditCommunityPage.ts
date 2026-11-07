@@ -1,12 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import { ROUTES } from '@/Constants/routes'
-import { useCommunityAccess, useUpdateCommunityMutation } from '@/Hooks/Community'
+import { useCommunityAccess, useCommunityByUrl, useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'

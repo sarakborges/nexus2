@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+
+import { useCommunityByUrl } from '@/Hooks/Community'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { ROUTES } from '@/Constants/routes'
@@ -17,7 +18,7 @@ import {
   moderateCommunityForumTopic
 } from '@/Services/CommunityForum'
 import { useCommunityForumAccess } from '@/Hooks/Community'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'

@@ -1,13 +1,13 @@
 import type { Profile } from '@nexus/common'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useProfileByUrl } from '@/Hooks/Profile'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import { ROUTES } from '@/Constants/routes'
-import { useUpdateProfileMutation } from '@/Hooks/Profile'
+import { useProfileByUrl, useUpdateProfileMutation } from '@/Hooks/Profile'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'

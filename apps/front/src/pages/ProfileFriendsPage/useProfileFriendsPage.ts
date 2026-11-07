@@ -3,8 +3,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { useProfileByUrl } from '@/Hooks/Profile'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'

@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useCommunityByUrl } from '@/Hooks/Community'
+
 
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useCommunityAccess } from '@/Hooks/Community'
+import { useCommunityAccess, useCommunityByUrl } from '@/Hooks/Community'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import {
   getCommunityMembers,

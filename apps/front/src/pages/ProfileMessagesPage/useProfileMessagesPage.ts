@@ -4,14 +4,14 @@ import { type FormEvent, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useProfileByUrl } from '@/Hooks/Profile'
+
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
 import {
   ProfileMessageError,
   createProfileMessage,

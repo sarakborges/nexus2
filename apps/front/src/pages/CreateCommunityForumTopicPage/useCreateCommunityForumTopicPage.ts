@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+
+import { useCommunityByUrl } from '@/Hooks/Community'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { ROUTES } from '@/Constants/routes'
