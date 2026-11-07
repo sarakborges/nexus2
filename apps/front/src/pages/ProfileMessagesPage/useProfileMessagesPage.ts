@@ -38,8 +38,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-  const canInteract =
-    typeCompatibility.isCompatible && !typeCompatibility.isChecking
+  const canInteract = typeCompatibility.canInteract
   const isProfileOwner = Boolean(
     profile && session?.user.profiles.includes(profile.id)
   )

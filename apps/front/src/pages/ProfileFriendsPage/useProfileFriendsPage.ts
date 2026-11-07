@@ -22,8 +22,7 @@ export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-  const canInteract =
-    typeCompatibility.isCompatible && !typeCompatibility.isChecking
+  const canInteract = typeCompatibility.canInteract
   const { page, pageSize, setPage } = useUrlPagination()
   const friendsQuery = useQuery({
     queryKey: queryKeys.relationships.friends(
