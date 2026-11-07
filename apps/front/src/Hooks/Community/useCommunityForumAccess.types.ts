@@ -1,4 +1,4 @@
-import type { CommunityRelationship, Profile, ProfileType } from '@nexus/common'
+import type { Profile, ProfileType } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
 export type UseCommunityForumAccessOptions = {
