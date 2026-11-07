@@ -1,7 +1,7 @@
-import type { EntityDetailsFieldsProps } from './EntityDetailsFields.types'
 import type {
   EntityDetailsEntity,
-  EntityDetailsFieldConfig
+  EntityDetailsFieldConfig,
+  EntityDetailsFieldsProps
 } from './EntityDetailsFields.types'
 
 import { AvatarUploadField } from '@/Components/Molecules/AvatarUploadField'
