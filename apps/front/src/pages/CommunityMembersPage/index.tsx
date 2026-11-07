@@ -95,9 +95,7 @@ export function CommunityMembersPage() {
         <CommunitySidebar
           community={community}
           active="members"
-          canInteract={
-            typeCompatibility.isCompatible && !typeCompatibility.isChecking
-          }
+          canInteract={typeCompatibility.canInteract}
         />
       }
     >
