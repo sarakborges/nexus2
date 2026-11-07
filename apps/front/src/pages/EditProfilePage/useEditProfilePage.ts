@@ -1,12 +1,13 @@
 import type { Profile } from '@nexus/common'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { ProfileForm } from './EditProfilePage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useUpdateProfileMutation } from '@/Hooks/Profile'
+import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
@@ -35,20 +36,15 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-  const initializedProfileId = useRef<string | null>(null)
-  const [form, setForm] = useState<ProfileForm | null>(null)
+  const initialForm = profile
+    ? { name: profile.name, url: profile.url, about: profile.about }
+    : null
+  const { form, updateForm } = useEntityFormDraft(
+    profile?.id ?? null,
+    initialForm
+  )
   const [errorMessage, setErrorMessage] = useState('')
   const updateMutation = useUpdateProfileMutation()
-
-  useEffect(() => {
-    if (!profile || initializedProfileId.current === profile.id) return
-    initializedProfileId.current = profile.id
-    setForm({ name: profile.name, url: profile.url, about: profile.about })
-  }, [profile])
-
-  const updateForm = (patch: Partial<ProfileForm>) => {
-    setForm((current) => current ? { ...current, ...patch } : current)
-  }
 
   const cancelEdit = () => {
     if (profile) navigate(ROUTES.profile + '/' + profile.url)

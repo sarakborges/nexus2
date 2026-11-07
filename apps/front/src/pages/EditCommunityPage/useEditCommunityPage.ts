@@ -1,12 +1,13 @@
 import type { CommunityRelationship } from '@nexus/common'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { CommunityForm } from './EditCommunityPage.types'
 import { ROUTES } from '@/Constants/routes'
 import { useUpdateCommunityMutation } from '@/Hooks/Community'
+import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
@@ -49,25 +50,20 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
       (record: CommunityRelationship) => record.type === 'owner'
     ) ?? null
   const ownerProfileId = ownerRelationship?.profiles[0] ?? null
-  const initializedCommunityId = useRef<string | null>(null)
-  const [form, setForm] = useState<CommunityForm | null>(null)
+  const initialForm = community
+    ? {
+        name: community.name,
+        url: community.url,
+        about: community.about,
+        privacy: community.privacy ?? 'public'
+      }
+    : null
+  const { form, updateForm } = useEntityFormDraft(
+    community?.id ?? null,
+    initialForm
+  )
   const [errorMessage, setErrorMessage] = useState('')
   const updateMutation = useUpdateCommunityMutation()
-
-  useEffect(() => {
-    if (!community || initializedCommunityId.current === community.id) return
-    initializedCommunityId.current = community.id
-    setForm({
-      name: community.name,
-      url: community.url,
-      about: community.about,
-      privacy: community.privacy ?? 'public'
-    })
-  }, [community])
-
-  const updateForm = (patch: Partial<CommunityForm>) => {
-    setForm((current) => current ? { ...current, ...patch } : current)
-  }
 
   const updateCommunityPicture = (picture: string) => {
     if (!community) return
