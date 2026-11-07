@@ -23,10 +23,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
 
-import type {
-  CommunityForumTopicModerationChanges,
-  UseCommunityForumTopicPageResult
-} from './useCommunityForumTopicPage.types'
+import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicPage.types'
 
 export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
