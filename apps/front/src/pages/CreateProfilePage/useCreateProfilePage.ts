@@ -1,22 +1,18 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { ROUTES } from '@/Constants/routes'
-import { useTranslations } from '@/Hooks/Language'
-import { uploadEditorImage } from '@/Services/Uploads'
 import type { ProfileType } from '@/Models/Profile.model'
+import { ROUTES } from '@/Constants/routes'
+import { useCreateProfileMutation } from '@/Hooks/Profile'
+import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { createUserProfile } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateProfilePageResult } from './useCreateProfilePage.types'
 
 export function useCreateProfilePage(): UseCreateProfilePageResult {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
   const user = session?.user
@@ -28,61 +24,27 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
   const [about, setAbout] = useState('')
   const [type, setType] = useState<ProfileType>('social')
   const [errorMessage, setErrorMessage] = useState('')
+  const createProfileMutation = useCreateProfileMutation()
 
-  const createProfileMutation = useMutation({
-    mutationFn: async () => {
-      const result = await createUserProfile({
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage('')
+
+    if (!isAuthInitialized) return
+    if (!user) {
+      navigate(ROUTES.signIn, { replace: true })
+      return
+    }
+
+    try {
+      await createProfileMutation.mutateAsync({
         name,
         url: url || undefined,
         picture,
         about,
         type
       })
-      const currentSession = useAuthStore.getState().session
-      if (
-        !currentSession ||
-        result.user.id !== currentSession.user.id ||
-        !result.user.profiles.includes(result.profile.id) ||
-        result.user.currentProfile !== result.profile.id
-      ) {
-        throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
-      }
-      useAuthStore
-        .getState()
-        .setSession({
-          user: result.user,
-          authenticatedAt: currentSession.authenticatedAt
-        })
-      return result
-    },
-    onSuccess: async (result) => {
-      queryClient.setQueryData(
-        queryKeys.profiles.byUrl(result.profile.url),
-        result.profile
-      )
-      queryClient.setQueryData(
-        queryKeys.auth.session,
-        useAuthStore.getState().session
-      )
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
-        queryClient.invalidateQueries({ queryKey: ['auth'] }),
-        queryClient.invalidateQueries({ queryKey: ['activity'] })
-      ])
       showToast(t('TOAST_PROFILE_CREATED'))
-    }
-  })
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setErrorMessage('')
-    if (!isAuthInitialized) return
-    if (!user) {
-      navigate(ROUTES.signIn, { replace: true })
-      return
-    }
-    try {
-      await createProfileMutation.mutateAsync()
       navigate(ROUTES.home, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
@@ -91,11 +53,10 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
           ? 'PROFILE_ERROR_URL_TAKEN'
           : code === 'INVALID_PROFILE'
             ? 'PROFILE_ERROR_INVALID'
-            : code === 'PROFILE_CREATION_SESSION_MISSING'
+            : code === 'PROFILE_CREATION_SESSION_MISSING' ||
+                code === 'PROFILE_CREATION_SESSION_INCONSISTENT'
               ? 'PROFILE_ERROR_SESSION'
-              : code === 'PROFILE_CREATION_SESSION_INCONSISTENT'
-                ? 'PROFILE_ERROR_SESSION'
-                : 'PROFILE_ERROR_GENERIC'
+              : 'PROFILE_ERROR_GENERIC'
       setErrorMessage(t(key))
       showToast(t(key), 'error')
     }

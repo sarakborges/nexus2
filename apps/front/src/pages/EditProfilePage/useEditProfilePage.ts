@@ -1,16 +1,17 @@
 import type { Profile } from '@nexus/common'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { ProfileForm } from './EditProfilePage.types'
 import { ROUTES } from '@/Constants/routes'
+import { useUpdateProfileMutation } from '@/Hooks/Profile'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { getProfileByUrl, updateUserProfile } from '@/Services/Profile'
+import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -37,30 +38,13 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const initializedProfileId = useRef<string | null>(null)
   const [form, setForm] = useState<ProfileForm | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const updateMutation = useUpdateProfileMutation()
 
   useEffect(() => {
     if (!profile || initializedProfileId.current === profile.id) return
     initializedProfileId.current = profile.id
     setForm({ name: profile.name, url: profile.url, about: profile.about })
   }, [profile])
-
-  const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!profile || !form) throw new Error('PROFILE_NOT_READY')
-      return updateUserProfile(profile.id, {
-        name: form.name,
-        url: form.url || undefined,
-        picture: profile.picture,
-        about: form.about
-      })
-    },
-    onSuccess: async (updated) => {
-      queryClient.setQueryData(queryKeys.profiles.byUrl(updated.url), updated)
-      await queryClient.invalidateQueries({ queryKey: ['profiles'] })
-      showToast(t('TOAST_PROFILE_UPDATED'))
-      navigate(ROUTES.profile + '/' + updated.url, { replace: true })
-    }
-  })
 
   const updateForm = (patch: Partial<ProfileForm>) => {
     setForm((current) => current ? { ...current, ...patch } : current)
@@ -81,8 +65,20 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
+    if (!profile || !form) return
+
     try {
-      await updateMutation.mutateAsync()
+      const updated = await updateMutation.mutateAsync({
+        profileId: profile.id,
+        input: {
+          name: form.name,
+          url: form.url || undefined,
+          picture: profile.picture,
+          about: form.about
+        }
+      })
+      showToast(t('TOAST_PROFILE_UPDATED'))
+      navigate(ROUTES.profile + '/' + updated.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key =

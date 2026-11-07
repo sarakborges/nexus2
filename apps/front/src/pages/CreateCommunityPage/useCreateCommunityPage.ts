@@ -1,22 +1,18 @@
 import type { CommunityPrivacy } from '@nexus/common'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
+import { useCreateCommunityMutation } from '@/Hooks/Community'
 import { useTranslations } from '@/Hooks/Language'
-import { uploadEditorImage } from '@/Services/Uploads'
-import { createCommunity } from '@/Services/Community'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { queryKeys } from '@/Services/Query/queryKeys'
+import { uploadEditorImage } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateCommunityPageResult } from './useCreateCommunityPage.types'
 
 export function useCreateCommunityPage(): UseCreateCommunityPageResult {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
   const ownerProfileId = session?.user.currentProfile ?? null
@@ -27,35 +23,12 @@ export function useCreateCommunityPage(): UseCreateCommunityPageResult {
   const [about, setAbout] = useState('')
   const [privacy, setPrivacy] = useState<CommunityPrivacy>('public')
   const [errorMessage, setErrorMessage] = useState('')
-
-  const createCommunityMutation = useMutation({
-    mutationFn: () =>
-      createCommunity(
-        { name, url: url || undefined, picture, about, privacy },
-        ownerProfileId!
-      ),
-    onSuccess: async (community) => {
-      queryClient.setQueryData(
-        queryKeys.communities.byUrl(community.url),
-        community
-      )
-      showToast(t('TOAST_COMMUNITY_CREATED'))
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['communities', 'list'] }),
-        ...(ownerProfileId
-          ? [
-              queryClient.invalidateQueries({
-                queryKey: ['communities', 'by-profile', ownerProfileId]
-              })
-            ]
-          : [])
-      ])
-    }
-  })
+  const createCommunityMutation = useCreateCommunityMutation()
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
+
     if (!session) {
       navigate(ROUTES.signIn, { replace: true })
       return
@@ -64,8 +37,19 @@ export function useCreateCommunityPage(): UseCreateCommunityPageResult {
       navigate(ROUTES.createProfile, { replace: true })
       return
     }
+
     try {
-      const community = await createCommunityMutation.mutateAsync()
+      const community = await createCommunityMutation.mutateAsync({
+        input: {
+          name,
+          url: url || undefined,
+          picture,
+          about,
+          privacy
+        },
+        ownerProfileId
+      })
+      showToast(t('TOAST_COMMUNITY_CREATED'))
       navigate(`${ROUTES.community}/${community.url}`, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)

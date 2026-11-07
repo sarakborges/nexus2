@@ -1,15 +1,16 @@
 import type { CommunityRelationship } from '@nexus/common'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { CommunityForm } from './EditCommunityPage.types'
 import { ROUTES } from '@/Constants/routes'
+import { useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { getCommunityByUrl, updateCommunity } from '@/Services/Community'
+import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -51,6 +52,7 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const initializedCommunityId = useRef<string | null>(null)
   const [form, setForm] = useState<CommunityForm | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const updateMutation = useUpdateCommunityMutation()
 
   useEffect(() => {
     if (!community || initializedCommunityId.current === community.id) return
@@ -62,28 +64,6 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
       privacy: community.privacy ?? 'public'
     })
   }, [community])
-
-  const updateMutation = useMutation({
-    mutationFn: () => {
-      if (!community || !form) throw new Error('COMMUNITY_NOT_READY')
-      return updateCommunity(community.id, {
-        name: form.name,
-        url: form.url || undefined,
-        picture: community.picture,
-        about: form.about,
-        privacy: form.privacy
-      })
-    },
-    onSuccess: async (updated) => {
-      queryClient.setQueryData(
-        queryKeys.communities.byUrl(updated.url),
-        updated
-      )
-      await queryClient.invalidateQueries({ queryKey: ['communities'] })
-      showToast(t('TOAST_COMMUNITY_UPDATED'))
-      navigate(ROUTES.community + '/' + updated.url, { replace: true })
-    }
-  })
 
   const updateForm = (patch: Partial<CommunityForm>) => {
     setForm((current) => current ? { ...current, ...patch } : current)
@@ -105,8 +85,21 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage('')
+    if (!community || !form) return
+
     try {
-      await updateMutation.mutateAsync()
+      const updated = await updateMutation.mutateAsync({
+        communityId: community.id,
+        input: {
+          name: form.name,
+          url: form.url || undefined,
+          picture: community.picture,
+          about: form.about,
+          privacy: form.privacy
+        }
+      })
+      showToast(t('TOAST_COMMUNITY_UPDATED'))
+      navigate(ROUTES.community + '/' + updated.url, { replace: true })
     } catch (error) {
       const code = getApiErrorCode(error)
       const key =
