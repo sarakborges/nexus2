@@ -1,4 +1,4 @@
-import type { CreateProfileInput, Profile } from '@nexus/common'
+import type { Profile } from '@nexus/common'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { updateUserProfile } from '@/Services/Profile'
