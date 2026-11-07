@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { useNavigate, useParams } from 'react-router'
 
@@ -15,7 +16,7 @@ export function useProfilePage(): UseProfilePageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const requestedUrl = normalizeEntityUrl(url)
   const profileQuery = useQuery({
     queryKey: queryKeys.profiles.byUrl(requestedUrl),
     queryFn: () => getProfileByUrl(requestedUrl),

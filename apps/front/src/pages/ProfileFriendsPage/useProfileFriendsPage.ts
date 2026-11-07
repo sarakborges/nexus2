@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getProfileByUrl } from '@/Services/Profile'
@@ -12,7 +14,7 @@ import type { UseProfileFriendsPageResult } from './useProfileFriendsPage.types'
 
 export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const { url } = useParams<{ url: string }>()
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const normalized = normalizeEntityUrl(url)
   const profileQuery = useQuery({
     queryKey: queryKeys.profiles.byUrl(normalized),
     queryFn: () => getProfileByUrl(normalized),

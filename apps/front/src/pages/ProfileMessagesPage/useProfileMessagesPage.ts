@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
@@ -24,7 +26,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const queryClient = useQueryClient()
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const requestedUrl = normalizeEntityUrl(url)
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)

@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -23,7 +24,7 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const requestedUrl = normalizeEntityUrl(url)
 
   const communityQuery = useQuery({
     queryKey: queryKeys.communities.byUrl(requestedUrl),

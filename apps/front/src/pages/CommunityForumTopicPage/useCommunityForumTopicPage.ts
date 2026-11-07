@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -37,7 +38,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const normalized = normalizeEntityUrl(url)
   const { page, pageSize, setPage } = useUrlPagination()
   const [replyContent, setReplyContent] = useState('')
 

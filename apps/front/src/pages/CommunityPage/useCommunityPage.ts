@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -22,7 +23,7 @@ export function useCommunityPage(): UseCommunityPageResult {
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const requestedUrl = normalizeEntityUrl(url)
 
   const communityQuery = useQuery({
     queryKey: queryKeys.communities.byUrl(requestedUrl, session?.user.id ?? null),

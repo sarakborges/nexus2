@@ -1,4 +1,5 @@
 import type { Profile } from '@nexus/common'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
@@ -24,7 +25,7 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const requestedUrl = normalizeEntityUrl(url)
 
   const profileQuery = useQuery({
     queryKey: queryKeys.profiles.byUrl(requestedUrl),

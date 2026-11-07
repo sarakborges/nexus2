@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
@@ -18,7 +20,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 
 export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const { url } = useParams<{ url: string }>()
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const normalized = normalizeEntityUrl(url)
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
   const profileIds = session?.user.profiles ?? []

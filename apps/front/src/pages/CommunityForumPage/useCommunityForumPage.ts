@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -20,7 +21,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
   const session = useAuthStore((state) => state.session)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
+  const normalized = normalizeEntityUrl(url)
   const { page, pageSize, setPage } = useUrlPagination()
 
   const communityQuery = useQuery({
