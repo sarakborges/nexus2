@@ -1,34 +1,9 @@
-import type {
-  CommunityRelationship,
-  CommunityRelationshipType
-} from '@nexus/common'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { useState } from 'react'
+import type { CommunityMemberActionsProps } from './CommunityMemberActions.types'
+import { useCommunityMemberActions } from './useCommunityMemberActions'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import {
-  demoteCommunityModerator,
-  removeCommunityRelationship,
-  setCommunityRelationship,
-  transferCommunityOwnership
-} from '@/Services/CommunityRelationship'
-import { useToastStore } from '@/Stores/Toast.store'
-
-type Props = {
-  memberProfileId: string
-  communityId: string
-  actorProfileId: string
-  actorRole: 'owner' | 'moderator'
-  relationship: CommunityRelationship | null
-}
-type Operation =
-  | { type: 'update'; relationshipType: CommunityRelationshipType }
-  | { type: 'remove' }
-  | { type: 'demote' }
-  | { type: 'transfer' }
 
 export function CommunityMemberActions({
   memberProfileId,
@@ -36,70 +11,28 @@ export function CommunityMemberActions({
   actorProfileId,
   actorRole,
   relationship
-}: Props) {
+}: CommunityMemberActionsProps) {
   const { t } = useTranslations()
-  const queryClient = useQueryClient()
-  const showToast = useToastStore((state) => state.showToast)
-  const [confirmTransfer, setConfirmTransfer] = useState(false)
-  const [lastOperation, setLastOperation] = useState<Operation | null>(null)
-  const mutation = useMutation({
-    mutationFn: async (operation: Operation) => {
-      if (operation.type === 'remove')
-        return removeCommunityRelationship(
-          memberProfileId,
-          communityId,
-          actorProfileId
-        )
-      if (operation.type === 'demote')
-        return demoteCommunityModerator(
-          memberProfileId,
-          communityId,
-          actorProfileId
-        )
-      if (operation.type === 'transfer')
-        return transferCommunityOwnership(
-          actorProfileId,
-          memberProfileId,
-          communityId
-        )
-      return setCommunityRelationship(
-        memberProfileId,
-        communityId,
-        operation.relationshipType,
-        actorProfileId
-      )
-    },
-    onSuccess: async () => {
-      showToast(t('TOAST_COMMUNITY_MODERATION'))
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['community-relationships', communityId]
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['community-members', communityId]
-        })
-      ])
-      setConfirmTransfer(false)
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+  const {
+    confirmTransfer,
+    pending,
+    hasError,
+    retryLastOperation,
+    run,
+    confirmOwnershipTransfer,
+    cancelOwnershipTransfer
+  } = useCommunityMemberActions({
+    memberProfileId,
+    communityId,
+    actorProfileId
   })
-  const run = (operation: Operation) => {
-    setLastOperation(operation)
-    mutation.mutate(operation)
-  }
-  const pending = mutation.isPending
 
   if (!relationship || relationship.type === 'owner') return null
 
   return (
     <div className="account-card__relationship-actions">
-      {mutation.isError && (
-        <RequestState
-          isError
-          onRetry={
-            lastOperation ? () => mutation.mutate(lastOperation) : undefined
-          }
-        />
+      {hasError && (
+        <RequestState isError onRetry={retryLastOperation} />
       )}
       {relationship.type === 'blocked' ? (
         <Button
@@ -148,7 +81,7 @@ export function CommunityMemberActions({
                 <Button
                   variation="secondary"
                   disabled={pending}
-                  onClick={() => setConfirmTransfer(false)}
+                  onClick={cancelOwnershipTransfer}
                 >
                   {t('COMMUNITY_CANCEL_TRANSFER')}
                 </Button>
@@ -157,7 +90,7 @@ export function CommunityMemberActions({
               <Button
                 variation="secondary"
                 disabled={pending}
-                onClick={() => setConfirmTransfer(true)}
+                onClick={confirmOwnershipTransfer}
               >
                 {t('COMMUNITY_TRANSFER_OWNERSHIP')}
               </Button>

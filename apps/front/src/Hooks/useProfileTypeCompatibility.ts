@@ -4,8 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { UseProfileTypeCompatibilityResult } from './useProfileTypeCompatibility.types'
 
-export function useProfileTypeCompatibility(targetType: ProfileType) {
+export function useProfileTypeCompatibility(
+  targetType: ProfileType
+): UseProfileTypeCompatibilityResult {
+  const hasSession = useAuthStore((state) => Boolean(state.session))
   const currentProfileId = useAuthStore(
     (state) => state.session?.user.currentProfile ?? null
   )
@@ -20,9 +24,13 @@ export function useProfileTypeCompatibility(targetType: ProfileType) {
   const isCompatible =
     !currentProfileId ||
     (currentProfileQuery.isSuccess && currentType === targetType)
+  const canInteract =
+    !hasSession || (isCompatible && !isChecking)
+
   return {
     isCompatible,
     isChecking,
+    canInteract,
     currentProfileType: currentType,
     currentProfileQuery
   }

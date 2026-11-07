@@ -1,23 +1,16 @@
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 
+import type {
+  UseAvatarUploadController,
+  UseAvatarUploadOptions
+} from './useAvatarUpload.types'
+
 import { useState } from 'react'
+import type { ChangeEvent } from 'react'
 
 import { useTranslations } from '@/Hooks/Language'
-import {
-  deleteUploadedFile,
-  updateCommunityAvatar,
-  updateProfileAvatar,
-  uploadFile
-} from '@/Services/Uploads'
+import { useAvatarMutation } from '@/Hooks/Uploads'
 import { useToastStore } from '@/Stores/Toast.store'
-
-type UseAvatarUploadOptions = {
-  purpose: 'profile-avatar' | 'community-avatar'
-  onChange: (value: string) => void
-  targetId?: string
-  actorProfileId?: string
-  errorLabel: string
-}
 
 export function useAvatarUpload({
   purpose,
@@ -25,9 +18,10 @@ export function useAvatarUpload({
   targetId,
   actorProfileId,
   errorLabel
-}: UseAvatarUploadOptions) {
+}: UseAvatarUploadOptions): UseAvatarUploadController {
   const { t } = useTranslations()
   const showToast = useToastStore((state) => state.showToast)
+  const avatarMutation = useAvatarMutation()
   const isFetching = useIsFetching() > 0
   const isMutating = useIsMutating() > 0
   const isRequestPending = isFetching || isMutating
@@ -41,23 +35,16 @@ export function useAvatarUpload({
     setIsUploading(true)
 
     try {
-      const uploaded = await uploadFile(file, purpose, targetId, actorProfileId)
-      if (targetId) {
-        const result =
-          purpose === 'profile-avatar'
-            ? await updateProfileAvatar(targetId, uploaded.id)
-            : await updateCommunityAvatar(
-                targetId,
-                actorProfileId!,
-                uploaded.id
-              )
-        setPendingUploadId(null)
-        onChange(result.picture)
-      } else {
-        if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
-        setPendingUploadId(uploaded.id)
-        onChange(uploaded.url)
-      }
+      const result = await avatarMutation.mutateAsync({
+        action: 'upload',
+        file,
+        purpose,
+        targetId,
+        actorProfileId,
+        pendingUploadId
+      })
+      setPendingUploadId(result.pendingUploadId)
+      onChange(result.picture)
       showToast(t('TOAST_AVATAR_UPDATED'))
     } catch {
       setError(errorLabel)
@@ -67,22 +54,26 @@ export function useAvatarUpload({
     }
   }
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    if (file) void handleFileChange(file)
+  }
+
   const handleRemove = async () => {
     setError('')
     setIsRemoving(true)
 
     try {
-      if (targetId) {
-        const result =
-          purpose === 'profile-avatar'
-            ? await updateProfileAvatar(targetId, null)
-            : await updateCommunityAvatar(targetId, actorProfileId!, null)
-        onChange(result.picture)
-      } else {
-        if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
-        setPendingUploadId(null)
-        onChange('')
-      }
+      const result = await avatarMutation.mutateAsync({
+        action: 'remove',
+        purpose,
+        targetId,
+        actorProfileId,
+        pendingUploadId
+      })
+      setPendingUploadId(result.pendingUploadId)
+      onChange(result.picture)
       showToast(t('TOAST_AVATAR_REMOVED'))
     } catch {
       setError(errorLabel)
@@ -96,6 +87,7 @@ export function useAvatarUpload({
     busy: isUploading || isRemoving || isRequestPending,
     error,
     handleFileChange,
+    handleInputChange,
     handleRemove
   }
 }

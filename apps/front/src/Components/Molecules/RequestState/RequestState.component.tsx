@@ -1,20 +1,9 @@
-import type { ReactNode } from 'react'
+import type { RequestStateProps } from './RequestState.types'
 
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 import './RequestState.style.scss'
-
-type RequestStateProps = {
-  isLoading?: boolean
-  isFetching?: boolean
-  isError?: boolean
-  isEmpty?: boolean
-  emptyMessage?: string
-  errorMessage?: string
-  onRetry?: () => void
-  children?: ReactNode
-}
 
 export function RequestState({
   isLoading = false,

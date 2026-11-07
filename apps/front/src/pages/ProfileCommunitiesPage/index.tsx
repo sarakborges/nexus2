@@ -1,7 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { useEffect } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
 import {
@@ -10,45 +7,25 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getProfileCommunities } from '@/Services/Community'
-import { getProfileByUrl } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfileCommunitiesPage } from './useProfileCommunitiesPage'
 
 import '../AuthenticatedPage.style.scss'
 
 export function ProfileCommunitiesPage() {
-  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const normalized = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(normalized),
-    queryFn: () => getProfileByUrl(normalized),
-    enabled: Boolean(normalized)
-  })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const { page, pageSize, setPage } = useUrlPagination()
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(
-      profile?.id ?? '',
-      page,
-      pageSize
-    ),
-    queryFn: () => getProfileCommunities(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
-  })
-  const communities = communitiesQuery.data?.items ?? []
-  const totalItems = communitiesQuery.data?.totalItems ?? 0
-
-  useEffect(() => {
-    if (communitiesQuery.data && communitiesQuery.data.page !== page)
-      setPage(communitiesQuery.data.page)
-  }, [communitiesQuery.data, page, setPage])
+  const {
+    normalized,
+    profileQuery,
+    profile,
+    typeCompatibility,
+    page,
+    pageSize,
+    setPage,
+    communitiesQuery,
+    communities,
+    totalItems
+  } = useProfileCommunitiesPage()
 
   if (!normalized) return <NotFoundPage />
   if (profileQuery.isLoading)

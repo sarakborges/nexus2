@@ -1,16 +1,10 @@
-import type { Community } from '@nexus/common'
+import type { CommunitySidebarProps } from './CommunitySidebar.types'
 
 import { Link } from 'react-router'
 
 import { IdentityAvatar, RelationshipActions } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-
-type CommunitySidebarProps = {
-  community: Community
-  active: 'about' | 'members' | 'forum'
-  canInteract?: boolean
-}
 
 export function CommunitySidebar({
   community,

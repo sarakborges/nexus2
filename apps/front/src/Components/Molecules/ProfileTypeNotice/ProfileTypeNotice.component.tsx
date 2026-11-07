@@ -1,13 +1,11 @@
-import type { ProfileType } from '@nexus/common'
+import type { ProfileTypeNoticeProps } from './ProfileTypeNotice.types'
 
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 
 import './ProfileTypeNotice.style.scss'
 
-type Props = { targetType: ProfileType }
-
-export function ProfileTypeNotice({ targetType }: Props) {
+export function ProfileTypeNotice({ targetType }: ProfileTypeNoticeProps) {
   const { t } = useTranslations()
   const { isCompatible, isChecking } = useProfileTypeCompatibility(targetType)
   if (isCompatible || isChecking) return null

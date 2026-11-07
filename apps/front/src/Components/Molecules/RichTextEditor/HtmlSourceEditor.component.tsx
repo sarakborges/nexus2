@@ -1,13 +1,6 @@
-import { renderHtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
-
-import { type UIEvent, useRef } from 'react'
-
-type HtmlSourceEditorProps = {
-  id: string
-  value: string
-  onChange: (value: string) => void
-  disabled: boolean
-}
+import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
+import { HtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
+import { useHtmlSourceEditor } from './useHtmlSourceEditor'
 
 export function HtmlSourceEditor({
   id,
@@ -15,18 +8,7 @@ export function HtmlSourceEditor({
   onChange,
   disabled
 }: HtmlSourceEditorProps) {
-  const highlightRef = useRef<HTMLPreElement>(null)
-  const gutterRef = useRef<HTMLDivElement>(null)
-  const lineCount = Math.max(1, value.split('\n').length)
-
-  const syncScroll = (event: UIEvent<HTMLTextAreaElement>) => {
-    const target = event.currentTarget
-    if (highlightRef.current) {
-      highlightRef.current.scrollTop = target.scrollTop
-      highlightRef.current.scrollLeft = target.scrollLeft
-    }
-    if (gutterRef.current) gutterRef.current.scrollTop = target.scrollTop
-  }
+  const { highlightRef, gutterRef, lineCount, syncScroll } = useHtmlSourceEditor({ value })
 
   return (
     <div className="rich-text-editor__html-editor">
@@ -45,7 +27,7 @@ export function HtmlSourceEditor({
           className="rich-text-editor__highlight"
           aria-hidden="true"
         >
-          {renderHtmlSyntaxHighlight(value)}
+          <HtmlSyntaxHighlight source={value} />
         </pre>
         <textarea
           id={id + '-html-source'}

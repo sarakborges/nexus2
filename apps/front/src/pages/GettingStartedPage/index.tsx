@@ -1,26 +1,14 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { useNavigate } from 'react-router'
-
-import { ROUTES } from '@/Constants/routes'
 import { Button, ButtonLink } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useGettingStartedPage } from './useGettingStartedPage'
+
+import { ROUTES } from '@/Constants/routes'
 
 import '../AuthenticatedPage.style.scss'
 
 export function GettingStartedPage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const signOut = useAuthStore((state) => state.signOut)
-  const signOutMutation = useMutation({
-    mutationFn: signOut,
-    onSuccess: () => {
-      queryClient.clear()
-      navigate(ROUTES.signIn, { replace: true })
-    }
-  })
+  const { isSigningOut, hasSignOutError, signOut } = useGettingStartedPage()
 
   return (
     <main className="account-page">
@@ -34,16 +22,11 @@ export function GettingStartedPage() {
               {t('GETTING_STARTED_DESCRIPTION')}
             </p>
           </div>
-          <Button
-            disabled={signOutMutation.isPending}
-            onClick={() => signOutMutation.mutate()}
-          >
-            {signOutMutation.isPending
-              ? t('AUTH_SUBMITTING')
-              : t('AUTH_SIGN_OUT')}
+          <Button disabled={isSigningOut} onClick={signOut}>
+            {isSigningOut ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_OUT')}
           </Button>
         </header>
-        {signOutMutation.isError && (
+        {hasSignOutError && (
           <p className="auth-card__error" role="alert">
             {t('REQUEST_FAILED')}
           </p>
