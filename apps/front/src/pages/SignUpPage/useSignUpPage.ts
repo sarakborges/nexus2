@@ -1,33 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { useSignUpMutation } from '@/Hooks/Auth'
 import { AUTH_ERROR_TRANSLATION_KEYS } from '@/Constants/auth'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { AuthError } from '@/Services/Auth'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseSignUpPageResult } from './useSignUpPage.types'
 
 export function useSignUpPage(): UseSignUpPageResult {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const signUp = useAuthStore((state) => state.signUp)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const signUpMutation = useMutation({
-    mutationFn: signUp,
-    onSuccess: (user) =>
-      queryClient.setQueryData(queryKeys.auth.session, {
-        user,
-        authenticatedAt: Date.now()
-      })
-  })
+  const signUpMutation = useSignUpMutation()
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

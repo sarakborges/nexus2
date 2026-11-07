@@ -1,32 +1,20 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { useSignInMutation } from '@/Hooks/Auth'
 import { AUTH_ERROR_TRANSLATION_KEYS } from '@/Constants/auth'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { AuthError } from '@/Services/Auth'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseSignInPageResult } from './useSignInPage.types'
 
 export function useSignInPage(): UseSignInPageResult {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const signIn = useAuthStore((state) => state.signIn)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const signInMutation = useMutation({
-    mutationFn: signIn,
-    onSuccess: (user) =>
-      queryClient.setQueryData(queryKeys.auth.session, {
-        user,
-        authenticatedAt: Date.now()
-      })
-  })
+  const signInMutation = useSignInMutation()
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
