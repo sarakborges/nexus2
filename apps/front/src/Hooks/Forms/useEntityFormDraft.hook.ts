@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import type { UseEntityFormDraftResult } from './useEntityFormDraft.types'
 
@@ -12,27 +12,24 @@ export function useEntityFormDraft<TForm>(
   initialForm: TForm | null
 ): UseEntityFormDraftResult<TForm> {
   const [draft, setDraft] = useState<EntityFormDraftState<TForm> | null>(null)
+  const form =
+    entityId && draft?.entityId === entityId ? draft.form : initialForm
 
-  useEffect(() => {
-    if (!entityId || !initialForm) return
-
-    setDraft((current) =>
-      current?.entityId === entityId
-        ? current
-        : { entityId, form: initialForm }
-    )
-  }, [entityId, initialForm])
-
-  const form = draft?.entityId === entityId ? draft.form : null
   const updateForm = useCallback(
     (patch: Partial<TForm>) => {
-      setDraft((current) =>
-        current?.entityId === entityId
-          ? { ...current, form: { ...current.form, ...patch } }
-          : current
-      )
+      setDraft((current) => {
+        const currentForm =
+          current?.entityId === entityId ? current.form : initialForm
+
+        if (!entityId || !currentForm) return current
+
+        return {
+          entityId,
+          form: { ...currentForm, ...patch }
+        }
+      })
     },
-    [entityId]
+    [entityId, initialForm]
   )
 
   return { form, updateForm }
