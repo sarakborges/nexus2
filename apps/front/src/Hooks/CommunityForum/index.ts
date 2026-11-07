@@ -1,10 +1,30 @@
 export { useCreateCommunityForumTopicMutation } from './useCreateCommunityForumTopicMutation.hook'
-export type { CreateCommunityForumTopicMutationVariables, UseUseCreateCommunityForumTopicMutationResult } from './useCreateCommunityForumTopicMutation.types'
+export type {
+  CreateCommunityForumTopicMutationVariables,
+  UseCreateCommunityForumTopicMutationResult
+} from './useCreateCommunityForumTopicMutation.types'
+
 export { useCreateCommunityForumReplyMutation } from './useCreateCommunityForumReplyMutation.hook'
-export type { CreateCommunityForumReplyMutationVariables, UseUseCreateCommunityForumReplyMutationResult } from './useCreateCommunityForumReplyMutation.types'
+export type {
+  CreateCommunityForumReplyMutationVariables,
+  UseCreateCommunityForumReplyMutationResult
+} from './useCreateCommunityForumReplyMutation.types'
+
 export { useModerateCommunityForumTopicMutation } from './useModerateCommunityForumTopicMutation.hook'
-export type { CommunityForumTopicModerationChanges, ModerateCommunityForumTopicMutationVariables, UseUseModerateCommunityForumTopicMutationResult } from './useModerateCommunityForumTopicMutation.types'
+export type {
+  CommunityForumTopicModerationChanges,
+  ModerateCommunityForumTopicMutationVariables,
+  UseModerateCommunityForumTopicMutationResult
+} from './useModerateCommunityForumTopicMutation.types'
+
 export { useDeleteCommunityForumTopicMutation } from './useDeleteCommunityForumTopicMutation.hook'
-export type { DeleteCommunityForumTopicMutationVariables, UseUseDeleteCommunityForumTopicMutationResult } from './useDeleteCommunityForumTopicMutation.types'
+export type {
+  DeleteCommunityForumTopicMutationVariables,
+  UseDeleteCommunityForumTopicMutationResult
+} from './useDeleteCommunityForumTopicMutation.types'
+
 export { useDeleteCommunityForumReplyMutation } from './useDeleteCommunityForumReplyMutation.hook'
-export type { DeleteCommunityForumReplyMutationVariables, UseUseDeleteCommunityForumReplyMutationResult } from './useDeleteCommunityForumReplyMutation.types'
+export type {
+  DeleteCommunityForumReplyMutationVariables,
+  UseDeleteCommunityForumReplyMutationResult
+} from './useDeleteCommunityForumReplyMutation.types'
