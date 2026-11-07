@@ -1,14 +1,9 @@
-import type { InputHTMLAttributes } from 'react'
-
 import { Input } from '@/DesignSystem/Atoms/Input'
 import { Label } from '@/DesignSystem/Atoms/Label'
 
-import './FormField.style.scss'
+import type { FormFieldProps } from './FormField.types'
 
-type FormFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> & {
-  id: string
-  label: string
-}
+import './FormField.style.scss'
 
 export function FormField({
   id,

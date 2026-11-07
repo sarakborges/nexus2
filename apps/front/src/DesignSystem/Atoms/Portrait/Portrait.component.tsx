@@ -1,14 +1,6 @@
-import type { ImgHTMLAttributes } from 'react'
+import type { PortraitProps } from './Portrait.types'
 
 import './Portrait.style.scss'
-
-type PortraitProps = Omit<
-  ImgHTMLAttributes<HTMLImageElement>,
-  'src' | 'alt'
-> & {
-  src: string
-  alt: string
-}
 
 export function Portrait({ className, ...props }: PortraitProps) {
   const classNames = ['portrait', className].filter(Boolean).join(' ')

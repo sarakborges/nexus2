@@ -1,8 +1,6 @@
-import type { InputHTMLAttributes } from 'react'
+import type { InputProps } from './Input.types'
 
 import './Input.style.scss'
-
-type InputProps = InputHTMLAttributes<HTMLInputElement>
 
 export function Input({ className, ...props }: InputProps) {
   const classNames = ['input', className].filter(Boolean).join(' ')

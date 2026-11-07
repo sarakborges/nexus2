@@ -1,14 +1,9 @@
+import type { PaginationProps } from './Pagination.types'
 import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { Button } from '@/DesignSystem'
 import { getTotalPages } from '@/Helpers/Math/pagination.helper'
 import { useTranslations } from '@/Hooks/Language'
 
-type PaginationProps = {
-  page: number
-  totalItems: number
-  pageSize?: number
-  onPageChange: (page: number) => void
-}
 export function Pagination({
   page,
   totalItems,

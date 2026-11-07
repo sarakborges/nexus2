@@ -1,13 +1,6 @@
-import type { ComponentPropsWithoutRef } from 'react'
+import type { TextElement, TextProps } from './Text.types'
 
 import './Text.style.scss'
-
-type TextElement = 'p' | 'span' | 'h1' | 'h2'
-
-type TextProps<T extends TextElement = 'span'> = {
-  as?: T
-  className?: string
-} & Omit<ComponentPropsWithoutRef<T>, 'as' | 'className'>
 
 export function Text<T extends TextElement = 'span'>({
   as,

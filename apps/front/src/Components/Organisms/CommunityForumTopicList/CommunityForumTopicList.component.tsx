@@ -1,16 +1,10 @@
-import type { CommunityForumTopicSummary, Profile } from '@nexus/common'
+import type { CommunityForumTopicListProps } from './CommunityForumTopicList.types'
 
 import { Link } from 'react-router'
 
 import { IdentityAvatar } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-
-type CommunityForumTopicListProps = {
-  communityUrl: string
-  topics: CommunityForumTopicSummary[]
-  authorsById: ReadonlyMap<string, Profile>
-}
 
 export function CommunityForumTopicList({
   communityUrl,

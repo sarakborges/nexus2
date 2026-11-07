@@ -1,12 +1,9 @@
+import type { LanguageFlagProps } from './LanguageFlag.types'
 import { LANGUAGE_FLAG_PATHS } from '@/Constants/languages'
-import type { Language } from '@/Constants/languages'
 import { Portrait } from '@/DesignSystem'
 
 import './LanguageFlag.style.scss'
 
-type LanguageFlagProps = {
-  language: Language
-}
 
 export function LanguageFlag({ language }: LanguageFlagProps) {
   return (

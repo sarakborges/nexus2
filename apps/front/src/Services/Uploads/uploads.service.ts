@@ -77,3 +77,8 @@ export async function updateCommunityAvatar(
   )
   return data
 }
+
+export async function uploadEditorImage(file: File): Promise<string> {
+  const uploaded = await uploadFile(file, 'editor-image')
+  return uploaded.url
+}

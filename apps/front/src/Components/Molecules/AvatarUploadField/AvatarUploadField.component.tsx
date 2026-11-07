@@ -1,25 +1,11 @@
+import type { AvatarUploadFieldProps } from './AvatarUploadField.types'
 import { useAvatarUpload } from './useAvatarUpload'
 import { FiImage } from 'react-icons/fi'
 
-import { type ChangeEvent, useRef } from 'react'
+import { useRef } from 'react'
 
 import './AvatarUploadField.style.scss'
 
-type AvatarUploadFieldProps = {
-  label: string
-  value: string
-  fallbackName: string
-  purpose: 'profile-avatar' | 'community-avatar'
-  onChange: (value: string) => void
-  targetId?: string
-  actorProfileId?: string
-  selectLabel: string
-  changeLabel: string
-  removeLabel: string
-  uploadingLabel: string
-  errorLabel: string
-  emptyLabel: string
-}
 
 export function AvatarUploadField({
   label,
@@ -37,19 +23,13 @@ export function AvatarUploadField({
   emptyLabel
 }: AvatarUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const { busy, error, handleFileChange, handleRemove } = useAvatarUpload({
+  const { busy, error, handleInputChange, handleRemove } = useAvatarUpload({
     purpose,
     onChange,
     targetId,
     actorProfileId,
     errorLabel
   })
-
-  const onInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.currentTarget.files?.[0]
-    event.currentTarget.value = ''
-    if (file) void handleFileChange(file)
-  }
 
   return (
     <div className="avatar-upload-field">
@@ -93,7 +73,7 @@ export function AvatarUploadField({
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
         aria-label={label}
-        onChange={onInputChange}
+        onChange={handleInputChange}
       />
       {error && (
         <p className="avatar-upload-field__error" role="alert">

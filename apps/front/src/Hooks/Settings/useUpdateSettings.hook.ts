@@ -1,3 +1,4 @@
+import type { UpdateContext, UseUpdateSettingsResult } from './useUpdateSettings.types'
 import type { UserPreferences } from '@nexus/common'
 import {
   useIsMutating,
@@ -9,14 +10,8 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { saveUserPreferences } from '@/Services/Settings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
-import type { SettingsType } from '@/Types/Settings.type'
 
-type UpdateContext = {
-  previousSettings: SettingsType
-  previousQuery: UserPreferences | undefined
-}
-
-export function useUpdateSettings() {
+export function useUpdateSettings(): UseUpdateSettingsResult {
   const queryClient = useQueryClient()
   const userId = useAuthStore((state) => state.session?.user.id ?? null)
   const updateSettings = useSettingsStore((state) => state.updateSettings)

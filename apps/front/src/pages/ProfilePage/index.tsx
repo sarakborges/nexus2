@@ -1,63 +1,31 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link } from 'react-router'
 
 import { IdentityAvatar, RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { getProfileCommunities } from '@/Services/Community'
-import { getProfileByUrl } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
-import { useAuthStore } from '@/Stores/Auth.store'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { useProfilePage } from './useProfilePage'
 
 import '../AuthenticatedPage.style.scss'
 import './ProfilePage.style.scss'
 
-function PreviewAvatar({ name, picture }: { name: string; picture: string }) {
-  return (
-    <IdentityAvatar
-      className="social-preview-avatar"
-      name={name}
-      picture={picture}
-    />
-  )
-}
-
 export function ProfilePage() {
-  const { url } = useParams<{ url: string }>()
   const { t } = useTranslations()
-  const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
-  const requestedUrl = url?.trim().replace(/^@/, '').toLowerCase() ?? ''
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(requestedUrl),
-    queryFn: () => getProfileByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const canInteract =
-    !session ||
-    (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
-
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 16),
-    queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
-    enabled: Boolean(profile?.id)
-  })
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 16),
-    queryFn: () =>
-      getProfileCommunities(profile!.id, { page: 1, pageSize: 16 }),
-    enabled: Boolean(profile?.id)
-  })
+  const {
+    requestedUrl,
+    profileQuery,
+    profile,
+    typeCompatibility,
+    canInteract,
+    friendsQuery,
+    communitiesQuery,
+    friends,
+    communities,
+    isOwner,
+    openEditProfile,
+  } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
   if (profileQuery.isLoading) {
@@ -79,10 +47,6 @@ export function ProfilePage() {
     )
   }
   if (!profile) return <NotFoundPage />
-
-  const friends = friendsQuery.data?.items ?? []
-  const communities = communitiesQuery.data?.items ?? []
-  const isOwner = session?.user.profiles.includes(profile.id) ?? false
 
   return (
     <main className="social-page social-page--profile">
@@ -113,9 +77,7 @@ export function ProfilePage() {
                 <Button
                   type="button"
                   variation="primary"
-                  onClick={() =>
-                    navigate(ROUTES.profile + '/' + profile.url + '/edit')
-                  }
+                  onClick={openEditProfile}
                 >
                   {t('PROFILE_EDIT')}
                 </Button>
@@ -165,7 +127,8 @@ export function ProfilePage() {
                     aria-label={friend.name}
                     title={friend.name}
                   >
-                    <PreviewAvatar
+                    <IdentityAvatar
+                      className="social-preview-avatar"
                       name={friend.name}
                       picture={friend.picture}
                     />
@@ -207,7 +170,8 @@ export function ProfilePage() {
                     aria-label={community.name}
                     title={community.name}
                   >
-                    <PreviewAvatar
+                    <IdentityAvatar
+                      className="social-preview-avatar"
                       name={community.name}
                       picture={community.picture}
                     />

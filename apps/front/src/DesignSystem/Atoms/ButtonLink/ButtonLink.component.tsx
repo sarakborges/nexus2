@@ -1,14 +1,10 @@
-import type { ButtonVariation } from '../Button/Button.component'
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-
 import type { MouseEvent } from 'react'
-import { Link, type LinkProps } from 'react-router'
+import { Link } from 'react-router'
+
+import type { ButtonLinkProps } from './ButtonLink.types'
+import { useGlobalRequestStatus } from '../../Hooks/useGlobalRequestStatus'
 
 import '../Button/Button.style.scss'
-
-type ButtonLinkProps = LinkProps & {
-  variation?: ButtonVariation
-}
 
 export function ButtonLink({
   children,
@@ -18,9 +14,7 @@ export function ButtonLink({
   tabIndex,
   ...props
 }: ButtonLinkProps) {
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
+  const isRequestPending = useGlobalRequestStatus()
   const classNames = ['button', `button--${variation}`, className]
     .filter(Boolean)
     .join(' ')

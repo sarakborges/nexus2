@@ -10,8 +10,14 @@ function community(id) {
   return { id, name: id, url: id, picture: '', about: '', type: 'social' }
 }
 
-function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships }) {
+function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, beforeTransaction }) {
   const collections = new Map([
+    ['accounts', [{
+      id: 'user',
+      email: 'user@example.com',
+      profiles: [...ownedProfiles],
+      currentProfile: ownedProfiles[0] ?? null
+    }]],
     ['profiles', profiles],
     ['communities', communities],
     ['relationships', relationships],
@@ -19,13 +25,32 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, records) { collections.set(name, structuredClone(records)) }
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
+      const snapshot = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(snapshot)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
+    }
   }
   const auth = {
-    async getUser(userId) {
-      return { id: userId, email: 'user@example.com', profiles: ownedProfiles, currentProfile: ownedProfiles[0] ?? null }
+    async getUser() {
+      throw new Error('Activity reads must use the account in their repository snapshot')
     },
-    async ownsProfile(userId, profileId) { return ownedProfiles.includes(profileId) }
+    async ownsProfile() {
+      throw new Error('Activity reads must not perform separate profile ownership reads')
+    }
   }
   return new DomainService(data, auth)
 }
@@ -63,6 +88,26 @@ test('recent activity merges friend and community updates for all owned profiles
   assert.equal(activity[2].friend.id, 'friend-b')
 })
 
+test('recent activity normalizes communities in its existing snapshot', async () => {
+  let transactionCount = 0
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: [profile('owned-a')],
+    communities: [community('community-a')],
+    relationships: [],
+    communityRelationships: [{ profiles: ['owned-a', 'community-a'], type: 'owner', updatedAt: 100 }],
+    beforeTransaction(_names, current) {
+      transactionCount += 1
+      current.set('profiles', [profile('owned-a')])
+    }
+  })
+
+  const result = await service.getRecentActivity('user')
+
+  assert.equal(result.length, 1)
+  assert.equal(transactionCount, 1)
+})
+
 test('recent activity returns an empty list when the account has no profiles', async () => {
   const service = createService({
     ownedProfiles: [],
@@ -70,6 +115,29 @@ test('recent activity returns an empty list when the account has no profiles', a
     communities: [],
     relationships: [],
     communityRelationships: []
+  })
+
+  assert.deepEqual(await service.getRecentActivity('user'), [])
+})
+
+
+test('recent activity does not include relationships after profile ownership is revoked', async () => {
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: ['owned-a', 'friend-a'].map(profile),
+    communities: [],
+    relationships: [
+      { profiles: ['owned-a', 'friend-a'], type: 'connection', updatedAt: 100 }
+    ],
+    communityRelationships: [],
+    beforeTransaction(_names, current) {
+      current.set('accounts', [{
+        id: 'user',
+        email: 'user@example.com',
+        profiles: [],
+        currentProfile: null
+      }])
+    }
   })
 
   assert.deepEqual(await service.getRecentActivity('user'), [])

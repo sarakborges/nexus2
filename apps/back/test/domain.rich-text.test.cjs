@@ -2,26 +2,44 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function makeService(collections, ownedProfiles = ['sender'], uploads) {
+function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTransaction) {
+  if (!collections.has('accounts')) {
+    collections.set('accounts', [{
+      id: 'user',
+      email: 'user@example.test',
+      profiles: [...ownedProfiles],
+      currentProfile: ownedProfiles[0] ?? null
+    }])
+  }
   const data = {
     async read(name) {
       return structuredClone(collections.get(name) ?? [])
     },
-    async write(name, records) {
-      collections.set(name, structuredClone(records))
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      beforeTransaction?.(names, collections)
+      const records = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(records)
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
+      return structuredClone(outcome.result)
     }
   }
   const auth = {
-    async ownsProfile(_userId, profileId) {
-      return ownedProfiles.includes(profileId)
+    async ownsProfile() {
+      throw new Error('Profile message flows must use repository snapshot authorization')
     },
-    async getUser(id) {
-      return {
-        id,
-        email: 'user@example.test',
-        profiles: ownedProfiles,
-        currentProfile: ownedProfiles[0] ?? null
-      }
+    async getUser() {
+      throw new Error('Profile message flows must not perform separate auth reads')
     }
   }
   return new DomainService(data, auth, uploads)
@@ -78,16 +96,14 @@ test('sanitizes legacy profile, community, and message HTML on reads', async () 
   assert.doesNotMatch(messages.items[0].content, /iframe|unsafe/i)
 })
 
-test('validates and attaches uploaded image references when saving a profile message', async () => {
+test('validates and attaches uploaded image references in the message transaction', async () => {
   const imageId = '123e4567-e89b-42d3-a456-426614174000'
   const imageReference = '/api/uploads/' + imageId + '/content'
   const calls = []
   const uploads = {
-    async validateEditorImages(userId, html) {
-      calls.push({ method: 'validate', userId, html })
-    },
-    async attachEditorImages(userId, html, resourceType, resourceId, participants) {
+    attachEditorImagesToRecords(records, userId, html, resourceType, resourceId, participants) {
       calls.push({ method: 'attach', userId, html, resourceType, resourceId, participants })
+      return records
     }
   }
   const collections = new Map([
@@ -106,10 +122,36 @@ test('validates and attaches uploaded image references when saving a profile mes
     '<p>Hello</p><img src="' + imageReference + '" alt="Uploaded">'
   )
 
-  assert.equal(calls[0].method, 'validate')
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].method, 'attach')
   assert.ok(calls[0].html.includes(imageReference))
-  assert.equal(calls[1].method, 'attach')
-  assert.equal(calls[1].resourceType, 'profile-message')
-  assert.equal(calls[1].resourceId, message.id)
-  assert.deepEqual(calls[1].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
+  assert.equal(calls[0].resourceType, 'profile-message')
+  assert.equal(calls[0].resourceId, message.id)
+  assert.deepEqual(calls[0].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
+})
+
+
+test('private inbox reads use the current account profile links from the message snapshot', async () => {
+  const collections = new Map([
+    ['profiles', [
+      { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' },
+      { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
+    ]],
+    ['profile_messages', [
+      { id: 'message', fromProfileId: 'sender', toProfileId: 'recipient', content: '<p>Private</p>', createdAt: 1 }
+    ]]
+  ])
+  const service = makeService(collections, ['sender'], null, (names, current) => {
+    if (names.includes('profile_messages')) {
+      current.set('accounts', [{
+        id: 'user',
+        email: 'user@example.test',
+        profiles: [],
+        currentProfile: null
+      }])
+    }
+  })
+
+  const result = await service.getMessages('recipient', 'user', { page: 1, pageSize: 20 })
+  assert.deepEqual(result.items, [])
 })

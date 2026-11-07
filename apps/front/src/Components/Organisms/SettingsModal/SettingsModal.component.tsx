@@ -1,31 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
+import type { SettingsModalProps } from './SettingsModal.types'
+import { useSettingsModal } from './useSettingsModal'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { LanguageSelector } from '@/Components/Organisms/LanguageSelector'
 import { ThemeSelector } from '@/Components/Organisms/ThemeSelector'
 import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { getUserPreferences } from '@/Services/Settings'
-import { useAuthStore } from '@/Stores/Auth.store'
-import { useSettingsStore } from '@/Stores/Settings.store'
 
 import './SettingsModal.style.scss'
 
-type SettingsModalProps = {
-  open: boolean
-  onClose: () => void
-}
-
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
-  const userId = useAuthStore((state) => state.session?.user.id ?? null)
-  const updateError = useSettingsStore((state) => state.updateError)
-  const preferencesQuery = useQuery({
-    queryKey: queryKeys.auth.preferences(userId ?? ''),
-    queryFn: getUserPreferences,
-    enabled: open && Boolean(userId)
-  })
+  const {
+    updateError,
+    isLoading,
+    isFetching,
+    isError,
+    retry
+  } = useSettingsModal({ open })
 
   return (
     <Modal
@@ -38,10 +30,10 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
       <p className="settings-modal__description">{t('SETTINGS_DESCRIPTION')}</p>
       {updateError && <RequestState isError />}
       <RequestState
-        isLoading={Boolean(userId && preferencesQuery.isLoading)}
-        isFetching={Boolean(userId && preferencesQuery.isFetching)}
-        isError={Boolean(userId && preferencesQuery.isError)}
-        onRetry={() => void preferencesQuery.refetch()}
+        isLoading={isLoading}
+        isFetching={isFetching}
+        isError={isError}
+        onRetry={retry}
       >
         <div className="settings-modal__preferences">
           <LanguageSelector />

@@ -4,7 +4,8 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { plainToInstance } = require('class-transformer')
 const { validateSync } = require('class-validator')
-const { PaginationDto, paginate } = require('../dist/api/pagination/pagination.dto.js')
+const { PaginationDto } = require('../dist/api/pagination/pagination.dto.js')
+const { paginate } = require('../dist/api/pagination/pagination.helper.js')
 
 test('pagination always uses 20 items even when a URL supplies another page size', () => {
   const query = plainToInstance(PaginationDto, { page: '2', pageSize: '1' })

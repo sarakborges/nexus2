@@ -1,19 +1,11 @@
+import type { PreferenceOptionProps } from './PreferenceOption.types'
 import { FaCheck } from 'react-icons/fa'
 
-import type { ReactNode } from 'react'
 
 import { Button, Text } from '@/DesignSystem'
 
 import './PreferenceOption.style.scss'
 
-type PreferenceOptionProps = {
-  label: string
-  description?: string
-  isSelected: boolean
-  onSelect: () => void
-  disabled?: boolean
-  leadingVisual?: ReactNode
-}
 
 export function PreferenceOption({
   label,

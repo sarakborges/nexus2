@@ -1,108 +1,33 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-import { type FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router'
-
-import { AvatarUploadField, RequestState, RichTextEditor } from '@/Components'
+import { RequestState } from '@/Components'
+import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
-import { ROUTES } from '@/Constants/routes'
-import { Button, FormField, Label } from '@/DesignSystem'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import type { ProfileType } from '@/Models/Profile.model'
-import { getApiErrorCode } from '@/Services/Http/api'
-import { createUserProfile } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { uploadFile } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
-import { useToastStore } from '@/Stores/Toast.store'
+import { useCreateProfilePage } from './useCreateProfilePage'
 
 import '../AuthPage.style.scss'
 
 export function CreateProfilePage() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
-  const user = session?.user
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-  const showToast = useToastStore((state) => state.showToast)
-  const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
-  const [picture, setPicture] = useState('')
-  const [about, setAbout] = useState('')
-  const [type, setType] = useState<ProfileType>('social')
-  const [errorMessage, setErrorMessage] = useState('')
-  const createProfileMutation = useMutation({
-    mutationFn: async () => {
-      const result = await createUserProfile({
-        name,
-        url: url || undefined,
-        picture,
-        about,
-        type
-      })
-      const currentSession = useAuthStore.getState().session
-      if (
-        !currentSession ||
-        result.user.id !== currentSession.user.id ||
-        !result.user.profiles.includes(result.profile.id) ||
-        result.user.currentProfile !== result.profile.id
-      ) {
-        throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
-      }
-      useAuthStore
-        .getState()
-        .setSession({
-          user: result.user,
-          authenticatedAt: currentSession.authenticatedAt
-        })
-      return result
-    },
-    onSuccess: async (result) => {
-      queryClient.setQueryData(
-        queryKeys.profiles.byUrl(result.profile.url),
-        result.profile
-      )
-      queryClient.setQueryData(
-        queryKeys.auth.session,
-        useAuthStore.getState().session
-      )
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
-        queryClient.invalidateQueries({ queryKey: ['auth'] }),
-        queryClient.invalidateQueries({ queryKey: ['activity'] })
-      ])
-      showToast(t('TOAST_PROFILE_CREATED'))
-    }
-  })
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setErrorMessage('')
-    if (!isAuthInitialized) return
-    if (!user) {
-      navigate(ROUTES.signIn, { replace: true })
-      return
-    }
-    try {
-      await createProfileMutation.mutateAsync()
-      navigate(ROUTES.home, { replace: true })
-    } catch (error) {
-      const code = getApiErrorCode(error)
-      const key =
-        code === 'PROFILE_URL_ALREADY_IN_USE'
-          ? 'PROFILE_ERROR_URL_TAKEN'
-          : code === 'INVALID_PROFILE'
-            ? 'PROFILE_ERROR_INVALID'
-            : code === 'PROFILE_CREATION_SESSION_MISSING'
-              ? 'PROFILE_ERROR_SESSION'
-              : code === 'PROFILE_CREATION_SESSION_INCONSISTENT'
-                ? 'PROFILE_ERROR_SESSION'
-                : 'PROFILE_ERROR_GENERIC'
-      setErrorMessage(t(key))
-      showToast(t(key), 'error')
-    }
-  }
+  const {
+    isAuthInitialized,
+    name,
+    setName,
+    url,
+    setUrl,
+    picture,
+    setPicture,
+    about,
+    setAbout,
+    type,
+    setType,
+    errorMessage,
+    isSubmitting,
+    uploadEditorImage,
+    handleSubmit,
+    handleCancel
+  } = useCreateProfilePage()
 
   if (!isAuthInitialized) {
     return (
@@ -129,68 +54,22 @@ export function CreateProfilePage() {
           </p>
         </header>
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <div className="entity-form-page__card">
-            <FormField
-              id="profile-name"
-              label={t('PROFILE_NAME_LABEL')}
-              type="text"
-              autoComplete="nickname"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              maxLength={80}
-              required
-            />
-            <FormField
-              id="profile-url"
-              label={t('PROFILE_URL_LABEL')}
-              type="text"
-              placeholder={t('PROFILE_URL_AUTO_PLACEHOLDER')}
-              value={url}
-              onChange={(event) => setUrl(event.target.value)}
-              autoComplete="off"
-            />
-            <p className="account-card__description">
-              {t('PROFILE_URL_AUTO_HELP')}
+          <ProfileDetailsFields
+            name={name}
+            url={url}
+            picture={picture}
+            about={about}
+            onNameChange={setName}
+            onUrlChange={setUrl}
+            onPictureChange={setPicture}
+            onAboutChange={setAbout}
+            onUploadImage={uploadEditorImage}
+          />
+          {errorMessage && (
+            <p className="auth-card__error" role="alert">
+              {errorMessage}
             </p>
-            <AvatarUploadField
-              label={t('PROFILE_PICTURE_LABEL')}
-              value={picture}
-              fallbackName={name}
-              purpose="profile-avatar"
-              onChange={setPicture}
-              selectLabel={t('UPLOAD_SELECT_IMAGE')}
-              changeLabel={t('UPLOAD_CHANGE_IMAGE')}
-              removeLabel={t('UPLOAD_REMOVE_IMAGE')}
-              uploadingLabel={t('UPLOAD_IN_PROGRESS')}
-              errorLabel={t('UPLOAD_FAILED')}
-              emptyLabel={t('UPLOAD_EMPTY')}
-            />
-            <div className="form-field">
-              <Label id="profile-about-label" htmlFor="profile-about">
-                {t('PROFILE_ABOUT_LABEL')}
-              </Label>
-              <RichTextEditor
-                id="profile-about"
-                value={about}
-                onChange={setAbout}
-                maxTextLength={500}
-                imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-                imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-                onUploadImage={(file) =>
-                  uploadFile(file, 'editor-image').then((result) => result.url)
-                }
-                placeholder={t('RICH_TEXT_PLACEHOLDER')}
-              />
-              <p className="account-card__description">
-                {t('PROFILE_ABOUT_MAX_LENGTH')}
-              </p>
-            </div>
-            {errorMessage && (
-              <p className="auth-card__error" role="alert">
-                {errorMessage}
-              </p>
-            )}
-          </div>
+          )}
           <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
             <PreferenceOption
               label={t('PROFILE_TYPE_SOCIAL')}
@@ -215,16 +94,12 @@ export function CreateProfilePage() {
             <Button
               type="button"
               variation="secondary"
-              onClick={() =>
-                navigate(
-                  user?.profiles.length ? ROUTES.home : ROUTES.gettingStarted
-                )
-              }
+              onClick={handleCancel}
             >
               {t('ACTION_CANCEL')}
             </Button>
-            <Button type="submit" disabled={createProfileMutation.isPending}>
-              {createProfileMutation.isPending
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting
                 ? t('AUTH_SUBMITTING')
                 : t('CREATE_PROFILE_ACTION')}
             </Button>

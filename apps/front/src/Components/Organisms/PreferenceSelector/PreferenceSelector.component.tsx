@@ -1,14 +1,9 @@
-import type { ReactNode } from 'react'
+import type { PreferenceSelectorProps } from './PreferenceSelector.types'
 import { useId } from 'react'
 
 import { Text } from '@/DesignSystem'
 
 import './PreferenceSelector.style.scss'
-
-type PreferenceSelectorProps = {
-  title: string
-  children: ReactNode
-}
 
 export function PreferenceSelector({
   title,

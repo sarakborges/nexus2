@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react'
 import { SUPPORTED_LANGUAGES } from '@/Constants/languages'
 import type { Language } from '@/Constants/languages'
 import type { Theme } from '@/Constants/themes'
+import type { UseSystemPreferencesResult } from './useSystemPreferences.types'
 
 const COLOR_SCHEME_QUERY = '(prefers-color-scheme: dark)'
 const DEFAULT_LANGUAGE: Language = SUPPORTED_LANGUAGES[0]
@@ -60,13 +61,18 @@ function subscribe(onStoreChange: () => void): () => void {
 
 const getServerSnapshot = (): string => 'pt-BR|light'
 
-export function useSystemPreferences() {
+export function useSystemPreferences(): UseSystemPreferencesResult {
   const snapshot = useSyncExternalStore(
     subscribe,
     getSnapshot,
     getServerSnapshot
   )
-  const [language, theme] = snapshot.split('|') as [Language, Theme]
+  const [languageSnapshot, themeSnapshot] = snapshot.split('|')
+  const language =
+    SUPPORTED_LANGUAGES.find(
+      (supportedLanguage) => supportedLanguage === languageSnapshot
+    ) ?? DEFAULT_LANGUAGE
+  const theme: Theme = themeSnapshot === 'dark' ? 'dark' : 'light'
 
   return { language, theme }
 }

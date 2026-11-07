@@ -1,22 +1,10 @@
-import type { Profile } from '@nexus/common'
+import type { ProfileSidebarProps } from './ProfileSidebar.types'
 
 import { Link } from 'react-router'
 
 import { IdentityAvatar, RelationshipActions } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-
-type ProfileSidebarProps = {
-  profile: Profile
-  active:
-    | 'home'
-    | 'profile'
-    | 'friends'
-    | 'communities'
-    | 'messages'
-    | 'community-list'
-  showRelationshipActions?: boolean
-}
 
 export function ProfileSidebar({
   profile,

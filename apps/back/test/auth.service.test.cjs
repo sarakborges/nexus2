@@ -2,14 +2,33 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { AuthService } = require('../dist/api/auth/auth.service.js')
 
-function createAuthHarness() {
+function createAuthHarness({ failTransaction = false } = {}) {
   const collections = new Map([
     ['accounts', []],
     ['refresh_tokens', []]
   ])
   const repository = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async write(name, records) { collections.set(name, structuredClone(records)) }
+    async update(name, updater) {
+      const next = updater(structuredClone(collections.get(name) ?? []))
+      collections.set(name, structuredClone(next))
+      return structuredClone(next)
+    },
+    async transaction(names, updater) {
+      const current = Object.fromEntries(names.map(name => [
+        name,
+        structuredClone(collections.get(name) ?? [])
+      ]))
+      const outcome = updater(current)
+      if (failTransaction) throw new Error('TRANSACTION_FAILED')
+      for (const name of names) {
+        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      }
+      for (const name of names) {
+        collections.set(name, structuredClone(outcome.records[name]))
+      }
+      return structuredClone(outcome.result)
+    }
   }
   const signedTokens = new Map()
   let tokenCounter = 0
@@ -108,3 +127,46 @@ test('remove-profile rolls back ownership and restores the previous active profi
   assert.deepEqual(updated.profiles, ['profile-first'])
   assert.equal(updated.currentProfile, 'profile-first')
 })
+
+
+test('concurrent refresh requests rotate a refresh token only once', async () => {
+  const { service, collections } = createAuthHarness()
+  const initial = await service.signUp({ email: 'race@example.com', password: 'a-secure-password' })
+
+  const results = await Promise.allSettled([
+    service.refresh(initial.refreshToken),
+    service.refresh(initial.refreshToken)
+  ])
+
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
+  assert.equal(results.filter(result => result.status === 'rejected').length, 1)
+  const rejection = results.find(result => result.status === 'rejected')
+  assert.equal(rejection.reason.getStatus(), 401)
+  assert.equal(rejection.reason.message, 'REFRESH_TOKEN_REVOKED')
+  assert.equal(collections.get('refresh_tokens').length, 1)
+})
+
+test('concurrent sign-ups cannot create duplicate normalized emails', async () => {
+  const { service, collections } = createAuthHarness()
+  const results = await Promise.allSettled([
+    service.signUp({ email: 'same@example.com', password: 'a-secure-password' }),
+    service.signUp({ email: ' SAME@example.com ', password: 'another-secure-password' })
+  ])
+
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
+  assert.equal(results.filter(result => result.status === 'rejected').length, 1)
+  assert.equal(collections.get('accounts').length, 1)
+})
+
+test('sign-up does not persist an account when initial refresh-token persistence fails', async () => {
+  const { service, collections } = createAuthHarness({ failTransaction: true })
+
+  await assert.rejects(
+    service.signUp({ email: 'atomic@example.com', password: 'a-secure-password' }),
+    /TRANSACTION_FAILED/
+  )
+
+  assert.deepEqual(collections.get('accounts'), [])
+  assert.deepEqual(collections.get('refresh_tokens'), [])
+})
+
