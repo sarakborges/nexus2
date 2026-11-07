@@ -1,5 +1,3 @@
-import { Link } from 'react-router'
-
 import {
   FiHome,
   FiMessageCircle,
@@ -8,6 +6,7 @@ import {
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { FloatingNavigationLink } from './FloatingNavigationLink.component'
 import type { FloatingNavigationLinksProps } from './FloatingNavigationLinks.types'
 
 export function FloatingNavigationLinks({
@@ -29,49 +28,43 @@ export function FloatingNavigationLinks({
       >
         {hasCurrentProfile && (
           <>
-            <Link
+            <FloatingNavigationLink
               className="floating-navigation__desktop-link"
               to={ROUTES.home}
-              aria-current={pathname === ROUTES.home ? 'page' : undefined}
-              onClick={onNavigate}
-            >
-              <FiHome aria-hidden="true" />
-              <span>{t('HOME_TITLE')}</span>
-            </Link>
+              icon={<FiHome aria-hidden="true" />}
+              label={t('HOME_TITLE')}
+              isActive={pathname === ROUTES.home}
+              onNavigate={onNavigate}
+            />
             {profileRoute && (
-              <Link
+              <FloatingNavigationLink
                 className="floating-navigation__desktop-link"
                 to={profileRoute}
-                aria-current={pathname === profileRoute ? 'page' : undefined}
-                onClick={onNavigate}
-              >
-                <FiUsers aria-hidden="true" />
-                <span>{t('NAVIGATION_PROFILE')}</span>
-              </Link>
+                icon={<FiUsers aria-hidden="true" />}
+                label={t('NAVIGATION_PROFILE')}
+                isActive={pathname === profileRoute}
+                onNavigate={onNavigate}
+              />
             )}
             {messagesRoute && (
-              <Link
+              <FloatingNavigationLink
                 className="floating-navigation__desktop-link"
                 to={messagesRoute}
-                aria-current={pathname === messagesRoute ? 'page' : undefined}
-                onClick={onNavigate}
-              >
-                <FiMessageCircle aria-hidden="true" />
-                <span>{t('NAVIGATION_MESSAGES')}</span>
-              </Link>
+                icon={<FiMessageCircle aria-hidden="true" />}
+                label={t('NAVIGATION_MESSAGES')}
+                isActive={pathname === messagesRoute}
+                onNavigate={onNavigate}
+              />
             )}
             {communitiesRoute && (
-              <Link
+              <FloatingNavigationLink
                 className="floating-navigation__desktop-link"
                 to={communitiesRoute}
-                aria-current={
-                  pathname === communitiesRoute ? 'page' : undefined
-                }
-                onClick={onNavigate}
-              >
-                <FiUsers aria-hidden="true" />
-                <span>{t('COMMUNITIES_TITLE')}</span>
-              </Link>
+                icon={<FiUsers aria-hidden="true" />}
+                label={t('COMMUNITIES_TITLE')}
+                isActive={pathname === communitiesRoute}
+                onNavigate={onNavigate}
+              />
             )}
           </>
         )}
@@ -85,42 +78,38 @@ export function FloatingNavigationLinks({
       id="floating-navigation-menu"
       aria-label={t('NAVIGATION_LABEL')}
     >
-      <Link
+      <FloatingNavigationLink
         className="floating-navigation__menu-item"
         to={ROUTES.home}
-        onClick={onNavigate}
-      >
-        <FiHome aria-hidden="true" />
-        <span>{t('HOME_TITLE')}</span>
-      </Link>
+        icon={<FiHome aria-hidden="true" />}
+        label={t('HOME_TITLE')}
+        onNavigate={onNavigate}
+      />
       {profileRoute && (
-        <Link
+        <FloatingNavigationLink
           className="floating-navigation__menu-item"
           to={profileRoute}
-          onClick={onNavigate}
-        >
-          <FiUsers aria-hidden="true" />
-          <span>{t('NAVIGATION_PROFILE')}</span>
-        </Link>
+          icon={<FiUsers aria-hidden="true" />}
+          label={t('NAVIGATION_PROFILE')}
+          onNavigate={onNavigate}
+        />
       )}
       {messagesRoute && (
-        <Link
+        <FloatingNavigationLink
           className="floating-navigation__menu-item"
           to={messagesRoute}
-          onClick={onNavigate}
-        >
-          <FiMessageCircle aria-hidden="true" />
-          <span>{t('NAVIGATION_MESSAGES')}</span>
-        </Link>
+          icon={<FiMessageCircle aria-hidden="true" />}
+          label={t('NAVIGATION_MESSAGES')}
+          onNavigate={onNavigate}
+        />
       )}
-      <Link
+      <FloatingNavigationLink
         className="floating-navigation__menu-item"
         to={ROUTES.communities}
-        onClick={onNavigate}
-      >
-        <FiUsers aria-hidden="true" />
-        <span>{t('COMMUNITIES_TITLE')}</span>
-      </Link>
+        icon={<FiUsers aria-hidden="true" />}
+        label={t('COMMUNITIES_TITLE')}
+        onNavigate={onNavigate}
+      />
     </nav>
   )
 }
