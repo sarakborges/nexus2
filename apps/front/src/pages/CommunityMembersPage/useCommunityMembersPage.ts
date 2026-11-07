@@ -7,11 +7,11 @@ import { useParams } from 'react-router'
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { useCommunityAccess } from '@/Hooks/Community'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityByUrl } from '@/Services/Community'
 import {
   getCommunityMembers,
-  getCommunityRelationships,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -40,24 +40,18 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     community?.type ?? 'social'
   )
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
-    enabled: Boolean(community?.id)
+  const {
+    relationshipsQuery,
+    relationships,
+    managementRelationship,
+    managementProfileId: actorProfileId,
+    currentRole,
+    isStaff
+  } = useCommunityAccess({
+    communityId: community?.id ?? null,
+    viewerUserId: session?.user.id ?? null,
+    profileIds
   })
-  const relationships: CommunityRelationship[] = relationshipsQuery.data ?? []
-  const managementRelationship =
-    relationships.find(
-      (record) =>
-        (record.type === 'owner' || record.type === 'moderator') &&
-        profileIds.includes(record.profiles[0])
-    ) ?? null
-  const actorProfileId = managementRelationship?.profiles[0] ?? null
-  const currentRole = managementRelationship?.type ?? null
-  const isStaff = Boolean(actorProfileId)
   const visibleTab: MemberTab = isStaff ? activeTab : 'all'
   const membersQuery = useQuery({
     queryKey: queryKeys.communityMembers(

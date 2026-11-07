@@ -1,3 +1,4 @@
+export { useCommunityAccess } from './useCommunityAccess.hook'
 export { useCreateCommunityMutation } from './useCreateCommunityMutation.hook'
 export { useUpdateCommunityMutation } from './useUpdateCommunityMutation.hook'
 

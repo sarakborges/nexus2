@@ -1,17 +1,15 @@
-import type { CommunityRelationship } from '@nexus/common'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
-import { useUpdateCommunityMutation } from '@/Hooks/Community'
+import { useCommunityAccess, useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getCommunityByUrl } from '@/Services/Community'
-import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -36,19 +34,12 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     community?.type ?? 'social'
   )
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
+  const { relationshipsQuery, ownerProfileId } = useCommunityAccess({
+    communityId: community?.id ?? null,
+    viewerUserId: session?.user.id ?? null,
+    profileIds: session?.user.profiles ?? [],
     enabled: Boolean(community?.id && session?.user.id)
   })
-  const ownerRelationship =
-    relationshipsQuery.data?.find(
-      (record: CommunityRelationship) => record.type === 'owner'
-    ) ?? null
-  const ownerProfileId = ownerRelationship?.profiles[0] ?? null
   const initialForm = useMemo(
     () =>
       community

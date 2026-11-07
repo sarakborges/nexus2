@@ -4,12 +4,12 @@ import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+import { useCommunityAccess } from '@/Hooks/Community'
 import { ROUTES } from '@/Constants/routes'
 import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import {
   getCommunityMembers,
-  getCommunityRelationships,
   getPendingCommunityMembers
 } from '@/Services/CommunityRelationship'
 import { getProfilesByIds } from '@/Services/Profile'
@@ -36,31 +36,22 @@ export function useCommunityPage(): UseCommunityPageResult {
   const canInteract =
     !session ||
     (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
-  const relationshipsQuery = useQuery({
-    queryKey: queryKeys.communityRelationships(
-      community?.id ?? '',
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityRelationships(community!.id),
-    enabled: Boolean(community?.id)
+  const {
+    relationshipsQuery,
+    relationships,
+    isOwner,
+    managementRelationship
+  } = useCommunityAccess({
+    communityId: community?.id ?? null,
+    viewerUserId: session?.user.id ?? null,
+    profileIds: session?.user.profiles ?? []
   })
-  const privateMembership =
-    relationshipsQuery.data?.some((record) =>
-      ['owner', 'moderator', 'connection'].includes(record.type)
-    ) ?? false
+  const privateMembership = relationships.some((record) =>
+    ['owner', 'moderator', 'connection'].includes(record.type)
+  )
   const canViewMembers = community?.privacy !== 'private' || privateMembership
-  const canEditCommunity =
-    relationshipsQuery.data?.some(
-      (record) =>
-        record.type === 'owner' &&
-        (session?.user.profiles.includes(record.profiles[0]) ?? false)
-    ) ?? false
-  const pendingActor =
-    relationshipsQuery.data?.find(
-      (record) =>
-        (record.type === 'owner' || record.type === 'moderator') &&
-        (session?.user.profiles.includes(record.profiles[0]) ?? false)
-    ) ?? null
+  const canEditCommunity = isOwner
+  const pendingActor = managementRelationship
   const pendingRequestsQuery = useQuery({
     queryKey: queryKeys.pendingCommunityMembers(
       community?.id ?? '',
