@@ -3,6 +3,11 @@ export { useCreateCommunityMutation } from './useCreateCommunityMutation.hook'
 export { useUpdateCommunityMutation } from './useUpdateCommunityMutation.hook'
 
 export type {
+  UseCommunityAccessOptions,
+  UseCommunityAccessResult
+} from './useCommunityAccess.types'
+
+export type {
   CreateCommunityMutationVariables,
   UseCreateCommunityMutationResult
 } from './useCreateCommunityMutation.types'
