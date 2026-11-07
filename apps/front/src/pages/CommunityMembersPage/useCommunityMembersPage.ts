@@ -1,4 +1,3 @@
-import type { CommunityRelationship } from '@nexus/common'
 import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useState } from 'react'
@@ -43,7 +42,6 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const {
     relationshipsQuery,
     relationships,
-    managementRelationship,
     managementProfileId: actorProfileId,
     currentRole,
     isStaff

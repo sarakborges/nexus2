@@ -29,7 +29,10 @@ export function useCommunityAccess({
   const ownerRelationship =
     relationships.find((record) => record.type === 'owner') ?? null
   const ownerProfileId = ownerRelationship?.profiles[0] ?? null
-  const isOwner = Boolean(ownerProfileId && profileIds.includes(ownerProfileId))
+  const isOwner = relationships.some(
+    (record) =>
+      record.type === 'owner' && profileIds.includes(record.profiles[0])
+  )
   const managementRelationship =
     relationships.find(
       (record) =>
