@@ -8,7 +8,7 @@ import type { UseProfilesByIdsResult } from './useProfilesByIds.types'
 
 export function useProfilesByIds(profileIds: string[]): UseProfilesByIdsResult {
   const normalizedIds = useMemo(
-    () => [...new Set(profileIds)].sort(),
+    () => [...new Set(profileIds)],
     [profileIds]
   )
   const profilesQuery = useQuery({

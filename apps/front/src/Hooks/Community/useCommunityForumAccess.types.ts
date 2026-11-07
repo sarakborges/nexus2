@@ -13,9 +13,7 @@ export type UseCommunityForumAccessOptions = {
 export type UseCommunityForumAccessResult = {
   relationshipsQuery: UseQueryResult<CommunityRelationship[]>
   ownedProfilesQuery: UseQueryResult<Profile[]>
-  forumProfile: Profile | null
   forumProfileId: string | null
-  currentRole: CommunityRelationship['type'] | null
   isMember: boolean
   isStaff: boolean
   canPublish: boolean

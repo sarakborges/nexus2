@@ -76,9 +76,7 @@ export function useCommunityForumAccess({
   return {
     relationshipsQuery,
     ownedProfilesQuery,
-    forumProfile,
     forumProfileId,
-    currentRole,
     isMember,
     isStaff,
     canPublish: Boolean(forumProfile)
