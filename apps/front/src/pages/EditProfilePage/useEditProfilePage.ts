@@ -1,7 +1,7 @@
 import type { Profile } from '@nexus/common'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { ProfileForm } from './EditProfilePage.types'
@@ -36,9 +36,13 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-  const initialForm = profile
-    ? { name: profile.name, url: profile.url, about: profile.about }
-    : null
+  const initialForm = useMemo(
+    () =>
+      profile
+        ? { name: profile.name, url: profile.url, about: profile.about }
+        : null,
+    [profile]
+  )
   const { form, updateForm } = useEntityFormDraft(
     profile?.id ?? null,
     initialForm

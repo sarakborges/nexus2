@@ -1,7 +1,7 @@
 import type { CommunityRelationship } from '@nexus/common'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import type { CommunityForm } from './EditCommunityPage.types'
@@ -50,14 +50,18 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
       (record: CommunityRelationship) => record.type === 'owner'
     ) ?? null
   const ownerProfileId = ownerRelationship?.profiles[0] ?? null
-  const initialForm = community
-    ? {
-        name: community.name,
-        url: community.url,
-        about: community.about,
-        privacy: community.privacy ?? 'public'
-      }
-    : null
+  const initialForm = useMemo(
+    () =>
+      community
+        ? {
+            name: community.name,
+            url: community.url,
+            about: community.about,
+            privacy: community.privacy ?? 'public'
+          }
+        : null,
+    [community]
+  )
   const { form, updateForm } = useEntityFormDraft(
     community?.id ?? null,
     initialForm
