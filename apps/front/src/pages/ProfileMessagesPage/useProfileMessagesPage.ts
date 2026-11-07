@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
@@ -12,9 +12,9 @@ import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
+import { useCreateProfileMessageMutation } from '@/Hooks/ProfileMessage'
 import {
   ProfileMessageError,
-  createProfileMessage,
   getProfileMessages
 } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -25,7 +25,6 @@ import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.type
 export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
-  const queryClient = useQueryClient()
   const requestedUrl = normalizeEntityUrl(url)
   const session = useAuthStore((state) => state.session)
   const currentProfileId = session?.user.currentProfile ?? null
@@ -80,24 +79,27 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const canSendMessage = Boolean(
     profile && session && messageSenderProfileId && canInteract
   )
-  const sendMessageMutation = useMutation({
-    mutationFn: () =>
-      createProfileMessage(messageSenderProfileId!, profile!.id, content),
-    onSuccess: async () => {
-      setContent('')
-      if (page !== 1) setPage(1)
-      showToast(t('TOAST_MESSAGE_SENT'))
-      await queryClient.invalidateQueries({
-        queryKey: ['profile-messages', profile?.id]
-      })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
+  const sendMessageMutation = useCreateProfileMessageMutation()
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!hasRichTextContent(content) || !canSendMessage) return
-    await sendMessageMutation.mutateAsync()
+    if (!hasRichTextContent(content) || !canSendMessage || !profile || !messageSenderProfileId) return
+
+    await sendMessageMutation.mutateAsync(
+      {
+        fromProfileId: messageSenderProfileId,
+        toProfileId: profile.id,
+        content
+      },
+      {
+        onSuccess: () => {
+          setContent('')
+          if (page !== 1) setPage(1)
+          showToast(t('TOAST_MESSAGE_SENT'))
+        },
+        onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+      }
+    )
   }
 
 
