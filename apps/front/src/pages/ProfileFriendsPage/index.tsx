@@ -1,10 +1,9 @@
-import { Link } from 'react-router'
-
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import {
   ProfileSidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
+import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -69,36 +68,18 @@ export function ProfileFriendsPage() {
           emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
           onRetry={() => void friendsQuery.refetch()}
         >
-          <div className="account-card__profile-list account-card__profile-list--grid">
-            {friends.map((friend) => (
-              <article
-                className="account-card__profile-entry account-card__profile-entry--card"
-                key={friend.id}
-              >
-                <Link
-                  className="account-card__profile-entry-identity"
-                  to={`${ROUTES.profile}/${friend.url}`}
-                >
-                  <span className="account-card__profile-entry-avatar">
-                    {friend.picture ? (
-                      <img src={friend.picture} alt="" />
-                    ) : (
-                      <span aria-hidden="true">
-                        {friend.name.trim().charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </span>
-                  <span className="account-card__profile-entry-copy">
-                    <span className="account-card__link">{friend.name}</span>
-                    <span className="account-card__profile-entry-secondary">
-                      @{friend.url}
-                    </span>
-                  </span>
-                </Link>
-                {canInteract && <RelationshipActions targetId={friend.id} />}
-              </article>
-            ))}
-          </div>
+          <EntityDirectoryGrid
+            entries={friends.map((friend) => ({
+              id: friend.id,
+              name: friend.name,
+              picture: friend.picture,
+              href: `${ROUTES.profile}/${friend.url}`,
+              secondaryText: `@${friend.url}`,
+              actions: canInteract ? (
+                <RelationshipActions targetId={friend.id} />
+              ) : undefined
+            }))}
+          />
         </RequestState>
         <Pagination
           page={page}
