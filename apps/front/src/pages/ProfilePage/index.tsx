@@ -1,6 +1,5 @@
-import { Link } from 'react-router'
-
-import { IdentityAvatar, RequestState } from '@/Components'
+import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
+import { RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
@@ -24,7 +23,7 @@ export function ProfilePage() {
     friends,
     communities,
     isOwner,
-    openEditProfile,
+    openEditProfile
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
@@ -95,91 +94,42 @@ export function ProfilePage() {
         </section>
 
         <aside className="social-page__right-column">
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('PROFILE_FRIENDS_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({friendsQuery.data?.totalItems ?? '—'})
-                </span>
-              </h2>
-              <Link
-                className="social-preview-panel__all"
-                to={ROUTES.profile + '/' + profile.url + '/friends'}
-              >
-                {t('PROFILE_FRIENDS_LINK')}
-              </Link>
-            </header>
-            <RequestState
-              isLoading={friendsQuery.isLoading}
-              isFetching={friendsQuery.isFetching}
-              isError={friendsQuery.isError}
-              isEmpty={friendsQuery.isSuccess && friends.length === 0}
-              emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-              onRetry={() => void friendsQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {friends.map((friend) => (
-                  <Link
-                    className="social-preview-link"
-                    key={friend.id}
-                    to={ROUTES.profile + '/' + friend.url}
-                    aria-label={friend.name}
-                    title={friend.name}
-                  >
-                    <IdentityAvatar
-                      className="social-preview-avatar"
-                      name={friend.name}
-                      picture={friend.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
-
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('PROFILE_COMMUNITIES_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({communitiesQuery.data?.totalItems ?? '—'})
-                </span>
-              </h2>
-              <Link
-                className="social-preview-panel__all"
-                to={ROUTES.profile + '/' + profile.url + '/communities'}
-              >
-                {t('PROFILE_COMMUNITIES_LINK')}
-              </Link>
-            </header>
-            <RequestState
-              isLoading={communitiesQuery.isLoading}
-              isFetching={communitiesQuery.isFetching}
-              isError={communitiesQuery.isError}
-              isEmpty={communitiesQuery.isSuccess && communities.length === 0}
-              emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-              onRetry={() => void communitiesQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {communities.map((community) => (
-                  <Link
-                    className="social-preview-link"
-                    key={community.id}
-                    to={ROUTES.community + '/' + community.url}
-                    aria-label={community.name}
-                    title={community.name}
-                  >
-                    <IdentityAvatar
-                      className="social-preview-avatar"
-                      name={community.name}
-                      picture={community.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
+          <ProfilePageEntityPreview
+            title={t('PROFILE_FRIENDS_TITLE')}
+            totalItems={friendsQuery.data?.totalItems}
+            allHref={`${ROUTES.profile}/${profile.url}/friends`}
+            allLabel={t('PROFILE_FRIENDS_LINK')}
+            isLoading={friendsQuery.isLoading}
+            isFetching={friendsQuery.isFetching}
+            isError={friendsQuery.isError}
+            isSuccess={friendsQuery.isSuccess}
+            emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
+            onRetry={() => void friendsQuery.refetch()}
+            entries={friends.map((friend) => ({
+              id: friend.id,
+              name: friend.name,
+              picture: friend.picture,
+              href: `${ROUTES.profile}/${friend.url}`
+            }))}
+          />
+          <ProfilePageEntityPreview
+            title={t('PROFILE_COMMUNITIES_TITLE')}
+            totalItems={communitiesQuery.data?.totalItems}
+            allHref={`${ROUTES.profile}/${profile.url}/communities`}
+            allLabel={t('PROFILE_COMMUNITIES_LINK')}
+            isLoading={communitiesQuery.isLoading}
+            isFetching={communitiesQuery.isFetching}
+            isError={communitiesQuery.isError}
+            isSuccess={communitiesQuery.isSuccess}
+            emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
+            onRetry={() => void communitiesQuery.refetch()}
+            entries={communities.map((community) => ({
+              id: community.id,
+              name: community.name,
+              picture: community.picture,
+              href: `${ROUTES.community}/${community.url}`
+            }))}
+          />
         </aside>
       </div>
     </main>
