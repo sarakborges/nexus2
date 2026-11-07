@@ -4,22 +4,18 @@ import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useProfileByUrl } from '@/Hooks/Profile'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getProfileCommunities } from '@/Services/Community'
-import { getProfileByUrl } from '@/Services/Profile'
 import type { UseProfileCommunitiesPageResult } from './useProfileCommunitiesPage.types'
 import { queryKeys } from '@/Services/Query/queryKeys'
 
 export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(normalized),
-    queryFn: () => getProfileByUrl(normalized),
-    enabled: Boolean(normalized)
-  })
+  const profileQuery = useProfileByUrl({ url: normalized })
   const profile = profileQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -7,7 +8,6 @@ import { useNavigate, useParams } from 'react-router'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useCommunityAccess } from '@/Hooks/Community'
 import { ROUTES } from '@/Constants/routes'
-import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import {
   getCommunityMembers,
@@ -25,10 +25,9 @@ export function useCommunityPage(): UseCommunityPageResult {
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(requestedUrl, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
+  const communityQuery = useCommunityByUrl({
+    url: requestedUrl,
+    viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(

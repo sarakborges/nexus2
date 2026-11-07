@@ -1,6 +1,7 @@
 import type { Profile } from '@nexus/common'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useProfileByUrl } from '@/Hooks/Profile'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -12,7 +13,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
-import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -27,11 +27,7 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(requestedUrl),
-    queryFn: () => getProfileByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
+  const profileQuery = useProfileByUrl({ url: requestedUrl })
   const profile = profileQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'

@@ -4,13 +4,13 @@ import { type FormEvent, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useProfileByUrl } from '@/Hooks/Profile'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getProfileByUrl } from '@/Services/Profile'
 import { useProfilesByIds } from '@/Hooks/Profile'
 import {
   ProfileMessageError,
@@ -32,11 +32,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const showToast = useToastStore((state) => state.showToast)
   const { page, pageSize, setPage } = useUrlPagination()
   const [content, setContent] = useState('')
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(requestedUrl),
-    queryFn: () => getProfileByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
+  const profileQuery = useProfileByUrl({ url: requestedUrl })
   const profile = profileQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'

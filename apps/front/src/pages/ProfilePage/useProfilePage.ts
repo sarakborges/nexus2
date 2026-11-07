@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useProfileByUrl } from '@/Hooks/Profile'
 
 import { useNavigate, useParams } from 'react-router'
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { getProfileCommunities } from '@/Services/Community'
-import { getProfileByUrl } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getProfileFriends } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -17,11 +17,7 @@ export function useProfilePage(): UseProfilePageResult {
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const requestedUrl = normalizeEntityUrl(url)
-  const profileQuery = useQuery({
-    queryKey: queryKeys.profiles.byUrl(requestedUrl),
-    queryFn: () => getProfileByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
+  const profileQuery = useProfileByUrl({ url: requestedUrl })
   const profile = profileQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'

@@ -1,5 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -10,7 +11,6 @@ import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { getCommunityByUrl } from '@/Services/Community'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -26,11 +26,7 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(requestedUrl),
-    queryFn: () => getCommunityByUrl(requestedUrl),
-    enabled: Boolean(requestedUrl)
-  })
+  const communityQuery = useCommunityByUrl({ url: requestedUrl })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
     community?.type ?? 'social'

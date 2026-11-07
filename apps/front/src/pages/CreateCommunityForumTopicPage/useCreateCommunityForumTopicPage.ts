@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -8,7 +9,6 @@ import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richTe
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { getCommunityByUrl } from '@/Services/Community'
 import { createCommunityForumTopic } from '@/Services/CommunityForum'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { getProfilesByIds } from '@/Services/Profile'
@@ -31,10 +31,9 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(normalized),
-    enabled: Boolean(normalized)
+  const communityQuery = useCommunityByUrl({
+    url: normalized,
+    viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
   const relationshipsQuery = useQuery({

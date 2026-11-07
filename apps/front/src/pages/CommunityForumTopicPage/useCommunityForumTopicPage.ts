@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -8,7 +9,6 @@ import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityByUrl } from '@/Services/Community'
 import {
   createCommunityForumReply,
   deleteCommunityForumReply,
@@ -42,10 +42,9 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { page, pageSize, setPage } = useUrlPagination()
   const [replyContent, setReplyContent] = useState('')
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(normalized),
-    enabled: Boolean(normalized)
+  const communityQuery = useCommunityByUrl({
+    url: normalized,
+    viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
   const {

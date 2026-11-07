@@ -20,3 +20,5 @@ export type {
   UseCommunityForumAccessOptions,
   UseCommunityForumAccessResult
 } from './useCommunityForumAccess.types'
+export { useCommunityByUrl } from './useCommunityByUrl.hook'
+export type { UseCommunityByUrlOptions } from './useCommunityByUrl.types'

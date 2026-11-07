@@ -4,13 +4,13 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useCommunityAccess } from '@/Hooks/Community'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityByUrl } from '@/Services/Community'
 import {
   getCommunityMembers,
   getPendingCommunityMembers
@@ -32,10 +32,9 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
     setPage: setPendingPage
   } = useUrlPagination('pendingPage')
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(normalized),
-    enabled: Boolean(normalized)
+  const communityQuery = useCommunityByUrl({
+    url: normalized,
+    viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(

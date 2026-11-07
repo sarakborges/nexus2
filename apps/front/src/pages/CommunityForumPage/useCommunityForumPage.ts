@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useCommunityByUrl } from '@/Hooks/Community'
 
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -7,7 +8,6 @@ import { useNavigate, useParams } from 'react-router'
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityByUrl } from '@/Services/Community'
 import { getCommunityForumTopics } from '@/Services/CommunityForum'
 import { useCommunityForumAccess } from '@/Hooks/Community'
 import { useProfilesByIds } from '@/Hooks/Profile'
@@ -24,10 +24,9 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
   const normalized = normalizeEntityUrl(url)
   const { page, pageSize, setPage } = useUrlPagination()
 
-  const communityQuery = useQuery({
-    queryKey: queryKeys.communities.byUrl(normalized, session?.user.id ?? null),
-    queryFn: () => getCommunityByUrl(normalized),
-    enabled: Boolean(normalized)
+  const communityQuery = useCommunityByUrl({
+    url: normalized,
+    viewerUserId: session?.user.id ?? null
   })
   const community = communityQuery.data
   const typeCompatibility = useProfileTypeCompatibility(
