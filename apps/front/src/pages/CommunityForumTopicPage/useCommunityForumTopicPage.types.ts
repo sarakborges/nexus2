@@ -16,11 +16,6 @@ import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { getCommunityByUrl } from '@/Services/Community'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
-export type CommunityForumTopicModerationChanges = {
-  isPinned?: boolean
-  isLocked?: boolean
-}
-
 export type CommunityForumReplyViewModel = {
   reply: CommunityForumReply
   author: Profile | undefined

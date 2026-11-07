@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -9,14 +9,14 @@ import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import {
-  createCommunityForumReply,
-  deleteCommunityForumReply,
-  deleteCommunityForumTopic,
-  getCommunityForumTopic,
-  moderateCommunityForumTopic
-} from '@/Services/CommunityForum'
+import { getCommunityForumTopic } from '@/Services/CommunityForum'
 import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
+import {
+  useCreateCommunityForumReplyMutation,
+  useDeleteCommunityForumReplyMutation,
+  useDeleteCommunityForumTopicMutation,
+  useModerateCommunityForumTopicMutation
+} from '@/Hooks/CommunityForum'
 import { useProfilesByIds } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -32,7 +32,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
   const { t } = useTranslations()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const profileIds = session?.user.profiles ?? []
@@ -113,71 +112,68 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     [detail?.replies.items, authorsById, canInteract, forumProfileId, isStaff]
   )
 
-  const replyMutation = useMutation({
-    mutationFn: () =>
-      createCommunityForumReply(
-        community!.id,
-        topicId!,
-        forumProfileId!,
-        replyContent
-      ),
-    onSuccess: async () => {
-      setReplyContent('')
-      showToast(t('TOAST_FORUM_REPLY_CREATED'))
-      await queryClient.invalidateQueries({
-        queryKey: ['community-forum', community?.id]
-      })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
-  const moderationMutation = useMutation({
-    mutationFn: (changes: CommunityForumTopicModerationChanges) =>
-      moderateCommunityForumTopic(
-        community!.id,
-        topicId!,
-        forumProfileId!,
-        changes
-      ),
-    onSuccess: async () => {
-      showToast(t('TOAST_FORUM_TOPIC_UPDATED'))
-      await queryClient.invalidateQueries({
-        queryKey: ['community-forum', community?.id]
-      })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
-  const deleteTopicMutation = useMutation({
-    mutationFn: () =>
-      deleteCommunityForumTopic(community!.id, topicId!, forumProfileId!),
-    onSuccess: async () => {
-      showToast(t('TOAST_FORUM_CONTENT_DELETED'))
-      await queryClient.invalidateQueries({
-        queryKey: ['community-forum', community?.id]
-      })
-      navigate(`${ROUTES.community}/${community!.url}/forum`, { replace: true })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
-  const deleteReplyMutation = useMutation({
-    mutationFn: (replyId: string) =>
-      deleteCommunityForumReply(community!.id, replyId, forumProfileId!),
-    onSuccess: async () => {
-      showToast(t('TOAST_FORUM_CONTENT_DELETED'))
-      await queryClient.invalidateQueries({
-        queryKey: ['community-forum', community?.id]
-      })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
+  const replyMutation = useCreateCommunityForumReplyMutation()
+  const moderationMutation = useModerateCommunityForumTopicMutation()
+  const deleteTopicMutation = useDeleteCommunityForumTopicMutation()
+  const deleteReplyMutation = useDeleteCommunityForumReplyMutation()
 
   const togglePinned = () => {
-    if (topic) moderationMutation.mutate({ isPinned: !topic.isPinned })
+    if (!topic || !community || !forumProfileId) return
+    moderationMutation.mutate(
+      {
+        communityId: community.id,
+        topicId: topic.id,
+        profileId: forumProfileId,
+        changes: { isPinned: !topic.isPinned }
+      },
+      {
+        onSuccess: () => showToast(t('TOAST_FORUM_TOPIC_UPDATED')),
+        onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+      }
+    )
   }
   const toggleLocked = () => {
-    if (topic) moderationMutation.mutate({ isLocked: !topic.isLocked })
+    if (!topic || !community || !forumProfileId) return
+    moderationMutation.mutate(
+      {
+        communityId: community.id,
+        topicId: topic.id,
+        profileId: forumProfileId,
+        changes: { isLocked: !topic.isLocked }
+      },
+      {
+        onSuccess: () => showToast(t('TOAST_FORUM_TOPIC_UPDATED')),
+        onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+      }
+    )
   }
-  const deleteTopic = () => deleteTopicMutation.mutate()
-  const deleteReply = (replyId: string) => deleteReplyMutation.mutate(replyId)
+  const deleteTopic = () => {
+    if (!community || !topic || !forumProfileId) return
+    deleteTopicMutation.mutate(
+      {
+        communityId: community.id,
+        topicId: topic.id,
+        profileId: forumProfileId
+      },
+      {
+        onSuccess: () => {
+          showToast(t('TOAST_FORUM_CONTENT_DELETED'))
+          navigate(`${ROUTES.community}/${community.url}/forum`, { replace: true })
+        },
+        onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+      }
+    )
+  }
+  const deleteReply = (replyId: string) => {
+    if (!community || !forumProfileId) return
+    deleteReplyMutation.mutate(
+      { communityId: community.id, replyId, profileId: forumProfileId },
+      {
+        onSuccess: () => showToast(t('TOAST_FORUM_CONTENT_DELETED')),
+        onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
+      }
+    )
+  }
 
   const submitReply = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -188,7 +184,19 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
       topic?.isLocked
     )
       return
-    await replyMutation.mutateAsync()
+    if (!community || !topic || !forumProfileId) return
+    try {
+      await replyMutation.mutateAsync({
+        communityId: community.id,
+        topicId: topic.id,
+        profileId: forumProfileId,
+        content: replyContent
+      })
+      setReplyContent('')
+      showToast(t('TOAST_FORUM_REPLY_CREATED'))
+    } catch {
+      showToast(t('TOAST_ACTION_FAILED'), 'error')
+    }
   }
 
   return {

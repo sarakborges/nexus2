@@ -1,0 +1,19 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+import { deleteCommunityForumReply } from '@/Services/CommunityForum'
+import { invalidateCommunityForumQueries } from './communityForumQuery.utils'
+import type {
+  DeleteCommunityForumReplyMutationVariables,
+  DeleteCommunityForumReplyMutationResult
+} from './useDeleteCommunityForumReplyMutation.types'
+
+export function useDeleteCommunityForumReplyMutation(): DeleteCommunityForumReplyMutationResult {
+  const queryClient = useQueryClient()
+
+  return useMutation<void, unknown, DeleteCommunityForumReplyMutationVariables>({
+    mutationFn: ({ communityId, replyId, profileId }) => deleteCommunityForumReply(communityId, replyId, profileId),
+    onSuccess: async (_result, variables) => {
+      await invalidateCommunityForumQueries(queryClient, variables.communityId)
+    }
+  })
+}

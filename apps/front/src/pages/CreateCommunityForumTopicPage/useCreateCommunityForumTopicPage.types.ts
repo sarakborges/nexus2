@@ -6,6 +6,7 @@ import type {
   Profile
 } from '@nexus/common'
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query'
+import type { CreateCommunityForumTopicMutationVariables } from '@/Hooks/CommunityForum'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
@@ -23,7 +24,7 @@ export type UseCreateCommunityForumTopicPageResult = {
   content: string
   setContent: Dispatch<SetStateAction<string>>
   createMutation: Pick<
-    UseMutationResult<CommunityForumTopic, Error, void, unknown>,
+    UseMutationResult<CommunityForumTopic, unknown, CreateCommunityForumTopicMutationVariables, unknown>,
     'isPending' | 'isError'
   >
   submit: (event: FormEvent<HTMLFormElement>) => Promise<void>

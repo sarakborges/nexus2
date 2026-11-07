@@ -1,16 +1,16 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
+import { useCreateCommunityForumTopicMutation } from '@/Hooks/CommunityForum'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { createCommunityForumTopic } from '@/Services/CommunityForum'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateCommunityForumTopicPageResult } from './useCreateCommunityForumTopicPage.types'
@@ -19,7 +19,6 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const profileIds = session?.user.profiles ?? []
@@ -47,29 +46,25 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
     relationshipsEnabled: Boolean(session?.user.id)
   })
 
-  const createMutation = useMutation({
-    mutationFn: () =>
-      createCommunityForumTopic(
-        community!.id,
-        forumProfile!.id,
-        title,
-        content
-      ),
-    onSuccess: async (topic) => {
-      showToast(t('TOAST_FORUM_TOPIC_CREATED'))
-      await queryClient.invalidateQueries({
-        queryKey: ['community-forum', community?.id]
-      })
-      navigate(ROUTES.community + '/' + community!.url + '/forum/' + topic.id, {
-        replace: true
-      })
-    },
-    onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
-  })
+  const createMutation = useCreateCommunityForumTopicMutation()
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!title.trim() || !hasRichTextContent(content) || !forumProfile) return
-    await createMutation.mutateAsync()
+    if (!title.trim() || !hasRichTextContent(content) || !community || !forumProfile) return
+
+    try {
+      const topic = await createMutation.mutateAsync({
+        communityId: community.id,
+        profileId: forumProfile.id,
+        title,
+        content
+      })
+      showToast(t('TOAST_FORUM_TOPIC_CREATED'))
+      navigate(ROUTES.community + '/' + community.url + '/forum/' + topic.id, {
+        replace: true
+      })
+    } catch {
+      showToast(t('TOAST_ACTION_FAILED'), 'error')
+    }
   }
 
 
