@@ -1,4 +1,4 @@
-import type { RelationshipType } from '@nexus/common'
+import type { Relationship, RelationshipType } from '@nexus/common'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 export type RelationshipMutationAction =
@@ -12,7 +12,7 @@ export type RelationshipMutationVariables = {
 }
 
 export type UseRelationshipMutationResult = UseMutationResult<
-  void | import('@nexus/common').Relationship,
+  Relationship | void,
   unknown,
   RelationshipMutationVariables
 >

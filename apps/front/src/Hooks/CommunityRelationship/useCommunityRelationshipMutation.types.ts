@@ -1,4 +1,7 @@
-import type { CommunityRelationship, CommunityRelationshipType } from '@nexus/common'
+import type {
+  CommunityRelationship,
+  CommunityRelationshipType
+} from '@nexus/common'
 import type { UseMutationResult } from '@tanstack/react-query'
 
 export type CommunityRelationshipOperation =

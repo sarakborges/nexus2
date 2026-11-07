@@ -26,7 +26,7 @@ export function useCommunityMemberActions({
     setLastOperation(operation)
     mutation.mutate(
       {
-        memberProfileId,
+        profileId: memberProfileId,
         communityId,
         actorProfileId,
         operation
@@ -46,7 +46,7 @@ export function useCommunityMemberActions({
     pending: mutation.isPending,
     hasError: mutation.isError,
     retryLastOperation: lastOperation
-      ? () => mutation.mutate(lastOperation)
+      ? () => run(lastOperation)
       : undefined,
     run,
     confirmOwnershipTransfer: () => setConfirmTransfer(true),

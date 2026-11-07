@@ -3,17 +3,17 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import type {
+  RelationshipAction,
   RelationshipActionsController,
   UseRelationshipActionsOptions
 } from './useRelationshipActions.types'
-import { useRelationshipMutation } from '@/Hooks/Relationship'
 import { useCommunityRelationshipMutation } from '@/Hooks/CommunityRelationship'
+import { useRelationshipMutation } from '@/Hooks/Relationship'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getRelationships } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
-import type { RelationshipAction } from './useRelationshipActions.types'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useRelationshipActions({
@@ -164,8 +164,6 @@ export function useRelationshipActions({
     run,
     handleRequestOrAccept,
     refetch: () => void relationshipsQuery.refetch(),
-    retryLastAction: lastAction
-      ? () => run(lastAction)
-      : undefined
+    retryLastAction: lastAction ? () => run(lastAction) : undefined
   }
 }
