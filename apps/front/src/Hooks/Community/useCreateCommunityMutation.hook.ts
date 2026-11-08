@@ -22,6 +22,7 @@ export function useCreateCommunityMutation(): UseCreateCommunityMutationResult {
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['communities', 'list'] }),
+        queryClient.invalidateQueries({ queryKey: ['communities-page'] }),
         queryClient.invalidateQueries({
           queryKey: ['communities', 'by-profile', variables.ownerProfileId]
         }),

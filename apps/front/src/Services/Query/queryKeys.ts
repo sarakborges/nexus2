@@ -1,5 +1,11 @@
 export const queryKeys = {
   home: (userId: string) => ['home', userId] as const,
+  communitiesPage: (
+    userId: string,
+    currentProfileId: string | null,
+    page: number,
+    pageSize: number
+  ) => ['communities-page', userId, currentProfileId, page, pageSize] as const,
   profilePage: (url: string) => ['profile-page', url] as const,
   profileMessagesPage: (
     url: string,

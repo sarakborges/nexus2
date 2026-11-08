@@ -1,43 +1,48 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { useEffect } from 'react'
-
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunities } from '@/Services/Community'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { getCommunitiesPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseCommunitiesPageResult } from './useCommunitiesPage.types'
 
 export function useCommunitiesPage(): UseCommunitiesPageResult {
   const session = useAuthStore((state) => state.session)
-  const profileIds = session?.user.profiles ?? []
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
-  const { profilesQuery } = useProfilesByIds(profileIds)
-  const currentProfile =
-    profilesQuery.data?.find((profile) => profile.id === currentProfileId) ??
-    profilesQuery.data?.[0] ??
-    null
   const { page, pageSize, setPage } = useUrlPagination()
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.list(page, pageSize),
-    queryFn: () => getCommunities({ page, pageSize })
+
+  const communitiesPageQuery = useQuery({
+    queryKey: queryKeys.communitiesPage(
+      userId ?? '',
+      currentProfileId,
+      page,
+      pageSize
+    ),
+    queryFn: () => getCommunitiesPage({ page, pageSize }),
+    enabled: Boolean(isAuthInitialized && userId),
+    staleTime: 30 * 1000
   })
-  const communities = communitiesQuery.data?.items ?? []
-  const totalItems = communitiesQuery.data?.totalItems ?? 0
+  const pageData = communitiesPageQuery.data
+  const currentProfile = pageData?.currentProfile ?? null
+  const communities = pageData?.communities.items ?? []
+  const totalItems = pageData?.communities.totalItems ?? 0
 
   useEffect(() => {
-    if (communitiesQuery.data && communitiesQuery.data.page !== page)
-      setPage(communitiesQuery.data.page)
-  }, [communitiesQuery.data, page, setPage])
+    if (pageData?.communities && pageData.communities.page !== page) {
+      setPage(pageData.communities.page)
+    }
+  }, [pageData?.communities, page, setPage])
 
   return {
-    profilesQuery,
+    isAuthInitialized,
+    communitiesPageQuery,
     currentProfile,
     page,
     pageSize,
     setPage,
-    communitiesQuery,
     communities,
     totalItems
   }

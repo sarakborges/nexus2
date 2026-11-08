@@ -28,6 +28,7 @@ import { CommunityMembersPageService } from './community-members-page.service'
 import { CommunityMembersPageDto } from './community-members-page.dto'
 import { ProfileMessagesPageService } from './profile-messages-page.service'
 import { ProfileDirectoryPageService } from './profile-directory-page.service'
+import { CommunitiesPageService } from './communities-page.service'
 
 @Controller()
 export class DomainController {
@@ -40,7 +41,8 @@ export class DomainController {
     private readonly communityForumTopicPage: CommunityForumTopicPageService,
     private readonly communityMembersPage: CommunityMembersPageService,
     private readonly profileMessagesPage: ProfileMessagesPageService,
-    private readonly profileDirectoryPage: ProfileDirectoryPageService
+    private readonly profileDirectoryPage: ProfileDirectoryPageService,
+    private readonly communitiesPage: CommunitiesPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -95,6 +97,14 @@ export class DomainController {
     @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
     return this.communityForumPage.getCommunityForumPage(url, q, u?.id ?? null)
+  }
+
+  @Get('communities/page') @UseGuards(JwtAccessGuard)
+  getCommunitiesPage(
+    @CurrentUser() u: AuthenticatedUserContext,
+    @Query() q: PaginationDto
+  ) {
+    return this.communitiesPage.getCommunitiesPage(u.id, q)
   }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }

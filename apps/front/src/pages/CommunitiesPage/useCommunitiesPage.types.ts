@@ -1,14 +1,14 @@
-import type { Community, PaginatedResult, Profile } from '@nexus/common'
+import type { CommunitiesPageData } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
 export type UseCommunitiesPageResult = {
-  profilesQuery: UseQueryResult<Profile[]>
-  currentProfile: Profile | null
+  isAuthInitialized: boolean
+  communitiesPageQuery: UseQueryResult<CommunitiesPageData>
+  currentProfile: CommunitiesPageData['currentProfile']
   page: number
   pageSize: number
   setPage: ReturnType<typeof useUrlPagination>['setPage']
-  communitiesQuery: UseQueryResult<PaginatedResult<Community>>
-  communities: Community[]
+  communities: CommunitiesPageData['communities']['items']
   totalItems: number
 }
