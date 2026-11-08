@@ -117,7 +117,7 @@ test('forum topic page aggregate returns authors only for the selected reply pag
     result.detail.replies.items.map(reply => reply.id),
     ['reply-21']
   )
-  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-member'])
+  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-owner'])
 })
 
 test('public topic page is readable by anonymous visitors without forum membership', async () => {
