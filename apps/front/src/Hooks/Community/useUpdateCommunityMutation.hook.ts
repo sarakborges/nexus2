@@ -23,6 +23,7 @@ export function useUpdateCommunityMutation(): UseUpdateCommunityMutationResult {
         queryClient.invalidateQueries({ queryKey: ['communities'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-forum-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-page'] })
       ])
     }

@@ -18,7 +18,8 @@ export function useUpdateProfileMutation(): UseUpdateProfileMutationResult {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
-        queryClient.invalidateQueries({ queryKey: ['profile-page'] })
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-forum-page'] })
       ])
     }
   })

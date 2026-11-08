@@ -20,21 +20,18 @@ export function CommunityForumPage() {
     page,
     pageSize,
     setPage,
-    communityQuery,
+    forumPageQuery,
     community,
     typeCompatibility,
-    relationshipsQuery,
-    ownedProfilesQuery,
+    canReadForum,
     canPublish,
     openCreateTopic,
-    topicsQuery,
     topics,
-    authorsQuery,
     authorsById
   } = useCommunityForumPage()
 
   if (!normalized) return <NotFoundPage />
-  if (communityQuery.isLoading)
+  if (forumPageQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -42,14 +39,19 @@ export function CommunityForumPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
+  }
+  if (forumPageQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void forumPageQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!community) return <NotFoundPage />
 
   return (
@@ -74,50 +76,39 @@ export function CommunityForumPage() {
             </p>
           </div>
           {canPublish && (
-            <Button
-              type="button"
-              onClick={openCreateTopic}
-            >
+            <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
             </Button>
           )}
         </header>
 
-        <RequestState
-          isLoading={
-            relationshipsQuery.isLoading || ownedProfilesQuery.isLoading
-          }
-          isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
-          onRetry={() => {
-            void relationshipsQuery.refetch()
-            void ownedProfilesQuery.refetch()
-          }}
-        />
-        {!canPublish &&
-          session &&
-          relationshipsQuery.isSuccess &&
-          ownedProfilesQuery.isSuccess && (
-            <div className="community-forum__join">
-              <p className="account-card__description">
-                {t('FORUM_MEMBERS_ONLY')}
-              </p>
-              <RelationshipActions
-                targetId={community.id}
-                targetKind="community"
-              />
-            </div>
-          )}
+        <RequestState isFetching={forumPageQuery.isFetching} />
+        {!canPublish && session && (
+          <div className="community-forum__join">
+            <p className="account-card__description">
+              {t('FORUM_MEMBERS_ONLY')}
+            </p>
+            <RelationshipActions
+              targetId={community.id}
+              targetKind="community"
+            />
+          </div>
+        )}
 
         <RequestState
-          isLoading={topicsQuery.isLoading || authorsQuery.isLoading}
-          isFetching={topicsQuery.isFetching || authorsQuery.isFetching}
-          isError={topicsQuery.isError || authorsQuery.isError}
-          isEmpty={topicsQuery.isSuccess && topicsQuery.data.totalItems === 0}
-          emptyMessage={t('FORUM_EMPTY')}
-          onRetry={() => {
-            void topicsQuery.refetch()
-            void authorsQuery.refetch()
-          }}
+          isLoading={forumPageQuery.isLoading}
+          isFetching={forumPageQuery.isFetching}
+          isError={forumPageQuery.isError}
+          isEmpty={
+            forumPageQuery.isSuccess &&
+            (!canReadForum || forumPageQuery.data.topics.totalItems === 0)
+          }
+          emptyMessage={
+            !canReadForum
+              ? t('COMMUNITY_PRIVATE_RESTRICTED')
+              : t('FORUM_EMPTY')
+          }
+          onRetry={() => void forumPageQuery.refetch()}
         >
           <CommunityForumTopicList
             communityUrl={community.url}
@@ -128,7 +119,7 @@ export function CommunityForumPage() {
         <Pagination
           page={page}
           pageSize={pageSize}
-          totalItems={topicsQuery.data?.totalItems ?? 0}
+          totalItems={forumPageQuery.data.topics.totalItems}
           onPageChange={setPage}
         />
       </section>

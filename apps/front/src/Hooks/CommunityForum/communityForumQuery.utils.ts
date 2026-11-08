@@ -10,6 +10,9 @@ export async function invalidateCommunityForumQueries(
     }),
     queryClient.invalidateQueries({
       queryKey: ['community-page']
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['community-forum-page']
     })
   ])
 }

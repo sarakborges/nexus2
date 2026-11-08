@@ -18,7 +18,10 @@ export function useSetCurrentProfileMutation(): UseSetCurrentProfileMutationResu
         queryKeys.auth.session,
         useAuthStore.getState().session
       )
-      await queryClient.invalidateQueries({ queryKey: ['home'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-forum-page'] })
+      ])
     }
   })
 }

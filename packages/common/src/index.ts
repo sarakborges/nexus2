@@ -66,3 +66,12 @@ export type CommunityPageData = {
   forumTopics: PaginatedResult<CommunityForumTopicSummary>
   forumAuthors: Profile[]
 }
+
+
+export type CommunityForumPageData = {
+  community: Community | null
+  canReadForum: boolean
+  canPublish: boolean
+  topics: PaginatedResult<CommunityForumTopicSummary>
+  authors: Profile[]
+}

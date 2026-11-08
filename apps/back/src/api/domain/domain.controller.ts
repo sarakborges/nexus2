@@ -22,6 +22,7 @@ import { DomainService } from './domain.service'
 import { HomePageService } from './home-page.service'
 import { ProfilePageService } from './profile-page.service'
 import { CommunityPageService } from './community-page.service'
+import { CommunityForumPageService } from './community-forum-page.service'
 
 @Controller()
 export class DomainController {
@@ -29,7 +30,8 @@ export class DomainController {
     private readonly domain: DomainService,
     private readonly homePage: HomePageService,
     private readonly profilePage: ProfilePageService,
-    private readonly communityPage: CommunityPageService
+    private readonly communityPage: CommunityPageService,
+    private readonly communityForumPage: CommunityForumPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -57,6 +59,15 @@ export class DomainController {
     @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
     return this.communityPage.getCommunityPage(url, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/forum/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityForumPage(
+    @Param('url') url: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityForumPage.getCommunityForumPage(url, q, u?.id ?? null)
   }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }

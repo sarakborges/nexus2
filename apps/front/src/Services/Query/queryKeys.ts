@@ -3,6 +3,14 @@ export const queryKeys = {
   profilePage: (url: string) => ['profile-page', url] as const,
   communityPage: (url: string, viewerUserId: string | null) =>
     ['community-page', url, viewerUserId] as const,
+  communityForumPage: (
+    url: string,
+    page: number,
+    pageSize: number,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) =>
+    ['community-forum-page', url, page, pageSize, viewerUserId, currentProfileId] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },
