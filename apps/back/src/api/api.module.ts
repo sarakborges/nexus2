@@ -20,6 +20,7 @@ import { ProfileDirectoryPageService } from './domain/profile-directory-page.ser
 import { CommunitiesPageService } from './domain/communities-page.service'
 import { CommunityForumComposerPageService } from './domain/community-forum-composer-page.service'
 import { CommunityEditPageService } from './domain/community-edit-page.service'
+import { ProfileEditPageService } from './domain/profile-edit-page.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -33,6 +34,6 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, ProfileEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}

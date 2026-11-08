@@ -8,7 +8,6 @@ import { useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { getCommunityEditPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -24,20 +23,31 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const session = useAuthStore((state) => state.session)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
   const communityEditPageQuery = useQuery({
-    queryKey: queryKeys.communityEditPage(requestedUrl, viewerUserId),
+    queryKey: queryKeys.communityEditPage(
+      requestedUrl,
+      viewerUserId,
+      currentProfileId
+    ),
     queryFn: () => getCommunityEditPage(requestedUrl),
     enabled: Boolean(requestedUrl && isAuthInitialized),
     staleTime: 30 * 1000
   })
   const community = communityEditPageQuery.data?.community
   const ownerProfileId = communityEditPageQuery.data?.ownerProfileId ?? null
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
+  const currentProfileType =
+    communityEditPageQuery.data?.currentProfileType ?? null
+  const typeCompatibility = {
+    isChecking: Boolean(currentProfileId && communityEditPageQuery.isLoading),
+    isCompatible:
+      !currentProfileId ||
+      (communityEditPageQuery.isSuccess &&
+        currentProfileType === (community?.type ?? 'social'))
+  }
   const initialForm = useMemo(
     () =>
       community
@@ -60,7 +70,11 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const updateCommunityPicture = (picture: string) => {
     if (!community) return
     queryClient.setQueryData(
-      queryKeys.communityEditPage(requestedUrl, viewerUserId),
+      queryKeys.communityEditPage(
+        requestedUrl,
+        viewerUserId,
+        currentProfileId
+      ),
       (current: typeof communityEditPageQuery.data) =>
         current?.community
           ? { ...current, community: { ...current.community, picture } }

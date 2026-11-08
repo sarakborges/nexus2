@@ -138,4 +138,10 @@ export type CommunityForumComposerPageData = {
 export type CommunityEditPageData = {
   community: Community | null
   ownerProfileId: string | null
+  currentProfileType: ProfileType | null
+}
+
+export type ProfileEditPageData = {
+  profile: Profile | null
+  currentProfileType: ProfileType | null
 }

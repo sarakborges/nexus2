@@ -53,6 +53,7 @@ test('edit page returns community and authenticated owner profile from one trans
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
   assert.equal(result.ownerProfileId, 'profile-owner')
+  assert.equal(result.currentProfileType, 'social')
 })
 
 test('edit page does not expose another account owner profile and redacts private community', async () => {
@@ -61,6 +62,7 @@ test('edit page does not expose another account owner profile and redacts privat
   assert.equal(result.ownerProfileId, null)
   assert.equal(result.community.picture, '')
   assert.equal(result.community.about, '')
+  assert.equal(result.currentProfileType, 'social')
 })
 
 test('anonymous edit-page visitor receives no owner profile', async () => {
@@ -68,12 +70,17 @@ test('anonymous edit-page visitor receives no owner profile', async () => {
   const result = await service.getCommunityEditPage('community', null)
   assert.equal(result.community.id, 'community-1')
   assert.equal(result.ownerProfileId, null)
+  assert.equal(result.currentProfileType, null)
 })
 
 test('unknown community returns an empty aggregate and invalid account is rejected', async () => {
   const { service, repository } = createService()
   const missing = await service.getCommunityEditPage('missing', null)
-  assert.deepEqual(missing, { community: null, ownerProfileId: null })
+  assert.deepEqual(missing, {
+    community: null,
+    ownerProfileId: null,
+    currentProfileType: null
+  })
   await assert.rejects(
     service.getCommunityEditPage('community', 'missing-user'),
     (error) => error instanceof UnauthorizedException && error.message === 'ACCOUNT_NOT_FOUND'

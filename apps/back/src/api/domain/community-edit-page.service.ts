@@ -40,7 +40,11 @@ export class CommunityEditPageService {
         if (!community) {
           return {
             records,
-            result: { community: null, ownerProfileId: null }
+            result: {
+              community: null,
+              ownerProfileId: null,
+              currentProfileType: null
+            }
           }
         }
 
@@ -68,7 +72,11 @@ export class CommunityEditPageService {
         if (!account) {
           return {
             records,
-            result: { community: visibleCommunity, ownerProfileId: null }
+            result: {
+              community: visibleCommunity,
+              ownerProfileId: null,
+              currentProfileType: null
+            }
           }
         }
 
@@ -77,6 +85,10 @@ export class CommunityEditPageService {
           profiles.map((profile) => [profile.id, profile] as const)
         )
         const ownedProfileIds = new Set(account.profiles)
+        const currentProfileType =
+          account.currentProfile && ownedProfileIds.has(account.currentProfile)
+            ? profilesById.get(account.currentProfile)?.type ?? null
+            : null
         const viewerRelationships = relationships.filter(
           (relationship) =>
             relationship.profiles[1] === community.id &&
@@ -89,7 +101,7 @@ export class CommunityEditPageService {
 
         return {
           records,
-          result: { community: visibleCommunity, ownerProfileId }
+          result: { community: visibleCommunity, ownerProfileId, currentProfileType }
         }
       }
     )

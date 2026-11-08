@@ -31,6 +31,7 @@ import { ProfileDirectoryPageService } from './profile-directory-page.service'
 import { CommunitiesPageService } from './communities-page.service'
 import { CommunityForumComposerPageService } from './community-forum-composer-page.service'
 import { CommunityEditPageService } from './community-edit-page.service'
+import { ProfileEditPageService } from './profile-edit-page.service'
 
 @Controller()
 export class DomainController {
@@ -46,7 +47,8 @@ export class DomainController {
     private readonly profileDirectoryPage: ProfileDirectoryPageService,
     private readonly communitiesPage: CommunitiesPageService,
     private readonly communityForumComposerPage: CommunityForumComposerPageService,
-    private readonly communityEditPage: CommunityEditPageService
+    private readonly communityEditPage: CommunityEditPageService,
+    private readonly profileEditPage: ProfileEditPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -72,6 +74,14 @@ export class DomainController {
     @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
     return this.profileMessagesPage.getProfileMessagesPage(url, q, u?.id ?? null)
+  }
+
+  @Get('profiles/by-url/:url/edit/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfileEditPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profileEditPage.getProfileEditPage(url, u?.id ?? null)
   }
 
   @Get('profiles/by-url/:url/page')

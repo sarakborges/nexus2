@@ -24,8 +24,16 @@ export const queryKeys = {
     viewerUserId: string | null,
     currentProfileId: string | null
   ) => ['community-forum-composer-page', url, viewerUserId, currentProfileId] as const,
-  communityEditPage: (url: string, viewerUserId: string | null) =>
-    ['community-edit-page', url, viewerUserId] as const,
+  communityEditPage: (
+    url: string,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) => ['community-edit-page', url, viewerUserId, currentProfileId] as const,
+  profileEditPage: (
+    url: string,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) => ['profile-edit-page', url, viewerUserId, currentProfileId] as const,
   communityPage: (url: string, viewerUserId: string | null) =>
     ['community-page', url, viewerUserId] as const,
   communityForumPage: (

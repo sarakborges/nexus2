@@ -12,7 +12,8 @@ export function EditProfilePage() {
   const {
     requestedUrl,
     session,
-    profileQuery,
+    isAuthInitialized,
+    profileEditPageQuery,
     profile,
     typeCompatibility,
     form,
@@ -26,7 +27,7 @@ export function EditProfilePage() {
   } = useEditProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (!isAuthInitialized || profileEditPageQuery.isLoading)
     return (
       <main className="auth-page">
         <section className="entity-form-page">
@@ -34,11 +35,14 @@ export function EditProfilePage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  if (profileEditPageQuery.isError)
     return (
       <main className="auth-page">
         <section className="entity-form-page">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileEditPageQuery.refetch()}
+          />
         </section>
       </main>
     )
