@@ -128,3 +128,14 @@ export type ProfileDirectoryPageData =
       profile: Profile | null
       communities: PaginatedResult<Community>
     }
+
+
+export type CommunityForumComposerPageData = {
+  community: Community | null
+  forumProfile: Profile | null
+}
+
+export type CommunityEditPageData = {
+  community: Community | null
+  ownerProfileId: string | null
+}

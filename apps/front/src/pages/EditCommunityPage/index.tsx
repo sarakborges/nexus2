@@ -12,11 +12,11 @@ export function EditCommunityPage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
-    communityQuery,
+    communityEditPageQuery,
     community,
     typeCompatibility,
-    relationshipsQuery,
     ownerProfileId,
+    isAuthInitialized,
     form,
     errorMessage,
     isSubmitting,
@@ -28,7 +28,7 @@ export function EditCommunityPage() {
   } = useEditCommunityPage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (communityQuery.isLoading || relationshipsQuery.isLoading)
+  if (!isAuthInitialized || communityEditPageQuery.isLoading)
     return (
       <main className="auth-page">
         <section className="entity-form-page">
@@ -36,21 +36,13 @@ export function EditCommunityPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
-        </section>
-      </main>
-    )
-  if (relationshipsQuery.isError)
+  if (communityEditPageQuery.isError)
     return (
       <main className="auth-page">
         <section className="entity-form-page">
           <RequestState
             isError
-            onRetry={() => void relationshipsQuery.refetch()}
+            onRetry={() => void communityEditPageQuery.refetch()}
           />
         </section>
       </main>
@@ -113,11 +105,7 @@ export function EditCommunityPage() {
             onChange={(privacy) => updateForm({ privacy })}
           />
           <div className="entity-form-page__actions">
-            <Button
-              type="button"
-              variation="secondary"
-              onClick={cancelEdit}
-            >
+            <Button type="button" variation="secondary" onClick={cancelEdit}>
               {t('ACTION_CANCEL')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>

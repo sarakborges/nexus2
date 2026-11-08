@@ -1,4 +1,4 @@
-import type { Community, CommunityRelationship } from '@nexus/common'
+import type { CommunityEditPageData } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { FormEvent } from 'react'
 
@@ -8,11 +8,11 @@ import type { CommunityForm } from './EditCommunityPage.types'
 
 export type UseEditCommunityPageResult = {
   requestedUrl: string
-  communityQuery: UseQueryResult<Community | null>
-  community: Community | null | undefined
+  communityEditPageQuery: UseQueryResult<CommunityEditPageData>
+  community: CommunityEditPageData['community'] | undefined
   typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
-  relationshipsQuery: UseQueryResult<CommunityRelationship[]>
   ownerProfileId: string | null
+  isAuthInitialized: boolean
   form: CommunityForm | null
   errorMessage: string
   isSubmitting: boolean

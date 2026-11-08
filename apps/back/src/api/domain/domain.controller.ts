@@ -29,6 +29,8 @@ import { CommunityMembersPageDto } from './community-members-page.dto'
 import { ProfileMessagesPageService } from './profile-messages-page.service'
 import { ProfileDirectoryPageService } from './profile-directory-page.service'
 import { CommunitiesPageService } from './communities-page.service'
+import { CommunityForumComposerPageService } from './community-forum-composer-page.service'
+import { CommunityEditPageService } from './community-edit-page.service'
 
 @Controller()
 export class DomainController {
@@ -42,7 +44,9 @@ export class DomainController {
     private readonly communityMembersPage: CommunityMembersPageService,
     private readonly profileMessagesPage: ProfileMessagesPageService,
     private readonly profileDirectoryPage: ProfileDirectoryPageService,
-    private readonly communitiesPage: CommunitiesPageService
+    private readonly communitiesPage: CommunitiesPageService,
+    private readonly communityForumComposerPage: CommunityForumComposerPageService,
+    private readonly communityEditPage: CommunityEditPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -97,6 +101,22 @@ export class DomainController {
     @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
     return this.communityForumPage.getCommunityForumPage(url, q, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/forum/composer-page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityForumComposerPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityForumComposerPage.getCommunityForumComposerPage(url, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/edit/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityEditPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityEditPage.getCommunityEditPage(url, u?.id ?? null)
   }
 
   @Get('communities/page') @UseGuards(JwtAccessGuard)

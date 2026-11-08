@@ -19,6 +19,13 @@ export const queryKeys = {
     page: number,
     pageSize: number
   ) => ['profile-directory-page', url, kind, page, pageSize] as const,
+  communityForumComposerPage: (
+    url: string,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) => ['community-forum-composer-page', url, viewerUserId, currentProfileId] as const,
+  communityEditPage: (url: string, viewerUserId: string | null) =>
+    ['community-edit-page', url, viewerUserId] as const,
   communityPage: (url: string, viewerUserId: string | null) =>
     ['community-page', url, viewerUserId] as const,
   communityForumPage: (
