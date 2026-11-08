@@ -16,6 +16,7 @@ type PendingQueryData = Awaited<ReturnType<typeof getPendingCommunityMembers>>
 
 export type UseCommunityMembersPageResult = {
   normalized: string
+  isAuthInitialized: boolean
   activeTab: MemberTab
   setActiveTab: Dispatch<SetStateAction<MemberTab>>
   page: number

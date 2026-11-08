@@ -20,6 +20,15 @@ export const queryKeys = {
     currentProfileId: string | null
   ) =>
     ['community-forum-topic-page', url, topicId, page, pageSize, viewerUserId, currentProfileId] as const,
+  communityMembersPage: (
+    url: string,
+    tab: string,
+    page: number,
+    pendingPage: number,
+    viewerUserId: string | null,
+    profileIds: string[]
+  ) =>
+    ['community-members-page', url, tab, page, pendingPage, viewerUserId, [...profileIds].sort()] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },

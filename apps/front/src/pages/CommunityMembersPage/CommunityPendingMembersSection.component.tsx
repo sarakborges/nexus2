@@ -4,7 +4,7 @@ import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPendingMembersSectionProps } from './CommunityPendingMembersSection.types'
 
 export function CommunityPendingMembersSection({
-  pendingQuery,
+  pageQuery,
   pending,
   totalPending,
   page,
@@ -31,12 +31,12 @@ export function CommunityPendingMembersSection({
         </div>
       </header>
       <RequestState
-        isLoading={pendingQuery.isLoading}
-        isFetching={pendingQuery.isFetching}
-        isError={pendingQuery.isError}
-        isEmpty={pendingQuery.isSuccess && totalPending === 0}
+        isLoading={pageQuery.isLoading}
+        isFetching={pageQuery.isFetching}
+        isError={pageQuery.isError}
+        isEmpty={pageQuery.isSuccess && totalPending === 0}
         emptyMessage={t('COMMUNITY_MEMBERS_PENDING_EMPTY')}
-        onRetry={() => void pendingQuery.refetch()}
+        onRetry={() => void pageQuery.refetch()}
       >
         <div className="account-card__profile-list account-card__profile-list--grid">
           {pending.map((profile) => (
