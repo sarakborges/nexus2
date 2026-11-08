@@ -85,3 +85,19 @@ export type CommunityForumTopicPageData = {
   isStaff: boolean
   authors: Profile[]
 }
+
+
+export type CommunityMember = Profile & {
+  role: string
+}
+
+export type CommunityMembersPageData = {
+  community: Community | null
+  relationships: CommunityRelationship[]
+  actorProfileId: string | null
+  actorRole: CommunityRelationshipType | null
+  isStaff: boolean
+  visibleTab: 'all' | 'staff' | 'banned'
+  members: PaginatedResult<CommunityMember>
+  pending: PaginatedResult<CommunityMember>
+}

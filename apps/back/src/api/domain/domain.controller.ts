@@ -24,6 +24,8 @@ import { ProfilePageService } from './profile-page.service'
 import { CommunityPageService } from './community-page.service'
 import { CommunityForumPageService } from './community-forum-page.service'
 import { CommunityForumTopicPageService } from './community-forum-topic-page.service'
+import { CommunityMembersPageService } from './community-members-page.service'
+import { CommunityMembersPageDto } from './community-members-page.dto'
 
 @Controller()
 export class DomainController {
@@ -33,7 +35,8 @@ export class DomainController {
     private readonly profilePage: ProfilePageService,
     private readonly communityPage: CommunityPageService,
     private readonly communityForumPage: CommunityForumPageService,
-    private readonly communityForumTopicPage: CommunityForumTopicPageService
+    private readonly communityForumTopicPage: CommunityForumTopicPageService,
+    private readonly communityMembersPage: CommunityMembersPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -88,6 +91,15 @@ export class DomainController {
 
   @Get('communities/:communityId/forum/topics') @UseGuards(OptionalJwtAccessGuard)
   forumTopics(@Param('communityId') id: string, @Query() q: PaginationDto, @CurrentUser() u: AuthenticatedUserContext | undefined) { return this.domain.listCommunityForumTopics(id, q, u?.id ?? null) }
+  @Get('communities/by-url/:url/members/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityMembersPage(
+    @Param('url') url: string,
+    @Query() q: CommunityMembersPageDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityMembersPage.getCommunityMembersPage(url, q, u?.id ?? null)
+  }
+
   @Get('communities/by-url/:url/forum/topics/:topicId/page') @UseGuards(OptionalJwtAccessGuard)
   getCommunityForumTopicPage(
     @Param('url') url: string,

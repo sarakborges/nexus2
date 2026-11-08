@@ -16,6 +16,7 @@ export function CommunityMembersPage() {
   const { t } = useTranslations()
   const {
     normalized,
+    isAuthInitialized,
     activeTab,
     setActiveTab,
     page,
