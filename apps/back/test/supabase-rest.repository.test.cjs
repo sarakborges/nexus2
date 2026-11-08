@@ -150,12 +150,20 @@ test('transaction commits multiple collection snapshots through one authenticate
     const requestUrl = new URL(String(input))
     calls.push({ url: requestUrl, options })
     if (options.method === 'GET') {
-      const collection = requestUrl.searchParams.get('collection').slice(3)
-      const records = collection === 'accounts' ? [{ id: 'account' }] : [{ id: 'profile' }]
-      return new Response(JSON.stringify([{
-        records,
-        updated_at: collection === 'accounts' ? updatedAt : '2026-11-04T12:00:02.000Z'
-      }]), { status: 200 })
+      assert.equal(requestUrl.searchParams.get('select'), 'collection,records,updated_at')
+      assert.equal(requestUrl.searchParams.get('collection'), 'in.(accounts,profiles)')
+      return new Response(JSON.stringify([
+        {
+          collection: 'accounts',
+          records: [{ id: 'account' }],
+          updated_at: updatedAt
+        },
+        {
+          collection: 'profiles',
+          records: [{ id: 'profile' }],
+          updated_at: '2026-11-04T12:00:02.000Z'
+        }
+      ]), { status: 200 })
     }
 
     assert.equal(requestUrl.pathname, '/rest/v1/rpc/nexus_commit_collections')
@@ -175,6 +183,9 @@ test('transaction commits multiple collection snapshots through one authenticate
   }))
 
   assert.equal(result, 'created')
+  const snapshotCalls = calls.filter(call => call.options.method === 'GET')
+  assert.equal(snapshotCalls.length, 1)
+  assert.equal(calls.length, 2)
   const rpcCalls = calls.filter(call => call.options.method === 'POST')
   assert.equal(rpcCalls.length, 1)
   const body = JSON.parse(rpcCalls[0].options.body)
@@ -185,23 +196,30 @@ test('transaction commits multiple collection snapshots through one authenticate
 })
 
 test('transaction retries all collection snapshots after an atomic version conflict', async t => {
-  const reads = new Map()
+  let snapshotReads = 0
   let rpcAttempts = 0
   let updaterCalls = 0
   let secondAttemptAccounts
   withFetch(t, async (input, options) => {
     const requestUrl = new URL(String(input))
     if (options.method === 'GET') {
-      const collection = requestUrl.searchParams.get('collection').slice(3)
-      const count = (reads.get(collection) ?? 0) + 1
-      reads.set(collection, count)
-      const records = collection === 'accounts'
-        ? (count === 1 ? [{ id: 'account' }] : [{ id: 'account' }, { id: 'concurrent' }])
-        : [{ id: 'profile' }]
-      return new Response(JSON.stringify([{
-        records,
-        updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
-      }]), { status: 200 })
+      snapshotReads += 1
+      const count = snapshotReads
+      assert.equal(requestUrl.searchParams.get('collection'), 'in.(accounts,profiles)')
+      return new Response(JSON.stringify([
+        {
+          collection: 'accounts',
+          records: count === 1
+            ? [{ id: 'account' }]
+            : [{ id: 'account' }, { id: 'concurrent' }],
+          updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
+        },
+        {
+          collection: 'profiles',
+          records: [{ id: 'profile' }],
+          updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
+        }
+      ]), { status: 200 })
     }
 
     rpcAttempts += 1
@@ -227,8 +245,7 @@ test('transaction retries all collection snapshots after an atomic version confl
   assert.equal(result, 2)
   assert.equal(rpcAttempts, 2)
   assert.equal(updaterCalls, 2)
-  assert.equal(reads.get('accounts'), 2)
-  assert.equal(reads.get('profiles'), 2)
+  assert.equal(snapshotReads, 2)
   assert.deepEqual(secondAttemptAccounts.map(record => record.id), ['account', 'concurrent', 'new-account'])
 })
 

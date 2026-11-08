@@ -1,5 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type {
+  Community,
   CommunityRelationship,
   RecentActivity,
   Relationship
@@ -32,7 +33,18 @@ export class ActivityService {
     collections: CollectionRecordMap
   ): CollectionTransaction<RecentActivity[]> {
     const normalized = this.access.normalizeCommunitiesInRecords(collections)
-    const records = normalized.records
+    return this.getRecentActivityFromNormalizedRecords(
+      userId,
+      normalized.records,
+      normalized.communities
+    )
+  }
+
+  getRecentActivityFromNormalizedRecords(
+    userId: string,
+    records: CollectionRecordMap,
+    communities: Community[]
+  ): CollectionTransaction<RecentActivity[]> {
     const account = (
       records.accounts as Array<{ id: string; profiles: string[] }>
     ).find((item) => item.id === userId)
@@ -43,7 +55,6 @@ export class ActivityService {
     if (!ownedProfileIds.size) return { records, result: [] }
 
     const profiles = records.profiles as import('@nexus/common').Profile[]
-    const communities = normalized.communities
     const relationships = records.relationships as Relationship[]
     const communityRelationships =
       records.community_relationships as CommunityRelationship[]
