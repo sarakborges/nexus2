@@ -54,3 +54,15 @@ export type ProfilePageData = {
   friends: PaginatedResult<Profile>
   communities: PaginatedResult<Community>
 }
+
+
+export type CommunityPageData = {
+  community: Community | null
+  relationships: CommunityRelationship[]
+  canViewMembers: boolean
+  canEditCommunity: boolean
+  pendingRequestCount: number
+  members: PaginatedResult<Profile>
+  forumTopics: PaginatedResult<CommunityForumTopicSummary>
+  forumAuthors: Profile[]
+}

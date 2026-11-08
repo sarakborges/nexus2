@@ -8,8 +8,8 @@ import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPre
 
 export function CommunityPageMembersPreview({
   communityUrl,
+  communityPageQuery,
   canViewMembers,
-  membersQuery,
   members,
   memberCount
 }: CommunityPageMembersPreviewProps) {
@@ -32,16 +32,16 @@ export function CommunityPageMembersPreview({
         </Link>
       </header>
       <RequestState
-        isLoading={canViewMembers && membersQuery.isLoading}
-        isFetching={canViewMembers && membersQuery.isFetching}
-        isError={canViewMembers && membersQuery.isError}
-        isEmpty={!canViewMembers || (membersQuery.isSuccess && members.length === 0)}
+        isLoading={communityPageQuery.isLoading}
+        isFetching={communityPageQuery.isFetching}
+        isError={communityPageQuery.isError}
+        isEmpty={!canViewMembers || (communityPageQuery.isSuccess && members.length === 0)}
         emptyMessage={
           canViewMembers
             ? t('COMMUNITY_MEMBERS_EMPTY')
             : t('COMMUNITY_PRIVATE_RESTRICTED')
         }
-        onRetry={() => void membersQuery.refetch()}
+        onRetry={() => void communityPageQuery.refetch()}
       >
         <div className="social-preview-grid">
           {members.map((member) => (

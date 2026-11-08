@@ -32,5 +32,6 @@ A page aggregate covers the initial view, not every possible interaction. Keep i
 
 - `GET /home`: current profile, recent activity, friends, joined communities and suggested communities.
 - `GET /profiles/by-url/:url/page`: profile, friends preview and public community preview.
+- `GET /communities/by-url/:url/page`: community, viewer relationships, preview members, pending request count, forum topics and author profiles.
 
 The next candidates are `CommunityPage`, forum listing/topic pages, profile messages and community member pages. Their paginated data should remain separately addressable after the initial aggregate has loaded.
