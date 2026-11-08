@@ -1,6 +1,5 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type {
-  Community,
   CommunityForumReply,
   CommunityForumTopic,
   CommunityForumTopicSummary,
