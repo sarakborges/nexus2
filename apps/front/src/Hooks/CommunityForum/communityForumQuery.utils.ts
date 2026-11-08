@@ -4,7 +4,12 @@ export async function invalidateCommunityForumQueries(
   queryClient: QueryClient,
   communityId: string
 ): Promise<void> {
-  await queryClient.invalidateQueries({
-    queryKey: ['community-forum', communityId]
-  })
+  await Promise.all([
+    queryClient.invalidateQueries({
+      queryKey: ['community-forum', communityId]
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['community-page']
+    })
+  ])
 }

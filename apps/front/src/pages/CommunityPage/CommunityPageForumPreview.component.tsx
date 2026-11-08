@@ -8,8 +8,8 @@ import type { CommunityPageForumPreviewProps } from './CommunityPageForumPreview
 
 export function CommunityPageForumPreview({
   communityUrl,
-  topicsQuery,
-  authorsQuery,
+  communityPageQuery,
+  canViewMembers,
   topics,
   authorsById
 }: CommunityPageForumPreviewProps) {
@@ -24,15 +24,16 @@ export function CommunityPageForumPreview({
         </Link>
       </header>
       <RequestState
-        isLoading={topicsQuery.isLoading || authorsQuery.isLoading}
-        isFetching={topicsQuery.isFetching || authorsQuery.isFetching}
-        isError={topicsQuery.isError || authorsQuery.isError}
-        isEmpty={topicsQuery.isSuccess && topicsQuery.data.totalItems === 0}
-        emptyMessage={t('FORUM_EMPTY')}
-        onRetry={() => {
-          void topicsQuery.refetch()
-          void authorsQuery.refetch()
-        }}
+        isLoading={communityPageQuery.isLoading}
+        isFetching={communityPageQuery.isFetching}
+        isError={communityPageQuery.isError}
+        isEmpty={communityPageQuery.isSuccess && topics.length === 0}
+        emptyMessage={
+          canViewMembers
+            ? t('FORUM_EMPTY')
+            : t('COMMUNITY_PRIVATE_RESTRICTED')
+        }
+        onRetry={() => void communityPageQuery.refetch()}
       >
         <CommunityForumTopicList
           communityUrl={communityUrl}

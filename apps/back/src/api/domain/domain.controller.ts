@@ -21,13 +21,15 @@ import {
 import { DomainService } from './domain.service'
 import { HomePageService } from './home-page.service'
 import { ProfilePageService } from './profile-page.service'
+import { CommunityPageService } from './community-page.service'
 
 @Controller()
 export class DomainController {
   constructor(
     private readonly domain: DomainService,
     private readonly homePage: HomePageService,
-    private readonly profilePage: ProfilePageService
+    private readonly profilePage: ProfilePageService,
+    private readonly communityPage: CommunityPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -48,6 +50,14 @@ export class DomainController {
   @Get('profiles/ids') getProfiles(@Query('ids') ids: string | string[]) { return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Post('profiles') @UseGuards(JwtAccessGuard) createProfile(@CurrentUser() u: AuthenticatedUserContext, @Body() body: CreateProfileDto) { return this.domain.createProfile(u.id, body) }
   @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') id: string, @Body() body: UpdateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
+
+  @Get('communities/by-url/:url/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityPage.getCommunityPage(url, u?.id ?? null)
+  }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
   @Get('communities/by-url/:url') @UseGuards(OptionalJwtAccessGuard)
