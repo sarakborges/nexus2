@@ -114,8 +114,8 @@ test('forum page aggregate uses the requested pagination and only includes curre
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.topics.page, 2)
   assert.equal(result.topics.totalItems, 21)
-  assert.deepEqual(result.topics.items.map(topic => topic.id), ['topic-21'])
-  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-moderator'])
+  assert.deepEqual(result.topics.items.map(topic => topic.id), ['topic-01'])
+  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-owner'])
 })
 
 test('public forum page is readable by an anonymous visitor but cannot publish', async () => {
