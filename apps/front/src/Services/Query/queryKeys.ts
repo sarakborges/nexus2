@@ -1,6 +1,7 @@
 export const queryKeys = {
   home: (userId: string) => ['home', userId] as const,
   profilePage: (url: string) => ['profile-page', url] as const,
+  profilePage: (url: string) => ['profile-page', url] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },

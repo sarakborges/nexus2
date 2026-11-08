@@ -15,20 +15,18 @@ export function ProfilePage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
-    profileQuery,
+    profilePageQuery,
     profile,
     typeCompatibility,
     canInteract,
-    friendsQuery,
-    communitiesQuery,
     friends,
     communities,
     isOwner,
-    openEditProfile,
+    openEditProfile
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading) {
+  if (profilePageQuery.isLoading) {
     return (
       <main className="social-page">
         <div className="social-page__state">
@@ -37,11 +35,14 @@ export function ProfilePage() {
       </main>
     )
   }
-  if (profileQuery.isError) {
+  if (profilePageQuery.isError) {
     return (
       <main className="social-page">
         <div className="social-page__state">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profilePageQuery.refetch()}
+          />
         </div>
       </main>
     )
@@ -60,7 +61,7 @@ export function ProfilePage() {
         </aside>
 
         <section className="social-page__main-column">
-          <RequestState isFetching={profileQuery.isFetching} />
+          <RequestState isFetching={profilePageQuery.isFetching} />
           {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
             <p className="profile-type-notice" role="alert">
               {t('PROFILE_TYPE_MISMATCH_NOTICE')}
@@ -100,7 +101,7 @@ export function ProfilePage() {
               <h2>
                 {t('PROFILE_FRIENDS_TITLE')}
                 <span className="social-preview-panel__count">
-                  ({friendsQuery.data?.totalItems ?? '—'})
+                  ({profilePageQuery.data?.friends.totalItems ?? '—'})
                 </span>
               </h2>
               <Link
@@ -111,12 +112,12 @@ export function ProfilePage() {
               </Link>
             </header>
             <RequestState
-              isLoading={friendsQuery.isLoading}
-              isFetching={friendsQuery.isFetching}
-              isError={friendsQuery.isError}
-              isEmpty={friendsQuery.isSuccess && friends.length === 0}
+              isLoading={profilePageQuery.isLoading}
+              isFetching={profilePageQuery.isFetching}
+              isError={profilePageQuery.isError}
+              isEmpty={profilePageQuery.isSuccess && friends.length === 0}
               emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-              onRetry={() => void friendsQuery.refetch()}
+              onRetry={() => void profilePageQuery.refetch()}
             >
               <div className="social-preview-grid">
                 {friends.map((friend) => (
@@ -143,7 +144,7 @@ export function ProfilePage() {
               <h2>
                 {t('PROFILE_COMMUNITIES_TITLE')}
                 <span className="social-preview-panel__count">
-                  ({communitiesQuery.data?.totalItems ?? '—'})
+                  ({profilePageQuery.data?.communities.totalItems ?? '—'})
                 </span>
               </h2>
               <Link
@@ -154,12 +155,12 @@ export function ProfilePage() {
               </Link>
             </header>
             <RequestState
-              isLoading={communitiesQuery.isLoading}
-              isFetching={communitiesQuery.isFetching}
-              isError={communitiesQuery.isError}
-              isEmpty={communitiesQuery.isSuccess && communities.length === 0}
+              isLoading={profilePageQuery.isLoading}
+              isFetching={profilePageQuery.isFetching}
+              isError={profilePageQuery.isError}
+              isEmpty={profilePageQuery.isSuccess && communities.length === 0}
               emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-              onRetry={() => void communitiesQuery.refetch()}
+              onRetry={() => void profilePageQuery.refetch()}
             >
               <div className="social-preview-grid">
                 {communities.map((community) => (
