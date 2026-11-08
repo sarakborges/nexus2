@@ -26,6 +26,7 @@ import { CommunityForumPageService } from './community-forum-page.service'
 import { CommunityForumTopicPageService } from './community-forum-topic-page.service'
 import { CommunityMembersPageService } from './community-members-page.service'
 import { CommunityMembersPageDto } from './community-members-page.dto'
+import { ProfileMessagesPageService } from './profile-messages-page.service'
 
 @Controller()
 export class DomainController {
@@ -36,7 +37,8 @@ export class DomainController {
     private readonly communityPage: CommunityPageService,
     private readonly communityForumPage: CommunityForumPageService,
     private readonly communityForumTopicPage: CommunityForumTopicPageService,
-    private readonly communityMembersPage: CommunityMembersPageService
+    private readonly communityMembersPage: CommunityMembersPageService,
+    private readonly profileMessagesPage: ProfileMessagesPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -45,6 +47,15 @@ export class DomainController {
   }
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
+
+  @Get('profiles/by-url/:url/messages/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfileMessagesPage(
+    @Param('url') url: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profileMessagesPage.getProfileMessagesPage(url, q, u?.id ?? null)
+  }
 
   @Get('profiles/by-url/:url/page')
   getProfilePage(@Param('url') url: string) {

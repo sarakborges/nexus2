@@ -36,5 +36,6 @@ A page aggregate covers the initial view, not every possible interaction. Keep i
 - `GET /communities/by-url/:url/forum/page`: community, forum access, publish eligibility, one paginated topic page and its author profiles.
 - `GET /communities/by-url/:url/forum/topics/:topicId/page`: community, topic, paginated replies, forum profile permissions and authors for the visible reply page.
 - `GET /communities/by-url/:url/members/page`: community, viewer relationships, management role, selected member tab and both paginated member/pending-request lists.
+- `GET /profiles/by-url/:url/messages/page`: profile, viewer-visible paginated messages and sender profiles for the current page.
 
 The next candidates are `CommunityPage`, forum listing/topic pages, profile messages and community member pages. Their paginated data should remain separately addressable after the initial aggregate has loaded.
