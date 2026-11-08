@@ -39,5 +39,7 @@ A page aggregate covers the initial view, not every possible interaction. Keep i
 - `GET /profiles/by-url/:url/messages/page`: profile, viewer-visible paginated messages and sender profiles for the current page.
 - `GET /profiles/by-url/:url/directory/:kind/page`: profile plus a paginated friends or public-community directory, projected from one snapshot.
 - `GET /communities/page`: authenticated current-profile projection and paginated public-community directory.
+- `GET /communities/by-url/:url/forum/composer-page`: community and eligible author profile for the new-topic form.
+- `GET /communities/by-url/:url/edit/page`: community and owner profile available to the current account for the edit form.
 
 Any remaining route should be audited against the same rule. Add a page aggregate when its initial render depends on multiple related requests or author lookups; keep independent endpoints for explicit user interactions and data with a separate lifecycle.

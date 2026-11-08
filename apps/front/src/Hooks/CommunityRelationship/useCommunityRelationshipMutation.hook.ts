@@ -22,25 +22,13 @@ export function useCommunityRelationshipMutation(): UseCommunityRelationshipMuta
   >({
     mutationFn: ({ profileId, communityId, actorProfileId, operation }) => {
       if (operation.type === 'remove') {
-        return removeCommunityRelationship(
-          profileId,
-          communityId,
-          actorProfileId
-        )
+        return removeCommunityRelationship(profileId, communityId, actorProfileId)
       }
       if (operation.type === 'demote') {
-        return demoteCommunityModerator(
-          profileId,
-          communityId,
-          actorProfileId
-        )
+        return demoteCommunityModerator(profileId, communityId, actorProfileId)
       }
       if (operation.type === 'transfer') {
-        return transferCommunityOwnership(
-          actorProfileId,
-          profileId,
-          communityId
-        )
+        return transferCommunityOwnership(actorProfileId, profileId, communityId)
       }
       return setCommunityRelationship(
         profileId,
@@ -51,17 +39,15 @@ export function useCommunityRelationshipMutation(): UseCommunityRelationshipMuta
     },
     onSuccess: async (_result, variables) => {
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ['community-relationships', variables.communityId]
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ['community-members', variables.communityId]
-        }),
+        queryClient.invalidateQueries({ queryKey: ['community-relationships', variables.communityId] }),
+        queryClient.invalidateQueries({ queryKey: ['community-members', variables.communityId] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-forum-composer-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-edit-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-members-page'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] })
       ])
