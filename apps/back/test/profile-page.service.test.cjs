@@ -47,8 +47,15 @@ const records = {
       updatedAt: 100
     },
     {
-      profiles: ['profile-1', 'community-4'],
+      profiles: ['profile-3', 'community-4'],
       type: 'owner',
+      requestedBy: null,
+      blockedBy: null,
+      updatedAt: 100
+    },
+    {
+      profiles: ['profile-1', 'community-4'],
+      type: 'connection',
       requestedBy: null,
       blockedBy: null,
       updatedAt: 100
