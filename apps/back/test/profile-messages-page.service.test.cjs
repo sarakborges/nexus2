@@ -122,7 +122,7 @@ test('profile messages aggregate preserves pagination and only returns senders f
   const paginatedRecords = structuredClone(records)
   paginatedRecords.profile_messages = Array.from({ length: 21 }, (_, index) => ({
     id: 'message-' + String(index + 1).padStart(2, '0'),
-    fromProfileId: index === 20 ? 'profile-other' : 'profile-sender',
+    fromProfileId: index === 0 ? 'profile-other' : 'profile-sender',
     toProfileId: 'profile-target',
     content: '<p>Message ' + (index + 1) + '</p>',
     createdAt: (index + 1) * 100
@@ -141,7 +141,7 @@ test('profile messages aggregate preserves pagination and only returns senders f
   assert.equal(result.messages.totalItems, 21)
   assert.deepEqual(
     result.messages.items.map(message => message.id),
-    ['message-21']
+    ['message-01']
   )
   assert.deepEqual(
     result.senders.map(profile => profile.id),
