@@ -98,7 +98,7 @@ test('communities page paginates public communities and excludes private and unl
 
   assert.equal(repository.transactionCalls, 1)
   assert.deepEqual(result.communities.items.map((community) => community.id), ['community-21'])
-  assert.equal(result.communities.totalItems, 3)
+  assert.equal(result.communities.totalItems, 21)
   assert.equal(result.communities.page, 2)
 })
 
