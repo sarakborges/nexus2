@@ -119,7 +119,7 @@ export function CommunityForumPage() {
         <Pagination
           page={page}
           pageSize={pageSize}
-          totalItems={forumPageQuery.data.topics.totalItems}
+          totalItems={forumPageQuery.data?.topics.totalItems ?? 0}
           onPageChange={setPage}
         />
       </section>
