@@ -82,14 +82,22 @@ test('communities page paginates public communities and excludes private and unl
   const paginatedRecords = structuredClone(records)
   paginatedRecords.communities = [
     ...paginatedRecords.communities,
-    { id: 'community-third', name: 'Third', url: 'third', picture: '', about: '', type: 'social', privacy: 'public' }
+    ...Array.from({ length: 19 }, (_, index) => ({
+      id: 'community-' + (index + 3),
+      name: 'Community ' + (index + 3),
+      url: 'community-' + (index + 3),
+      picture: '',
+      about: '',
+      type: 'social',
+      privacy: 'public'
+    }))
   ]
   const { service, repository } = createService(paginatedRecords)
 
-  const result = await service.getCommunitiesPage('user-1', query({ page: 2, pageSize: 2 }))
+  const result = await service.getCommunitiesPage('user-1', query({ page: 2 }))
 
   assert.equal(repository.transactionCalls, 1)
-  assert.deepEqual(result.communities.items.map((community) => community.id), ['community-third'])
+  assert.deepEqual(result.communities.items.map((community) => community.id), ['community-21'])
   assert.equal(result.communities.totalItems, 3)
   assert.equal(result.communities.page, 2)
 })
