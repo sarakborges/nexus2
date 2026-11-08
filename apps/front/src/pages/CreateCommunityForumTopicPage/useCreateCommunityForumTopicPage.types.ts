@@ -1,8 +1,7 @@
 import type {
   AuthSession,
   Community,
-  CommunityRelationship,
-  Profile
+  CommunityForumComposerPageData
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { UseCreateCommunityForumTopicMutationResult } from '@/Hooks/CommunityForum'
@@ -13,11 +12,9 @@ export type UseCreateCommunityForumTopicPageResult = {
   normalized: string
   session: AuthSession | null
   isAuthInitialized: boolean
-  communityQuery: UseQueryResult<Community | null>
+  composerPageQuery: UseQueryResult<CommunityForumComposerPageData>
   community: Community | null | undefined
-  relationshipsQuery: UseQueryResult<CommunityRelationship[]>
-  ownedProfilesQuery: UseQueryResult<Profile[]>
-  forumProfile: Profile | null
+  forumProfile: CommunityForumComposerPageData['forumProfile']
   title: string
   setTitle: Dispatch<SetStateAction<string>>
   content: string

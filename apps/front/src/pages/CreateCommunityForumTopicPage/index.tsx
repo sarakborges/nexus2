@@ -17,10 +17,8 @@ export function CreateCommunityForumTopicPage() {
     normalized,
     session,
     isAuthInitialized,
-    communityQuery,
+    composerPageQuery,
     community,
-    relationshipsQuery,
-    ownedProfilesQuery,
     forumProfile,
     title,
     setTitle,
@@ -33,7 +31,7 @@ export function CreateCommunityForumTopicPage() {
   } = useCreateCommunityForumTopicPage()
 
   if (!normalized) return <NotFoundPage />
-  if (communityQuery.isLoading)
+  if (!isAuthInitialized || composerPageQuery.isLoading)
     return (
       <main className="account-page">
         <section className="account-card">
@@ -41,11 +39,14 @@ export function CreateCommunityForumTopicPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
+  if (composerPageQuery.isError)
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void composerPageQuery.refetch()}
+          />
         </section>
       </main>
     )
@@ -66,23 +67,7 @@ export function CreateCommunityForumTopicPage() {
             </p>
           </div>
         </header>
-        <RequestState
-          isLoading={
-            !isAuthInitialized ||
-            relationshipsQuery.isLoading ||
-            ownedProfilesQuery.isLoading
-          }
-          isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
-          onRetry={() => {
-            void relationshipsQuery.refetch()
-            void ownedProfilesQuery.refetch()
-          }}
-        />
-        {!isAuthInitialized ||
-        relationshipsQuery.isLoading ||
-        ownedProfilesQuery.isLoading ||
-        relationshipsQuery.isError ||
-        ownedProfilesQuery.isError ? null : forumProfile ? (
+        {forumProfile ? (
           <form className="community-forum__composer" onSubmit={submit}>
             <div className="form-field">
               <Label htmlFor="forum-topic-title">
@@ -122,10 +107,7 @@ export function CreateCommunityForumTopicPage() {
             )}
             <Button
               type="submit"
-              disabled={
-                !title.trim() ||
-                !canSubmit || createMutation.isPending
-              }
+              disabled={!title.trim() || !canSubmit || createMutation.isPending}
             >
               {t('FORUM_PUBLISH_TOPIC')}
             </Button>
