@@ -33,10 +33,16 @@ const records = {
     { id: 'topic-other', communityId: 'other-community', profileId: 'profile-owner', title: 'Other', content: '', createdAt: 1, updatedAt: 1, isPinned: false, isLocked: false }
   ],
   community_forum_replies: [
-    { id: 'reply-1', topicId: 'topic-1', communityId: 'community-1', profileId: 'profile-member', content: '<p>First</p>', createdAt: 100, updatedAt: 100 },
-    { id: 'reply-2', topicId: 'topic-1', communityId: 'community-1', profileId: 'profile-moderator', content: '<p>Second</p>', createdAt: 200, updatedAt: 200 },
-    { id: 'reply-3', topicId: 'topic-1', communityId: 'community-1', profileId: 'profile-owner', content: '<p>Third</p>', createdAt: 300, updatedAt: 300 },
-    { id: 'reply-other', topicId: 'topic-other', communityId: 'other-community', profileId: 'profile-owner', content: '<p>Other</p>', createdAt: 400, updatedAt: 400 }
+    ...Array.from({ length: 21 }, (_, index) => ({
+      id: 'reply-' + (index + 1),
+      topicId: 'topic-1',
+      communityId: 'community-1',
+      profileId: ['profile-member', 'profile-moderator', 'profile-owner'][index % 3],
+      content: '<p>Reply ' + (index + 1) + '</p>',
+      createdAt: (index + 1) * 100,
+      updatedAt: (index + 1) * 100
+    })),
+    { id: 'reply-other', topicId: 'topic-other', communityId: 'other-community', profileId: 'profile-owner', content: '<p>Other</p>', createdAt: 4000, updatedAt: 4000 }
   ]
 }
 
@@ -81,9 +87,10 @@ test('forum topic page aggregate includes community, access, current reply page 
   assert.equal(result.isMember, true)
   assert.equal(result.isStaff, true)
   assert.equal(result.forumProfileId, 'profile-moderator')
-  assert.equal(result.detail.topic.replyCount, 3)
+  assert.equal(result.detail.topic.replyCount, 21)
+  assert.equal(result.detail.replies.items.length, 20)
   assert.deepEqual(
-    result.detail.replies.items.map(reply => reply.id),
+    result.detail.replies.items.slice(0, 2).map(reply => reply.id),
     ['reply-1', 'reply-2']
   )
   assert.deepEqual(
@@ -105,12 +112,12 @@ test('forum topic page aggregate returns authors only for the selected reply pag
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.detail.replies.page, 2)
-  assert.equal(result.detail.replies.totalItems, 3)
+  assert.equal(result.detail.replies.totalItems, 21)
   assert.deepEqual(
     result.detail.replies.items.map(reply => reply.id),
-    ['reply-3']
+    ['reply-21']
   )
-  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-owner'])
+  assert.deepEqual(result.authors.map(profile => profile.id), ['profile-member'])
 })
 
 test('public topic page is readable by anonymous visitors without forum membership', async () => {
