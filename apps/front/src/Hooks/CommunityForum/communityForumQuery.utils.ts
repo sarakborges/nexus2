@@ -13,6 +13,9 @@ export async function invalidateCommunityForumQueries(
     }),
     queryClient.invalidateQueries({
       queryKey: ['community-forum-page']
+    }),
+    queryClient.invalidateQueries({
+      queryKey: ['community-forum-topic-page']
     })
   ])
 }

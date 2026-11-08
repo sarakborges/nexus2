@@ -75,3 +75,13 @@ export type CommunityForumPageData = {
   topics: PaginatedResult<CommunityForumTopicSummary>
   authors: Profile[]
 }
+
+
+export type CommunityForumTopicPageData = {
+  community: Community
+  detail: CommunityForumTopicDetail
+  forumProfileId: string | null
+  isMember: boolean
+  isStaff: boolean
+  authors: Profile[]
+}

@@ -1,27 +1,23 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useQuery } from '@tanstack/react-query'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityForumTopic } from '@/Services/CommunityForum'
-import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
 import {
   useCreateCommunityForumReplyMutation,
   useDeleteCommunityForumReplyMutation,
   useDeleteCommunityForumTopicMutation,
   useModerateCommunityForumTopicMutation
 } from '@/Hooks/CommunityForum'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { getCommunityForumTopicPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicPage.types'
 
@@ -31,62 +27,44 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-  const profileIds = session?.user.profiles ?? []
+  const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const normalized = normalizeEntityUrl(url)
   const { page, pageSize, setPage } = useUrlPagination()
   const [replyContent, setReplyContent] = useState('')
 
-  const communityQuery = useCommunityByUrl({
-    url: normalized,
-    viewerUserId: session?.user.id ?? null
-  })
-  const community = communityQuery.data
-  const {
-    relationshipsQuery,
-    ownedProfilesQuery,
-    forumProfileId,
-    isMember,
-    isStaff
-  } = useCommunityForumAccess({
-    communityId: community?.id ?? null,
-    communityType: community?.type ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds,
-    currentProfileId
-  })
-  const canInteract = isMember
-  const topicQuery = useQuery({
-    queryKey: queryKeys.communityForumTopic(
-      community?.id ?? '',
+  const topicPageQuery = useQuery({
+    queryKey: queryKeys.communityForumTopicPage(
+      normalized,
       topicId ?? '',
       page,
       pageSize,
-      session?.user.id ?? null
+      viewerUserId,
+      currentProfileId
     ),
     queryFn: () =>
-      getCommunityForumTopic(community!.id, topicId!, { page, pageSize }),
-    enabled: Boolean(community?.id && topicId)
+      getCommunityForumTopicPage(normalized, topicId!, { page, pageSize }),
+    enabled: Boolean(normalized && topicId && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const detail = topicQuery.data
+  const pageData = topicPageQuery.data
+  const community = pageData?.community
+  const detail = pageData?.detail
   const topic = detail?.topic
-  const authorIds = useMemo(
+  const forumProfileId = pageData?.forumProfileId ?? null
+  const isMember = pageData?.isMember ?? false
+  const isStaff = pageData?.isStaff ?? false
+  const canInteract = isMember
+  const authorsById = useMemo(
     () =>
-      [
-        ...new Set(
-          [
-            topic?.profileId,
-            ...(detail?.replies.items ?? []).map((reply) => reply.profileId)
-          ].filter((id): id is string => Boolean(id))
+      new Map(
+        (pageData?.authors ?? []).map(
+          (profile) => [profile.id, profile] as const
         )
-      ].sort(),
-    [topic?.profileId, detail?.replies.items]
+      ),
+    [pageData?.authors]
   )
-  const {
-    profilesQuery: authorsQuery,
-    profilesById: authorsById
-  } = useProfilesByIds(authorIds)
 
   const topicAuthor = topic ? authorsById.get(topic.profileId) : undefined
   const canDeleteTopic = Boolean(
@@ -179,9 +157,9 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
       !isMember ||
       !canInteract ||
       topic?.isLocked
-    )
-      return
+    ) return
     if (!community || !topic || !forumProfileId) return
+
     try {
       await replyMutation.mutateAsync({
         communityId: community.id,
@@ -206,20 +184,16 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     setPage,
     replyContent,
     setReplyContent,
-    communityQuery,
+    topicPageQuery,
     community,
-    relationshipsQuery,
-    ownedProfilesQuery,
     isMember,
     isStaff,
     canInteract,
-    topicQuery,
     detail,
     topic,
     topicAuthor,
     canDeleteTopic,
     replyItems,
-    authorsQuery,
     hasReplyError: replyMutation.isError,
     canSubmitReply: hasRichTextContent(replyContent),
     isSendingReply: replyMutation.isPending,

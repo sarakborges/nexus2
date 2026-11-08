@@ -20,7 +20,8 @@ export function useSetCurrentProfileMutation(): UseSetCurrentProfileMutationResu
       )
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['home'] }),
-        queryClient.invalidateQueries({ queryKey: ['community-forum-page'] })
+        queryClient.invalidateQueries({ queryKey: ['community-forum-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] })
       ])
     }
   })
