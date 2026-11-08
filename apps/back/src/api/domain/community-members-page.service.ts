@@ -97,8 +97,12 @@ export class CommunityMembersPageService {
           managementRelationship?.profiles[0] ?? null
         const actorRole = managementRelationship?.type ?? null
         const isStaff = Boolean(actorProfileId)
-        const requestedTab = query.tab ?? 'all'
-        const visibleTab = isStaff ? requestedTab : 'all'
+        const requestedTab =
+          query.tab === 'staff' || query.tab === 'banned'
+            ? query.tab
+            : 'all'
+        const visibleTab: CommunityMembersPageData['visibleTab'] =
+          isStaff ? requestedTab : 'all'
 
         const memberRoles =
           visibleTab === 'staff'
