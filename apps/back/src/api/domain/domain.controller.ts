@@ -27,6 +27,7 @@ import { CommunityForumTopicPageService } from './community-forum-topic-page.ser
 import { CommunityMembersPageService } from './community-members-page.service'
 import { CommunityMembersPageDto } from './community-members-page.dto'
 import { ProfileMessagesPageService } from './profile-messages-page.service'
+import { ProfileDirectoryPageService } from './profile-directory-page.service'
 
 @Controller()
 export class DomainController {
@@ -38,7 +39,8 @@ export class DomainController {
     private readonly communityForumPage: CommunityForumPageService,
     private readonly communityForumTopicPage: CommunityForumTopicPageService,
     private readonly communityMembersPage: CommunityMembersPageService,
-    private readonly profileMessagesPage: ProfileMessagesPageService
+    private readonly profileMessagesPage: ProfileMessagesPageService,
+    private readonly profileDirectoryPage: ProfileDirectoryPageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -47,6 +49,15 @@ export class DomainController {
   }
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
+
+  @Get('profiles/by-url/:url/directory/:kind/page')
+  getProfileDirectoryPage(
+    @Param('url') url: string,
+    @Param('kind') kind: string,
+    @Query() q: PaginationDto
+  ) {
+    return this.profileDirectoryPage.getProfileDirectoryPage(url, kind, q)
+  }
 
   @Get('profiles/by-url/:url/messages/page') @UseGuards(OptionalJwtAccessGuard)
   getProfileMessagesPage(

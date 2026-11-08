@@ -27,7 +27,8 @@ export function useCreateCommunityMutation(): UseCreateCommunityMutationResult {
         }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
-        queryClient.invalidateQueries({ queryKey: ['community-page'] })
+        queryClient.invalidateQueries({ queryKey: ['community-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] })
       ])
     }
   })

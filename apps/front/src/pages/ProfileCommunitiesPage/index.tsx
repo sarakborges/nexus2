@@ -16,19 +16,18 @@ export function ProfileCommunitiesPage() {
   const { t } = useTranslations()
   const {
     normalized,
-    profileQuery,
+    profileDirectoryQuery,
     profile,
     typeCompatibility,
     page,
     pageSize,
     setPage,
-    communitiesQuery,
     communities,
     totalItems
   } = useProfileCommunitiesPage()
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (profileDirectoryQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -36,14 +35,19 @@ export function ProfileCommunitiesPage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  }
+  if (profileDirectoryQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileDirectoryQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!profile) return <NotFoundPage />
 
   return (
@@ -56,19 +60,19 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
-        <RequestState isFetching={profileQuery.isFetching} />
+        <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
           </p>
         )}
         <RequestState
-          isLoading={communitiesQuery.isLoading}
-          isFetching={communitiesQuery.isFetching}
-          isError={communitiesQuery.isError}
-          isEmpty={communitiesQuery.isSuccess && totalItems === 0}
+          isLoading={profileDirectoryQuery.isLoading}
+          isFetching={profileDirectoryQuery.isFetching}
+          isError={profileDirectoryQuery.isError}
+          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-          onRetry={() => void communitiesQuery.refetch()}
+          onRetry={() => void profileDirectoryQuery.refetch()}
         >
           <div className="account-card__profile-list account-card__profile-list--grid">
             {communities.map((community) => (

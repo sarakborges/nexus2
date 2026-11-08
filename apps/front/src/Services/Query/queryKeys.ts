@@ -7,6 +7,12 @@ export const queryKeys = {
     pageSize: number,
     viewerUserId: string | null
   ) => ['profile-messages-page', url, page, pageSize, viewerUserId] as const,
+  profileDirectoryPage: (
+    url: string,
+    kind: 'friends' | 'communities',
+    page: number,
+    pageSize: number
+  ) => ['profile-directory-page', url, kind, page, pageSize] as const,
   communityPage: (url: string, viewerUserId: string | null) =>
     ['community-page', url, viewerUserId] as const,
   communityForumPage: (

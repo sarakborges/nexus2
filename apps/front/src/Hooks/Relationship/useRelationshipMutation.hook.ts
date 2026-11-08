@@ -23,7 +23,8 @@ export function useRelationshipMutation(): UseRelationshipMutationResult {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['relationships'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
-        queryClient.invalidateQueries({ queryKey: ['profile-page'] })
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] })
       ])
     }
   })

@@ -19,6 +19,7 @@ export function useUpdateProfileMutation(): UseUpdateProfileMutationResult {
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-members-page'] }),

@@ -1,55 +1,60 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
-
-import { useProfileByUrl } from '@/Hooks/Profile'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
 
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
 import type { UseProfileFriendsPageResult } from './useProfileFriendsPage.types'
 
 export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const profileQuery = useProfileByUrl({ url: normalized })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const canInteract = typeCompatibility.canInteract
   const { page, pageSize, setPage } = useUrlPagination()
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(
-      profile?.id ?? '',
+
+  const profileDirectoryQuery = useQuery({
+    queryKey: queryKeys.profileDirectoryPage(
+      normalized,
+      'friends',
       page,
       pageSize
     ),
-    queryFn: () => getProfileFriends(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
+    queryFn: () =>
+      getProfileDirectoryPage(normalized, 'friends', { page, pageSize }),
+    enabled: Boolean(normalized),
+    staleTime: 30 * 1000
   })
-  const friends = friendsQuery.data?.items ?? []
-  const totalItems = friendsQuery.data?.totalItems ?? 0
+  const profile = profileDirectoryQuery.data?.profile
+  const typeCompatibility = useProfileTypeCompatibility(
+    profile?.type ?? 'social'
+  )
+  const friends =
+    profileDirectoryQuery.data?.kind === 'friends'
+      ? profileDirectoryQuery.data.friends.items
+      : []
+  const totalItems =
+    profileDirectoryQuery.data?.kind === 'friends'
+      ? profileDirectoryQuery.data.friends.totalItems
+      : 0
 
   useEffect(() => {
-    if (friendsQuery.data && friendsQuery.data.page !== page)
-      setPage(friendsQuery.data.page)
-  }, [friendsQuery.data, page, setPage])
+    const result = profileDirectoryQuery.data
+    if (result?.kind === 'friends' && result.friends.page !== page) {
+      setPage(result.friends.page)
+    }
+  }, [profileDirectoryQuery.data, page, setPage])
 
   return {
     normalized,
-    profileQuery,
+    profileDirectoryQuery,
     profile,
     typeCompatibility,
-    canInteract,
+    canInteract: typeCompatibility.canInteract,
     page,
     pageSize,
     setPage,
-    friendsQuery,
     friends,
     totalItems
   }
