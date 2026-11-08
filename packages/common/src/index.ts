@@ -128,4 +128,3 @@ export type ProfileDirectoryPageData =
       profile: Profile | null
       communities: PaginatedResult<Community>
     }
-}
