@@ -59,7 +59,7 @@ export function HomePage() {
         </header>
         <HomePageActivityFeed
           homeQuery={homeQuery}
-          activities={home.activities}
+          activities={home?.activities ?? []}
           formatDate={formatHomeActivityDate}
         />
       </section>

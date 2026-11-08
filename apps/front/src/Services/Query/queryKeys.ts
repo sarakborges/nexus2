@@ -23,7 +23,7 @@ export const queryKeys = {
     byIds: (ids: string[]) =>
       ['communities', 'by-ids', [...ids].sort()] as const,
     byProfile: (profileId: string, page: number, pageSize: number) =>
-      ['communities', 'by-profile', profileId, page, pageSize] as const,
+      ['communities', 'by-profile', profileId, page, pageSize] as const
   },
   relationships: {
     byProfile: (profileId: string) =>
