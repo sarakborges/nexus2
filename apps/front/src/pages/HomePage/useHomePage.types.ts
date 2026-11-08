@@ -1,22 +1,12 @@
-import type {
-  Community,
-  PaginatedResult,
-  Profile,
-  RecentActivity
-} from '@nexus/common'
+import type { Profile } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
+import type { UseHomeActivityResult } from './useHomeActivity.types'
+import type { UseHomeCommunitySuggestionsResult } from './useHomeCommunitySuggestions.types'
+import type { UseHomeSocialPreviewsResult } from './useHomeSocialPreviews.types'
 
 export type UseHomePageResult = {
-  activityQuery: UseQueryResult<RecentActivity[]>
   profilesQuery: UseQueryResult<Profile[]>
-  friendsQuery: UseQueryResult<PaginatedResult<Profile>>
-  communitiesQuery: UseQueryResult<PaginatedResult<Community>>
-  allCommunitiesQuery: UseQueryResult<PaginatedResult<Community>>
-  ownedCommunityIdsQuery: UseQueryResult<string[]>
   currentProfile: Profile | null
-  activities: RecentActivity[]
-  friends: Profile[]
-  communities: Community[]
-  suggestions: Community[]
-  formatDate: (timestamp: number) => string
-}
+} & UseHomeActivityResult &
+  UseHomeSocialPreviewsResult &
+  UseHomeCommunitySuggestionsResult

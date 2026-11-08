@@ -4,6 +4,7 @@ import {
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
+import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from './HomePageActivityFeed.component'
 import { HomePageRightSidebar } from './HomePageRightSidebar.component'
@@ -23,8 +24,7 @@ export function HomePage() {
     activities,
     friends,
     communities,
-    suggestions,
-    formatDate
+    suggestions
   } = useHomePage()
 
   if (!currentProfile) {
@@ -76,7 +76,7 @@ export function HomePage() {
         <HomePageActivityFeed
           activityQuery={activityQuery}
           activities={activities}
-          formatDate={formatDate}
+          formatDate={formatHomeActivityDate}
         />
       </section>
     </SocialPageLayout>
