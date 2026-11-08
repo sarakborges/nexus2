@@ -26,7 +26,8 @@ const records = {
   community_relationships: [
     { profiles: ['profile-target', 'community-public-owner'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 200 },
     { profiles: ['profile-target', 'community-private'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 190 },
-    { profiles: ['profile-target', 'community-other-type'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 180 },
+    { profiles: ['profile-other-type', 'community-other-type'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 185 },
+    { profiles: ['profile-target', 'community-other-type'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 180 },
     { profiles: ['profile-target', 'community-requested'], type: 'requested', requestedBy: 'profile-target', blockedBy: null, updatedAt: 170 },
     { profiles: ['profile-target', 'community-member'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 160 }
   ]
