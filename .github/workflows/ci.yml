@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - refactor/home-page-query-orchestration
   push:
     branches:
       - main
