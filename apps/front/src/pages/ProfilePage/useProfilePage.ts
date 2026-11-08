@@ -2,14 +2,11 @@ import { useQuery } from '@tanstack/react-query'
 
 import { useNavigate, useParams } from 'react-router'
 
-import { useProfileByUrl } from '@/Hooks/Profile'
+import { getProfilePage } from '@/Services/Profile'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
 import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
-import { getProfileCommunities } from '@/Services/Community'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseProfilePageResult } from './useProfilePage.types'
 
@@ -18,40 +15,31 @@ export function useProfilePage(): UseProfilePageResult {
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const requestedUrl = normalizeEntityUrl(url)
-  const profileQuery = useProfileByUrl({ url: requestedUrl })
-  const profile = profileQuery.data
+
+  const profilePageQuery = useQuery({
+    queryKey: queryKeys.profilePage(requestedUrl),
+    queryFn: () => getProfilePage(requestedUrl),
+    enabled: Boolean(requestedUrl),
+    staleTime: 30 * 1000
+  })
+  const profile = profilePageQuery.data?.profile
+  const friends = profilePageQuery.data?.friends.items ?? []
+  const communities = profilePageQuery.data?.communities.items ?? []
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
-
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(profile?.id ?? '', 1, 16),
-    queryFn: () => getProfileFriends(profile!.id, { page: 1, pageSize: 16 }),
-    enabled: Boolean(profile?.id)
-  })
-
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(profile?.id ?? '', 1, 16),
-    queryFn: () =>
-      getProfileCommunities(profile!.id, { page: 1, pageSize: 16 }),
-    enabled: Boolean(profile?.id)
-  })
-
-  const friends = friendsQuery.data?.items ?? []
-  const communities = communitiesQuery.data?.items ?? []
   const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
+
   const openEditProfile = () => {
     if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')
   }
 
   return {
     requestedUrl,
-    profileQuery,
+    profilePageQuery,
     profile,
     typeCompatibility,
     canInteract: typeCompatibility.canInteract,
-    friendsQuery,
-    communitiesQuery,
     friends,
     communities,
     isOwner,

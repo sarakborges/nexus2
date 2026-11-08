@@ -22,7 +22,8 @@ export function useRelationshipMutation(): UseRelationshipMutationResult {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['relationships'] }),
-        queryClient.invalidateQueries({ queryKey: ['home'] })
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] })
       ])
     }
   })

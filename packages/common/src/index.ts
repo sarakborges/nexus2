@@ -47,3 +47,10 @@ export type HomePageData = {
   communities: PaginatedResult<Community>
   suggestions: Community[]
 }
+
+
+export type ProfilePageData = {
+  profile: Profile | null
+  friends: PaginatedResult<Profile>
+  communities: PaginatedResult<Community>
+}

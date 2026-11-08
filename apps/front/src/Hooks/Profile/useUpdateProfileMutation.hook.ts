@@ -17,7 +17,8 @@ export function useUpdateProfileMutation(): UseUpdateProfileMutationResult {
       queryClient.setQueryData(queryKeys.profiles.byUrl(updated.url), updated)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
-        queryClient.invalidateQueries({ queryKey: ['home'] })
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] })
       ])
     }
   })

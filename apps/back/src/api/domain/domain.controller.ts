@@ -20,12 +20,14 @@ import {
 } from './domain.dto'
 import { DomainService } from './domain.service'
 import { HomePageService } from './home-page.service'
+import { ProfilePageService } from './profile-page.service'
 
 @Controller()
 export class DomainController {
   constructor(
     private readonly domain: DomainService,
-    private readonly homePage: HomePageService
+    private readonly homePage: HomePageService,
+    private readonly profilePage: ProfilePageService
   ) {}
 
   @Get('home') @UseGuards(JwtAccessGuard)
@@ -34,6 +36,11 @@ export class DomainController {
   }
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
+
+  @Get('profiles/by-url/:url/page')
+  getProfilePage(@Param('url') url: string) {
+    return this.profilePage.getProfilePage(url)
+  }
 
   @Get('profiles') listProfiles(@Query() q: PaginationDto) { return this.domain.listProfiles(q) }
   @Get('profiles/owned') @UseGuards(JwtAccessGuard) ownedProfiles(@CurrentUser() u: AuthenticatedUserContext, @Query() q: PaginationDto) { return this.domain.listOwnedProfiles(u.id, q) }

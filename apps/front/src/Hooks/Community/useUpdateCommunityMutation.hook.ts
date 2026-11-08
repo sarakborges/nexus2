@@ -21,7 +21,8 @@ export function useUpdateCommunityMutation(): UseUpdateCommunityMutationResult {
       )
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['communities'] }),
-        queryClient.invalidateQueries({ queryKey: ['home'] })
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] })
       ])
     }
   })
