@@ -24,7 +24,8 @@ export function useCreateCommunityMutation(): UseCreateCommunityMutationResult {
         queryClient.invalidateQueries({ queryKey: ['communities', 'list'] }),
         queryClient.invalidateQueries({
           queryKey: ['communities', 'by-profile', variables.ownerProfileId]
-        })
+        }),
+        queryClient.invalidateQueries({ queryKey: ['home'] })
       ])
     }
   })

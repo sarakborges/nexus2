@@ -19,7 +19,10 @@ export function useUpdateCommunityMutation(): UseUpdateCommunityMutationResult {
         queryKeys.communities.byUrl(updated.url),
         updated
       )
-      await queryClient.invalidateQueries({ queryKey: ['communities'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['communities'] }),
+        queryClient.invalidateQueries({ queryKey: ['home'] })
+      ])
     }
   })
 }

@@ -1,4 +1,5 @@
 export const queryKeys = {
+  home: (userId: string) => ['home', userId] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },
@@ -23,8 +24,6 @@ export const queryKeys = {
       ['communities', 'by-ids', [...ids].sort()] as const,
     byProfile: (profileId: string, page: number, pageSize: number) =>
       ['communities', 'by-profile', profileId, page, pageSize] as const,
-    ownedMemberships: (profileIds: string[]) =>
-      ['communities', 'owned-memberships', ...[...profileIds].sort()] as const
   },
   relationships: {
     byProfile: (profileId: string) =>

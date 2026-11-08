@@ -46,7 +46,8 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['auth'] }),
-        queryClient.invalidateQueries({ queryKey: ['activity'] })
+        queryClient.invalidateQueries({ queryKey: ['activity'] }),
+        queryClient.invalidateQueries({ queryKey: ['home'] })
       ])
     }
   })

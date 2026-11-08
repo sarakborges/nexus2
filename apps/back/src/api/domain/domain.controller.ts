@@ -19,10 +19,19 @@ import {
   UpdateProfileDto
 } from './domain.dto'
 import { DomainService } from './domain.service'
+import { HomePageService } from './home-page.service'
 
 @Controller()
 export class DomainController {
-  constructor(private readonly domain: DomainService) {}
+  constructor(
+    private readonly domain: DomainService,
+    private readonly homePage: HomePageService
+  ) {}
+
+  @Get('home') @UseGuards(JwtAccessGuard)
+  getHomePage(@CurrentUser() u: AuthenticatedUserContext) {
+    return this.homePage.getHomePage(u.id)
+  }
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
 

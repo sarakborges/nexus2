@@ -1,6 +1,7 @@
 import type { CollectionRecordMap, DataRepository } from './repository.interface'
 
 type CollectionRow = {
+  collection?: unknown
   records?: unknown
   updated_at?: unknown
 }
@@ -72,10 +73,7 @@ export class SupabaseRestRepository implements DataRepository {
     const names = this.validateTransactionCollections(collections)
 
     for (let attempt = 0; attempt < MAX_UPDATE_ATTEMPTS; attempt += 1) {
-      const snapshots = new Map<string, CollectionSnapshot<unknown>>()
-      await Promise.all(names.map(async name => {
-        snapshots.set(name, await this.readSnapshot<unknown>(name))
-      }))
+      const snapshots = await this.readSnapshots(names)
 
       const current: CollectionRecordMap = {}
       for (const name of names) current[name] = structuredClone(snapshots.get(name)!.records)
@@ -127,6 +125,57 @@ export class SupabaseRestRepository implements DataRepository {
       'Concurrent updates prevented collection transaction (' + names.join(', ') +
       ') from being saved after ' + MAX_UPDATE_ATTEMPTS + ' attempts.'
     )
+  }
+
+  private async readSnapshots(
+    collections: readonly string[]
+  ): Promise<Map<string, CollectionSnapshot<unknown>>> {
+    const requested = new Set(collections)
+    const url = new URL(this.endpoint)
+    url.searchParams.set('select', 'collection,records,updated_at')
+    url.searchParams.set('collection', 'in.(' + collections.join(',') + ')')
+    url.searchParams.set('limit', String(collections.length))
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: this.headers()
+    })
+    await this.assertSuccess(response)
+
+    const rows = await response.json() as CollectionRow[]
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase transaction returned an invalid collection snapshot.')
+    }
+
+    const snapshots = new Map<string, CollectionSnapshot<unknown>>()
+    for (const row of rows) {
+      const name = row.collection
+      if (typeof name !== 'string' || !requested.has(name)) {
+        throw new Error('Supabase transaction returned an unknown collection.')
+      }
+      if (snapshots.has(name)) {
+        throw new Error('Supabase collection "' + name + '" returned more than one row.')
+      }
+
+      const records = row.records
+      const updatedAt = row.updated_at
+      if (
+        !Array.isArray(records) ||
+        typeof updatedAt !== 'string' ||
+        !Number.isFinite(Date.parse(updatedAt))
+      ) {
+        throw new Error('Supabase collection "' + name + '" contains an invalid snapshot.')
+      }
+      snapshots.set(name, { records, updatedAt })
+    }
+
+    for (const name of collections) {
+      if (!snapshots.has(name)) {
+        snapshots.set(name, { records: [], updatedAt: null })
+      }
+    }
+
+    return snapshots
   }
 
   private async readSnapshot<T>(collection: string): Promise<CollectionSnapshot<T>> {

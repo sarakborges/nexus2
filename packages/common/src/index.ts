@@ -38,3 +38,12 @@ export type RecentActivity =
       community: Community
       role: Extract<CommunityRelationshipType, 'owner' | 'moderator' | 'connection'>
     }
+
+
+export type HomePageData = {
+  currentProfile: Profile | null
+  activities: RecentActivity[]
+  friends: PaginatedResult<Profile>
+  communities: PaginatedResult<Community>
+  suggestions: Community[]
+}

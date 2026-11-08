@@ -9,6 +9,7 @@ import { DomainAccessService } from './domain/domain-access.service'
 import { CommunityForumService } from './domain/community-forum.service'
 import { ProfileMessageService } from './domain/profile-message.service'
 import { ActivityService } from './domain/activity.service'
+import { HomePageService } from './domain/home-page.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -22,6 +23,6 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}

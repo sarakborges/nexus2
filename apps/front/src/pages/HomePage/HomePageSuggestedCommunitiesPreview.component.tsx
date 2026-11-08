@@ -5,11 +5,10 @@ import { HomePagePreviewEntry } from './HomePagePreviewEntry.component'
 import type { HomePageSuggestedCommunitiesPreviewProps } from './HomePageSuggestedCommunitiesPreview.types'
 
 export function HomePageSuggestedCommunitiesPreview({
-  allCommunitiesQuery,
-  ownedCommunityIdsQuery,
-  suggestions
+  homeQuery
 }: HomePageSuggestedCommunitiesPreviewProps) {
   const { t } = useTranslations()
+  const suggestions = homeQuery.data?.suggestions ?? []
 
   return (
     <section className="social-preview-panel">
@@ -17,25 +16,12 @@ export function HomePageSuggestedCommunitiesPreview({
         <h2>{t('HOME_SUGGESTED_COMMUNITIES')}</h2>
       </header>
       <RequestState
-        isLoading={
-          allCommunitiesQuery.isLoading || ownedCommunityIdsQuery.isLoading
-        }
-        isFetching={
-          allCommunitiesQuery.isFetching || ownedCommunityIdsQuery.isFetching
-        }
-        isError={
-          allCommunitiesQuery.isError || ownedCommunityIdsQuery.isError
-        }
-        isEmpty={
-          allCommunitiesQuery.isSuccess &&
-          ownedCommunityIdsQuery.isSuccess &&
-          suggestions.length === 0
-        }
+        isLoading={homeQuery.isLoading}
+        isFetching={homeQuery.isFetching}
+        isError={homeQuery.isError}
+        isEmpty={homeQuery.isSuccess && suggestions.length === 0}
         emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
-        onRetry={() => {
-          void allCommunitiesQuery.refetch()
-          void ownedCommunityIdsQuery.refetch()
-        }}
+        onRetry={() => void homeQuery.refetch()}
       >
         <div className="home-page__preview-list">
           {suggestions.map((community) => (

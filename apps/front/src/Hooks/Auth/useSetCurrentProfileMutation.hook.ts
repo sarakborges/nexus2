@@ -13,11 +13,12 @@ export function useSetCurrentProfileMutation(): UseSetCurrentProfileMutationResu
       const success = await setCurrentProfile(profileId)
       if (!success) throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.setQueryData(
         queryKeys.auth.session,
         useAuthStore.getState().session
       )
+      await queryClient.invalidateQueries({ queryKey: ['home'] })
     }
   })
 }

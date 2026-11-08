@@ -15,7 +15,10 @@ export function useUpdateProfileMutation(): UseUpdateProfileMutationResult {
     mutationFn: ({ profileId, input }) => updateUserProfile(profileId, input),
     onSuccess: async (updated) => {
       queryClient.setQueryData(queryKeys.profiles.byUrl(updated.url), updated)
-      await queryClient.invalidateQueries({ queryKey: ['profiles'] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+        queryClient.invalidateQueries({ queryKey: ['home'] })
+      ])
     }
   })
 }
