@@ -15,6 +15,7 @@ import { CommunityPageService } from './domain/community-page.service'
 import { CommunityForumPageService } from './domain/community-forum-page.service'
 import { CommunityForumTopicPageService } from './domain/community-forum-topic-page.service'
 import { CommunityMembersPageService } from './domain/community-members-page.service'
+import { ProfileMessagesPageService } from './domain/profile-messages-page.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -28,6 +29,6 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
   controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}

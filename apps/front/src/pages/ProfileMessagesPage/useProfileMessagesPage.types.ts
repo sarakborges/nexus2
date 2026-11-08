@@ -1,8 +1,7 @@
 import type {
   AuthSession,
-  PaginatedResult,
   Profile,
-  ProfileMessage
+  ProfileMessagesPageData
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction, FormEvent } from 'react'
@@ -15,18 +14,17 @@ import type { ProfileMessageViewModel } from './ProfileMessageList.types'
 export type UseProfileMessagesPageResult = {
   requestedUrl: string
   session: AuthSession | null
+  isAuthInitialized: boolean
   page: number
   pageSize: number
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   content: string
   setContent: Dispatch<SetStateAction<string>>
-  profileQuery: UseQueryResult<Profile | null>
+  profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
   typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
   isProfileOwner: boolean
-  messagesQuery: UseQueryResult<PaginatedResult<ProfileMessage>>
   totalItems: number
-  senderProfilesQuery: UseQueryResult<Profile[]>
   messageItems: ProfileMessageViewModel[]
   canSendMessage: boolean
   canSubmitMessage: boolean

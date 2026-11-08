@@ -101,3 +101,11 @@ export type CommunityMembersPageData = {
   members: PaginatedResult<CommunityMember>
   pending: PaginatedResult<CommunityMember>
 }
+
+
+export type ProfileMessagesPageData = {
+  profile: Profile | null
+  isProfileOwner: boolean
+  messages: PaginatedResult<ProfileMessage>
+  senders: Profile[]
+}
