@@ -62,7 +62,8 @@ export function useCommunityRelationshipMutation(): UseCommunityRelationshipMuta
         queryClient.invalidateQueries({ queryKey: ['community-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] }),
-        queryClient.invalidateQueries({ queryKey: ['community-members-page'] })
+        queryClient.invalidateQueries({ queryKey: ['community-members-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] })
       ])
     }
   })

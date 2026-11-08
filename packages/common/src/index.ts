@@ -109,3 +109,16 @@ export type ProfileMessagesPageData = {
   messages: PaginatedResult<ProfileMessage>
   senders: Profile[]
 }
+
+
+export type ProfileDirectoryPageData =
+  | {
+      kind: 'friends'
+      profile: Profile | null
+      friends: PaginatedResult<Profile>
+    }
+  | {
+      kind: 'communities'
+      profile: Profile | null
+      communities: PaginatedResult<Community>
+    }

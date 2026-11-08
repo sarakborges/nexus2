@@ -16,20 +16,19 @@ export function ProfileFriendsPage() {
   const { t } = useTranslations()
   const {
     normalized,
-    profileQuery,
+    profileDirectoryQuery,
     profile,
     typeCompatibility,
     canInteract,
     page,
     pageSize,
     setPage,
-    friendsQuery,
     friends,
     totalItems
   } = useProfileFriendsPage()
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (profileDirectoryQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -37,14 +36,19 @@ export function ProfileFriendsPage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  }
+  if (profileDirectoryQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileDirectoryQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!profile) return <NotFoundPage />
 
   return (
@@ -55,19 +59,19 @@ export function ProfileFriendsPage() {
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
         </header>
-        <RequestState isFetching={profileQuery.isFetching} />
+        <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
           </p>
         )}
         <RequestState
-          isLoading={friendsQuery.isLoading}
-          isFetching={friendsQuery.isFetching}
-          isError={friendsQuery.isError}
-          isEmpty={friendsQuery.isSuccess && totalItems === 0}
+          isLoading={profileDirectoryQuery.isLoading}
+          isFetching={profileDirectoryQuery.isFetching}
+          isError={profileDirectoryQuery.isError}
+          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-          onRetry={() => void friendsQuery.refetch()}
+          onRetry={() => void profileDirectoryQuery.refetch()}
         >
           <div className="account-card__profile-list account-card__profile-list--grid">
             {friends.map((friend) => (
