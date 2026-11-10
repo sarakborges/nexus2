@@ -108,3 +108,8 @@
   width: 100%;
   aspect-ratio: 1 / 2;
 }
+
+.avatar-upload-field__fallback {
+  height: auto;
+  max-height: inherit;
+}

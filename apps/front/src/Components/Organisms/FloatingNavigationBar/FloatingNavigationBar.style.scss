@@ -318,3 +318,11 @@ html.has-global-navigation .auth-page {
   max-height: inherit;
   object-fit: cover;
 }
+
+.floating-navigation__profile-toggle > svg,
+.floating-navigation__profile-chevron,
+.floating-navigation__account-chevron {
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
+  flex: 0 0 var(--nexus-icon-size, 20px);
+}
