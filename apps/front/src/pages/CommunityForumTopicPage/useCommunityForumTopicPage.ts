@@ -104,7 +104,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const deleteReplyMutation = useDeleteCommunityForumReplyMutation()
 
   const togglePinned = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
     moderationMutation.mutate(
       {
         communityId: community.id,
@@ -119,7 +119,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const toggleLocked = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
     moderationMutation.mutate(
       {
         communityId: community.id,
@@ -134,7 +134,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const deleteTopic = () => {
-    if (!community || !topic || !forumProfileId) return
+    if (!canInteract || !community || !topic || !forumProfileId) return
     deleteTopicMutation.mutate(
       {
         communityId: community.id,
@@ -151,7 +151,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const deleteReply = (replyId: string) => {
-    if (!community || !forumProfileId) return
+    if (!canInteract || !community || !forumProfileId) return
     deleteReplyMutation.mutate(
       { communityId: community.id, replyId, profileId: forumProfileId },
       {

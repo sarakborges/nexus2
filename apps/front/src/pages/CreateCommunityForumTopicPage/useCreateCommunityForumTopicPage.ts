@@ -57,6 +57,7 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (
+      !canPublish ||
       !title.trim() ||
       !hasRichTextContent(content) ||
       !community ||
@@ -95,7 +96,7 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
     setContent,
     createMutation,
     submit,
-    canSubmit: Boolean(title.trim() && hasRichTextContent(content)),
+    canSubmit: Boolean(canPublish && title.trim() && hasRichTextContent(content)),
     uploadEditorImage
   }
 }
