@@ -106,7 +106,7 @@ export function CreateCommunityForumTopicPage() {
                 id="forum-topic-content"
                 value={content}
                 onChange={setContent}
-                maxTextLength={8000}
+                maxHtmlLength={8000}
                 imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
                 imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
                 onUploadImage={uploadEditorImage}

@@ -10,5 +10,6 @@ export type ProfileSidebarProps = {
     | 'messages'
     | 'community-list'
   showRelationshipActions?: boolean
+  portraitPicture?: boolean
   relationship?: Relationship | null
 }

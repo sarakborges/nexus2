@@ -2,6 +2,8 @@ import { Pagination, RequestState } from '@/Components'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
+import { useHomePage } from '@/pages/HomePage/useHomePage'
+import { HomePageSuggestedCommunitiesPreview } from '@/pages/HomePage/HomePageSuggestedCommunitiesPreview.component'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfileMessageComposer } from './ProfileMessageComposer.component'
 import { ProfileMessageList } from './ProfileMessageList.component'
@@ -11,6 +13,7 @@ import '../AuthenticatedPage.style.scss'
 
 export function ProfileMessagesPage() {
   const { t } = useTranslations()
+  const { homeQuery } = useHomePage()
   const {
     requestedUrl,
     session,
@@ -64,10 +67,10 @@ export function ProfileMessagesPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} />}
+      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} portraitPicture />}
+      rightSidebar={<HomePageSuggestedCommunitiesPreview homeQuery={homeQuery} />}
     >
       <div className="social-page__content-stack">
-        <RequestState isFetching={profileMessagesPageQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}

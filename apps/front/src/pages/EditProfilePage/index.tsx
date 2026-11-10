@@ -115,7 +115,7 @@ export function EditProfilePage() {
             >
               {t('ACTION_CANCEL')}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || form.about.length > 8000}>
               {isSubmitting
                 ? t('AUTH_SUBMITTING')
                 : t('PROFILE_UPDATE_ACTION')}

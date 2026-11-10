@@ -87,6 +87,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     event.preventDefault()
     if (
       !hasRichTextContent(content) ||
+      content.length > 8000 ||
       !canSendMessage ||
       !profile ||
       !messageSenderProfileId
@@ -130,7 +131,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     totalItems,
     messageItems,
     canSendMessage,
-    canSubmitMessage: hasRichTextContent(content),
+    canSubmitMessage: hasRichTextContent(content) && content.length <= 8000,
     isSendingMessage: sendMessageMutation.isPending,
     hasSendMessageError: sendMessageMutation.isError,
     isInvalidMessageError:

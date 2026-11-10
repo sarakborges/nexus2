@@ -49,7 +49,7 @@ export function CommunityForumReplyComposer({
               id="forum-reply-content"
               value={value}
               onChange={onChange}
-              maxTextLength={8000}
+              maxHtmlLength={8000}
               imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
               imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
               onUploadImage={onUploadImage}

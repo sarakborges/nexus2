@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useLayoutEffect } from 'react'
 import { useLocation } from 'react-router'
 
-import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
 import { getCurrentAuthSession } from '@/Services/Auth'

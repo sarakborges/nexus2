@@ -158,6 +158,8 @@ export const enUSTranslations = {
   PROFILE_PICTURE_LABEL: 'Profile image (optional)',
   PROFILE_ABOUT_LABEL: 'About',
   RICH_TEXT_PLACEHOLDER: 'Write here…',
+  RICH_TEXT_HTML_CHARACTER_COUNT: '{{count}} / {{max}} HTML characters',
+  RICH_TEXT_HTML_CHARACTER_LIMIT: 'MAIS DE OITO MIL!',
   RICH_TEXT_IMAGE_UPLOAD_FAILED:
     'The image could not be uploaded. Check the file type and size.',
   RICH_TEXT_INSERT_IMAGE: 'Upload image',
@@ -169,7 +171,7 @@ export const enUSTranslations = {
   UPLOAD_EMPTY: 'No image selected',
   PROFILE_ABOUT_EMPTY: 'This profile has not added an introduction yet.',
   PROFILE_ABOUT_MAX_LENGTH:
-    'Up to 500 text characters. Images and formatting are allowed.',
+    'Up to 8,000 HTML characters.',
   PROFILE_PICTURE_ALT: '{{name}} profile picture',
   PROFILE_ERROR_URL_TAKEN: 'This profile address is already in use.',
   PROFILE_ERROR_INVALID:
@@ -311,9 +313,9 @@ export const enUSTranslations = {
     'You can only see messages you sent to this profile.',
   PROFILE_MESSAGES_COMPOSE_LABEL: 'Write a message',
   PROFILE_MESSAGES_MAX_LENGTH:
-    'Maximum 4,000 text characters. Formatting and images are allowed.',
+    'Maximum 8,000 HTML characters.',
   PROFILE_MESSAGES_SEND: 'Send message',
-  PROFILE_MESSAGES_ERROR_INVALID: 'Write a message of up to 4,000 characters.',
+  PROFILE_MESSAGES_ERROR_INVALID: 'Write a message of up to 8,000 HTML characters.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'The message could not be saved.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Select one of your profiles to send a message.',

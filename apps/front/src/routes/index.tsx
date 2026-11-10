@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router'
 
 import { AuthenticatedRoute } from './AuthenticatedRoute.component'
+import { GuestRoute } from './GuestRoute.component'
 import { OnboardingRoute } from './OnboardingRoute.component'
 import { ProfileRequiredRoute } from './ProfileRequiredRoute.component'
 import { RouteLoadingState } from './RouteLoadingState.component'
@@ -74,12 +75,14 @@ export function AppRoutes() {
   return (
     <Suspense fallback={<RouteLoadingState />}>
       <Routes>
-        <Route
-          path={ROUTES.landing}
-          element={<Navigate to={ROUTES.signIn} replace />}
-        />
-        <Route path={ROUTES.signUp} element={<SignUpPage />} />
-        <Route path={ROUTES.signIn} element={<SignInPage />} />
+        <Route element={<GuestRoute />}>
+          <Route
+            path={ROUTES.landing}
+            element={<Navigate to={ROUTES.signIn} replace />}
+          />
+          <Route path={ROUTES.signUp} element={<SignUpPage />} />
+          <Route path={ROUTES.signIn} element={<SignInPage />} />
+        </Route>
         <Route element={<AuthenticatedRoute />}>
           <Route
             path={`${ROUTES.profile}/:url/edit`}

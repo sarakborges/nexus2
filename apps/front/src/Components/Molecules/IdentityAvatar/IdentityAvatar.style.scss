@@ -1,3 +1,18 @@
+.identity-avatar {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  line-height: 1;
+  text-align: center;
+}
+
+.identity-avatar__initial {
+  display: block;
+  max-width: 100%;
+  line-height: 1;
+  text-align: center;
+}
+
 .identity-avatar__image {
   display: block;
   width: 100%;

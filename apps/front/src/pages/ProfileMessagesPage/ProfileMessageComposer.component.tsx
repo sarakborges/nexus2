@@ -51,15 +51,12 @@ export function ProfileMessageComposer({
           id="profile-message-content"
           value={content}
           onChange={onContentChange}
-          maxTextLength={4000}
+          maxHtmlLength={8000}
           imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
           imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
           onUploadImage={onUploadImage}
           placeholder={t('RICH_TEXT_PLACEHOLDER')}
         />
-        <p className="account-card__description">
-          {t('PROFILE_MESSAGES_MAX_LENGTH')}
-        </p>
       </div>
       {hasSendMessageError && (
         <p className="auth-card__error" role="alert">
