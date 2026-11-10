@@ -1,4 +1,4 @@
-import type { Profile } from '@nexus/common'
+import type { Profile, Relationship } from '@nexus/common'
 
 export type ProfileSidebarProps = {
   profile: Profile
@@ -10,4 +10,5 @@ export type ProfileSidebarProps = {
     | 'messages'
     | 'community-list'
   showRelationshipActions?: boolean
+  relationship?: Relationship | null
 }

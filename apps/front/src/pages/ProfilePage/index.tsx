@@ -17,6 +17,7 @@ export function ProfilePage() {
     requestedUrl,
     profilePageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     canInteract,
     friends,
@@ -57,6 +58,7 @@ export function ProfilePage() {
             profile={profile}
             active="profile"
             showRelationshipActions={canInteract}
+            relationship={viewerRelationship}
           />
         </aside>
 

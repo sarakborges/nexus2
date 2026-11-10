@@ -6,7 +6,8 @@ export const queryKeys = {
     page: number,
     pageSize: number
   ) => ['communities-page', userId, currentProfileId, page, pageSize] as const,
-  profilePage: (url: string) => ['profile-page', url] as const,
+  profilePage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
+    ['profile-page', url, viewerUserId, currentProfileId] as const,
   profileMessagesPage: (
     url: string,
     page: number,

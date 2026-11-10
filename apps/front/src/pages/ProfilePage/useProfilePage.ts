@@ -14,15 +14,19 @@ export function useProfilePage(): UseProfilePageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)
 
   const profilePageQuery = useQuery({
-    queryKey: queryKeys.profilePage(requestedUrl),
+    queryKey: queryKeys.profilePage(requestedUrl, viewerUserId, currentProfileId),
     queryFn: () => getProfilePage(requestedUrl),
-    enabled: Boolean(requestedUrl),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
     staleTime: 30 * 1000
   })
   const profile = profilePageQuery.data?.profile
+  const viewerRelationship = profilePageQuery.data?.viewerRelationship ?? null
   const friends = profilePageQuery.data?.friends.items ?? []
   const communities = profilePageQuery.data?.communities.items ?? []
   const typeCompatibility = useProfileTypeCompatibility(
@@ -38,6 +42,7 @@ export function useProfilePage(): UseProfilePageResult {
     requestedUrl,
     profilePageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     canInteract: typeCompatibility.canInteract,
     friends,
