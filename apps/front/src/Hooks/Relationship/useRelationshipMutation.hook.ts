@@ -24,7 +24,8 @@ export function useRelationshipMutation(): UseRelationshipMutationResult {
         queryClient.invalidateQueries({ queryKey: ['relationships'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
-        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] })
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-messages-page'] })
       ])
     }
   })
