@@ -25,22 +25,26 @@ export class CommunityForumRealtimeService {
 
   async publishTopicChanged(topicId: string): Promise<void> {
     const config = this.getPublicConfig()
-    if (!config.enabled) return
+    const secretKey = this.config.get<string>('SUPABASE_STORAGE_SECRET_KEY')
+    if (!config.enabled || !secretKey) return
 
-    const topic = `nexus-forum-topic-${encodeURIComponent(topicId)}`
-    const endpoint = new URL(
-      `/realtime/v1/api/broadcast/${topic}/events/topic_changed`,
-      config.supabaseUrl
-    )
+    const topic = `nexus-forum-topic-${topicId}`
+    const endpoint = new URL('/realtime/v1/api/broadcast', config.supabaseUrl)
 
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          apikey: config.publishableKey,
+          apikey: secretKey,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ changedAt: Date.now() })
+        body: JSON.stringify({
+          messages: [{
+            topic,
+            event: 'topic_changed',
+            payload: { changedAt: Date.now() }
+          }]
+        })
       })
 
       if (!response.ok) {

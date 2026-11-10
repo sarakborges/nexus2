@@ -72,7 +72,7 @@ Create the following variables in the Vercel project for Preview and Production:
 - `SUPABASE_URL`: Supabase project URL.
 - `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key, also used by the topic page's public Realtime channel. The frontend receives this public key and the project URL from the backend's `/api/realtime/config` endpoint; do not use the Supabase secret key here.
 - `SUPABASE_API_SECRET`: the existing independent secret used only by the Nexus database RPCs.
-- `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
+- `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations and to publish forum-topic change events to Realtime. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
 - `CRON_SECRET`: a long random value shared by the BFF and backend to authenticate the daily cleanup cron.
 
 The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Forum topic broadcasts carry only a change notification; the topic's content is always loaded through the existing authorized backend API. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
