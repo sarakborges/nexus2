@@ -49,7 +49,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     queryFn: () =>
       getCommunityForumTopicPage(normalized, topicId!, { page, pageSize, query, sort }),
     enabled: Boolean(normalized && topicId && isAuthInitialized),
-    staleTime: Infinity
+    staleTime: 30 * 1000
   })
   useEffect(() => {
     if (!topicId || !topicPageQuery.isSuccess) return

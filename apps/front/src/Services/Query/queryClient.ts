@@ -4,11 +4,11 @@ import axios from 'axios'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity,
+      staleTime: 30_000,
       gcTime: 5 * 60_000,
-      refetchOnMount: false,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      refetchInterval: false,
       retry: (failureCount, error) => {
         if (axios.isAxiosError(error) && error.response?.status === 404)
           return false

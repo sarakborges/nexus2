@@ -7,7 +7,7 @@
 - `apps/back`: NestJS domain API. Owns authentication, authorization, validation, domain services and persistence.
 - `packages/common`: shared domain models, DTO contracts and pagination types.
 
-The three applications are deployed together in one Vercel project using Vercel Services. Only community forum topic pages use live updates: the frontend opens a Supabase Realtime WebSocket for the active topic. All other queries remain cached and do not refetch on mount, window focus or reconnect; a manual page reload or an explicit mutation can still refresh the data it changed. The BFF is the only public API service; the domain backend remains private and is reached through a Vercel service binding.
+The three applications are deployed together in one Vercel project using Vercel Services. Only community forum topic pages use live updates: the frontend opens a Supabase Realtime WebSocket for the active topic. Other views still load normally when opened, but do not refresh in the background on a timer, window focus or network reconnect. Explicit mutations continue to refresh the data they change. The BFF is the only public API service; the domain backend remains private and is reached through a Vercel service binding.
 
 ## Development
 
