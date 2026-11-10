@@ -1,9 +1,13 @@
+require('reflect-metadata')
+
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { validateSync } = require('class-validator')
 const {
   CreateProfileDto,
+  UpdateProfileDto,
   CreateCommunityDto,
+  UpdateCommunityDto,
   MessageDto,
   CreateForumTopicDto,
   CreateForumReplyDto
@@ -27,6 +31,17 @@ const community = about => ({
   privacy: 'public',
   ownerProfileId: 'profile-1'
 })
+const updateProfile = about => ({
+  name: 'Profile',
+  picture: '',
+  about
+})
+const updateCommunity = about => ({
+  name: 'Community',
+  picture: '',
+  about,
+  privacy: 'public'
+})
 const message = content => ({ fromProfileId: 'profile-1', content })
 const topic = content => ({
   profileId: 'profile-1',
@@ -37,7 +52,9 @@ const reply = content => ({ profileId: 'profile-1', content })
 
 const cases = [
   ['profile about', CreateProfileDto, profile, 'about'],
+  ['profile update about', UpdateProfileDto, updateProfile, 'about'],
   ['community about', CreateCommunityDto, community, 'about'],
+  ['community update about', UpdateCommunityDto, updateCommunity, 'about'],
   ['profile message', MessageDto, message, 'content'],
   ['forum topic', CreateForumTopicDto, topic, 'content'],
   ['forum reply', CreateForumReplyDto, reply, 'content']
