@@ -1,4 +1,5 @@
 import { RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   CommunitySidebar,
   SocialPageLayout
@@ -19,6 +20,10 @@ export function CommunityMembersPage() {
     isAuthInitialized,
     activeTab,
     setActiveTab,
+    query,
+    sort,
+    setQuery,
+    setSort,
     page,
     pageSize,
     setPage,
@@ -87,6 +92,7 @@ export function CommunityMembersPage() {
     >
       <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         {isStaff && (
           <CommunityPendingMembersSection
             pageQuery={communityMembersPageQuery}

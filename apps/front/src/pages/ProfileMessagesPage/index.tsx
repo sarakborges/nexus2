@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -17,6 +18,10 @@ export function ProfileMessagesPage() {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     content,
     setContent,
     profileMessagesPageQuery,
@@ -82,6 +87,7 @@ export function ProfileMessagesPage() {
             </p>
           </div>
         </header>
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <ProfileMessageComposer
           hasSession={Boolean(session)}
           isProfileOwner={isProfileOwner}

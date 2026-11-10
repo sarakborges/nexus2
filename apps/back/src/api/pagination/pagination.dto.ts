@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer'
-import { Equals, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator'
+import { Equals, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator'
 
 import { FIXED_PAGE_SIZE } from './pagination.constants'
 

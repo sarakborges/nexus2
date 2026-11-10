@@ -16,7 +16,7 @@ export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
   const profileDirectoryQuery = useQuery({
     queryKey: queryKeys.profileDirectoryPage(
@@ -25,10 +25,12 @@ export function useProfileFriendsPage(): UseProfileFriendsPageResult {
       page,
       pageSize,
       viewerUserId,
-      currentProfileId
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
-      getProfileDirectoryPage(normalized, 'friends', { page, pageSize }),
+      getProfileDirectoryPage(normalized, 'friends', { page, pageSize, query, sort }),
     enabled: Boolean(normalized && isAuthInitialized),
     staleTime: 30 * 1000
   })
@@ -79,6 +81,10 @@ export function useProfileFriendsPage(): UseProfileFriendsPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     friends,
     totalItems
   }

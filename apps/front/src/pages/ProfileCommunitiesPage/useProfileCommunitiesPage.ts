@@ -16,7 +16,7 @@ export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
   const profileDirectoryQuery = useQuery({
     queryKey: queryKeys.profileDirectoryPage(
@@ -25,10 +25,12 @@ export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
       page,
       pageSize,
       viewerUserId,
-      currentProfileId
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
-      getProfileDirectoryPage(normalized, 'communities', { page, pageSize }),
+      getProfileDirectoryPage(normalized, 'communities', { page, pageSize, query, sort }),
     enabled: Boolean(normalized && isAuthInitialized),
     staleTime: 30 * 1000
   })
@@ -68,6 +70,10 @@ export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   }

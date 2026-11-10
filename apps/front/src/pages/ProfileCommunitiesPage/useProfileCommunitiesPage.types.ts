@@ -16,6 +16,10 @@ export type UseProfileCommunitiesPageResult = {
   }
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   communities: Community[]
   totalItems: number

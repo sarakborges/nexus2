@@ -12,6 +12,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
 import { normalizeEntityUrl } from './domain.utils'
 import { sanitizeRichText } from './rich-text-sanitizer'
@@ -131,18 +132,16 @@ export class CommunityForumTopicPageService {
         )
         if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
 
-        const allReplies = (
-          records.community_forum_replies as CommunityForumReply[]
+        const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
+        const allReplies = filterAndSortList(
+          (records.community_forum_replies as CommunityForumReply[]).filter(reply => reply.topicId === topicId && reply.communityId === community.id),
+          query.query,
+          query.sort,
+          reply => [reply.content, profilesById.get(reply.profileId)?.name ?? '', profilesById.get(reply.profileId)?.url ?? ''].join(' '),
+          reply => reply.createdAt,
+          reply => profilesById.get(reply.profileId)?.name ?? '',
+          reply => reply.id
         )
-          .filter(
-            (reply) =>
-              reply.topicId === topicId &&
-              reply.communityId === community.id
-          )
-          .sort(
-            (a, b) =>
-              a.createdAt - b.createdAt || a.id.localeCompare(b.id)
-          )
         const detail: CommunityForumTopicDetail = {
           topic: { ...topic, replyCount: allReplies.length },
           replies: paginate(allReplies, query)

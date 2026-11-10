@@ -18,6 +18,10 @@ export type UseCommunityMembersPageResult = {
   setActiveTab: Dispatch<SetStateAction<MemberTab>>
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: PaginationSetter
   pendingPage: number
   pendingPageSize: number

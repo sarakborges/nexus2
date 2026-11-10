@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -21,6 +22,10 @@ export function CommunitiesPage() {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   } = useCommunitiesPage()
@@ -59,6 +64,7 @@ export function CommunitiesPage() {
             {t('COMMUNITIES_CREATE')}
           </ButtonLink>
         </header>
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}

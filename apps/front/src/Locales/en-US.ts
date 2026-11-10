@@ -371,6 +371,13 @@ export const enUSTranslations = {
   FORUM_UNKNOWN_AUTHOR: 'Unknown profile',
   FORUM_TOPIC_ERROR: 'The topic could not be saved.',
 
+  LIST_FILTER_PLACEHOLDER: 'Filter this list',
+  LIST_FILTER_SUBMIT: 'Filter',
+  LIST_SORT_LABEL: 'Sort by',
+  LIST_SORT_ACTIVITY_DESC: 'Most recent activity',
+  LIST_SORT_ACTIVITY_ASC: 'Oldest activity',
+  LIST_SORT_NAME_ASC: 'Name (A–Z)',
+  LIST_SORT_NAME_DESC: 'Name (Z–A)',
   COMMUNITY_PENDING_EMPTY: 'There are no pending requests.',
   PAGINATION_LABEL: 'List pages',
   PAGINATION_PREVIOUS: 'Previous',

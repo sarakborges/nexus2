@@ -1,4 +1,4 @@
-import type { PaginatedResult, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ListSort, PaginatedResult, SearchResultItem, SearchScope } from '@nexus/common'
 import { api } from '@/Services/Http/api'
 
 export type SearchParams = {
@@ -6,6 +6,7 @@ export type SearchParams = {
   scope: SearchScope
   page: number
   pageSize: number
+  sort: ListSort
 }
 
 export async function searchEntities(

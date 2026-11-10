@@ -20,7 +20,7 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
   const [activeTab, setActiveTab] = useState<MemberTab>('all')
-  const { page, pageSize, setPage } = useUrlPagination('page')
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination('page')
   const {
     page: pendingPage,
     pageSize: pendingPageSize,
@@ -35,13 +35,17 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
       pendingPage,
       viewerUserId,
       profileIds,
-      currentProfileId
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
       getCommunityMembersPage(normalized, {
         tab: activeTab,
         page,
-        pendingPage
+        pendingPage,
+        query,
+        sort
       }),
     enabled: Boolean(normalized && isAuthInitialized),
     staleTime: 30 * 1000
@@ -86,6 +90,10 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     pendingPage,
     pendingPageSize,
     setPendingPage,

@@ -378,6 +378,13 @@ export const ptBRTranslations = {
   FORUM_UNKNOWN_AUTHOR: 'Perfil desconhecido',
   FORUM_TOPIC_ERROR: 'Não foi possível salvar o tópico.',
 
+  LIST_FILTER_PLACEHOLDER: 'Filtrar nesta listagem',
+  LIST_FILTER_SUBMIT: 'Filtrar',
+  LIST_SORT_LABEL: 'Ordenar por',
+  LIST_SORT_ACTIVITY_DESC: 'Atividade mais recente',
+  LIST_SORT_ACTIVITY_ASC: 'Atividade mais antiga',
+  LIST_SORT_NAME_ASC: 'Nome (A–Z)',
+  LIST_SORT_NAME_DESC: 'Nome (Z–A)',
   COMMUNITY_PENDING_EMPTY: 'Não há solicitações pendentes.',
   PAGINATION_LABEL: 'Páginas da listagem',
   PAGINATION_PREVIOUS: 'Anterior',

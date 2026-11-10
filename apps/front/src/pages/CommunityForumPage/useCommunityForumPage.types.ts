@@ -16,6 +16,10 @@ export type UseCommunityForumPageResult = {
   session: AuthSession | null
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   forumPageQuery: UseQueryResult<CommunityForumPageData>
   community: Community | null | undefined

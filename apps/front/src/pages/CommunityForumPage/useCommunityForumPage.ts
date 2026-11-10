@@ -18,7 +18,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const normalized = normalizeEntityUrl(url)
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
   const forumPageQuery = useQuery({
     queryKey: queryKeys.communityForumPage(
@@ -26,9 +26,11 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
       page,
       pageSize,
       viewerUserId,
-      currentProfileId
+      currentProfileId,
+      query,
+      sort
     ),
-    queryFn: () => getCommunityForumPage(normalized, { page, pageSize }),
+    queryFn: () => getCommunityForumPage(normalized, { page, pageSize, query, sort }),
     enabled: Boolean(normalized && isAuthInitialized),
     staleTime: 30 * 1000
   })
@@ -66,6 +68,10 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     forumPageQuery,
     community,
     viewerRelationship,

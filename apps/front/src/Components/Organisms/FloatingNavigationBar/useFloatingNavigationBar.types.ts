@@ -5,7 +5,7 @@ import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 
 export type UseFloatingNavigationBarOptions = FloatingNavigationBarProps
 
-export type NavigationPanel = 'navigation' | 'account'
+export type NavigationPanel = 'account'
 
 export type OpenPanel = {
   panel: NavigationPanel

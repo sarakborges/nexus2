@@ -1,7 +1,8 @@
 .social-page {
+  box-sizing: border-box;
   width: 100%;
   min-height: 100dvh;
-  padding: 104px 0 40px;
+  padding: 88px 0 40px;
   color: var(--text-color);
   font-size: 14px;
 }
@@ -181,7 +182,7 @@
 
 @media (max-width: 680px) {
   .social-page {
-    padding: 88px 0 28px;
+    padding: 78px 0 28px;
   }
 
   .social-page__layout,

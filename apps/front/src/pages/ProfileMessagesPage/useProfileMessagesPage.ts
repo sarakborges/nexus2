@@ -26,7 +26,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
   const [content, setContent] = useState('')
 
   const profileMessagesPageQuery = useQuery({
@@ -35,10 +35,12 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       page,
       pageSize,
       session?.user.id ?? null,
-      currentProfileId
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
-      getProfileMessagesPage(requestedUrl, { page, pageSize }),
+      getProfileMessagesPage(requestedUrl, { page, pageSize, query, sort }),
     enabled: Boolean(requestedUrl && isAuthInitialized),
     staleTime: 30 * 1000
   })
@@ -114,6 +116,10 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     content,
     setContent,
     profileMessagesPageQuery,

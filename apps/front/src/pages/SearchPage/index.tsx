@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import type { SearchResultItem, SearchScope } from '@nexus/common'
 import { IdentityAvatar, Pagination } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
@@ -59,11 +60,11 @@ export function SearchPage() {
     requestedScope === 'profiles' || requestedScope === 'communities'
       ? requestedScope
       : 'all'
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, sort, setSort } = useUrlPagination()
 
   const searchQuery = useQuery({
-    queryKey: queryKeys.search(query, scope, page, pageSize),
-    queryFn: () => searchEntities({ query, scope, page, pageSize }),
+    queryKey: queryKeys.search(query, scope, sort, page, pageSize),
+    queryFn: () => searchEntities({ query, scope, page, pageSize, sort }),
     enabled: query.length > 0
   })
   const results = searchQuery.data?.items ?? []
@@ -83,6 +84,8 @@ export function SearchPage() {
             </span>
           )}
         </header>
+
+        <PaginatedListControls query={query} sort={sort} onQueryChange={() => undefined} onSortChange={setSort} showQuery={false} />
 
         {!query && (
           <p className="search-page__state">{t('SEARCH_EMPTY_QUERY')}</p>

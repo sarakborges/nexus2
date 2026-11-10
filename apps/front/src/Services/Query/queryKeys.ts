@@ -1,13 +1,15 @@
 export const queryKeys = {
   home: (userId: string) => ['home', userId] as const,
-  search: (query: string, scope: string, page: number, pageSize: number) =>
-    ['search', query, scope, page, pageSize] as const,
+  search: (query: string, scope: string, sort: string, page: number, pageSize: number) =>
+    ['search', query, scope, sort, page, pageSize] as const,
   communitiesPage: (
     userId: string,
     currentProfileId: string | null,
     page: number,
-    pageSize: number
-  ) => ['communities-page', userId, currentProfileId, page, pageSize] as const,
+    pageSize: number,
+    query: string,
+    sort: string
+  ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort] as const,
   profilePage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
     ['profile-page', url, viewerUserId, currentProfileId] as const,
   profileMessagesPage: (
@@ -15,16 +17,20 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     viewerUserId: string | null,
-    currentProfileId: string | null
-  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId] as const,
+    currentProfileId: string | null,
+    query: string,
+    sort: string
+  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
   profileDirectoryPage: (
     url: string,
     kind: 'friends' | 'communities',
     page: number,
     pageSize: number,
     viewerUserId: string | null,
-    currentProfileId: string | null
-  ) => ['profile-directory-page', url, kind, page, pageSize, viewerUserId, currentProfileId] as const,
+    currentProfileId: string | null,
+    query: string,
+    sort: string
+  ) => ['profile-directory-page', url, kind, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
   communityForumComposerPage: (
     url: string,
     viewerUserId: string | null,
@@ -47,18 +53,22 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     viewerUserId: string | null,
-    currentProfileId: string | null
+    currentProfileId: string | null,
+    query: string,
+    sort: string
   ) =>
-    ['community-forum-page', url, page, pageSize, viewerUserId, currentProfileId] as const,
+    ['community-forum-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
   communityForumTopicPage: (
     url: string,
     topicId: string,
     page: number,
     pageSize: number,
     viewerUserId: string | null,
-    currentProfileId: string | null
+    currentProfileId: string | null,
+    query: string,
+    sort: string
   ) =>
-    ['community-forum-topic-page', url, topicId, page, pageSize, viewerUserId, currentProfileId] as const,
+    ['community-forum-topic-page', url, topicId, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
   communityMembersPage: (
     url: string,
     tab: string,
@@ -66,9 +76,11 @@ export const queryKeys = {
     pendingPage: number,
     viewerUserId: string | null,
     profileIds: string[],
-    currentProfileId: string | null
+    currentProfileId: string | null,
+    query: string,
+    sort: string
   ) =>
-    ['community-members-page', url, tab, page, pendingPage, viewerUserId, [...profileIds].sort(), currentProfileId] as const,
+    ['community-members-page', url, tab, page, pendingPage, viewerUserId, [...profileIds].sort(), currentProfileId, query, sort] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },

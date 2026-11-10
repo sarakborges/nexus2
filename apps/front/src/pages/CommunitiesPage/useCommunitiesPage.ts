@@ -12,16 +12,18 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
   const communitiesPageQuery = useQuery({
     queryKey: queryKeys.communitiesPage(
       userId ?? '',
       currentProfileId,
       page,
-      pageSize
+      pageSize,
+      query,
+      sort
     ),
-    queryFn: () => getCommunitiesPage({ page, pageSize }),
+    queryFn: () => getCommunitiesPage({ page, pageSize, query, sort }),
     enabled: Boolean(isAuthInitialized && userId),
     staleTime: 30 * 1000
   })
@@ -43,6 +45,10 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   }

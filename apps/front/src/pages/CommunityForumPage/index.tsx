@@ -1,4 +1,5 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import {
   CommunitySidebar,
@@ -21,6 +22,10 @@ export function CommunityForumPage() {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     forumPageQuery,
     community,
     viewerRelationship,
@@ -90,6 +95,7 @@ export function CommunityForumPage() {
           )}
         </header>
 
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState isFetching={forumPageQuery.isFetching} />
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">

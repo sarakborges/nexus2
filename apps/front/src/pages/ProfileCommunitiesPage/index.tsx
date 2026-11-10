@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -24,6 +25,10 @@ export function ProfileCommunitiesPage() {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   } = useProfileCommunitiesPage()
@@ -62,6 +67,7 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
