@@ -68,8 +68,8 @@ export class CommunityService {
     )
   }
   async getCommunitiesByIds(ids: string[]): Promise<Community[]> {
-    const set = new Set(ids)
-    return (await this.access.readCommunities()).filter(community => set.has(community.id) && community.privacy === 'public')
+    return (await this.access.readCommunitiesByIds(ids))
+      .filter(community => community.privacy === 'public')
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
     return this.data.transaction<PaginatedResult<Community>>(
