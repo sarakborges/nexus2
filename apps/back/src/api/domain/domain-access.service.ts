@@ -34,6 +34,37 @@ export class DomainAccessService {
     })
   }
 
+  touchProfilesActivity(
+    profiles: readonly Profile[],
+    profileIds: readonly string[],
+    lastActivity: number
+  ): Profile[] {
+    const activeIds = new Set(profileIds)
+    return profiles.map(profile => activeIds.has(profile.id)
+      ? {
+          ...profile,
+          createdAt: Number.isFinite(profile.createdAt) ? profile.createdAt : 0,
+          lastActivity
+        }
+      : profile
+    )
+  }
+
+  touchCommunityActivity(
+    communities: readonly Community[],
+    communityId: string,
+    lastActivity: number
+  ): Community[] {
+    return communities.map(community => community.id === communityId
+      ? {
+          ...community,
+          createdAt: Number.isFinite(community.createdAt) ? community.createdAt : 0,
+          lastActivity
+        }
+      : community
+    )
+  }
+
   normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
     records: CollectionRecordMap
     communities: Community[]

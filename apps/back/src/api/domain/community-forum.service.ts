@@ -132,6 +132,9 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: [...topics, topic],
             media_files: nextMediaFiles
           },
@@ -182,6 +185,9 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_replies: [...replies, reply],
             community_forum_topics: currentTopics.map(record =>
               record.id === topicId ? { ...record, updatedAt: now } : record
@@ -221,6 +227,9 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: topics.map(record => record.id === topicId ? updated : record)
           },
           result: updated

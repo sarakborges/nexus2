@@ -100,6 +100,7 @@ export class ProfileRelationshipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [source, target], now),
             relationships: [
               ...all.filter(record =>
                 record.profiles[0] !== pair[0] || record.profiles[1] !== pair[1]
@@ -136,6 +137,9 @@ export class ProfileRelationshipService {
         return {
           records: {
             ...collections,
+            ...(current
+              ? { profiles: this.access.touchProfilesActivity(profiles, [source, target], Date.now()) }
+              : {}),
             relationships: all.filter(record =>
               record.profiles[0] !== pair[0] || record.profiles[1] !== pair[1]
             )
