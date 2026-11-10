@@ -9,6 +9,7 @@ import {
 } from 'react-icons/fi'
 import type { SearchScope } from '@nexus/common'
 
+import { ROUTES } from '@/Constants/routes'
 import { IdentityAvatar } from '@/Components/Molecules'
 import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from './AccountMenu.component'

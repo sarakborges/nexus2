@@ -186,6 +186,7 @@ export class CommunityMembershipService {
   }
 
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -216,7 +217,7 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
-            communities: this.access.touchCommunityActivity(communities, communityId, Date.now()),
+            communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.filter(record =>
               record.profiles[0] !== targetId || record.profiles[1] !== communityId
             )

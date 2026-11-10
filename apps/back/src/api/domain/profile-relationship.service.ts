@@ -116,6 +116,7 @@ export class ProfileRelationshipService {
 
   async removeProfileRelationship(userId: string, source: string, target: string): Promise<void> {
     const pair = [source, target].sort()
+    const lastActivity = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'relationships'],
       collections => {
@@ -138,7 +139,7 @@ export class ProfileRelationshipService {
           records: {
             ...collections,
             ...(current
-              ? { profiles: this.access.touchProfilesActivity(profiles, [source, target], Date.now()) }
+              ? { profiles: this.access.touchProfilesActivity(profiles, [source, target], lastActivity) }
               : {}),
             relationships: all.filter(record =>
               record.profiles[0] !== pair[0] || record.profiles[1] !== pair[1]
