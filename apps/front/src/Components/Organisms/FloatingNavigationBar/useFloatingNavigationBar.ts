@@ -60,8 +60,8 @@ export function useFloatingNavigationBar({
 
   const profiles = profilesQuery.data ?? []
   const currentProfile =
-    profiles.find((profile) => profile.id === currentProfileId) ??
     currentProfileQuery.data ??
+    profiles.find((profile) => profile.id === currentProfileId) ??
     undefined
   const profileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url
