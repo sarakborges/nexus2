@@ -58,13 +58,14 @@ export class DomainController {
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
 
-  @Get('profiles/by-url/:url/directory/:kind/page')
+  @Get('profiles/by-url/:url/directory/:kind/page') @UseGuards(OptionalJwtAccessGuard)
   getProfileDirectoryPage(
     @Param('url') url: string,
     @Param('kind') kind: string,
-    @Query() q: PaginationDto
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
-    return this.profileDirectoryPage.getProfileDirectoryPage(url, kind, q)
+    return this.profileDirectoryPage.getProfileDirectoryPage(url, kind, q, u?.id ?? null)
   }
 
   @Get('profiles/by-url/:url/messages/page') @UseGuards(OptionalJwtAccessGuard)
@@ -84,9 +85,12 @@ export class DomainController {
     return this.profileEditPage.getProfileEditPage(url, u?.id ?? null)
   }
 
-  @Get('profiles/by-url/:url/page')
-  getProfilePage(@Param('url') url: string) {
-    return this.profilePage.getProfilePage(url)
+  @Get('profiles/by-url/:url/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfilePage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profilePage.getProfilePage(url, u?.id ?? null)
   }
 
   @Get('profiles') listProfiles(@Query() q: PaginationDto) { return this.domain.listProfiles(q) }

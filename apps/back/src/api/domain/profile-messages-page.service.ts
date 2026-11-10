@@ -2,7 +2,8 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type {
   Profile,
   ProfileMessage,
-  ProfileMessagesPageData
+  ProfileMessagesPageData,
+  Relationship
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
@@ -14,6 +15,7 @@ import { sanitizeRichText } from './rich-text-sanitizer'
 const PROFILE_MESSAGES_PAGE_COLLECTIONS = [
   'accounts',
   'profiles',
+  'relationships',
   'profile_messages'
 ] as const
 
@@ -50,6 +52,7 @@ export class ProfileMessagesPageService {
             records: collections,
             result: {
               profile: null,
+              viewerRelationship: null,
               isProfileOwner: false,
               messages: paginate<ProfileMessage>([], query),
               senders: []
@@ -62,6 +65,10 @@ export class ProfileMessagesPageService {
           about: sanitizeRichText(profileRecord.about ?? '')
         }
         const viewerProfileIds = new Set(account?.profiles ?? [])
+        const currentProfileId = account?.currentProfile && viewerProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const viewerRelationship = currentProfileId && currentProfileId !== profile.id
+          ? (collections.relationships as Relationship[]).find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
+          : null
         const isProfileOwner = viewerProfileIds.has(profile.id)
         const visibleMessages = (
           collections.profile_messages as ProfileMessage[]
@@ -94,6 +101,7 @@ export class ProfileMessagesPageService {
           records: collections,
           result: {
             profile,
+            viewerRelationship,
             isProfileOwner,
             messages,
             senders

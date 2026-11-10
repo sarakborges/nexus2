@@ -45,6 +45,7 @@ export class CommunityMembersPageService {
             result: {
               community: null,
               relationships: [],
+              viewerRelationship: null,
               actorProfileId: null,
               actorRole: null,
               isStaff: false,
@@ -87,6 +88,8 @@ export class CommunityMembersPageService {
             ownedProfileIds.has(relationship.profiles[0]) &&
             profilesById.get(relationship.profiles[0])?.type === community.type
         )
+        const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const viewerRelationship = currentProfileId ? viewerRelationships.find((relationship) => relationship.profiles[0] === currentProfileId) ?? null : null
         const managementRelationship =
           viewerRelationships.find(
             (relationship) =>
@@ -169,6 +172,7 @@ export class CommunityMembersPageService {
           result: {
             community,
             relationships: viewerRelationships,
+            viewerRelationship,
             actorProfileId,
             actorRole,
             isStaff,
