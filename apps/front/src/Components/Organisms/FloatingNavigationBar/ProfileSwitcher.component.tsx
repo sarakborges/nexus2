@@ -10,6 +10,7 @@ import { useTranslations } from '@/Hooks/Language'
 
 export function ProfileSwitcher({
   profiles,
+  hasProfiles,
   currentProfileId,
   isOpen,
   isRequestPending,
@@ -25,6 +26,7 @@ export function ProfileSwitcher({
   const { t } = useTranslations()
 
   if (
+    !hasProfiles &&
     !profiles.length &&
     !profilesLoading &&
     !profilesError &&

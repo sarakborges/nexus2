@@ -34,6 +34,7 @@ export function FloatingNavigationBar({
     togglePanel,
     toggleProfileSwitcher,
     profiles,
+    hasProfiles,
     currentProfileId,
     isProfileSwitcherOpen,
     profilesLoading,
@@ -121,6 +122,7 @@ export function FloatingNavigationBar({
         <AccountMenu
           accountName={accountName}
           profiles={profiles}
+          hasProfiles={hasProfiles}
           currentProfileId={currentProfileId}
           currentProfile={currentProfile ?? null}
           editProfileRoute={editProfileRoute}

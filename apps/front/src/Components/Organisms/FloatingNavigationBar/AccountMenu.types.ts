@@ -3,6 +3,7 @@ import type { Profile } from '@nexus/common'
 export type AccountMenuProps = {
   accountName: string
   profiles: Profile[]
+  hasProfiles: boolean
   currentProfileId: string | null
   currentProfile: Profile | null
   editProfileRoute: string | null

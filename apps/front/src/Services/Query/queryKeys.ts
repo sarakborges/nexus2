@@ -79,6 +79,7 @@ export const queryKeys = {
       ['profiles', 'owned', userId, page, pageSize] as const,
     byUrl: (url: string) => ['profiles', 'by-url', url] as const,
     byIds: (ids: string[]) => ['profiles', 'by-ids', [...ids].sort()] as const,
+    byId: (id: string | null) => ['profiles', 'by-id', id] as const,
     currentType: (profileId: string) =>
       ['profiles', 'current-type', profileId] as const
   },

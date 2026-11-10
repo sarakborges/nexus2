@@ -19,7 +19,7 @@ Viewer-specific page state belongs in the same aggregate snapshot when it is nee
 
 ## When separate requests are correct
 
-A page aggregate covers the initial view, not every possible interaction. Keep independent queries for user-driven pagination, filters, search, infinite scrolling, and data that is intentionally refreshed independently. A forum topic's reply-page change, for example, should not reload unrelated page chrome. Those queries must be driven by an explicit interaction or separate lifecycle, not by an N+1 dependency discovered after another response arrives.
+A page aggregate covers the initial view, not every possible interaction. The persistent global navigation is shell state rather than page content: load only the active profile needed for its avatar and routes at startup, and defer the full profile inventory until the user opens the profile switcher. Keep independent queries for user-driven pagination, filters, search, infinite scrolling, and data that is intentionally refreshed independently. A forum topic's reply-page change, for example, should not reload unrelated page chrome. Those queries must be driven by an explicit interaction or separate lifecycle, not by an N+1 dependency discovered after another response arrives.
 
 ## Storage and performance requirements
 

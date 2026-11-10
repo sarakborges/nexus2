@@ -28,6 +28,7 @@ export type UseFloatingNavigationBarResult = {
   togglePanel: (panel: NavigationPanel) => void
   toggleProfileSwitcher: () => void
   profiles: Profile[]
+  hasProfiles: boolean
   currentProfileId: string | null
   isProfileSwitcherOpen: boolean
   profilesLoading: boolean

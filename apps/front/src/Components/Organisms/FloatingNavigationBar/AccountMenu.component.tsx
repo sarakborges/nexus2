@@ -16,6 +16,7 @@ import { useTranslations } from '@/Hooks/Language'
 export function AccountMenu({
   accountName,
   profiles,
+  hasProfiles,
   currentProfileId,
   currentProfile,
   editProfileRoute,
@@ -49,6 +50,7 @@ export function AccountMenu({
 
       <ProfileSwitcher
         profiles={profiles}
+        hasProfiles={hasProfiles}
         currentProfileId={currentProfileId}
         isOpen={isProfileSwitcherOpen}
         isRequestPending={isRequestPending}
