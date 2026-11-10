@@ -27,7 +27,7 @@ import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import { CommunityMembershipService } from './community-membership.service'
-import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
+import { getNewEditorImages, getRemovedEditorImages, normalizeEntityUrl } from './domain.utils'
 
 @Injectable()
 export class CommunityService {
@@ -204,6 +204,12 @@ export class CommunityService {
               nextMediaFiles, userId, picture, 'community-avatar', 'community', communityId
             )
           }
+          nextMediaFiles = this.uploads.detachEditorImagesFromRecords(
+            nextMediaFiles,
+            getRemovedEditorImages(latest.about, about),
+            'community',
+            communityId
+          )
           nextMediaFiles = this.uploads.attachEditorImagesToRecords(
             nextMediaFiles,
             userId,

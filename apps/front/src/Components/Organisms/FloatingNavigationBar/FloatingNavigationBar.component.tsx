@@ -42,6 +42,14 @@ function FloatingNavigationSearch() {
       role="search"
       onSubmit={handleSearch}
     >
+      <input
+        type="search"
+        aria-label={t('SEARCH_PLACEHOLDER')}
+        placeholder={t('SEARCH_PLACEHOLDER')}
+        maxLength={120}
+        value={searchText}
+        onChange={(event) => setSearchText(event.target.value)}
+      />
       <select
         aria-label={t('SEARCH_SCOPE_LABEL')}
         value={searchScope}
@@ -51,14 +59,6 @@ function FloatingNavigationSearch() {
         <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
         <option value="communities">{t('SEARCH_SCOPE_COMMUNITIES')}</option>
       </select>
-      <input
-        type="search"
-        aria-label={t('SEARCH_PLACEHOLDER')}
-        placeholder={t('SEARCH_PLACEHOLDER')}
-        maxLength={120}
-        value={searchText}
-        onChange={(event) => setSearchText(event.target.value)}
-      />
       <button
         type="submit"
         aria-label={t('SEARCH_SUBMIT')}
@@ -142,7 +142,12 @@ export function FloatingNavigationBar({
             <FiMenu aria-hidden="true" />
           </button>
           <Link className="floating-navigation__brand" to={ROUTES.home}>
-            NEXUS
+            <img
+              src="https://imageyobleus.nyc3.cdn.digitaloceanspaces.com/community/303456/photo/68b203d18ff9c.png"
+              alt=""
+              aria-hidden="true"
+            />
+            <span>NEXUS</span>
           </Link>
           <FloatingNavigationSearch
             key={`${location.pathname}:${location.search}`}
