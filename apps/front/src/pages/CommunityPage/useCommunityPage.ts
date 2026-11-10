@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { getCommunityPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -13,23 +12,32 @@ import type { UseCommunityPageResult } from './useCommunityPage.types'
 export function useCommunityPage(): UseCommunityPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const viewerUserId = useAuthStore((state) => state.session?.user.id ?? null)
+  const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)
 
   const communityPageQuery = useQuery({
-    queryKey: queryKeys.communityPage(requestedUrl, viewerUserId),
+    queryKey: queryKeys.communityPage(requestedUrl, viewerUserId, currentProfileId),
     queryFn: () => getCommunityPage(requestedUrl),
-    enabled: Boolean(requestedUrl),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
     staleTime: 30 * 1000
   })
   const page = communityPageQuery.data
   const community = page?.community
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
+  const currentProfileType = page?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && communityPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (communityPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
   const members = page?.members.items ?? []
   const memberCount = page?.members.totalItems
   const forumTopics = page?.forumTopics.items ?? []
+  const viewerRelationship = page?.viewerRelationship ?? null
   const forumAuthorsById = useMemo(
     () =>
       new Map(
@@ -50,6 +58,7 @@ export function useCommunityPage(): UseCommunityPageResult {
     requestedUrl,
     communityPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
     canInteract: typeCompatibility.canInteract,
     canViewMembers: page?.canViewMembers ?? false,

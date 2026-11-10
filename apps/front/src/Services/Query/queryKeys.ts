@@ -38,8 +38,8 @@ export const queryKeys = {
     viewerUserId: string | null,
     currentProfileId: string | null
   ) => ['profile-edit-page', url, viewerUserId, currentProfileId] as const,
-  communityPage: (url: string, viewerUserId: string | null) =>
-    ['community-page', url, viewerUserId] as const,
+  communityPage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
+    ['community-page', url, viewerUserId, currentProfileId] as const,
   communityForumPage: (
     url: string,
     page: number,
@@ -63,9 +63,10 @@ export const queryKeys = {
     page: number,
     pendingPage: number,
     viewerUserId: string | null,
-    profileIds: string[]
+    profileIds: string[],
+    currentProfileId: string | null
   ) =>
-    ['community-members-page', url, tab, page, pendingPage, viewerUserId, [...profileIds].sort()] as const,
+    ['community-members-page', url, tab, page, pendingPage, viewerUserId, [...profileIds].sort(), currentProfileId] as const,
   activity: {
     recent: (userId: string) => ['activity', 'recent', userId] as const
   },

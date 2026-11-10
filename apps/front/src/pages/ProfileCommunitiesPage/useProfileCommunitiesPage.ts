@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { getProfileDirectoryPage } from '@/Services/Profile'
@@ -35,9 +34,14 @@ export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
   })
   const profile = profileDirectoryQuery.data?.profile
   const viewerRelationship = profileDirectoryQuery.data?.viewerRelationship ?? null
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
+  const currentProfileType = profileDirectoryQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profileDirectoryQuery.isLoading)
+  const isCompatible = !currentProfileId || (profileDirectoryQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
   const communities =
     profileDirectoryQuery.data?.kind === 'communities'
       ? profileDirectoryQuery.data.communities.items

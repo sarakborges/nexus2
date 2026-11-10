@@ -53,6 +53,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const detail = pageData?.detail
   const topic = detail?.topic
   const forumProfileId = pageData?.forumProfileId ?? null
+  const viewerRelationship = pageData?.viewerRelationship ?? null
   const isMember = pageData?.isMember ?? false
   const isStaff = pageData?.isStaff ?? false
   const canInteract = isMember
@@ -186,6 +187,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     setReplyContent,
     topicPageQuery,
     community,
+    viewerRelationship,
     isMember,
     isStaff,
     canInteract,

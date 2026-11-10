@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityForumPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -15,6 +14,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const normalized = normalizeEntityUrl(url)
@@ -29,13 +29,19 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
       currentProfileId
     ),
     queryFn: () => getCommunityForumPage(normalized, { page, pageSize }),
-    enabled: Boolean(normalized),
+    enabled: Boolean(normalized && isAuthInitialized),
     staleTime: 30 * 1000
   })
   const community = forumPageQuery.data?.community
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
+  const currentProfileType = forumPageQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && forumPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (forumPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const viewerRelationship = forumPageQuery.data?.viewerRelationship ?? null
   const topics = forumPageQuery.data?.topics.items ?? []
   const authorsById = useMemo(
     () =>
@@ -61,6 +67,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     setPage,
     forumPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
     canReadForum: forumPageQuery.data?.canReadForum ?? false,
     canPublish: forumPageQuery.data?.canPublish ?? false,

@@ -4,7 +4,6 @@ import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityMembersPage } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -19,6 +18,7 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const profileIds = session?.user.profiles ?? []
+  const currentProfileId = session?.user.currentProfile ?? null
   const [activeTab, setActiveTab] = useState<MemberTab>('all')
   const { page, pageSize, setPage } = useUrlPagination('page')
   const {
@@ -34,7 +34,8 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
       page,
       pendingPage,
       viewerUserId,
-      profileIds
+      profileIds,
+      currentProfileId
     ),
     queryFn: () =>
       getCommunityMembersPage(normalized, {
@@ -47,12 +48,18 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   })
   const pageData = communityMembersPageQuery.data
   const community = pageData?.community
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && communityMembersPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (communityMembersPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
   const visibleTab = pageData?.visibleTab ?? 'all'
   const isStaff = pageData?.isStaff ?? false
   const relationships = pageData?.relationships ?? []
+  const viewerRelationship = pageData?.viewerRelationship ?? null
   const actorProfileId = pageData?.actorProfileId ?? null
   const currentRole = pageData?.actorRole ?? null
   const members = pageData?.members.items ?? []
@@ -86,6 +93,7 @@ export function useCommunityMembersPage(): UseCommunityMembersPageResult {
     community,
     typeCompatibility,
     relationships,
+    viewerRelationship,
     actorProfileId,
     currentRole,
     isStaff,

@@ -5,7 +5,6 @@ import { useNavigate, useParams } from 'react-router'
 import { getProfilePage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseProfilePageResult } from './useProfilePage.types'
@@ -26,12 +25,18 @@ export function useProfilePage(): UseProfilePageResult {
     staleTime: 30 * 1000
   })
   const profile = profilePageQuery.data?.profile
+  const currentProfileType = profilePageQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profilePageQuery.isLoading)
+  const isCompatible = !currentProfileId || (profilePageQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
   const viewerRelationship = profilePageQuery.data?.viewerRelationship ?? null
   const friends = profilePageQuery.data?.friends.items ?? []
   const communities = profilePageQuery.data?.communities.items ?? []
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
+
   const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
 
   const openEditProfile = () => {

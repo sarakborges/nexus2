@@ -6,7 +6,6 @@ import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useCreateProfileMessageMutation } from '@/Hooks/ProfileMessage'
 import {
@@ -47,9 +46,14 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const profile = pageData?.profile
   const isProfileOwner = pageData?.isProfileOwner ?? false
   const viewerRelationship = pageData?.viewerRelationship ?? null
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profileMessagesPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (profileMessagesPageQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
   const canInteract = typeCompatibility.canInteract
   const messages = pageData?.messages.items ?? []
   const totalItems = pageData?.messages.totalItems ?? 0
