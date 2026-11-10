@@ -268,8 +268,7 @@ test('readByIds uses the protected RPC and returns only selected records', async
   assert.equal(call.options.headers['x-nexus-api-secret'], headerSecret)
   assert.deepEqual(JSON.parse(call.options.body), {
     p_collection: 'profiles',
-    p_ids: ['profile-a', 'profile-c'],
-    p_secret: headerSecret
+    p_ids: ['profile-a', 'profile-c']
   })
 })
 

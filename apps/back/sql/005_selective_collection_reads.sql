@@ -1,15 +1,13 @@
 create or replace function public.nexus_read_collection_by_ids(
   p_collection text,
-  p_ids text[],
-  p_secret text
+  p_ids text[]
 )
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $function$
 declare
-  v_stored_hash text;
   v_matching_records jsonb;
 begin
   if p_collection is null or p_collection !~ '^[a-zA-Z0-9_-]+$' then
@@ -29,19 +27,6 @@ begin
     raise exception 'INVALID_RECORD_IDS' using errcode = '22023';
   end if;
 
-  select secret_hash
-    into v_stored_hash
-    from private.nexus_service_credentials
-   where id is true;
-
-  if v_stored_hash is null
-     or pg_catalog.encode(
-          extensions.digest(pg_catalog.convert_to(coalesce(p_secret, ''), 'UTF8'), 'sha256'),
-          'hex'
-        ) <> v_stored_hash then
-    raise exception 'UNAUTHORIZED' using errcode = '42501';
-  end if;
-
   select coalesce(
            pg_catalog.jsonb_agg(item.record order by item.ordinality),
            '[]'::jsonb
@@ -58,9 +43,9 @@ begin
 end;
 $function$;
 
-revoke all on function public.nexus_read_collection_by_ids(text, text[], text)
+revoke all on function public.nexus_read_collection_by_ids(text, text[])
   from public, authenticated;
-grant execute on function public.nexus_read_collection_by_ids(text, text[], text)
+grant execute on function public.nexus_read_collection_by_ids(text, text[])
   to anon;
 
 notify pgrst, 'reload schema';

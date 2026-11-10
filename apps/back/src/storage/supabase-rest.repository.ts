@@ -56,8 +56,7 @@ export class SupabaseRestRepository implements DataRepository {
       },
       body: JSON.stringify({
         p_collection: collection,
-        p_ids: requestedIds,
-        p_secret: this.apiSecret
+        p_ids: requestedIds
       })
     })
 
