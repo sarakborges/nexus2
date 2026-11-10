@@ -24,7 +24,11 @@ export type UseProfileMessagesPageResult = {
   profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   isProfileOwner: boolean
   totalItems: number
   messageItems: ProfileMessageViewModel[]

@@ -28,6 +28,7 @@ export function CommunityForumTopicPage() {
     setReplyContent,
     topicPageQuery,
     community,
+    viewerRelationship,
     isMember,
     isStaff,
     canInteract,
@@ -77,7 +78,7 @@ export function CommunityForumTopicPage() {
   return (
     <SocialPageLayout
       sidebar={
-        <CommunitySidebar community={community} active="forum" canInteract />
+        <CommunitySidebar community={community} active="forum" canInteract relationship={viewerRelationship} />
       }
     >
       <section className="account-card community-forum community-forum__topic-detail-card">

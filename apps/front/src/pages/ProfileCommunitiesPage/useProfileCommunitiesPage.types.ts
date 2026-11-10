@@ -9,7 +9,11 @@ export type UseProfileCommunitiesPageResult = {
   profileDirectoryQuery: UseQueryResult<ProfileDirectoryPageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   page: number
   pageSize: number
   setPage: ReturnType<typeof useUrlPagination>['setPage']

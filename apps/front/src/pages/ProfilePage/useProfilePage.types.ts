@@ -7,7 +7,11 @@ export type UseProfilePageResult = {
   profilePageQuery: UseQueryResult<ProfilePageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   canInteract: boolean
   friends: Profile[]
   communities: Community[]

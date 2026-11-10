@@ -3,6 +3,7 @@ import type {
   Community,
   CommunityForumPageData,
   CommunityForumTopicSummary,
+  CommunityRelationship,
   Profile
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
@@ -18,7 +19,12 @@ export type UseCommunityForumPageResult = {
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   forumPageQuery: UseQueryResult<CommunityForumPageData>
   community: Community | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  viewerRelationship: CommunityRelationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   canReadForum: boolean
   canPublish: boolean
   openCreateTopic: () => void

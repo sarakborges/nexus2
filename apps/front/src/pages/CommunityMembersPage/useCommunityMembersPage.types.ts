@@ -25,7 +25,12 @@ export type UseCommunityMembersPageResult = {
   setPendingPage: PaginationSetter
   communityMembersPageQuery: UseQueryResult<CommunityMembersPageData>
   community: Community | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  viewerRelationship: CommunityRelationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   relationships: CommunityRelationship[]
   actorProfileId: string | null
   currentRole: CommunityRelationship['type'] | null

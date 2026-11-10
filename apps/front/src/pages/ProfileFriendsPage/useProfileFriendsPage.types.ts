@@ -10,7 +10,11 @@ export type UseProfileFriendsPageResult = {
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null
   friendRelationshipsByProfileId: Map<string, Relationship>
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   canInteract: boolean
   page: number
   pageSize: number

@@ -16,6 +16,7 @@ export function CommunityPage() {
     requestedUrl,
     communityPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
     canInteract,
     canViewMembers,
@@ -60,6 +61,7 @@ export function CommunityPage() {
             community={community}
             active="about"
             canInteract={canInteract}
+            relationship={viewerRelationship}
           />
         </aside>
 

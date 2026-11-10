@@ -28,6 +28,7 @@ export function CommunityMembersPage() {
     communityMembersPageQuery,
     community,
     typeCompatibility,
+    viewerRelationship,
     relationships,
     actorProfileId,
     currentRole,
@@ -80,6 +81,7 @@ export function CommunityMembersPage() {
           community={community}
           active="members"
           canInteract={typeCompatibility.canInteract}
+          relationship={viewerRelationship}
         />
       }
     >

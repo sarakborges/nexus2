@@ -22,6 +22,7 @@ export function CommunityForumPage() {
     setPage,
     forumPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
     canReadForum,
     canPublish,
@@ -64,6 +65,7 @@ export function CommunityForumPage() {
             !session ||
             (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
           }
+          relationship={viewerRelationship}
         />
       }
     >
@@ -91,6 +93,7 @@ export function CommunityForumPage() {
             <RelationshipActions
               targetId={community.id}
               targetKind="community"
+              relationship={viewerRelationship}
             />
           </div>
         )}

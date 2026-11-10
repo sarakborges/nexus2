@@ -5,6 +5,7 @@ import type {
   CommunityForumTopic,
   CommunityForumTopicDetail,
   CommunityForumTopicPageData,
+  CommunityRelationship,
   Profile
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
@@ -31,6 +32,7 @@ export type UseCommunityForumTopicPageResult = {
   setReplyContent: Dispatch<SetStateAction<string>>
   topicPageQuery: UseQueryResult<CommunityForumTopicPageData>
   community: Community | undefined
+  viewerRelationship: CommunityRelationship | null
   isMember: boolean
   isStaff: boolean
   canInteract: boolean
