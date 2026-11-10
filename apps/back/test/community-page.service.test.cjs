@@ -67,6 +67,8 @@ test('community page aggregate includes access, member count, pending count and 
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
+  assert.equal(result.viewerRelationship.type, 'owner')
+  assert.equal(result.currentProfileType, 'social')
   assert.equal(result.canViewMembers, true)
   assert.equal(result.canEditCommunity, true)
   assert.equal(result.pendingRequestCount, 1)

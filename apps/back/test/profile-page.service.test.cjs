@@ -4,6 +4,7 @@ const { DomainAccessService } = require('../dist/api/domain/domain-access.servic
 const { ProfilePageService } = require('../dist/api/domain/profile-page.service.js')
 
 const records = {
+  accounts: [{ id: 'viewer-user', profiles: ['profile-2'], currentProfile: 'profile-2' }],
   profiles: [
     { id: 'profile-1', name: 'Viewed', url: 'viewed', picture: '', about: '', type: 'social' },
     { id: 'profile-2', name: 'Friend', url: 'friend', picture: '', about: '', type: 'social' },
@@ -69,6 +70,7 @@ test('profile page aggregate returns profile, friend and community previews from
     async transaction(collections, updater) {
       transactionCalls += 1
       assert.deepEqual(collections, [
+        'accounts',
         'profiles',
         'relationships',
         'communities',
@@ -81,10 +83,12 @@ test('profile page aggregate returns profile, friend and community previews from
   const access = new DomainAccessService(repository)
   const service = new ProfilePageService(repository, access)
 
-  const result = await service.getProfilePage('@VIEWED')
+  const result = await service.getProfilePage('@VIEWED', 'viewer-user')
 
   assert.equal(transactionCalls, 1)
   assert.equal(result.profile.id, 'profile-1')
+  assert.equal(result.viewerRelationship.type, 'connection')
+  assert.equal(result.currentProfileType, 'social')
   assert.deepEqual(result.friends.items.map(profile => profile.id), ['profile-2'])
   assert.equal(result.friends.totalItems, 1)
   assert.deepEqual(
@@ -105,10 +109,12 @@ test('profile page aggregate returns empty previews when the profile does not ex
   const access = new DomainAccessService(repository)
   const service = new ProfilePageService(repository, access)
 
-  const result = await service.getProfilePage('missing-profile')
+  const result = await service.getProfilePage('missing-profile', null)
 
   assert.equal(transactionCalls, 1)
   assert.equal(result.profile, null)
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, null)
   assert.deepEqual(result.friends.items, [])
   assert.deepEqual(result.communities.items, [])
 })

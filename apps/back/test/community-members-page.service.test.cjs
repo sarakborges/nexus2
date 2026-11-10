@@ -81,6 +81,8 @@ test('community members page aggregate returns directory, pending requests and m
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
+  assert.equal(result.viewerRelationship.type, 'connection')
+  assert.equal(result.currentProfileType, 'social')
   assert.deepEqual(
     result.relationships.map(relationship => relationship.type),
     ['owner', 'moderator', 'connection']
@@ -162,6 +164,8 @@ test('public community members can be viewed anonymously without management cont
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.isStaff, false)
   assert.deepEqual(result.relationships, [])
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, null)
   assert.equal(result.members.totalItems, 4)
   assert.equal(result.pending.totalItems, 0)
 })

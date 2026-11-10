@@ -24,6 +24,7 @@ const records = {
     { id: 'profile-sender', name: 'Sender', url: 'sender', picture: '', about: '<p>Sender</p>', type: 'social' },
     { id: 'profile-other', name: 'Other', url: 'other', picture: '', about: '<p>Other</p>', type: 'social' }
   ],
+  relationships: [{ profiles: ['profile-sender', 'profile-target'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 150 }],
   profile_messages: [
     { id: 'message-1', fromProfileId: 'profile-sender', toProfileId: 'profile-target', content: '<p>From sender</p>', createdAt: 100 },
     { id: 'message-2', fromProfileId: 'profile-other', toProfileId: 'profile-target', content: '<p>From other</p>', createdAt: 200 },
@@ -40,6 +41,7 @@ function createRepository(initialRecords = records) {
       assert.deepEqual(collections, [
         'accounts',
         'profiles',
+        'relationships',
         'profile_messages'
       ])
       const outcome = updater(structuredClone(initialRecords))
@@ -68,6 +70,8 @@ test('profile messages aggregate returns profile, visible messages and sender pr
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.profile.id, 'profile-target')
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, 'social')
   assert.equal(result.isProfileOwner, true)
   assert.deepEqual(
     result.messages.items.map(message => message.id),
@@ -91,6 +95,8 @@ test('non-owner visitors only receive messages sent from profiles they own', asy
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.isProfileOwner, false)
+  assert.equal(result.viewerRelationship.type, 'connection')
+  assert.equal(result.currentProfileType, 'social')
   assert.deepEqual(
     result.messages.items.map(message => message.id),
     ['message-1']
@@ -113,6 +119,8 @@ test('anonymous visitors do not receive private messages', async () => {
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.isProfileOwner, false)
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, null)
   assert.equal(result.messages.totalItems, 0)
   assert.deepEqual(result.messages.items, [])
   assert.deepEqual(result.senders, [])
@@ -161,6 +169,8 @@ test('profile messages aggregate returns empty data when the profile does not ex
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.profile, null)
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, null)
   assert.equal(result.isProfileOwner, false)
   assert.equal(result.messages.items.length, 0)
   assert.equal(result.messages.page, 1)

@@ -85,6 +85,8 @@ test('forum topic page aggregate includes community, access, current reply page 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
   assert.equal(result.isMember, true)
+  assert.equal(result.viewerRelationship.type, 'moderator')
+  assert.equal(result.currentProfileType, 'social')
   assert.equal(result.isStaff, true)
   assert.equal(result.forumProfileId, 'profile-moderator')
   assert.equal(result.detail.topic.replyCount, 21)
@@ -133,6 +135,8 @@ test('public topic page is readable by anonymous visitors without forum membersh
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.isMember, false)
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.currentProfileType, null)
   assert.equal(result.isStaff, false)
   assert.equal(result.forumProfileId, null)
   assert.equal(result.detail.topic.id, 'topic-1')

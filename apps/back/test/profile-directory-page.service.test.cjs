@@ -5,6 +5,7 @@ const { DomainAccessService } = require('../dist/api/domain/domain-access.servic
 const { ProfileDirectoryPageService } = require('../dist/api/domain/profile-directory-page.service.js')
 
 const records = {
+  accounts: [{ id: 'viewer-user', profiles: ['profile-requested'], currentProfile: 'profile-requested' }],
   profiles: [
     { id: 'profile-target', name: 'Target', url: 'target', picture: '', about: '<p>Target</p>', type: 'social' },
     { id: 'profile-friend', name: 'Friend', url: 'friend', picture: '', about: '<p>Friend</p>', type: 'social' },
@@ -14,7 +15,8 @@ const records = {
   relationships: [
     { profiles: ['profile-friend', 'profile-target'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 100 },
     { profiles: ['profile-other-type', 'profile-target'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 90 },
-    { profiles: ['profile-requested', 'profile-target'], type: 'requested', requestedBy: 'profile-requested', blockedBy: null, updatedAt: 80 }
+    { profiles: ['profile-requested', 'profile-target'], type: 'requested', requestedBy: 'profile-requested', blockedBy: null, updatedAt: 80 },
+    { profiles: ['profile-requested', 'profile-friend'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 70 }
   ],
   communities: [
     { id: 'community-public-owner', name: 'Public owner', url: 'public-owner', picture: '', about: '', type: 'social', privacy: 'public' },
@@ -40,6 +42,7 @@ function createRepository(initialRecords = records) {
     async transaction(collections, updater) {
       transactionCalls += 1
       assert.deepEqual(collections, [
+        'accounts',
         'profiles',
         'relationships',
         'communities',
@@ -69,12 +72,16 @@ test('friends directory aggregate returns profile and same-type connections in o
   const result = await service.getProfileDirectoryPage(
     '@TARGET',
     'friends',
-    query()
+    query(),
+    'viewer-user'
   )
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.kind, 'friends')
   assert.equal(result.profile.id, 'profile-target')
+  assert.equal(result.viewerRelationship.type, 'requested')
+  assert.equal(result.currentProfileType, 'social')
+  assert.equal(result.friendRelationships[0].type, 'connection')
   assert.deepEqual(
     result.friends.items.map(profile => profile.id),
     ['profile-friend']
@@ -89,12 +96,14 @@ test('communities directory aggregate returns active public same-type membership
   const result = await service.getProfileDirectoryPage(
     'target',
     'communities',
-    query()
+    query(),
+    'viewer-user'
   )
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.kind, 'communities')
   assert.equal(result.profile.id, 'profile-target')
+  assert.equal(result.currentProfileType, 'social')
   assert.deepEqual(
     result.communities.items.map(community => community.id),
     ['community-public-owner', 'community-member']
@@ -128,7 +137,8 @@ test('profile directories preserve pagination', async () => {
   const result = await service.getProfileDirectoryPage(
     'target',
     'friends',
-    query({ page: 2 })
+    query({ page: 2 }),
+    'viewer-user'
   )
 
   assert.equal(repository.transactionCalls, 1)
@@ -147,21 +157,27 @@ test('unknown profile returns an empty typed directory', async () => {
   const friends = await service.getProfileDirectoryPage(
     'missing',
     'friends',
-    query({ page: 3 })
+    query({ page: 3 }),
+    null
   )
   const communities = await service.getProfileDirectoryPage(
     'missing',
     'communities',
-    query({ page: 3 })
+    query({ page: 3 }),
+    null
   )
 
   assert.equal(repository.transactionCalls, 2)
   assert.equal(friends.kind, 'friends')
   assert.equal(friends.profile, null)
+  assert.equal(friends.viewerRelationship, null)
+  assert.equal(friends.currentProfileType, null)
   assert.deepEqual(friends.friends.items, [])
   assert.equal(friends.friends.page, 1)
   assert.equal(communities.kind, 'communities')
   assert.equal(communities.profile, null)
+  assert.equal(communities.viewerRelationship, null)
+  assert.equal(communities.currentProfileType, null)
   assert.deepEqual(communities.communities.items, [])
   assert.equal(communities.communities.page, 1)
 })
@@ -171,7 +187,7 @@ test('unsupported directory kind is rejected', async () => {
   const service = createService(repository)
 
   assert.throws(
-    () => service.getProfileDirectoryPage('target', 'members', query()),
+    () => service.getProfileDirectoryPage('target', 'members', query(), null),
     error => error instanceof BadRequestException &&
       error.message === 'INVALID_PROFILE_DIRECTORY'
   )
