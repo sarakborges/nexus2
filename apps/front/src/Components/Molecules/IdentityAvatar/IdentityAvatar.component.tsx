@@ -1,7 +1,6 @@
 import type { IdentityAvatarProps } from './IdentityAvatar.types'
 import './IdentityAvatar.style.scss'
 
-
 export function IdentityAvatar({
   name,
   picture,
@@ -11,7 +10,7 @@ export function IdentityAvatar({
   const initial = name.trim().charAt(0).toUpperCase()
 
   return (
-    <span className={className}>
+    <span className={['identity-avatar', className].filter(Boolean).join(' ')}>
       {picture ? (
         <img
           className={['identity-avatar__image', imageClassName]
@@ -21,7 +20,9 @@ export function IdentityAvatar({
           alt=""
         />
       ) : (
-        <span aria-hidden="true">{initial}</span>
+        <span className="identity-avatar__initial" aria-hidden="true">
+          {initial}
+        </span>
       )}
     </span>
   )

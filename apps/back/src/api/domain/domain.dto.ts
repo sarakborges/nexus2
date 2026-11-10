@@ -41,7 +41,7 @@ export class CreateProfileDto implements CreateProfileInput {
   picture!: string
 
   @IsString()
-  @MaxLength(12000)
+  @MaxLength(8000)
   about!: string
 
   @IsIn(['social', 'rp', 'business'])
@@ -61,7 +61,7 @@ export class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
   picture!: string
 
   @IsString()
-  @MaxLength(12000)
+  @MaxLength(8000)
   about!: string
 }
 
@@ -78,7 +78,7 @@ export class CreateCommunityDto implements CreateCommunityInput {
   picture!: string
 
   @IsString()
-  @MaxLength(12000)
+  @MaxLength(8000)
   about!: string
 
   @IsIn(['public', 'private', 'unlisted'])
@@ -101,7 +101,7 @@ export class UpdateCommunityDto implements CreateCommunityInput {
   picture!: string
 
   @IsString()
-  @MaxLength(12000)
+  @MaxLength(8000)
   about!: string
 
   @IsIn(['public', 'private', 'unlisted'])
@@ -143,7 +143,7 @@ export class MessageDto {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(12000)
+  @MaxLength(8000)
   content!: string
 }
 
@@ -158,7 +158,7 @@ export class CreateForumTopicDto {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(12000)
+  @MaxLength(8000)
   content!: string
 }
 
@@ -168,7 +168,7 @@ export class CreateForumReplyDto {
 
   @IsString()
   @MinLength(1)
-  @MaxLength(12000)
+  @MaxLength(8000)
   content!: string
 }
 

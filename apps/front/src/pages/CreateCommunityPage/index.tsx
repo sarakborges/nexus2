@@ -69,7 +69,7 @@ export function CreateCommunityPage() {
             >
               {t('ACTION_CANCEL')}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || about.length > 8000}>
               {isSubmitting
                 ? t('AUTH_SUBMITTING')
                 : t('COMMUNITY_CREATE_ACTION')}

@@ -230,3 +230,19 @@
   .paginated-list-controls__search { flex-basis: 100%; }
   .paginated-list-controls__sort { flex: 1 1 100%; }
 }
+
+.paginated-list-controls__sort select {
+  appearance: auto;
+  -webkit-appearance: menulist;
+  color: var(--text-color);
+  background-color: var(--color-surface);
+  cursor: pointer;
+}
+.paginated-list-controls__sort select option {
+  color: var(--text-color);
+  background-color: var(--color-surface);
+}
+.paginated-list-controls__sort select:focus-visible {
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 2px;
+}

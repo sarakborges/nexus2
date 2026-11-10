@@ -98,7 +98,7 @@ export function CreateProfilePage() {
             >
               {t('ACTION_CANCEL')}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || about.length > 8000}>
               {isSubmitting
                 ? t('AUTH_SUBMITTING')
                 : t('CREATE_PROFILE_ACTION')}

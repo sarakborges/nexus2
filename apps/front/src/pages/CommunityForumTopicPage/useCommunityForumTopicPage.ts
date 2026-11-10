@@ -167,6 +167,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     event.preventDefault()
     if (
       !hasRichTextContent(replyContent) ||
+      replyContent.length > 8000 ||
       !isMember ||
       !canInteract ||
       topic?.isLocked
@@ -214,7 +215,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     canDeleteTopic,
     replyItems,
     hasReplyError: replyMutation.isError,
-    canSubmitReply: hasRichTextContent(replyContent),
+    canSubmitReply: hasRichTextContent(replyContent) && replyContent.length <= 8000,
     isSendingReply: replyMutation.isPending,
     isUpdatingTopic: moderationMutation.isPending,
     isDeletingTopic: deleteTopicMutation.isPending,

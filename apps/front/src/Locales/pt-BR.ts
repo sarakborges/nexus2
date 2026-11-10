@@ -160,6 +160,8 @@ export const ptBRTranslations = {
   PROFILE_PICTURE_LABEL: 'Imagem de perfil (opcional)',
   PROFILE_ABOUT_LABEL: 'Sobre',
   RICH_TEXT_PLACEHOLDER: 'Escreva aqui…',
+  RICH_TEXT_HTML_CHARACTER_COUNT: '{{count}} / {{max}} caracteres HTML',
+  RICH_TEXT_HTML_CHARACTER_LIMIT: 'MAIS DE OITO MIL!',
   RICH_TEXT_IMAGE_UPLOAD_FAILED:
     'Não foi possível enviar a imagem. Verifique o formato e o tamanho do arquivo.',
   RICH_TEXT_INSERT_IMAGE: 'Enviar imagem',
@@ -171,7 +173,7 @@ export const ptBRTranslations = {
   UPLOAD_EMPTY: 'Nenhuma imagem selecionada',
   PROFILE_ABOUT_EMPTY: 'Este perfil ainda não adicionou uma apresentação.',
   PROFILE_ABOUT_MAX_LENGTH:
-    'Até 500 caracteres de texto. Imagens e formatação são permitidas.',
+    'Até 8.000 caracteres HTML.',
   PROFILE_PICTURE_ALT: 'Foto de perfil de {{name}}',
   PROFILE_ERROR_URL_TAKEN: 'Este endereço de perfil já está em uso.',
   PROFILE_ERROR_INVALID:
@@ -314,10 +316,10 @@ export const ptBRTranslations = {
     'Você pode ver apenas as mensagens que enviou para este perfil.',
   PROFILE_MESSAGES_COMPOSE_LABEL: 'Escreva uma mensagem',
   PROFILE_MESSAGES_MAX_LENGTH:
-    'Máximo de 4.000 caracteres de texto. Formatação e imagens são permitidas.',
+    'Máximo de 8.000 caracteres HTML.',
   PROFILE_MESSAGES_SEND: 'Enviar mensagem',
   PROFILE_MESSAGES_ERROR_INVALID:
-    'Escreva uma mensagem com até 4.000 caracteres.',
+    'Escreva uma mensagem com até 8.000 caracteres HTML.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'Não foi possível salvar a mensagem.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Selecione um dos seus perfis para enviar uma mensagem.',

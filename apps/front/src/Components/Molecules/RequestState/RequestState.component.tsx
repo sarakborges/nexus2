@@ -7,7 +7,6 @@ import './RequestState.style.scss'
 
 export function RequestState({
   isLoading = false,
-  isFetching = false,
   isError = false,
   isEmpty = false,
   emptyMessage,
@@ -41,21 +40,9 @@ export function RequestState({
     )
   }
 
-  const refreshingIndicator = isFetching ? (
-    <div
-      className="request-state request-state--inline"
-      role="status"
-      aria-live="polite"
-    >
-      <span className="request-state__spinner" aria-hidden="true" />
-      <span>{t('REQUEST_UPDATING')}</span>
-    </div>
-  ) : null
-
   if (isEmpty) {
     return (
       <>
-        {refreshingIndicator}
         <p className="account-card__description">{emptyMessage}</p>
       </>
     )
@@ -63,7 +50,6 @@ export function RequestState({
 
   return (
     <>
-      {refreshingIndicator}
       {children}
     </>
   )

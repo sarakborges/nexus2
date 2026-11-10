@@ -59,6 +59,7 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
       !canPublish ||
       !title.trim() ||
       !hasRichTextContent(content) ||
+      content.length > 8000 ||
       !community ||
       !forumProfile
     ) return
@@ -95,7 +96,7 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
     setContent,
     createMutation,
     submit,
-    canSubmit: Boolean(canPublish && title.trim() && hasRichTextContent(content)),
+    canSubmit: Boolean(canPublish && title.trim() && hasRichTextContent(content) && content.length <= 8000),
     uploadEditorImage
   }
 }
