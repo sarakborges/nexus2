@@ -14,6 +14,7 @@ export function CommunityPage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
+    isAuthInitialized,
     communityPageQuery,
     community,
     viewerRelationship,
@@ -30,7 +31,7 @@ export function CommunityPage() {
   } = useCommunityPage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (communityPageQuery.isLoading) {
+  if (!isAuthInitialized || communityPageQuery.isLoading) {
     return (
       <main className="social-page">
         <div className="social-page__state">

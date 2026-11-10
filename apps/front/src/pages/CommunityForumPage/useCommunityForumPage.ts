@@ -61,6 +61,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
 
   return {
     normalized,
+    isAuthInitialized,
     session,
     page,
     pageSize,

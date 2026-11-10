@@ -57,6 +57,7 @@ export function useCommunityPage(): UseCommunityPageResult {
   return {
     requestedUrl,
     communityPageQuery,
+    isAuthInitialized,
     community,
     viewerRelationship,
     typeCompatibility,

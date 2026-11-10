@@ -45,6 +45,7 @@ export function useProfilePage(): UseProfilePageResult {
 
   return {
     requestedUrl,
+    isAuthInitialized,
     profilePageQuery,
     profile,
     viewerRelationship,

@@ -16,6 +16,7 @@ export function CommunityForumPage() {
   const { t } = useTranslations()
   const {
     normalized,
+    isAuthInitialized,
     session,
     page,
     pageSize,
@@ -32,7 +33,7 @@ export function CommunityForumPage() {
   } = useCommunityForumPage()
 
   if (!normalized) return <NotFoundPage />
-  if (forumPageQuery.isLoading) {
+  if (!isAuthInitialized || forumPageQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">

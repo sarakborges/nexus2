@@ -5,6 +5,7 @@ import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatib
 
 export type UseCommunityPageResult = {
   requestedUrl: string
+  isAuthInitialized: boolean
   communityPageQuery: UseQueryResult<CommunityPageData>
   community: Community | null | undefined
   viewerRelationship: CommunityRelationship | null

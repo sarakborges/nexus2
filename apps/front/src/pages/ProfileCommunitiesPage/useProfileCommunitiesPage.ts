@@ -60,6 +60,7 @@ export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
 
   return {
     normalized,
+    isAuthInitialized,
     profileDirectoryQuery,
     profile,
     viewerRelationship,

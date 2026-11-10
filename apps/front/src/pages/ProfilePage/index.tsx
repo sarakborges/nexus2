@@ -15,6 +15,7 @@ export function ProfilePage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
+    isAuthInitialized,
     profilePageQuery,
     profile,
     viewerRelationship,
@@ -27,7 +28,7 @@ export function ProfilePage() {
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profilePageQuery.isLoading) {
+  if (!isAuthInitialized || profilePageQuery.isLoading) {
     return (
       <main className="social-page">
         <div className="social-page__state">

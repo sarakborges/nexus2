@@ -69,6 +69,7 @@ export function useProfileFriendsPage(): UseProfileFriendsPageResult {
 
   return {
     normalized,
+    isAuthInitialized,
     profileDirectoryQuery,
     profile,
     viewerRelationship,

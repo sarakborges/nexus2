@@ -16,6 +16,7 @@ export function ProfileCommunitiesPage() {
   const { t } = useTranslations()
   const {
     normalized,
+    isAuthInitialized,
     profileDirectoryQuery,
     profile,
     viewerRelationship,
@@ -28,7 +29,7 @@ export function ProfileCommunitiesPage() {
   } = useProfileCommunitiesPage()
 
   if (!normalized) return <NotFoundPage />
-  if (profileDirectoryQuery.isLoading) {
+  if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">

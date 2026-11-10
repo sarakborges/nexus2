@@ -6,6 +6,7 @@ import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
 export type UseProfileFriendsPageResult = {
   normalized: string
+  isAuthInitialized: boolean
   profileDirectoryQuery: UseQueryResult<ProfileDirectoryPageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null

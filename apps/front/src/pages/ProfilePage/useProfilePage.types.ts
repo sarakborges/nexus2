@@ -4,6 +4,7 @@ import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatib
 
 export type UseProfilePageResult = {
   requestedUrl: string
+  isAuthInitialized: boolean
   profilePageQuery: UseQueryResult<ProfilePageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null

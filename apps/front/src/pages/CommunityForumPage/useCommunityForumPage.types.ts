@@ -13,6 +13,7 @@ import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
 export type UseCommunityForumPageResult = {
   normalized: string
+  isAuthInitialized: boolean
   session: AuthSession | null
   page: number
   pageSize: number
