@@ -34,6 +34,6 @@ export function filterAndSortList<T>(
     const comparison = direction.startsWith('name-')
       ? getName(left).localeCompare(getName(right), undefined, { sensitivity: 'base' })
       : getActivity(left) - getActivity(right)
-    return (direction.endsWith('-asc') ? comparison : -comparison) || getId(left).localeCompare(getId(right))
+    return direction.endsWith('-asc') ? comparison : -comparison
   })
 }

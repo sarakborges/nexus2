@@ -135,7 +135,7 @@ export class CommunityForumTopicPageService {
         const allReplies = filterAndSortList(
           (records.community_forum_replies as CommunityForumReply[]).filter(reply => reply.topicId === topicId && reply.communityId === community.id),
           query.query,
-          query.sort,
+          query.sort ?? 'activity-asc',
           reply => [reply.content, profilesById.get(reply.profileId)?.name ?? '', profilesById.get(reply.profileId)?.url ?? ''].join(' '),
           reply => reply.createdAt,
           reply => profilesById.get(reply.profileId)?.name ?? '',
