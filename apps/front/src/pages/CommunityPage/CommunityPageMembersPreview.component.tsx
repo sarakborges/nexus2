@@ -28,7 +28,7 @@ export function CommunityPageMembersPreview({
           className="social-preview-panel__all"
           to={ROUTES.community + '/' + communityUrl + '/members'}
         >
-          {t('COMMUNITY_MEMBERS_LINK')}
+          {t('COMMON_VIEW_ALL')}
         </Link>
       </header>
       <RequestState

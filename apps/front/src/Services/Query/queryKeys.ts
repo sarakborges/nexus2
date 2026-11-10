@@ -8,8 +8,9 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     query: string,
-    sort: string
-  ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort] as const,
+    sort: string,
+    communityTab: 'all' | 'managed'
+  ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort, communityTab] as const,
   profilePage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
     ['profile-page', url, viewerUserId, currentProfileId] as const,
   profileMessagesPage: (

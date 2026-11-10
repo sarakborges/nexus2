@@ -26,7 +26,7 @@ export function HomePageFriendsPreview({
           className="social-preview-panel__all"
           to={ROUTES.profile + '/' + profileUrl + '/friends'}
         >
-          {t('PROFILE_FRIENDS_LINK')}
+          {t('COMMON_VIEW_ALL')}
         </Link>
       </header>
       <RequestState

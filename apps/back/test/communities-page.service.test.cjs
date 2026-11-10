@@ -25,7 +25,9 @@ const records = {
   ],
   community_relationships: [
     { profiles: ['profile-1', 'community-social'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 10 },
-    { profiles: ['profile-3', 'community-rp'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 20 }
+    { profiles: ['profile-3', 'community-rp'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 20 },
+    { profiles: ['profile-2', 'community-private'], type: 'moderator', requestedBy: null, blockedBy: null, updatedAt: 30 },
+    { profiles: ['profile-2', 'community-unlisted'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 40 }
   ]
 }
 
@@ -110,4 +112,17 @@ test('communities page rejects a missing authenticated account', async () => {
     (error) => error instanceof UnauthorizedException && error.message === 'ACCOUNT_NOT_FOUND'
   )
   assert.equal(repository.transactionCalls, 1)
+})
+
+test('managed communities includes owner and moderator roles across owned profiles', async () => {
+  const { service, repository } = createService()
+  const result = await service.getCommunitiesPage('user-1', query({ communityTab: 'managed' }))
+
+  assert.equal(repository.transactionCalls, 1)
+  assert.equal(result.communityTab, 'managed')
+  assert.deepEqual(
+    result.communities.items.map(community => community.id),
+    ['community-social', 'community-private', 'community-unlisted']
+  )
+  assert.ok(!result.communities.items.some(community => community.id === 'community-rp'))
 })

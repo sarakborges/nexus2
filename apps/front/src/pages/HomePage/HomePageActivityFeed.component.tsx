@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { IdentityAvatar, RequestState } from '@/Components'
+import { RichTextContent } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import type { HomePageActivityFeedProps } from './HomePageActivityFeed.types'
@@ -56,7 +57,9 @@ export function HomePageActivityFeed({
                   </time>
                 </div>
               </header>
-              {activity.type === 'friend_connected' ? (
+              {activity.type === 'profile_post' ? (
+                <RichTextContent className="home-page__activity-post" html={activity.content} />
+              ) : activity.type === 'friend_connected' ? (
                 <p className="home-page__activity-description">
                   <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
                   <Link to={ROUTES.profile + '/' + activity.profile.url}>

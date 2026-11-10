@@ -1,6 +1,27 @@
 import type { enUSTranslations } from './en-US'
 
 export const ptBRTranslations = {
+COMMON_VIEW_ALL: 'Ver todos',
+  COMMUNITIES_TABS_LABEL: 'Filtros de comunidades',
+  COMMUNITIES_TAB_ALL: 'Todas as comunidades',
+  COMMUNITIES_TAB_MANAGED: 'Comunidades que administro',
+  PROFILE_MESSAGES_TABS_LABEL: 'Filtros de mensagens',
+  PROFILE_MESSAGES_TAB_ALL: 'Todas as mensagens',
+  PROFILE_MESSAGES_TAB_FAVORITES: 'Mensagens favoritas',
+  PROFILE_MESSAGE_DELETE: 'Excluir',
+  PROFILE_MESSAGE_FAVORITE: 'Favoritar',
+  PROFILE_MESSAGE_UNFAVORITE: 'Remover dos favoritos',
+  PROFILE_MESSAGE_REPLY: 'Responder',
+  PROFILE_MESSAGE_FAVORITED: 'Mensagem favoritada',
+  PROFILE_MESSAGE_REPLYING_TO: 'Respondendo a {{name}}',
+  PROFILE_MESSAGE_CANCEL_REPLY: 'Cancelar resposta',
+  PROFILE_MESSAGE_DELETED: 'Mensagem excluída.',
+  PROFILE_MESSAGE_FAVORITE_UPDATED: 'Favoritos atualizados.',
+  HOME_POST_COMPOSE_LABEL: 'Compartilhe uma atualização',
+  HOME_POST_PUBLISH: 'Publicar',
+  HOME_POST_PUBLISHING: 'Publicando...',
+  HOME_POST_PUBLISHED: 'Publicação criada.',
+  HOME_POST_FAILED: 'Não foi possível publicar. Tente novamente.'
   SETTINGS_DESCRIPTION:
     'Gerencie o idioma, a aparência e os atalhos da sua conta.',
   APPEARANCE_TITLE: 'Aparência',
@@ -48,8 +69,8 @@ export const ptBRTranslations = {
     'Não há novas comunidades para sugerir no momento.',
   HOME_ACTIVITY_TITLE: 'Atualizações recentes',
   HOME_ACTIVITY_DESCRIPTION:
-    'As 10 atualizações mais recentes das suas amizades e comunidades.',
-  HOME_ACTIVITY_EMPTY: 'Ainda não há atualizações de amigos ou comunidades.',
+    'As 10 atualizações mais recentes das suas amizades, comunidades e publicações.',
+  HOME_ACTIVITY_EMPTY: 'Ainda não há publicações ou atividades recentes.',
   HOME_ACTIVITY_PROFILE_PREFIX: 'O perfil',
   HOME_ACTIVITY_FRIEND_LABEL: 'Amizade',
   HOME_ACTIVITY_COMMUNITY_LABEL: 'Comunidade',
@@ -212,7 +233,7 @@ export const ptBRTranslations = {
   RELATIONSHIP_PENDING: 'Solicitação pendente.',
   RELATIONSHIP_FRIENDS_EMPTY: 'Ainda não há conexões para exibir.',
   PROFILE_FRIENDS_TITLE: 'Amigos',
-  PROFILE_FRIENDS_LINK: 'Ver amigos',
+  PROFILE_FRIENDS_LINK: 'Amigos',
   VIEW_ALL: 'Ver todos',
   COMMUNITY_EDIT: 'Editar comunidade',
   COMMUNITY_EDIT_DESCRIPTION:
@@ -256,7 +277,7 @@ export const ptBRTranslations = {
   COMMUNITIES_CREATE: 'Criar comunidade',
   COMMUNITIES_EMPTY: 'Ainda não há comunidades.',
   COMMUNITY_PICTURE_ALT: 'Imagem da comunidade {{name}}',
-  COMMUNITY_MEMBERS_LINK: 'Ver membros',
+  COMMUNITY_MEMBERS_LINK: 'Membros',
   COMMUNITY_MEMBERS_TITLE: 'Membros',
   COMMUNITY_MEMBERS_EMPTY: 'Esta comunidade ainda não tem conexões.',
   COMMUNITY_BACK_TO_PAGE: 'Voltar à página',
@@ -275,7 +296,7 @@ export const ptBRTranslations = {
   COMMUNITY_OWNER: 'Proprietário da comunidade',
   COMMUNITY_ERROR_OWNER_REQUIRED:
     'Selecione um dos seus perfis antes de criar uma comunidade.',
-  PROFILE_COMMUNITIES_LINK: 'Ver comunidades',
+  PROFILE_COMMUNITIES_LINK: 'Comunidades',
   PROFILE_COMMUNITIES_TITLE: 'Comunidades',
   PROFILE_COMMUNITIES_EMPTY:
     'Este perfil ainda não está conectado a nenhuma comunidade.',

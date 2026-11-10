@@ -273,3 +273,30 @@
   max-height: inherit;
   object-fit: cover;
 }
+
+.home-page__post-composer {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
+  background: var(--color-surface-raised);
+}
+
+.home-page__post-composer .rich-text-editor { width: 100%; }
+
+.home-page__post-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.home-page__activity-post {
+  padding-top: 4px;
+  line-height: 1.65;
+}
+
+.home-page__post-error {
+  margin: 0;
+  color: var(--color-error-strong);
+  font-size: 13px;
+}

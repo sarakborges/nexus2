@@ -93,9 +93,8 @@ export class ProfileMessageService {
       }
     )
   }
-}
 
-async deleteMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
+  async deleteMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
     await this.data.transaction(['accounts', 'profile_messages', 'media_files'], collections => {
       const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
       if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
@@ -144,3 +143,4 @@ async deleteMessage(userId: string, recipientProfileId: string, messageId: strin
       }
     })
   }
+}

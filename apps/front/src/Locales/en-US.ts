@@ -1,4 +1,25 @@
 export const enUSTranslations = {
+COMMON_VIEW_ALL: 'View all',
+  COMMUNITIES_TABS_LABEL: 'Community filters',
+  COMMUNITIES_TAB_ALL: 'All communities',
+  COMMUNITIES_TAB_MANAGED: 'Communities I manage',
+  PROFILE_MESSAGES_TABS_LABEL: 'Message filters',
+  PROFILE_MESSAGES_TAB_ALL: 'All messages',
+  PROFILE_MESSAGES_TAB_FAVORITES: 'Favorite messages',
+  PROFILE_MESSAGE_DELETE: 'Delete',
+  PROFILE_MESSAGE_FAVORITE: 'Favorite',
+  PROFILE_MESSAGE_UNFAVORITE: 'Remove favorite',
+  PROFILE_MESSAGE_REPLY: 'Reply',
+  PROFILE_MESSAGE_FAVORITED: 'Favorited message',
+  PROFILE_MESSAGE_REPLYING_TO: 'Replying to {{name}}',
+  PROFILE_MESSAGE_CANCEL_REPLY: 'Cancel reply',
+  PROFILE_MESSAGE_DELETED: 'Message deleted.',
+  PROFILE_MESSAGE_FAVORITE_UPDATED: 'Favorites updated.',
+  HOME_POST_COMPOSE_LABEL: 'Share an update',
+  HOME_POST_PUBLISH: 'Publish',
+  HOME_POST_PUBLISHING: 'Publishing...',
+  HOME_POST_PUBLISHED: 'Post published.',
+  HOME_POST_FAILED: 'The post could not be published. Please try again.'
   SETTINGS_DESCRIPTION:
     'Manage your language, appearance, and account shortcuts.',
   APPEARANCE_TITLE: 'Appearance',
@@ -45,9 +66,9 @@ export const enUSTranslations = {
     'There are no new communities to suggest right now.',
   HOME_ACTIVITY_TITLE: 'Recent activity',
   HOME_ACTIVITY_DESCRIPTION:
-    'The 10 latest updates from your friends and communities.',
+    'The 10 latest updates from your friends, communities, and posts.',
   HOME_ACTIVITY_EMPTY:
-    'There are no recent updates from friends or communities yet.',
+    'There are no recent posts or activity yet.',
   HOME_ACTIVITY_PROFILE_PREFIX: 'Profile',
   HOME_ACTIVITY_FRIEND_LABEL: 'Friendship',
   HOME_ACTIVITY_COMMUNITY_LABEL: 'Community',
@@ -209,7 +230,7 @@ export const enUSTranslations = {
   RELATIONSHIP_PENDING: 'Request pending.',
   RELATIONSHIP_FRIENDS_EMPTY: 'There are no connections to show yet.',
   PROFILE_FRIENDS_TITLE: 'Friends',
-  PROFILE_FRIENDS_LINK: 'View friends',
+  PROFILE_FRIENDS_LINK: 'Friends',
   VIEW_ALL: 'View all',
   COMMUNITY_EDIT: 'Edit community',
   COMMUNITY_EDIT_DESCRIPTION:
@@ -253,7 +274,7 @@ export const enUSTranslations = {
   COMMUNITIES_CREATE: 'Create community',
   COMMUNITIES_EMPTY: 'There are no communities yet.',
   COMMUNITY_PICTURE_ALT: '{{name}} community picture',
-  COMMUNITY_MEMBERS_LINK: 'View members',
+  COMMUNITY_MEMBERS_LINK: 'Members',
   COMMUNITY_MEMBERS_TITLE: 'Members',
   COMMUNITY_MEMBERS_EMPTY: 'This community has no connections yet.',
   COMMUNITY_BACK_TO_PAGE: 'Back to page',
@@ -272,7 +293,7 @@ export const enUSTranslations = {
   COMMUNITY_OWNER: 'Community owner',
   COMMUNITY_ERROR_OWNER_REQUIRED:
     'Select one of your profiles before creating a community.',
-  PROFILE_COMMUNITIES_LINK: 'View communities',
+  PROFILE_COMMUNITIES_LINK: 'Communities',
   PROFILE_COMMUNITIES_TITLE: 'Communities',
   PROFILE_COMMUNITIES_EMPTY:
     'This profile is not connected to any communities yet.',
