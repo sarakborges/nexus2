@@ -66,6 +66,32 @@ const input = {
   type: 'social'
 }
 
+test('profile lookup by IDs filters records before returning the requested profiles', async () => {
+  const { service, collections } = createHarness()
+  const requested = {
+    id: 'requested-profile',
+    name: 'Requested',
+    url: 'requested',
+    picture: '',
+    about: '<p>Requested profile</p>',
+    type: 'social'
+  }
+  const unrequested = {
+    id: 'unrequested-profile',
+    name: 'Unrequested',
+    url: 'unrequested',
+    picture: '',
+    about: '<p>Unrequested profile</p>',
+    type: 'social'
+  }
+  collections.set('profiles', [requested, unrequested])
+
+  const result = await service.getProfilesByIds([requested.id])
+
+  assert.deepEqual(result.map(profile => profile.id), [requested.id])
+  assert.equal(result[0].about, '<p>Requested profile</p>')
+})
+
 test('profile creation atomically persists the profile and links it to the authenticated account', async () => {
   const { service, collections, account } = createHarness()
   const created = await service.createProfile(account.id, input)

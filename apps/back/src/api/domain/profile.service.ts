@@ -66,9 +66,8 @@ export class ProfileService {
     if (!found) throw new NotFoundException('PROFILE_NOT_FOUND')
     return found
   }
-  async getProfilesByIds(ids: string[]): Promise<Profile[]> {
-    const set = new Set(ids)
-    return (await this.access.readProfiles()).filter(p => set.has(p.id))
+  getProfilesByIds(ids: string[]): Promise<Profile[]> {
+    return this.access.readProfilesByIds(ids)
   }
   async createProfile(userId: string, input: CreateProfileInput): Promise<CreateProfileResult> {
     const name = input.name.trim()

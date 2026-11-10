@@ -11,7 +11,18 @@ export class DomainAccessService {
   ) {}
 
   async readProfiles(): Promise<Profile[]> {
+    return this.sanitizeProfiles(await this.data.read<Profile>('profiles'))
+  }
+
+  async readProfilesByIds(ids: string[]): Promise<Profile[]> {
+    const requestedIds = new Set(ids)
     const profiles = await this.data.read<Profile>('profiles')
+    return this.sanitizeProfiles(
+      profiles.filter(profile => requestedIds.has(profile.id))
+    )
+  }
+
+  private sanitizeProfiles(profiles: Profile[]): Profile[] {
     return profiles.map(profile => ({
       ...profile,
       about: sanitizeRichText(profile.about ?? '')
