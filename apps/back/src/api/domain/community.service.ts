@@ -22,7 +22,7 @@ import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
@@ -103,7 +103,6 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? 'public'
-    const aboutText = getRichTextPlainText(about)
     const createdAt = Date.now()
     const communityId = randomUUID()
     return this.data.transaction<Community>(
@@ -117,7 +116,7 @@ export class CommunityService {
         this.access.assertOwnsInRecords(userId, ownerProfileId, accounts, profiles)
         const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           !['public', 'private', 'unlisted'].includes(privacy) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
@@ -171,7 +170,6 @@ export class CommunityService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
     const lastActivity = Date.now()
     const result = await this.data.transaction<{ community: Community; previousPicture: string | null }>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
@@ -191,7 +189,7 @@ export class CommunityService {
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
         const latest = communities.find(community => community.id === communityId)
         if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           (input.privacy != null && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')

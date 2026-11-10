@@ -35,10 +35,11 @@ export async function uploadFile(
   )
 
   try {
-    const body = new FormData()
-    body.append('cacheControl', '3600')
-    body.append('', file)
-    const response = await fetch(signed.uploadUrl, { method: 'PUT', body })
+    const response = await fetch(signed.uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file
+    })
     if (!response.ok) throw new Error('UPLOAD_TRANSFER_FAILED')
 
     const { data } = await api.post<UploadedFile>(

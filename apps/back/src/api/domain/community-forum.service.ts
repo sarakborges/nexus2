@@ -118,7 +118,7 @@ export class CommunityForumService {
           collections.communities as Community[],
           collections.community_relationships as CommunityRelationship[]
         )
-        if (!title || title.length > 140 || !plainText || plainText.length > 8000 || content.length > 12000) {
+        if (!title || title.length > 140 || !plainText || content.length > 8000) {
           throw new BadRequestException('INVALID_FORUM_TOPIC')
         }
 
@@ -175,7 +175,7 @@ export class CommunityForumService {
         )
         if (!latestTopic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
         if (latestTopic.isLocked) throw new ForbiddenException('FORUM_TOPIC_LOCKED')
-        if (!plainText || plainText.length > 8000 || content.length > 12000) {
+        if (!plainText || content.length > 8000) {
           throw new BadRequestException('INVALID_FORUM_REPLY')
         }
 
