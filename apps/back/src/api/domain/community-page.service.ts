@@ -55,6 +55,7 @@ export class CommunityPageService {
               community: null,
               relationships: [],
               viewerRelationship: null,
+              currentProfileType: null,
               canViewMembers: false,
               canEditCommunity: false,
               pendingRequestCount: 0,
@@ -87,6 +88,7 @@ export class CommunityPageService {
         })
 
         const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? profilesById.get(currentProfileId)?.type ?? null : null
         const viewerRelationship = currentProfileId ? relationships.find((relationship) => relationship.profiles[0] === currentProfileId) ?? null : null
         const canViewMembers =
           community.privacy !== 'private' ||
@@ -179,6 +181,7 @@ export class CommunityPageService {
             community: visibleCommunity,
             relationships,
             viewerRelationship,
+            currentProfileType,
             canViewMembers,
             canEditCommunity,
             pendingRequestCount,

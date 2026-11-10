@@ -59,6 +59,7 @@ export class CommunityForumPageService {
             result: {
               community: null,
               viewerRelationship: null,
+              currentProfileType: null,
               canReadForum: false,
               canPublish: false,
               topics: paginate<CommunityForumTopicSummary>([], query),
@@ -91,6 +92,7 @@ export class CommunityForumPageService {
             profilesById.get(relationship.profiles[0])?.type === community.type
         )
         const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? profilesById.get(currentProfileId)?.type ?? null : null
         const viewerRelationship = currentProfileId ? viewerRelationships.find((relationship) => relationship.profiles[0] === currentProfileId) ?? null : null
         const rolesByProfileId = new Map(
           viewerRelationships.map((relationship) => [
@@ -177,6 +179,7 @@ export class CommunityForumPageService {
           result: {
             community: visibleCommunity,
             viewerRelationship,
+            currentProfileType,
             canReadForum,
             canPublish,
             topics,

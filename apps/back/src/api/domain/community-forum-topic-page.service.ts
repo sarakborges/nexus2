@@ -106,6 +106,7 @@ export class CommunityForumTopicPageService {
           )
         })
         const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? profilesById.get(currentProfileId)?.type ?? null : null
         const viewerRelationship = currentProfileId ? viewerRelationships.find((relationship) => relationship.profiles[0] === currentProfileId) ?? null : null
         const forumProfile =
           eligibleProfiles.find((profile) => profile.id === currentProfileId) ??
@@ -165,6 +166,7 @@ export class CommunityForumTopicPageService {
             detail,
             forumProfileId,
             viewerRelationship,
+            currentProfileType,
             isMember,
             isStaff,
             authors

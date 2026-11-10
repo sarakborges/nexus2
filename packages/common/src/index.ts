@@ -52,6 +52,7 @@ export type HomePageData = {
 export type ProfilePageData = {
   profile: Profile | null
   viewerRelationship: Relationship | null
+  currentProfileType: ProfileType | null
   friends: PaginatedResult<Profile>
   communities: PaginatedResult<Community>
 }
@@ -61,6 +62,7 @@ export type CommunityPageData = {
   community: Community | null
   relationships: CommunityRelationship[]
   viewerRelationship: CommunityRelationship | null
+  currentProfileType: ProfileType | null
   canViewMembers: boolean
   canEditCommunity: boolean
   pendingRequestCount: number
@@ -73,6 +75,7 @@ export type CommunityPageData = {
 export type CommunityForumPageData = {
   community: Community | null
   viewerRelationship: CommunityRelationship | null
+  currentProfileType: ProfileType | null
   canReadForum: boolean
   canPublish: boolean
   topics: PaginatedResult<CommunityForumTopicSummary>
@@ -85,6 +88,7 @@ export type CommunityForumTopicPageData = {
   detail: CommunityForumTopicDetail
   forumProfileId: string | null
   viewerRelationship: CommunityRelationship | null
+  currentProfileType: ProfileType | null
   isMember: boolean
   isStaff: boolean
   authors: Profile[]
@@ -99,6 +103,7 @@ export type CommunityMembersPageData = {
   community: Community | null
   relationships: CommunityRelationship[]
   viewerRelationship: CommunityRelationship | null
+  currentProfileType: ProfileType | null
   actorProfileId: string | null
   actorRole: CommunityRelationshipType | null
   isStaff: boolean
@@ -111,6 +116,7 @@ export type CommunityMembersPageData = {
 export type ProfileMessagesPageData = {
   profile: Profile | null
   viewerRelationship: Relationship | null
+  currentProfileType: ProfileType | null
   isProfileOwner: boolean
   messages: PaginatedResult<ProfileMessage>
   senders: Profile[]
@@ -128,6 +134,7 @@ export type ProfileDirectoryPageData =
       kind: 'friends'
       profile: Profile | null
       viewerRelationship: Relationship | null
+      currentProfileType: ProfileType | null
       friendRelationships: Relationship[]
       friends: PaginatedResult<Profile>
     }
@@ -135,6 +142,7 @@ export type ProfileDirectoryPageData =
       kind: 'communities'
       profile: Profile | null
       viewerRelationship: Relationship | null
+      currentProfileType: ProfileType | null
       communities: PaginatedResult<Community>
     }
 

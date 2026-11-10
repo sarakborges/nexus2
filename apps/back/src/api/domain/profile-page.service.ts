@@ -44,6 +44,8 @@ export class ProfilePageService {
         const account = userId ? accounts.find((item) => item.id === userId) : undefined
         if (userId && !account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
         const profiles = records.profiles as Profile[]
+        const currentProfileId = account?.currentProfile && account.profiles.includes(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? profiles.find((profile) => profile.id === currentProfileId)?.type ?? null : null
         const profileRecord = profiles.find(
           (profile) => profile.url === normalizedUrl
         )
@@ -54,6 +56,7 @@ export class ProfilePageService {
             result: {
               profile: null,
               viewerRelationship: null,
+              currentProfileType,
               friends: EMPTY_PAGE,
               communities: { ...EMPTY_PAGE, items: [] }
             }
@@ -65,7 +68,6 @@ export class ProfilePageService {
           about: sanitizeRichText(profileRecord.about ?? '')
         }
         const relationships = records.relationships as Relationship[]
-        const currentProfileId = account?.currentProfile && account.profiles.includes(account.currentProfile) ? account.currentProfile : null
         const viewerRelationship = currentProfileId && currentProfileId !== profile.id
           ? relationships.find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
           : null
@@ -115,6 +117,7 @@ export class ProfilePageService {
           result: {
             profile,
             viewerRelationship,
+            currentProfileType,
             friends: paginate(friends, FIRST_PAGE),
             communities: paginate(communities, FIRST_PAGE)
           }

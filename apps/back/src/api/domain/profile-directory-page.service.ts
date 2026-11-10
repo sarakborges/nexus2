@@ -60,6 +60,7 @@ export class ProfileDirectoryPageService {
                 kind: 'friends',
                 profile: null,
                 viewerRelationship: null,
+                currentProfileType: null,
                 friendRelationships: [],
                 friends: paginate<Profile>([], query)
               }
@@ -71,6 +72,7 @@ export class ProfileDirectoryPageService {
               kind: 'communities',
               profile: null,
               viewerRelationship: null,
+              currentProfileType: null,
               communities: paginate<Community>([], query)
             }
           }
@@ -82,6 +84,7 @@ export class ProfileDirectoryPageService {
         }
         const ownedProfileIds = new Set(account?.profiles ?? [])
         const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? (records.profiles as Profile[]).find((item) => item.id === currentProfileId)?.type ?? null : null
         const relationships = records.relationships as Relationship[]
         const viewerRelationship = currentProfileId && currentProfileId !== profile.id
           ? relationships.find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
@@ -121,6 +124,7 @@ export class ProfileDirectoryPageService {
               kind: 'friends',
               profile,
               viewerRelationship,
+              currentProfileType,
               friendRelationships,
               friends: friendPage
             }
@@ -153,6 +157,7 @@ export class ProfileDirectoryPageService {
             kind: 'communities',
             profile,
             viewerRelationship,
+            currentProfileType,
             communities: paginate(communities, query)
           }
         }

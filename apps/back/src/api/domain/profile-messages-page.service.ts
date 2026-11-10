@@ -53,6 +53,7 @@ export class ProfileMessagesPageService {
             result: {
               profile: null,
               viewerRelationship: null,
+              currentProfileType: null,
               isProfileOwner: false,
               messages: paginate<ProfileMessage>([], query),
               senders: []
@@ -66,6 +67,7 @@ export class ProfileMessagesPageService {
         }
         const viewerProfileIds = new Set(account?.profiles ?? [])
         const currentProfileId = account?.currentProfile && viewerProfileIds.has(account.currentProfile) ? account.currentProfile : null
+        const currentProfileType = currentProfileId ? profiles.find((item) => item.id === currentProfileId)?.type ?? null : null
         const viewerRelationship = currentProfileId && currentProfileId !== profile.id
           ? (collections.relationships as Relationship[]).find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
           : null
@@ -102,6 +104,7 @@ export class ProfileMessagesPageService {
           result: {
             profile,
             viewerRelationship,
+            currentProfileType,
             isProfileOwner,
             messages,
             senders
