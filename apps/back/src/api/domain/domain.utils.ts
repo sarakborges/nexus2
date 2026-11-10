@@ -17,3 +17,13 @@ export function getNewEditorImages(html: string, previousHtml: string): string {
     .filter((id, index, ids) => !previousIds.has(id) && ids.indexOf(id) === index)
   return newIds.map(id => '<img src="/api/uploads/' + id + '/content">').join('')
 }
+
+export function getRemovedEditorImages(previousHtml: string, currentHtml: string): string {
+  const pattern = /<img\b[^>]*\bsrc=(["'])\/api\/uploads\/([0-9a-f-]{36})\/content\1/gi
+  const currentIds = new Set([...currentHtml.matchAll(pattern)].map(match => match[2]))
+  const removedIds = [...previousHtml.matchAll(pattern)]
+    .map(match => match[2])
+    .filter((id, index, ids) => !currentIds.has(id) && ids.indexOf(id) === index)
+
+  return removedIds.map(id => '<img src="/api/uploads/' + id + '/content">').join('')
+}

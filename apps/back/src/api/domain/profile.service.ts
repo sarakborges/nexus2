@@ -26,7 +26,7 @@ import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import { ProfileRelationshipService } from './profile-relationship.service'
-import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
+import { getNewEditorImages, getRemovedEditorImages, normalizeEntityUrl } from './domain.utils'
 
 @Injectable()
 export class ProfileService {
@@ -160,6 +160,12 @@ export class ProfileService {
               nextMediaFiles, userId, picture, 'profile-avatar', 'profile', profileId
             )
           }
+          nextMediaFiles = this.uploads.detachEditorImagesFromRecords(
+            nextMediaFiles,
+            getRemovedEditorImages(latest.about, about),
+            'profile',
+            profileId
+          )
           nextMediaFiles = this.uploads.attachEditorImagesToRecords(
             nextMediaFiles,
             userId,

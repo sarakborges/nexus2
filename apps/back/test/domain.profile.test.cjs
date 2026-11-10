@@ -223,6 +223,7 @@ test('profile update keeps content and media metadata atomic when an attachment 
     attachAvatarUrlToRecords(records) {
       return [...records, { id: 'staged-avatar' }]
     },
+    detachEditorImagesFromRecords(records) { return records },
     attachEditorImagesToRecords() {
       throw new Error('PROFILE_EDITOR_ATTACHMENT_FAILED')
     }
@@ -260,6 +261,7 @@ test('profile updates delete the previous managed avatar after the profile trans
   const deleted = []
   const uploads = {
     attachAvatarUrlToRecords(records) { return records },
+    detachEditorImagesFromRecords(records) { return records },
     attachEditorImagesToRecords(records) { return records },
     async deletePreviousAvatar(url) {
       assert.equal(collections.get('profiles')[0].picture, nextPicture)
@@ -294,6 +296,7 @@ test('community update keeps content and media metadata atomic when an attachmen
     attachAvatarUrlToRecords(records) {
       return [...records, { id: 'staged-avatar' }]
     },
+    detachEditorImagesFromRecords(records) { return records },
     attachEditorImagesToRecords() {
       throw new Error('COMMUNITY_EDITOR_ATTACHMENT_FAILED')
     }
@@ -351,6 +354,7 @@ test('community updates delete the previous managed avatar after the community t
   const deleted = []
   const uploads = {
     attachAvatarUrlToRecords(records) { return records },
+    detachEditorImagesFromRecords(records) { return records },
     attachEditorImagesToRecords(records) { return records },
     async deletePreviousAvatar(url) {
       assert.equal(collections.get('communities')[0].picture, nextPicture)
