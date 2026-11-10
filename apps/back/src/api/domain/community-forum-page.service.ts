@@ -11,6 +11,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
 import { normalizeEntityUrl } from './domain.utils'
 import { sanitizeRichText } from './rich-text-sanitizer'
@@ -149,18 +150,11 @@ export class CommunityForumPageService {
         }
 
         const visibleTopics = canReadForum
-          ? forumTopics
-              .filter((topic) => topic.communityId === community.id)
-              .map((topic) => ({
-                ...topic,
-                replyCount: replyCounts.get(topic.id) ?? 0
-              }))
-              .sort(
-                (a, b) =>
-                  Number(b.isPinned) - Number(a.isPinned) ||
-                  b.updatedAt - a.updatedAt ||
-                  a.id.localeCompare(b.id)
-              )
+          ? filterAndSortList(
+              forumTopics.filter(topic => topic.communityId === community.id).map(topic => ({ ...topic, replyCount: replyCounts.get(topic.id) ?? 0 })),
+              query.query, query.sort,
+              topic => [topic.title,topic.content].join(' '), topic => topic.updatedAt || topic.createdAt, topic => topic.title, topic => topic.id
+            ).sort((a,b) => Number(b.isPinned)-Number(a.isPinned))
           : []
         const topics = paginate(visibleTopics, query)
         const authorIds = new Set(

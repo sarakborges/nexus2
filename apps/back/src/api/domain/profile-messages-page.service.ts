@@ -9,6 +9,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { normalizeEntityUrl } from './domain.utils'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
@@ -72,22 +73,15 @@ export class ProfileMessagesPageService {
           ? (collections.relationships as Relationship[]).find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
           : null
         const isProfileOwner = viewerProfileIds.has(profile.id)
-        const visibleMessages = (
-          collections.profile_messages as ProfileMessage[]
+        const profilesById = new Map(profiles.map(sender => [sender.id, sender] as const))
+        const visibleMessages = filterAndSortList(
+          (collections.profile_messages as ProfileMessage[])
+            .filter(message => message.toProfileId === profile.id && (isProfileOwner || viewerProfileIds.has(message.fromProfileId)))
+            .map(message => ({ ...message, content: sanitizeRichText(message.content ?? '') })),
+          query.query, query.sort,
+          message => [message.content, profilesById.get(message.fromProfileId)?.name ?? '', profilesById.get(message.fromProfileId)?.url ?? ''].join(' '),
+          message => message.createdAt, message => profilesById.get(message.fromProfileId)?.name ?? '', message => message.id
         )
-          .filter(
-            (message) =>
-              message.toProfileId === profile.id &&
-              (isProfileOwner || viewerProfileIds.has(message.fromProfileId))
-          )
-          .map((message) => ({
-            ...message,
-            content: sanitizeRichText(message.content ?? '')
-          }))
-          .sort(
-            (a, b) =>
-              b.createdAt - a.createdAt || a.id.localeCompare(b.id)
-          )
         const messages = paginate(visibleMessages, query)
         const senderIds = new Set(
           messages.items.map((message) => message.fromProfileId)

@@ -9,6 +9,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import { CommunityMembersPageDto } from './community-members-page.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
@@ -129,17 +130,11 @@ export class CommunityMembersPageService {
               relationship.type
             ] as const)
         )
-        const memberProfiles = profiles
-          .filter(
-            (profile) =>
-              roleByProfileId.has(profile.id) &&
-              profile.type === community.type
-          )
-          .map((profile) => ({
-            ...profile,
-            about: sanitizeRichText(profile.about ?? ''),
-            role: roleByProfileId.get(profile.id)!
-          }))
+        const memberProfiles = filterAndSortList(
+          profiles.filter(profile => roleByProfileId.has(profile.id) && profile.type === community.type).map(profile => ({ ...profile, about: sanitizeRichText(profile.about ?? ''), role: roleByProfileId.get(profile.id)! })),
+          query.query, query.sort,
+          profile => [profile.name,profile.about,profile.url].join(' '), profile => profile.lastActivity || profile.createdAt, profile => profile.name, profile => profile.id
+        )
         const members = paginate(memberProfiles, query)
 
         const pendingProfileIds = new Set(
@@ -154,17 +149,11 @@ export class CommunityMembersPageService {
             : []
         )
         const pendingProfiles = isStaff
-          ? profiles
-              .filter(
-                (profile) =>
-                  profile.type === community.type &&
-                  pendingProfileIds.has(profile.id)
-              )
-              .map((profile) => ({
-                ...profile,
-                about: sanitizeRichText(profile.about ?? ''),
-                role: 'requested'
-              }))
+          ? filterAndSortList(
+              profiles.filter(profile => profile.type === community.type && pendingProfileIds.has(profile.id)).map(profile => ({ ...profile, about: sanitizeRichText(profile.about ?? ''), role: 'requested' })),
+              query.query, query.sort,
+              profile => [profile.name,profile.about,profile.url].join(' '), profile => profile.lastActivity || profile.createdAt, profile => profile.name, profile => profile.id
+            )
           : []
         const pending = paginate(pendingProfiles, {
           ...query,

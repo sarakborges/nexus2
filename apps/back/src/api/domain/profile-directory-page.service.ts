@@ -10,6 +10,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
 import { normalizeEntityUrl } from './domain.utils'
 import { sanitizeRichText } from './rich-text-sanitizer'
@@ -102,15 +103,11 @@ export class ProfileDirectoryPageService {
                 relationship.profiles.find((id) => id !== profile.id)!
               )
           )
-          const friends = (records.profiles as Profile[])
-            .filter(
-              (friend) =>
-                friendIds.has(friend.id) && friend.type === profile.type
-            )
-            .map((friend) => ({
-              ...friend,
-              about: sanitizeRichText(friend.about ?? '')
-            }))
+          const friends = filterAndSortList(
+            (records.profiles as Profile[]).filter(friend => friendIds.has(friend.id) && friend.type === profile.type).map(friend => ({ ...friend, about: sanitizeRichText(friend.about ?? '') })),
+            query.query, query.sort,
+            friend => [friend.name,friend.about,friend.url].join(' '), friend => friend.lastActivity || friend.createdAt, friend => friend.name, friend => friend.id
+          )
 
           const friendPage = paginate(friends, query)
           const pageFriendIds = new Set(friendPage.items.map((friend) => friend.id))
@@ -143,11 +140,10 @@ export class ProfileDirectoryPageService {
             )
             .map((relationship) => relationship.profiles[1])
         )
-        const communities = normalized.communities.filter(
-          (community) =>
-            ownedCommunityIds.has(community.id) &&
-            community.type === profile.type &&
-            community.privacy === 'public'
+        const communities = filterAndSortList(
+          normalized.communities.filter(community => ownedCommunityIds.has(community.id) && community.type === profile.type && community.privacy === 'public'),
+          query.query, query.sort,
+          community => [community.name,community.about,community.url].join(' '), community => community.lastActivity || community.createdAt, community => community.name, community => community.id
         )
 
         return {

@@ -14,6 +14,15 @@ export class PaginationDto {
   pageSize = FIXED_PAGE_SIZE
 
   @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  query?: string
+
+  @IsOptional()
+  @IsIn(['activity-desc', 'activity-asc', 'name-asc', 'name-desc'])
+  sort: 'activity-desc' | 'activity-asc' | 'name-asc' | 'name-desc' = 'activity-desc'
+
+  @IsOptional()
   @IsIn(['all', 'staff', 'banned'])
   tab?: string
 

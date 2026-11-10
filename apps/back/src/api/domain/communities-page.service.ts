@@ -4,6 +4,7 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { AccountRecord } from '../auth/auth.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
@@ -52,8 +53,10 @@ export class CommunitiesPageService {
               about: sanitizeRichText(currentProfileRecord.about ?? '')
             }
           : null
-        const communities = normalized.communities.filter(
-          (community: Community) => community.privacy === 'public'
+        const communities = filterAndSortList(
+          normalized.communities.filter((community: Community) => community.privacy === 'public'), query.query, query.sort,
+          community => [community.name,community.about,community.url].join(' '),
+          community => community.lastActivity || community.createdAt, community => community.name, community => community.id
         )
 
         return {

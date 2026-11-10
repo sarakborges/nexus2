@@ -1,7 +1,8 @@
 export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
-export type PaginationParams = { page?: number; pageSize?: number }
+export type ListSort = 'activity-desc' | 'activity-asc' | 'name-asc' | 'name-desc'
+export type PaginationParams = { page?: number; pageSize?: number; query?: string; sort?: ListSort }
 export type PaginatedResult<T> = { items: T[]; page: number; pageSize: number; totalItems: number; totalPages: number }
 export type ProfileType = 'social' | 'rp' | 'business'
 export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; createdAt: number; lastActivity: number }

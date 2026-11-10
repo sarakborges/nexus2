@@ -24,6 +24,7 @@ import type { CommunityMemberProfile, ForumTopicModerationChanges } from './doma
 import { AuthService } from '../auth/auth.service'
 import { PaginationDto } from '../pagination/pagination.dto'
 import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
 import { getRichTextPlainText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import { ActivityService } from './activity.service'
@@ -118,11 +119,14 @@ export class DomainService {
     const createdAt = (item: SearchResultItem) =>
       item.kind === 'profile' ? item.profile.createdAt : item.community.createdAt
 
-    found.sort((a, b) =>
-      lastActivity(b) - lastActivity(a) ||
-      createdAt(b) - createdAt(a)
+    const ordered = filterAndSortList(
+      found, undefined, q.sort,
+      item => item.kind === 'profile' ? [item.profile.name,item.profile.about,item.profile.url].join(' ') : [item.community.name,item.community.about,item.community.url].join(' '),
+      item => lastActivity(item) || createdAt(item),
+      item => item.kind === 'profile' ? item.profile.name : item.community.name,
+      item => item.kind === 'profile' ? item.profile.id : item.community.id
     )
-    return paginate(found, q)
+    return paginate(ordered, q)
   }
 
   listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
