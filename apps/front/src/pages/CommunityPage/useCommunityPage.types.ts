@@ -1,7 +1,6 @@
 import type { Community, CommunityPageData, CommunityForumTopicSummary, CommunityRelationship, Profile } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 
 export type UseCommunityPageResult = {
   requestedUrl: string

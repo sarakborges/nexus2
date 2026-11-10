@@ -6,7 +6,6 @@ import type {
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 

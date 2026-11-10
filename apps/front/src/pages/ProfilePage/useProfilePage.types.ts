@@ -1,6 +1,5 @@
 import type { Community, Profile, ProfilePageData, Relationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 
 export type UseProfilePageResult = {
   requestedUrl: string

@@ -114,7 +114,6 @@ export class CommunityForumPageService {
             ACTIVE_MEMBER_ROLES.includes(role)
           )
         })
-        const currentProfileId = account?.currentProfile ?? null
         const forumProfile =
           eligibleProfiles.find((profile) => profile.id === currentProfileId) ??
           eligibleProfiles.find(

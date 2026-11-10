@@ -7,7 +7,6 @@ import type {
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction, FormEvent } from 'react'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
 import type { ProfileMessageViewModel } from './ProfileMessageList.types'

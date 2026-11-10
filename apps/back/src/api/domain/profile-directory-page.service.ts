@@ -91,7 +91,6 @@ export class ProfileDirectoryPageService {
           : null
 
         if (kind === 'friends') {
-          const relationships = records.relationships as Relationship[]
           const friendIds = new Set(
             relationships
               .filter(

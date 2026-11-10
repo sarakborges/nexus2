@@ -1,7 +1,6 @@
 import type { Profile, ProfileDirectoryPageData, Relationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
 export type UseProfileFriendsPageResult = {
