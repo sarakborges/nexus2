@@ -4,7 +4,7 @@
   &__content { display:flex; align-items:center; gap:10px; box-sizing:border-box; width:100%; min-height:64px; padding:6px 12px; }
   &__icon-button,&__account-trigger { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:transparent; color:var(--text-color); cursor:pointer; transition:background-color 150ms ease; }
   &__icon-button { width:40px; height:40px; flex:0 0 40px; font-size:18px; }
-  &__icon-button svg { display:block; width:18px; height:18px; }
+  &__icon-button svg { display:block; width:18px; height:18px; flex:0 0 18px; }
   &__brand { display:inline-flex; align-items:center; flex:0 0 auto; color:var(--text-color); font-size:18px; font-weight:var(--font-weight-bold); letter-spacing:.14em; text-decoration:none; white-space:nowrap; }
   &__spacer { flex:1; }
   &__account-trigger { max-width:240px; gap:10px; padding:8px; text-align:left; }
@@ -228,6 +228,7 @@ html.has-global-navigation .social-page,html.has-global-navigation .account-page
 .floating-navigation__search-form option {
   color: var(--text-color);
   background: var(--color-surface);
+  font-size: 12px;
 }
 .floating-navigation__sidebar { background: transparent; border: 0; box-shadow: none; }
 .floating-navigation__sidebar-link svg { width: 18px; height: 18px; flex: 0 0 18px; }

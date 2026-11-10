@@ -198,7 +198,6 @@ export const ptBRTranslations = {
   REQUEST_LOADING: 'Carregando informações...',
   REQUEST_FAILED: 'Não foi possível carregar estas informações.',
   REQUEST_RETRY: 'Tentar novamente',
-  REQUEST_UPDATING: 'Atualizando informações...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Página não encontrada',
   NOT_FOUND_DESCRIPTION:
@@ -245,7 +244,7 @@ export const ptBRTranslations = {
   COMMUNITY_ABOUT_LABEL: 'Sobre a comunidade',
   COMMUNITY_ABOUT_EMPTY: 'Esta comunidade ainda não adicionou uma descrição.',
   COMMUNITY_ABOUT_MAX_LENGTH:
-    'Até 500 caracteres de texto. Imagens e formatação são permitidas.',
+    'Até 8.000 caracteres HTML.',
   COMMUNITY_MEMBER_COUNT: 'Membros',
   COMMUNITY_ERROR_URL_TAKEN: 'Este endereço de comunidade já está em uso.',
   COMMUNITY_ERROR_INVALID:

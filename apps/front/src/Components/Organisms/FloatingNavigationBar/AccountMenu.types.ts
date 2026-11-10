@@ -11,7 +11,6 @@ export type AccountMenuProps = {
   profilesError: boolean
   profilesSuccess: boolean
   isProfileSwitcherOpen: boolean
-  isRequestPending: boolean
   isSelectionPending: boolean
   isSelectionError: boolean
   isSigningOut: boolean

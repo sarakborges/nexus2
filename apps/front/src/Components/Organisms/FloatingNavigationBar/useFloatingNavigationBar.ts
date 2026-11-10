@@ -1,8 +1,4 @@
-import {
-  useIsFetching,
-  useIsMutating,
-  useQuery,
-} from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
@@ -28,9 +24,6 @@ export function useFloatingNavigationBar({
   const navigate = useNavigate()
   const location = useLocation()
   const navigationRef = useRef<HTMLDivElement>(null)
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
   const activePanel =
@@ -133,7 +126,6 @@ export function useFloatingNavigationBar({
   return {
     isAuthenticated: Boolean(session),
     navigationRef,
-    isRequestPending,
     activePanel,
     pathname: location.pathname,
     currentProfile,

@@ -5,7 +5,6 @@ export type ProfileSwitcherProps = {
   hasProfiles: boolean
   currentProfileId: string | null
   isOpen: boolean
-  isRequestPending: boolean
   isSelectionPending: boolean
   isSelectionError: boolean
   profilesLoading: boolean

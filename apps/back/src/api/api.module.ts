@@ -7,6 +7,8 @@ import { DomainController } from './domain/domain.controller'
 import { DomainService } from './domain/domain.service'
 import { DomainAccessService } from './domain/domain-access.service'
 import { CommunityForumService } from './domain/community-forum.service'
+import { CommunityForumRealtimeService } from './domain/community-forum-realtime.service'
+import { RealtimeController } from './realtime.controller'
 import { ProfileMessageService } from './domain/profile-message.service'
 import { ActivityService } from './domain/activity.service'
 import { HomePageService } from './domain/home-page.service'
@@ -33,7 +35,7 @@ import { UploadsAvatarService } from './uploads/uploads.avatar.service'
 import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
-  controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, ProfileEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  controllers: [AuthController, DomainController, RealtimeController, UploadsController, UploadsInternalController],
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumRealtimeService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, ProfileEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}

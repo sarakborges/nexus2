@@ -21,7 +21,7 @@ import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
@@ -74,9 +74,8 @@ export class ProfileService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
     const createdAt = Date.now()
-    if (!name || about.length > 12000 || aboutText.length > 500 ||
+    if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
@@ -136,7 +135,6 @@ export class ProfileService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
     const lastActivity = Date.now()
     const result = await this.data.transaction<{ profile: Profile; previousPicture: string | null }>(
       ['accounts', 'profiles', 'media_files'],
@@ -148,7 +146,7 @@ export class ProfileService {
 
         const latest = currentProfiles.find(profile => profile.id === profileId)
         if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
         if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {

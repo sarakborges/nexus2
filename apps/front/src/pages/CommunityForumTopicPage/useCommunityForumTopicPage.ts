@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
@@ -18,6 +18,7 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { subscribeToCommunityForumTopic } from '@/Services/Realtime'
 
 import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicPage.types'
 
@@ -50,6 +51,14 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     enabled: Boolean(normalized && topicId && isAuthInitialized),
     staleTime: 30 * 1000
   })
+  useEffect(() => {
+    if (!topicId || !topicPageQuery.isSuccess) return
+
+    return subscribeToCommunityForumTopic(topicId, () => {
+      void topicPageQuery.refetch()
+    })
+  }, [topicId, topicPageQuery.isSuccess, topicPageQuery.refetch])
+
   const pageData = topicPageQuery.data
   const community = pageData?.community
   const detail = pageData?.detail

@@ -195,7 +195,6 @@ export const enUSTranslations = {
   REQUEST_LOADING: 'Loading information...',
   REQUEST_FAILED: 'These details could not be loaded.',
   REQUEST_RETRY: 'Try again',
-  REQUEST_UPDATING: 'Updating information...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Page not found',
   NOT_FOUND_DESCRIPTION:
@@ -242,7 +241,7 @@ export const enUSTranslations = {
   COMMUNITY_ABOUT_LABEL: 'About this community',
   COMMUNITY_ABOUT_EMPTY: 'This community has not added a description yet.',
   COMMUNITY_ABOUT_MAX_LENGTH:
-    'Up to 500 text characters. Images and formatting are allowed.',
+    'Up to 8,000 HTML characters.',
   COMMUNITY_MEMBER_COUNT: 'Members',
   COMMUNITY_ERROR_URL_TAKEN: 'This community address is already in use.',
   COMMUNITY_ERROR_INVALID:
