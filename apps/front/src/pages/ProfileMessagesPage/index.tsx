@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { Tabs } from '@/DesignSystem'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
@@ -24,6 +25,10 @@ export function ProfileMessagesPage() {
     setSort,
     content,
     setContent,
+    replyTo,
+    handleCancelReply,
+    messageTab,
+    handleMessageTabChange,
     profileMessagesPageQuery,
     profile,
     viewerRelationship,
@@ -31,6 +36,10 @@ export function ProfileMessagesPage() {
     isProfileOwner,
     totalItems,
     messageItems,
+    handleDeleteMessage,
+    handleFavoriteMessage,
+    handleReplyMessage,
+    isMessageActionPending,
     canSendMessage,
     canSubmitMessage,
     uploadEditorImage,
@@ -87,7 +96,6 @@ export function ProfileMessagesPage() {
             </p>
           </div>
         </header>
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <ProfileMessageComposer
           hasSession={Boolean(session)}
           isProfileOwner={isProfileOwner}
@@ -100,7 +108,16 @@ export function ProfileMessagesPage() {
           isInvalidMessageError={isInvalidMessageError}
           onUploadImage={uploadEditorImage}
           onSubmit={handleSubmit}
+          replyToName={replyTo?.name}
+          onCancelReply={handleCancelReply}
         />
+        {isProfileOwner && (
+          <Tabs ariaLabel={t('PROFILE_MESSAGES_TABS_LABEL')} value={messageTab} onChange={handleMessageTabChange} options={[
+            { value: 'all', label: t('PROFILE_MESSAGES_TAB_ALL') },
+            { value: 'favorites', label: t('PROFILE_MESSAGES_TAB_FAVORITES') }
+          ]} />
+        )}
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState
           isLoading={profileMessagesPageQuery.isLoading}
           isFetching={profileMessagesPageQuery.isFetching}
@@ -112,7 +129,7 @@ export function ProfileMessagesPage() {
           emptyMessage={t('PROFILE_MESSAGES_EMPTY')}
           onRetry={() => void profileMessagesPageQuery.refetch()}
         >
-          <ProfileMessageList items={messageItems} />
+          <ProfileMessageList items={messageItems} isActionPending={isMessageActionPending} onDelete={handleDeleteMessage} onFavorite={handleFavoriteMessage} onReply={handleReplyMessage} />
         </RequestState>
         <Pagination
           page={page}

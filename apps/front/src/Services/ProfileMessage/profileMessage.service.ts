@@ -43,3 +43,27 @@ export async function createProfileMessage(
     )
   }
 }
+
+export async function deleteProfileMessage(
+  recipientProfileId: string,
+  messageId: string,
+  actorProfileId: string
+): Promise<void> {
+  await api.delete(
+    `/profiles/${encodeURIComponent(recipientProfileId)}/messages/${encodeURIComponent(messageId)}`,
+    { data: { actorProfileId } }
+  )
+}
+
+export async function setProfileMessageFavorite(
+  recipientProfileId: string,
+  messageId: string,
+  actorProfileId: string,
+  isFavorite: boolean
+): Promise<ProfileMessage> {
+  const { data } = await api.put<ProfileMessage>(
+    `/profiles/${encodeURIComponent(recipientProfileId)}/messages/${encodeURIComponent(messageId)}/favorite`,
+    { actorProfileId, isFavorite }
+  )
+  return data
+}

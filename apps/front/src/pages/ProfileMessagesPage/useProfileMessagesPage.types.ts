@@ -24,6 +24,10 @@ export type UseProfileMessagesPageResult = {
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   content: string
   setContent: Dispatch<SetStateAction<string>>
+  replyTo: Profile | null
+  handleCancelReply: () => void
+  messageTab: 'all' | 'favorites'
+  handleMessageTabChange: (tab: 'all' | 'favorites') => void
   profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null
@@ -35,6 +39,10 @@ export type UseProfileMessagesPageResult = {
   isProfileOwner: boolean
   totalItems: number
   messageItems: ProfileMessageViewModel[]
+  handleDeleteMessage: (item: ProfileMessageViewModel) => void
+  handleFavoriteMessage: (item: ProfileMessageViewModel) => void
+  handleReplyMessage: (sender: Profile) => void
+  isMessageActionPending: boolean
   canSendMessage: boolean
   canSubmitMessage: boolean
   isSendingMessage: boolean

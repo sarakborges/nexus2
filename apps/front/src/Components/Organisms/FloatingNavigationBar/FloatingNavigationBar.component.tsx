@@ -1,11 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router'
-import { FiChevronDown, FiMenu, FiSearch } from 'react-icons/fi'
+import { FiChevronDown, FiMenu, FiSearch, FiUser } from 'react-icons/fi'
 import type { SearchScope } from '@nexus/common'
 
 import { ROUTES } from '@/Constants/routes'
-import { IdentityAvatar } from '@/Components/Molecules'
 import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from './AccountMenu.component'
 import { FloatingNavigationLinks } from './FloatingNavigationLinks.component'
@@ -161,11 +160,7 @@ export function FloatingNavigationBar({
             aria-controls="floating-account-menu"
             onClick={() => togglePanel('account')}
           >
-            <IdentityAvatar
-              className="floating-navigation__avatar"
-              name={accountName}
-              picture={currentProfile?.picture ?? ''}
-            />
+            <FiUser className="floating-navigation__account-icon" aria-hidden="true" />
             <span className="floating-navigation__account-label">
               <span>{accountName}</span>
             </span>

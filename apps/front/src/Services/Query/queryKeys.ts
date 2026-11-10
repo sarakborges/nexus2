@@ -19,8 +19,9 @@ export const queryKeys = {
     viewerUserId: string | null,
     currentProfileId: string | null,
     query: string,
-    sort: string
-  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
+    sort: string,
+    messageTab: 'all' | 'favorites'
+  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort, messageTab] as const,
   profileDirectoryPage: (
     url: string,
     kind: 'friends' | 'communities',

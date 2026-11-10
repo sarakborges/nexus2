@@ -14,4 +14,6 @@ export type ProfileMessageComposerProps = {
   isInvalidMessageError: boolean
   onUploadImage: typeof uploadEditorImage
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
+  replyToName?: string
+  onCancelReply?: () => void
 }

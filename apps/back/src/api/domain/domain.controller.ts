@@ -13,6 +13,10 @@ import {
   ForumActorDto,
   ForumModerationDto,
   MessageDto,
+  ProfileMessageFavoriteDto,
+  ProfileMessagesPageDto,
+  ProfilePostDto,
+  CommunitiesPageDto,
   OwnershipDto,
   ProfileRelationDto,
   UpdateCommunityDto,
@@ -33,6 +37,7 @@ import { CommunitiesPageService } from './communities-page.service'
 import { CommunityForumComposerPageService } from './community-forum-composer-page.service'
 import { CommunityEditPageService } from './community-edit-page.service'
 import { ProfileEditPageService } from './profile-edit-page.service'
+import { ProfilePostService } from './profile-post.service'
 
 @Controller()
 export class DomainController {
@@ -49,7 +54,8 @@ export class DomainController {
     private readonly communitiesPage: CommunitiesPageService,
     private readonly communityForumComposerPage: CommunityForumComposerPageService,
     private readonly communityEditPage: CommunityEditPageService,
-    private readonly profileEditPage: ProfileEditPageService
+    private readonly profileEditPage: ProfileEditPageService,
+    private readonly profilePosts: ProfilePostService
   ) {}
 
   @Get('search')
@@ -77,7 +83,7 @@ export class DomainController {
   @Get('profiles/by-url/:url/messages/page') @UseGuards(OptionalJwtAccessGuard)
   getProfileMessagesPage(
     @Param('url') url: string,
-    @Query() q: PaginationDto,
+    @Query() q: ProfileMessagesPageDto,
     @CurrentUser() u: AuthenticatedUserContext | undefined
   ) {
     return this.profileMessagesPage.getProfileMessagesPage(url, q, u?.id ?? null)
@@ -142,7 +148,7 @@ export class DomainController {
   @Get('communities/page') @UseGuards(JwtAccessGuard)
   getCommunitiesPage(
     @CurrentUser() u: AuthenticatedUserContext,
-    @Query() q: PaginationDto
+    @Query() q: CommunitiesPageDto
   ) {
     return this.communitiesPage.getCommunitiesPage(u.id, q)
   }
@@ -243,5 +249,18 @@ export class DomainController {
   }
   @Post('profiles/:profileId/messages') @UseGuards(JwtAccessGuard) sendMessage(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') id: string, @Body() body: MessageDto) {
     return this.domain.sendMessage(u.id, body.fromProfileId, id, body.content)
+  }
+  @Delete('profiles/:profileId/messages/:messageId') @UseGuards(JwtAccessGuard)
+  async deleteProfileMessage(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') profileId: string, @Param('messageId') messageId: string, @Body() body: ActorDto) {
+    await this.domain.deleteProfileMessage(u.id, profileId, messageId, body.actorProfileId)
+    return { success: true }
+  }
+  @Put('profiles/:profileId/messages/:messageId/favorite') @UseGuards(JwtAccessGuard)
+  setProfileMessageFavorite(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') profileId: string, @Param('messageId') messageId: string, @Body() body: ProfileMessageFavoriteDto) {
+    return this.domain.setProfileMessageFavorite(u.id, profileId, messageId, body.actorProfileId, body.isFavorite)
+  }
+  @Post('profiles/:profileId/posts') @UseGuards(JwtAccessGuard)
+  createProfilePost(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') profileId: string, @Body() body: ProfilePostDto) {
+    return this.profilePosts.createProfilePost(u.id, profileId, body.content)
   }
 }

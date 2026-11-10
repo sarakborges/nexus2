@@ -2,7 +2,7 @@ export const DEFAULT_PAGE = 1
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
 export type ListSort = 'activity-desc' | 'activity-asc' | 'name-asc' | 'name-desc'
-export type PaginationParams = { page?: number; pageSize?: number; query?: string; sort?: ListSort }
+export type PaginationParams = { page?: number; pageSize?: number; query?: string; sort?: ListSort; messageTab?: 'all' | 'favorites'; communityTab?: 'all' | 'managed' }
 export type PaginatedResult<T> = { items: T[]; page: number; pageSize: number; totalItems: number; totalPages: number }
 export type ProfileType = 'social' | 'rp' | 'business'
 export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; createdAt: number; lastActivity: number }
@@ -24,7 +24,8 @@ export type CommunityForumTopic = { id: string; communityId: string; profileId: 
 export type CommunityForumTopicSummary = CommunityForumTopic & { replyCount: number }
 export type CommunityForumReply = { id: string; topicId: string; communityId: string; profileId: string; content: string; createdAt: number; updatedAt: number }
 export type CommunityForumTopicDetail = { topic: CommunityForumTopicSummary; replies: PaginatedResult<CommunityForumReply> }
-export type ProfileMessage = { id: string; fromProfileId: string; toProfileId: string; content: string; createdAt: number }
+export type ProfileMessage = { id: string; fromProfileId: string; toProfileId: string; content: string; createdAt: number; isFavorite?: boolean }
+export type ProfilePost = { id: string; profileId: string; content: string; createdAt: number }
 export type AuthenticatedUser = { id: string; email: string; profiles: string[]; currentProfile: string | null }
 export type AuthTokenPair = { accessToken: string; refreshToken: string; expiresIn: number; user: AuthenticatedUser }
 export type AuthSession = { user: AuthenticatedUser; authenticatedAt: number }
@@ -35,6 +36,7 @@ export type ApiErrorResponse = { statusCode: number; message: string | string[];
 
 export type RecentActivity =
   | { id: string; type: 'friend_connected'; updatedAt: number; profile: Profile; friend: Profile }
+  | { id: string; type: 'profile_post'; updatedAt: number; profile: Profile; content: string }
   | {
       id: string
       type: 'community_membership'
@@ -118,18 +120,22 @@ export type CommunityMembersPageData = {
 }
 
 
+export type ProfileMessagePermissions = { canDelete: boolean; canFavorite: boolean; canReply: boolean }
 export type ProfileMessagesPageData = {
   profile: Profile | null
   viewerRelationship: Relationship | null
   currentProfileType: ProfileType | null
   isProfileOwner: boolean
+  messageTab: 'all' | 'favorites'
   messages: PaginatedResult<ProfileMessage>
   senders: Profile[]
+  messagePermissions: Record<string, ProfileMessagePermissions>
 }
 
 
 export type CommunitiesPageData = {
   currentProfile: Profile | null
+  communityTab: 'all' | 'managed'
   communities: PaginatedResult<Community>
 }
 

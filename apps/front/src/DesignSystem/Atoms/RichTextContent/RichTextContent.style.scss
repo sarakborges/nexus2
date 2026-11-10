@@ -1,0 +1,10 @@
+.rich-text-content { min-width:0; color:var(--text-color); font-size:inherit; line-height:1.7; overflow-wrap:anywhere; white-space:normal; }
+.rich-text-content > * + * { margin-top:.65em; }
+.rich-text-content img { display:inline-block; max-width:100%; height:auto; vertical-align:middle; }
+.rich-text-content a { color:var(--color-primary-weak); text-decoration:underline; text-underline-offset:2px; }
+.rich-text-content blockquote { padding-left:1em; border-left:var(--nexus-border-width,2px) solid var(--color-border); color:var(--color-neutral); }
+.rich-text-content ul,.rich-text-content ol { padding-left:1.5em; }
+.rich-text-content ul { list-style:disc; }
+.rich-text-content ol { list-style:decimal; }
+.rich-text-content strong,.rich-text-content b { font-weight:var(--font-weight-bold); }
+.rich-text-content em,.rich-text-content i { font-style:italic; }

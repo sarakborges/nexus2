@@ -186,3 +186,27 @@ export class ForumModerationDto extends ForumActorDto {
   @IsBoolean()
   isLocked?: boolean
 }
+
+export class ProfileMessagesPageDto extends PaginationDto {
+  @IsOptional()
+  @IsIn(['all', 'favorites'])
+  messageTab: 'all' | 'favorites' = 'all'
+}
+
+export class CommunitiesPageDto extends PaginationDto {
+  @IsOptional()
+  @IsIn(['all', 'managed'])
+  communityTab: 'all' | 'managed' = 'all'
+}
+
+export class ProfileMessageFavoriteDto extends ActorDto {
+  @IsBoolean()
+  isFavorite!: boolean
+}
+
+export class ProfilePostDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(8000)
+  content!: string
+}

@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Optional, UnauthorizedException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type { PaginatedResult, Profile, ProfileMessage } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
@@ -51,7 +51,8 @@ export class ProfileMessageService {
       fromProfileId,
       toProfileId,
       content: normalized,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      isFavorite: false
     }
 
     return this.data.transaction<ProfileMessage>(
@@ -93,3 +94,53 @@ export class ProfileMessageService {
     )
   }
 }
+
+async deleteMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
+    await this.data.transaction(['accounts', 'profile_messages', 'media_files'], collections => {
+      const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
+      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      const messages = collections.profile_messages as ProfileMessage[]
+      const message = messages.find(item => item.id === messageId && item.toProfileId === recipientProfileId)
+      if (!message) throw new NotFoundException('PROFILE_MESSAGE_NOT_FOUND')
+      if (!account.profiles.includes(actorProfileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
+      if (actorProfileId !== message.fromProfileId && actorProfileId !== message.toProfileId) {
+        throw new ForbiddenException('PROFILE_MESSAGE_DELETE_NOT_ALLOWED')
+      }
+      const mediaFiles = collections.media_files as UploadedFileRecord[]
+      const nextMediaFiles = this.uploads
+        ? this.uploads.detachResourceAttachmentsFromRecords(mediaFiles, userId, [{
+            resourceType: 'profile-message',
+            resourceId: message.id
+          }])
+        : mediaFiles
+      return {
+        records: {
+          ...collections,
+          profile_messages: messages.filter(item => item.id !== message.id),
+          media_files: nextMediaFiles
+        },
+        result: undefined
+      }
+    })
+  }
+
+  async setMessageFavorite(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string, isFavorite: boolean): Promise<ProfileMessage> {
+    return this.data.transaction<ProfileMessage>(['accounts', 'profile_messages'], collections => {
+      const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
+      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      if (!account.profiles.includes(recipientProfileId) || actorProfileId !== recipientProfileId) {
+        throw new ForbiddenException('PROFILE_MESSAGE_FAVORITE_NOT_ALLOWED')
+      }
+      const messages = collections.profile_messages as ProfileMessage[]
+      const message = messages.find(item => item.id === messageId && item.toProfileId === recipientProfileId)
+      if (!message) throw new NotFoundException('PROFILE_MESSAGE_NOT_FOUND')
+      const updated = { ...message, isFavorite }
+      return {
+        records: {
+          ...collections,
+          profile_messages: messages.map(item => item.id === message.id ? updated : item)
+        },
+        result: updated
+      }
+    })
+  }

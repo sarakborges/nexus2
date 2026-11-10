@@ -7,6 +7,7 @@ export type UploadResourceType =
   | 'profile'
   | 'community'
   | 'profile-message'
+  | 'profile-post'
   | 'community-forum-topic'
   | 'community-forum-reply'
 
