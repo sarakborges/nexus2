@@ -29,6 +29,7 @@ export function CommunityForumTopicPage() {
     topicPageQuery,
     community,
     viewerRelationship,
+    typeCompatibility,
     isMember,
     isStaff,
     canInteract,
@@ -78,9 +79,19 @@ export function CommunityForumTopicPage() {
   return (
     <SocialPageLayout
       sidebar={
-        <CommunitySidebar community={community} active="forum" canInteract relationship={viewerRelationship} />
+        <CommunitySidebar
+          community={community}
+          active="forum"
+          canInteract={typeCompatibility.canInteract}
+          relationship={viewerRelationship}
+        />
       }
     >
+      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+        <p className="profile-type-notice" role="alert">
+          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+        </p>
+      )}
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">
           <div>

@@ -122,6 +122,27 @@ test('forum topic page aggregate returns authors only for the selected reply pag
   assert.deepEqual(result.authors.map(profile => profile.id), ['profile-owner'])
 })
 
+test('active profile type mismatch is preserved when another owned profile can access the forum', async () => {
+  const mismatchedRecords = structuredClone(records)
+  mismatchedRecords.accounts[0].profiles.push('profile-other-type')
+  mismatchedRecords.accounts[0].currentProfile = 'profile-other-type'
+  const repository = createRepository(mismatchedRecords)
+  const service = createService(repository)
+
+  const result = await service.getCommunityForumTopicPage(
+    'community',
+    'topic-1',
+    { page: 1, pageSize: 20 },
+    'viewer-1'
+  )
+
+  assert.equal(repository.transactionCalls, 1)
+  assert.equal(result.currentProfileType, 'rp')
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.forumProfileId, 'profile-owner')
+  assert.equal(result.isMember, true)
+})
+
 test('public topic page is readable by anonymous visitors without forum membership', async () => {
   const repository = createRepository()
   const service = createService(repository)

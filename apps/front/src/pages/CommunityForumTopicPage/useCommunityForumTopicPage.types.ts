@@ -33,6 +33,11 @@ export type UseCommunityForumTopicPageResult = {
   topicPageQuery: UseQueryResult<CommunityForumTopicPageData>
   community: Community | undefined
   viewerRelationship: CommunityRelationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   isMember: boolean
   isStaff: boolean
   canInteract: boolean

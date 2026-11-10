@@ -56,7 +56,17 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const viewerRelationship = pageData?.viewerRelationship ?? null
   const isMember = pageData?.isMember ?? false
   const isStaff = pageData?.isStaff ?? false
-  const canInteract = isMember
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && topicPageQuery.isLoading)
+  const isCompatible =
+    !currentProfileId ||
+    (topicPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const canInteract = isMember && typeCompatibility.canInteract && !isChecking
   const authorsById = useMemo(
     () =>
       new Map(
@@ -188,6 +198,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     topicPageQuery,
     community,
     viewerRelationship,
+    typeCompatibility,
     isMember,
     isStaff,
     canInteract,
