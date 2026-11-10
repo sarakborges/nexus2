@@ -22,7 +22,6 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const currentProfileId = session?.user.currentProfile ?? null
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
-  const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const normalized = normalizeEntityUrl(url)
   const [title, setTitle] = useState('')
