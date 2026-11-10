@@ -103,6 +103,8 @@ test('profile creation atomically persists the profile and links it to the authe
 
   assert.equal(collections.get('profiles').length, 1)
   assert.deepEqual(collections.get('profiles')[0], created.profile)
+  assert.ok(created.profile.createdAt > 0)
+  assert.equal(created.profile.lastActivity, created.profile.createdAt)
   assert.deepEqual(savedAccount.profiles, ['existing-profile', created.profile.id])
   assert.equal(savedAccount.currentProfile, created.profile.id)
   assert.equal(created.user.id, account.id)
@@ -173,6 +175,8 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
     privacy: 'public'
   })
   assert.equal(created.url, 'meu-caminho')
+  assert.ok(created.createdAt > 0)
+  assert.equal(created.lastActivity, created.createdAt)
   assert.equal(collections.get('community_relationships').length, 1)
   assert.equal(collections.get('community_relationships')[0].type, 'owner')
 
