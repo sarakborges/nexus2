@@ -155,6 +155,7 @@ export class CommunityService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [ownerProfileId], createdAt),
             communities: [...communities, community],
             community_relationships: [...relationships, ownerRelationship],
             media_files: nextMediaFiles

@@ -171,6 +171,7 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
             communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: [
               ...all.filter(record =>
@@ -217,6 +218,7 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
             communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.filter(record =>
               record.profiles[0] !== targetId || record.profiles[1] !== communityId
@@ -250,6 +252,7 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
             communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.map(record =>
               record.profiles[0] === targetId && record.profiles[1] === communityId
@@ -283,6 +286,7 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, newOwnerId], now),
             communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.map(record => {
               if (record.profiles[1] !== communityId) return record
