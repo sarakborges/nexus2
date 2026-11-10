@@ -27,7 +27,7 @@ export type UseProfileMessagesPageResult = {
   replyTo: Profile | null
   handleCancelReply: () => void
   messageTab: 'all' | 'favorites'
-  handleMessageTabChange: (tab: 'all' | 'favorites') => void
+  handleMessageTabChange: (tab: string) => void
   profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
   viewerRelationship: Relationship | null

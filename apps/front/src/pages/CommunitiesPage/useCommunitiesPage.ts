@@ -34,8 +34,8 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const communities = pageData?.communities.items ?? []
   const totalItems = pageData?.communities.totalItems ?? 0
   const communityTab = pageData?.communityTab ?? requestedCommunityTab
-  const handleCommunityTabChange = (tab: 'all' | 'managed') => {
-    setRequestedCommunityTab(tab)
+  const handleCommunityTabChange = (tab: string) => {
+    setRequestedCommunityTab(tab === 'managed' ? 'managed' : 'all')
     if (page !== 1) setPage(1)
   }
 

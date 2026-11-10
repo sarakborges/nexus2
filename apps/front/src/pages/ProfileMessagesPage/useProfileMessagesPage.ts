@@ -154,12 +154,13 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     setReplyTo(sender)
   }
   const handleCancelReply = () => setReplyTo(null)
-  const handleMessageTabChange = (tab: 'all' | 'favorites') => {
-    setRequestedMessageTab(tab)
+  const handleMessageTabChange = (tab: string) => {
+    setRequestedMessageTab(tab === 'favorites' ? 'favorites' : 'all')
     if (page !== 1) setPage(1)
   }
 
   return {
+    requestedUrl,
     session,
     isAuthInitialized,
     page,

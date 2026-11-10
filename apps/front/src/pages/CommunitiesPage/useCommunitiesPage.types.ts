@@ -13,7 +13,7 @@ export type UseCommunitiesPageResult = {
   setQuery: ReturnType<typeof useUrlPagination>['setQuery']
   setSort: ReturnType<typeof useUrlPagination>['setSort']
   communityTab: 'all' | 'managed'
-  handleCommunityTabChange: (tab: 'all' | 'managed') => void
+  handleCommunityTabChange: (tab: string) => void
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   communities: CommunitiesPageData['communities']['items']
   totalItems: number
