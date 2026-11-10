@@ -15,10 +15,8 @@ export class DomainAccessService {
   }
 
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
-    const requestedIds = new Set(ids)
-    const profiles = await this.data.read<Profile>('profiles')
     return this.sanitizeProfiles(
-      profiles.filter(profile => requestedIds.has(profile.id))
+      await this.data.readByIds<Profile>('profiles', ids)
     )
   }
 

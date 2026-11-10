@@ -20,6 +20,7 @@ const MAX_UPDATE_ATTEMPTS = 8
 export class SupabaseRestRepository implements DataRepository {
   private readonly endpoint: string
   private readonly transactionEndpoint: string
+  private readonly readByIdsEndpoint: string
 
   constructor(
     projectUrl: string,
@@ -29,10 +30,54 @@ export class SupabaseRestRepository implements DataRepository {
     const baseUrl = projectUrl.replace(/\/+$/, '')
     this.endpoint = baseUrl + '/rest/v1/nexus_collections'
     this.transactionEndpoint = baseUrl + '/rest/v1/rpc/nexus_commit_collections'
+    this.readByIdsEndpoint = baseUrl + '/rest/v1/rpc/nexus_read_collection_by_ids'
   }
 
   async read<T>(collection: string): Promise<T[]> {
     return (await this.readSnapshot<T>(collection)).records
+  }
+
+  async readByIds<T extends { id: string }>(
+    collection: string,
+    ids: readonly string[]
+  ): Promise<T[]> {
+    this.assertCollectionName(collection)
+    const requestedIds = [...new Set(ids)]
+    if (requestedIds.length === 0) return []
+    if (requestedIds.some(id => typeof id !== 'string' || id.length === 0)) {
+      throw new Error('Record IDs must be non-empty strings.')
+    }
+
+    const response = await fetch(this.readByIdsEndpoint, {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_collection: collection,
+        p_ids: requestedIds,
+        p_secret: this.apiSecret
+      })
+    })
+
+    if (!response.ok) {
+      const details = await response.text()
+      const functionMissing =
+        response.status === 404 &&
+        (details.includes('PGRST202') || details.includes('nexus_read_collection_by_ids'))
+      if (functionMissing) {
+        const requested = new Set(requestedIds)
+        return (await this.read<T>(collection)).filter(record => requested.has(record.id))
+      }
+      throw new Error('Supabase storage request failed (' + response.status + '): ' + details)
+    }
+
+    const records: unknown = await response.json()
+    if (!Array.isArray(records)) {
+      throw new Error('Supabase selective collection read returned an invalid result.')
+    }
+    return records as T[]
   }
 
   async update<T>(collection: string, updater: (records: T[]) => T[]): Promise<T[]> {

@@ -249,6 +249,58 @@ test('transaction retries all collection snapshots after an atomic version confl
   assert.deepEqual(secondAttemptAccounts.map(record => record.id), ['account', 'concurrent', 'new-account'])
 })
 
+
+test('readByIds uses the protected RPC and returns only selected records', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{ id: 'profile-a' }, { id: 'profile-c' }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.readByIds('profiles', ['profile-a', 'profile-c', 'profile-a']), [
+    { id: 'profile-a' },
+    { id: 'profile-c' }
+  ])
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_read_collection_by_ids')
+  assert.equal(call.options.method, 'POST')
+  assert.equal(call.options.headers.apikey, key)
+  assert.equal(call.options.headers['x-nexus-api-secret'], headerSecret)
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_collection: 'profiles',
+    p_ids: ['profile-a', 'profile-c'],
+    p_secret: headerSecret
+  })
+})
+
+test('readByIds skips empty lists and rejects invalid collection names', async () => {
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  await assert.rejects(() => repo.readByIds('invalid collection', ['profile-a']), /Invalid collection name/)
+  assert.deepEqual(await repo.readByIds('profiles', []), [])
+})
+
+test('readByIds falls back to a full collection read while the selective-read RPC migration is absent', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    calls.push({ url: new URL(String(input)), options })
+    if (calls.length === 1) {
+      return new Response(JSON.stringify({
+        code: 'PGRST202',
+        message: 'Could not find the function public.nexus_read_collection_by_ids'
+      }), { status: 404 })
+    }
+    return new Response(JSON.stringify([{
+      records: [{ id: 'profile-a' }, { id: 'profile-b' }, { id: 'profile-c' }],
+      updated_at: updatedAt
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.readByIds('profiles', ['profile-b']), [{ id: 'profile-b' }])
+  assert.equal(calls.length, 2)
+  assert.equal(calls[1].url.pathname, '/rest/v1/nexus_collections')
+})
+
 test('transaction rejects empty, duplicate and invalid collection names', async () => {
   const repo = new SupabaseRestRepository(url, key, headerSecret)
   const updater = records => ({ records, result: undefined })
