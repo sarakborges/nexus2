@@ -12,6 +12,8 @@ The backend builds that response from one repository transaction/snapshot whenev
 2. Add a page aggregate service in the backend. Reuse pure projection helpers that accept an existing record snapshot; do not call several service methods that each start their own repository transaction.
 3. Expose one route for the page aggregate. Keep authorization and private-data filtering in the backend.
 4. Add a focused frontend service function and one React Query entry keyed by route identity and relevant viewer context.
+
+Viewer-specific page state belongs in the same aggregate snapshot when it is needed for the initial render. Resolve the visitor's valid active profile from the authenticated account record, then return relationship state and active-profile type alongside the page data. Include both the viewer account ID and active profile ID in the query key so switching profiles cannot reuse a result calculated for the previous identity. Do not make a follow-up request just to load the active profile or determine whether the viewer is connected, a member, or awaiting approval.
 5. Pass the same query state and result to visual components. Components should render their own slice of the shared response and retry the aggregate query, rather than firing new requests.
 6. Invalidate the aggregate query after mutations that affect any part of its response.
 

@@ -1,7 +1,6 @@
 import type { CommunityMembersPageData, CommunityRelationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { Member, MemberTab } from './CommunityMembersPage.types'
 
@@ -12,7 +11,11 @@ export type CommunityMemberTabOption = {
 
 export type CommunityMemberDirectoryProps = {
   pageQuery: UseQueryResult<CommunityMembersPageData>
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   tabs: CommunityMemberTabOption[]
   activeTab: MemberTab
   visibleTab: MemberTab
