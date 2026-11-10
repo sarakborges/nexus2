@@ -20,6 +20,9 @@ export function CreateCommunityForumTopicPage() {
     composerPageQuery,
     community,
     forumProfile,
+    viewerRelationship,
+    typeCompatibility,
+    canPublish,
     title,
     setTitle,
     content,
@@ -55,10 +58,20 @@ export function CreateCommunityForumTopicPage() {
   return (
     <SocialPageLayout
       sidebar={
-        <CommunitySidebar community={community} active="forum" canInteract />
+        <CommunitySidebar
+          community={community}
+          active="forum"
+          canInteract={typeCompatibility.canInteract}
+          relationship={viewerRelationship}
+        />
       }
     >
       <section className="community-forum social-page__content-stack">
+        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+          <p className="profile-type-notice" role="alert">
+            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+          </p>
+        )}
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_NEW_TOPIC')}</h1>
@@ -67,7 +80,7 @@ export function CreateCommunityForumTopicPage() {
             </p>
           </div>
         </header>
-        {forumProfile ? (
+        {canPublish && forumProfile ? (
           <form className="community-forum__composer" onSubmit={submit}>
             <div className="form-field">
               <Label htmlFor="forum-topic-title">
@@ -117,10 +130,11 @@ export function CreateCommunityForumTopicPage() {
             <p className="account-card__description">
               {t('FORUM_MEMBERS_ONLY')}
             </p>
-            {session && (
+            {session && typeCompatibility.canInteract && (
               <RelationshipActions
                 targetId={community.id}
                 targetKind="community"
+                relationship={viewerRelationship}
               />
             )}
           </div>

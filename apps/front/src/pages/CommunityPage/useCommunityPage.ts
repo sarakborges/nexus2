@@ -49,7 +49,7 @@ export function useCommunityPage(): UseCommunityPageResult {
   )
 
   const openEditCommunity = () => {
-    if (community) {
+    if (community && typeCompatibility.canInteract) {
       navigate(ROUTES.community + '/' + community.url + '/edit')
     }
   }
@@ -63,9 +63,9 @@ export function useCommunityPage(): UseCommunityPageResult {
     typeCompatibility,
     canInteract: typeCompatibility.canInteract,
     canViewMembers: page?.canViewMembers ?? false,
-    canEditCommunity: page?.canEditCommunity ?? false,
+    canEditCommunity: Boolean(page?.canEditCommunity && typeCompatibility.canInteract),
     openEditCommunity,
-    pendingRequestCount: page?.pendingRequestCount ?? 0,
+    pendingRequestCount: typeCompatibility.canInteract ? (page?.pendingRequestCount ?? 0) : 0,
     members,
     memberCount,
     forumTopics,

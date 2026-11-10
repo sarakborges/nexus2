@@ -71,7 +71,7 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     viewerRelationship,
     typeCompatibility,
     canReadForum: forumPageQuery.data?.canReadForum ?? false,
-    canPublish: forumPageQuery.data?.canPublish ?? false,
+    canPublish: Boolean(forumPageQuery.data?.canPublish && typeCompatibility.canInteract),
     openCreateTopic,
     topics,
     authorsById

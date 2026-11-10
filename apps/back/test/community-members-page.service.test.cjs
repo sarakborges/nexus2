@@ -151,6 +151,32 @@ test('non-staff viewers are limited to the all-members tab and cannot see pendin
   assert.equal(result.pending.totalItems, 0)
 })
 
+
+test('active profile type mismatch disables staff access even when another owned profile is a moderator', async () => {
+  const mismatchRecords = structuredClone(records)
+  mismatchRecords.accounts[0].profiles.push('profile-other-type')
+  mismatchRecords.accounts[0].currentProfile = 'profile-other-type'
+  const repository = createRepository(mismatchRecords)
+  const service = createService(repository)
+
+  const result = await service.getCommunityMembersPage(
+    'community',
+    query({ tab: 'staff' }),
+    'viewer-1'
+  )
+
+  assert.equal(repository.transactionCalls, 1)
+  assert.equal(result.currentProfileType, 'rp')
+  assert.equal(result.viewerRelationship, null)
+  assert.equal(result.actorProfileId, null)
+  assert.equal(result.actorRole, null)
+  assert.equal(result.isStaff, false)
+  assert.equal(result.visibleTab, 'all')
+  assert.equal(result.members.totalItems, 4)
+  assert.deepEqual(result.pending.items, [])
+  assert.equal(result.pending.totalItems, 0)
+})
+
 test('public community members can be viewed anonymously without management controls', async () => {
   const repository = createRepository()
   const service = createService(repository)

@@ -71,6 +71,11 @@ export function CommunityForumPage() {
       }
     >
       <section className="community-forum social-page__content-stack">
+        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+          <p className="profile-type-notice" role="alert">
+            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+          </p>
+        )}
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -86,7 +91,7 @@ export function CommunityForumPage() {
         </header>
 
         <RequestState isFetching={forumPageQuery.isFetching} />
-        {!canPublish && session && (
+        {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
             <p className="account-card__description">
               {t('FORUM_MEMBERS_ONLY')}

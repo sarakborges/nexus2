@@ -92,12 +92,14 @@ export class CommunityMembersPageService {
         const currentProfileId = account?.currentProfile && ownedProfileIds.has(account.currentProfile) ? account.currentProfile : null
         const currentProfileType = currentProfileId ? profilesById.get(currentProfileId)?.type ?? null : null
         const viewerRelationship = currentProfileId ? viewerRelationships.find((relationship) => relationship.profiles[0] === currentProfileId) ?? null : null
-        const managementRelationship =
-          viewerRelationships.find(
+        const hasCompatibleActiveProfile = !currentProfileId || currentProfileType === community.type
+        const managementRelationship = hasCompatibleActiveProfile
+          ? viewerRelationships.find(
             (relationship) =>
               relationship.type === 'owner' ||
               relationship.type === 'moderator'
           ) ?? null
+          : null
         const actorProfileId =
           managementRelationship?.profiles[0] ?? null
         const actorRole = managementRelationship?.type ?? null

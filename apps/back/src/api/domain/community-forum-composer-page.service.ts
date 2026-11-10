@@ -47,7 +47,7 @@ export class CommunityForumComposerPageService {
         if (!community) {
           return {
             records,
-            result: { community: null, forumProfile: null }
+            result: { community: null, forumProfile: null, viewerRelationship: null, currentProfileType: null }
           }
         }
 
@@ -76,7 +76,12 @@ export class CommunityForumComposerPageService {
         if (!account) {
           return {
             records,
-            result: { community: visibleCommunity, forumProfile: null }
+            result: {
+              community: visibleCommunity,
+              forumProfile: null,
+              viewerRelationship: null,
+              currentProfileType: null
+            }
           }
         }
 
@@ -85,6 +90,18 @@ export class CommunityForumComposerPageService {
           profiles.map((profile) => [profile.id, profile] as const)
         )
         const ownedProfileIds = new Set(account.profiles)
+        const currentProfileId = account.currentProfile && ownedProfileIds.has(account.currentProfile)
+          ? account.currentProfile
+          : null
+        const currentProfileType = currentProfileId
+          ? profilesById.get(currentProfileId)?.type ?? null
+          : null
+        const viewerRelationship = currentProfileId
+          ? relationships.find((relationship) =>
+              relationship.profiles[0] === currentProfileId &&
+              relationship.profiles[1] === community.id
+            ) ?? null
+          : null
         const roleByProfileId = new Map(
           relationships
             .filter(
@@ -107,7 +124,7 @@ export class CommunityForumComposerPageService {
           )
         })
         const forumProfileRecord =
-          eligibleProfiles.find((profile) => profile.id === account.currentProfile) ??
+          eligibleProfiles.find((profile) => profile.id === currentProfileId) ??
           eligibleProfiles.find(
             (profile) => roleByProfileId.get(profile.id) === 'owner'
           ) ??
@@ -125,7 +142,12 @@ export class CommunityForumComposerPageService {
 
         return {
           records,
-          result: { community: visibleCommunity, forumProfile }
+          result: {
+            community: visibleCommunity,
+            forumProfile,
+            viewerRelationship,
+            currentProfileType
+          }
         }
       }
     )

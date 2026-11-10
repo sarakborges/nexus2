@@ -15,6 +15,13 @@ export type UseCreateCommunityForumTopicPageResult = {
   composerPageQuery: UseQueryResult<CommunityForumComposerPageData>
   community: Community | null | undefined
   forumProfile: CommunityForumComposerPageData['forumProfile']
+  viewerRelationship: CommunityForumComposerPageData['viewerRelationship']
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
+  canPublish: boolean
   title: string
   setTitle: Dispatch<SetStateAction<string>>
   content: string

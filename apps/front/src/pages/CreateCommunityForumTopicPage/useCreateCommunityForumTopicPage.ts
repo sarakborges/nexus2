@@ -19,6 +19,7 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
+  const currentProfileId = session?.user.currentProfile ?? null
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
@@ -39,6 +40,18 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   })
   const community = composerPageQuery.data?.community
   const forumProfile = composerPageQuery.data?.forumProfile ?? null
+  const viewerRelationship = composerPageQuery.data?.viewerRelationship ?? null
+  const currentProfileType = composerPageQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && composerPageQuery.isLoading)
+  const isCompatible =
+    !currentProfileId ||
+    (composerPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const canPublish = Boolean(forumProfile && typeCompatibility.canInteract && !isChecking)
   const createMutation = useCreateCommunityForumTopicMutation()
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -73,6 +86,9 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
     composerPageQuery,
     community,
     forumProfile,
+    viewerRelationship,
+    typeCompatibility,
+    canPublish,
     title,
     setTitle,
     content,

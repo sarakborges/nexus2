@@ -150,6 +150,8 @@ export type ProfileDirectoryPageData =
 export type CommunityForumComposerPageData = {
   community: Community | null
   forumProfile: Profile | null
+  viewerRelationship: CommunityRelationship | null
+  currentProfileType: ProfileType | null
 }
 
 export type CommunityEditPageData = {

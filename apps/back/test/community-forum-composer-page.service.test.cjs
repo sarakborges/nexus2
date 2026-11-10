@@ -57,6 +57,8 @@ test('composer page selects the current eligible profile and projects the commun
   assert.equal(result.community.id, 'community-1')
   assert.equal(result.forumProfile.id, 'profile-member')
   assert.equal(result.forumProfile.about, '<p>Member</p>')
+  assert.equal(result.currentProfileType, 'social')
+  assert.equal(result.viewerRelationship.type, 'connection')
 })
 
 test('composer page falls back to owner, then moderator, then first eligible profile', async () => {
@@ -65,6 +67,8 @@ test('composer page falls back to owner, then moderator, then first eligible pro
   const { service } = createService(noCurrent)
   const result = await service.getCommunityForumComposerPage('public', 'user-1')
   assert.equal(result.forumProfile.id, 'profile-owner')
+  assert.equal(result.currentProfileType, null)
+  assert.equal(result.viewerRelationship, null)
 })
 
 test('composer page does not select owned profiles whose type differs from the community', async () => {
@@ -74,6 +78,20 @@ test('composer page does not select owned profiles whose type differs from the c
   const { service } = createService(onlyOtherType)
   const result = await service.getCommunityForumComposerPage('public', 'user-1')
   assert.equal(result.forumProfile, null)
+  assert.equal(result.currentProfileType, 'rp')
+  assert.equal(result.viewerRelationship.type, 'connection')
+})
+
+
+test('composer preserves an incompatible active profile while choosing another eligible profile only as a fallback', async () => {
+  const mismatched = structuredClone(records)
+  mismatched.accounts[0].currentProfile = 'profile-rp'
+  const { service } = createService(mismatched)
+  const result = await service.getCommunityForumComposerPage('public', 'user-1')
+
+  assert.equal(result.currentProfileType, 'rp')
+  assert.equal(result.viewerRelationship.type, 'connection')
+  assert.equal(result.forumProfile.id, 'profile-owner')
 })
 
 test('anonymous composer visitor receives public community data and no posting profile', async () => {
@@ -82,6 +100,8 @@ test('anonymous composer visitor receives public community data and no posting p
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
   assert.equal(result.forumProfile, null)
+  assert.equal(result.currentProfileType, null)
+  assert.equal(result.viewerRelationship, null)
 })
 
 test('private community data is redacted for visitors who are not members', async () => {
@@ -98,7 +118,12 @@ test('private community data is redacted for visitors who are not members', asyn
 test('unknown community returns an empty aggregate and invalid account is rejected', async () => {
   const { service, repository } = createService()
   const missing = await service.getCommunityForumComposerPage('missing', null)
-  assert.deepEqual(missing, { community: null, forumProfile: null })
+  assert.deepEqual(missing, {
+    community: null,
+    forumProfile: null,
+    viewerRelationship: null,
+    currentProfileType: null
+  })
   await assert.rejects(
     service.getCommunityForumComposerPage('public', 'missing-user'),
     (error) => error instanceof UnauthorizedException && error.message === 'ACCOUNT_NOT_FOUND'
