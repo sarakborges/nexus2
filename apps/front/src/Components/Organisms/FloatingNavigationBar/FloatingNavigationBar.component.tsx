@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router'
 import {
@@ -19,14 +19,67 @@ import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 
 import './FloatingNavigationBar.style.scss'
 
+function FloatingNavigationSearch() {
+  const { t } = useTranslations()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [searchText, setSearchText] = useState(() => {
+    if (location.pathname !== ROUTES.search) return ''
+    return new URLSearchParams(location.search).get('query') ?? ''
+  })
+  const [searchScope, setSearchScope] = useState<SearchScope>(() => {
+    if (location.pathname !== ROUTES.search) return 'all'
+    const scope = new URLSearchParams(location.search).get('scope')
+    return scope === 'profiles' || scope === 'communities' ? scope : 'all'
+  })
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = searchText.trim()
+    if (!query) return
+    const params = new URLSearchParams({ query, scope: searchScope })
+    navigate(`${ROUTES.search}?${params.toString()}`)
+  }
+
+  return (
+    <form
+      className="floating-navigation__search-form"
+      role="search"
+      onSubmit={handleSearch}
+    >
+      <input
+        type="search"
+        aria-label={t('SEARCH_PLACEHOLDER')}
+        placeholder={t('SEARCH_PLACEHOLDER')}
+        maxLength={120}
+        value={searchText}
+        onChange={event => setSearchText(event.target.value)}
+      />
+      <select
+        aria-label={t('SEARCH_SCOPE_LABEL')}
+        value={searchScope}
+        onChange={event => setSearchScope(event.target.value as SearchScope)}
+      >
+        <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
+        <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
+        <option value="communities">{t('SEARCH_SCOPE_COMMUNITIES')}</option>
+      </select>
+      <button
+        type="submit"
+        aria-label={t('SEARCH_SUBMIT')}
+        disabled={!searchText.trim()}
+      >
+        <FiSearch aria-hidden="true" />
+      </button>
+    </form>
+  )
+}
+
 export function FloatingNavigationBar({
   onOpenSettings
 }: FloatingNavigationBarProps) {
   const { t } = useTranslations()
-  const navigate = useNavigate()
   const location = useLocation()
-  const [searchText, setSearchText] = useState('')
-  const [searchScope, setSearchScope] = useState<SearchScope>('all')
   const {
     isAuthenticated,
     navigationRef,
@@ -58,28 +111,6 @@ export function FloatingNavigationBar({
     handleSignOut
   } = useFloatingNavigationBar({ onOpenSettings })
 
-  useEffect(() => {
-    if (location.pathname !== ROUTES.search) return
-    const params = new URLSearchParams(location.search)
-    setSearchText(params.get('query') ?? '')
-    const scope = params.get('scope')
-    setSearchScope(
-      scope === 'profiles' || scope === 'communities' ? scope : 'all'
-    )
-  }, [location.pathname, location.search])
-
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const query = searchText.trim()
-    if (!query) return
-    const params = new URLSearchParams({
-      query,
-      scope: searchScope
-    })
-    closePanels()
-    navigate(`${ROUTES.search}?${params.toString()}`)
-  }
-
   if (!isAuthenticated) return null
 
   return createPortal(
@@ -96,36 +127,9 @@ export function FloatingNavigationBar({
             onNavigate={closePanels}
           />
 
-          <form
-            className="floating-navigation__search-form"
-            role="search"
-            onSubmit={handleSearch}
-          >
-            <input
-              type="search"
-              aria-label={t('SEARCH_PLACEHOLDER')}
-              placeholder={t('SEARCH_PLACEHOLDER')}
-              maxLength={120}
-              value={searchText}
-              onChange={event => setSearchText(event.target.value)}
-            />
-            <select
-              aria-label={t('SEARCH_SCOPE_LABEL')}
-              value={searchScope}
-              onChange={event => setSearchScope(event.target.value as SearchScope)}
-            >
-              <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
-              <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
-              <option value="communities">{t('SEARCH_SCOPE_COMMUNITIES')}</option>
-            </select>
-            <button
-              type="submit"
-              aria-label={t('SEARCH_SUBMIT')}
-              disabled={!searchText.trim()}
-            >
-              <FiSearch aria-hidden="true" />
-            </button>
-          </form>
+          <FloatingNavigationSearch
+            key={`${location.pathname}:${location.search}`}
+          />
 
           <button
             className="floating-navigation__icon-button"
