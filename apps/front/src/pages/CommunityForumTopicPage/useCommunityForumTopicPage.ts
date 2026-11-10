@@ -64,7 +64,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const typeCompatibility = {
     isChecking,
     isCompatible,
-    canInteract: !session || (Boolean(currentProfileId) && isCompatible && !isChecking)
+    canInteract: !session || (isCompatible && !isChecking)
   }
   const canInteract = isMember && typeCompatibility.canInteract && !isChecking
   const authorsById = useMemo(
