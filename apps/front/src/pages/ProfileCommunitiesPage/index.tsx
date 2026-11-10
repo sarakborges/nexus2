@@ -18,6 +18,7 @@ export function ProfileCommunitiesPage() {
     normalized,
     profileDirectoryQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     page,
     pageSize,
@@ -52,7 +53,7 @@ export function ProfileCommunitiesPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="communities" />}
+      sidebar={<ProfileSidebar profile={profile} active="communities" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
         <header className="account-card__header">

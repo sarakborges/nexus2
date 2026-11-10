@@ -18,6 +18,8 @@ export function ProfileFriendsPage() {
     normalized,
     profileDirectoryQuery,
     profile,
+    viewerRelationship,
+    friendRelationshipsByProfileId,
     typeCompatibility,
     canInteract,
     page,
@@ -53,7 +55,7 @@ export function ProfileFriendsPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="friends" />}
+      sidebar={<ProfileSidebar profile={profile} active="friends" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
         <header className="account-card__header">
@@ -99,7 +101,7 @@ export function ProfileFriendsPage() {
                     </span>
                   </span>
                 </Link>
-                {canInteract && <RelationshipActions targetId={friend.id} />}
+                {canInteract && <RelationshipActions targetId={friend.id} relationship={friendRelationshipsByProfileId.get(friend.id) ?? null} />}
               </article>
             ))}
           </div>

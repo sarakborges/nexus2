@@ -35,7 +35,8 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       requestedUrl,
       page,
       pageSize,
-      session?.user.id ?? null
+      session?.user.id ?? null,
+      currentProfileId
     ),
     queryFn: () =>
       getProfileMessagesPage(requestedUrl, { page, pageSize }),
@@ -45,6 +46,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const pageData = profileMessagesPageQuery.data
   const profile = pageData?.profile
   const isProfileOwner = pageData?.isProfileOwner ?? false
+  const viewerRelationship = pageData?.viewerRelationship ?? null
   const typeCompatibility = useProfileTypeCompatibility(
     profile?.type ?? 'social'
   )
@@ -112,6 +114,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     setContent,
     profileMessagesPageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     isProfileOwner,
     totalItems,

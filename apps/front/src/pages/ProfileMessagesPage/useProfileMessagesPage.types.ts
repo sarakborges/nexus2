@@ -1,7 +1,8 @@
 import type {
   AuthSession,
   Profile,
-  ProfileMessagesPageData
+  ProfileMessagesPageData,
+  Relationship
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction, FormEvent } from 'react'
@@ -22,6 +23,7 @@ export type UseProfileMessagesPageResult = {
   setContent: Dispatch<SetStateAction<string>>
   profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
+  viewerRelationship: Relationship | null
   typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
   isProfileOwner: boolean
   totalItems: number

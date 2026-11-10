@@ -12,14 +12,17 @@ export const queryKeys = {
     url: string,
     page: number,
     pageSize: number,
-    viewerUserId: string | null
-  ) => ['profile-messages-page', url, page, pageSize, viewerUserId] as const,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId] as const,
   profileDirectoryPage: (
     url: string,
     kind: 'friends' | 'communities',
     page: number,
-    pageSize: number
-  ) => ['profile-directory-page', url, kind, page, pageSize] as const,
+    pageSize: number,
+    viewerUserId: string | null,
+    currentProfileId: string | null
+  ) => ['profile-directory-page', url, kind, page, pageSize, viewerUserId, currentProfileId] as const,
   communityForumComposerPage: (
     url: string,
     viewerUserId: string | null,

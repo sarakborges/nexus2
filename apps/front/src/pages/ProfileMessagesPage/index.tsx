@@ -21,6 +21,7 @@ export function ProfileMessagesPage() {
     setContent,
     profileMessagesPageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     isProfileOwner,
     totalItems,
@@ -58,7 +59,7 @@ export function ProfileMessagesPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="messages" />}
+      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
         <RequestState isFetching={profileMessagesPageQuery.isFetching} />
