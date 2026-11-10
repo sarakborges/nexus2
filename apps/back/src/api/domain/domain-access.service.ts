@@ -20,6 +20,19 @@ export class DomainAccessService {
     )
   }
 
+  async readCommunitiesByIds(ids: string[]): Promise<Community[]> {
+    const uniqueIds = [...new Set(ids)]
+    if (uniqueIds.length === 0) return []
+
+    const selected = await this.data.readByIds<Community>('communities', uniqueIds)
+    if (selected.every(community => this.hasStoredCommunityType(community))) {
+      return this.normalizeCommunities(selected)
+    }
+
+    const requestedIds = new Set(uniqueIds)
+    return (await this.readCommunities()).filter(community => requestedIds.has(community.id))
+  }
+
   normalizeProfiles(profiles: Profile[]): Profile[] {
     return profiles.map(profile => {
       const createdAt = Number.isFinite(profile.createdAt) ? profile.createdAt : 0
@@ -80,7 +93,33 @@ export class DomainAccessService {
         ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
       }
     }
-    const communities = stored.map(community => {
+    const communities = this.normalizeCommunities(
+      stored,
+      profileTypes,
+      ownerProfileByCommunityId
+    )
+    const hasNormalizationChanges = stored.some((community, index) =>
+      communities[index].type !== community.type ||
+      communities[index].privacy !== community.privacy
+    )
+    return {
+      records: hasNormalizationChanges ? { ...collections, communities } : collections,
+      communities
+    }
+  }
+
+  private hasStoredCommunityType(community: Community): boolean {
+    return community.type === 'social' ||
+      community.type === 'rp' ||
+      community.type === 'business'
+  }
+
+  private normalizeCommunities(
+    stored: Community[],
+    profileTypes: ReadonlyMap<string, Profile['type']> = new Map(),
+    ownerProfileByCommunityId: ReadonlyMap<string, string> = new Map()
+  ): Community[] {
+    return stored.map(community => {
       const ownerProfileId = ownerProfileByCommunityId.get(community.id)
       const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
       const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
@@ -98,14 +137,6 @@ export class DomainAccessService {
           : createdAt
       }
     })
-    const hasNormalizationChanges = stored.some((community, index) =>
-      communities[index].type !== community.type ||
-      communities[index].privacy !== community.privacy
-    )
-    return {
-      records: hasNormalizationChanges ? { ...collections, communities } : collections,
-      communities
-    }
   }
 
   async readCommunities(): Promise<Community[]> {
