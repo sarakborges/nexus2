@@ -9,7 +9,8 @@ import { useTranslations } from '@/Hooks/Language'
 export function CommunitySidebar({
   community,
   active,
-  canInteract = false
+  canInteract = false,
+  relationship
 }: CommunitySidebarProps) {
   const { t } = useTranslations()
 
@@ -29,7 +30,7 @@ export function CommunitySidebar({
         </Link>
         <h1 className="social-identity__name">{community.name}</h1>
         {canInteract && (
-          <RelationshipActions targetId={community.id} targetKind="community" />
+          <RelationshipActions targetId={community.id} targetKind="community" relationship={relationship} />
         )}
       </section>
       <nav

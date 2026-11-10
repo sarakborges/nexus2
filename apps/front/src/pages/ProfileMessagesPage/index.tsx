@@ -1,7 +1,5 @@
-import {
-  Pagination,
-  RequestState
-} from '@/Components'
+import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -16,18 +14,22 @@ export function ProfileMessagesPage() {
   const {
     requestedUrl,
     session,
+    isAuthInitialized,
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     content,
     setContent,
-    profileQuery,
+    profileMessagesPageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     isProfileOwner,
-    messagesQuery,
     totalItems,
-    senderProfilesQuery,
     messageItems,
     canSendMessage,
     canSubmitMessage,
@@ -39,7 +41,7 @@ export function ProfileMessagesPage() {
   } = useProfileMessagesPage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (!isAuthInitialized || profileMessagesPageQuery.isLoading)
     return (
       <main className="account-page">
         <section className="account-card">
@@ -47,11 +49,14 @@ export function ProfileMessagesPage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  if (profileMessagesPageQuery.isError)
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileMessagesPageQuery.refetch()}
+          />
         </section>
       </main>
     )
@@ -59,10 +64,10 @@ export function ProfileMessagesPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="messages" />}
+      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
-        <RequestState isFetching={profileQuery.isFetching} />
+        <RequestState isFetching={profileMessagesPageQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
@@ -82,6 +87,7 @@ export function ProfileMessagesPage() {
             </p>
           </div>
         </header>
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <ProfileMessageComposer
           hasSession={Boolean(session)}
           isProfileOwner={isProfileOwner}
@@ -96,22 +102,17 @@ export function ProfileMessagesPage() {
           onSubmit={handleSubmit}
         />
         <RequestState
-          isLoading={messagesQuery.isLoading}
-          isFetching={messagesQuery.isFetching}
-          isError={messagesQuery.isError}
-          isEmpty={messagesQuery.isSuccess && totalItems === 0}
+          isLoading={profileMessagesPageQuery.isLoading}
+          isFetching={profileMessagesPageQuery.isFetching}
+          isError={profileMessagesPageQuery.isError}
+          isEmpty={
+            profileMessagesPageQuery.isSuccess &&
+            totalItems === 0
+          }
           emptyMessage={t('PROFILE_MESSAGES_EMPTY')}
-          onRetry={() => void messagesQuery.refetch()}
+          onRetry={() => void profileMessagesPageQuery.refetch()}
         >
-          <RequestState
-            isLoading={senderProfilesQuery.isLoading}
-            isFetching={senderProfilesQuery.isFetching}
-            isError={senderProfilesQuery.isError}
-            errorMessage={t('PROFILE_MESSAGES_SENDERS_ERROR')}
-            onRetry={() => void senderProfilesQuery.refetch()}
-          >
-            <ProfileMessageList items={messageItems} />
-          </RequestState>
+          <ProfileMessageList items={messageItems} />
         </RequestState>
         <Pagination
           page={page}

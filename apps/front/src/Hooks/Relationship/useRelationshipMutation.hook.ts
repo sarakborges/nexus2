@@ -20,9 +20,13 @@ export function useRelationshipMutation(): UseRelationshipMutationResult {
         ? removeRelationship(sourceProfileId, targetProfileId)
         : setRelationship(sourceProfileId, targetProfileId, action.type),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ['relationships']
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['relationships'] }),
+        queryClient.invalidateQueries({ queryKey: ['home'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-directory-page'] }),
+        queryClient.invalidateQueries({ queryKey: ['profile-messages-page'] })
+      ])
     }
   })
 }

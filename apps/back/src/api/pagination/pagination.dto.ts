@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer'
-import { Equals, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator'
+import { Equals, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator'
 
 import { FIXED_PAGE_SIZE } from './pagination.constants'
 
@@ -12,6 +12,15 @@ export class PaginationDto {
   @Transform(() => FIXED_PAGE_SIZE)
   @Equals(FIXED_PAGE_SIZE)
   pageSize = FIXED_PAGE_SIZE
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  query?: string
+
+  @IsOptional()
+  @IsIn(['activity-desc', 'activity-asc', 'name-asc', 'name-desc'])
+  sort: 'activity-desc' | 'activity-asc' | 'name-asc' | 'name-desc' = 'activity-desc'
 
   @IsOptional()
   @IsIn(['all', 'staff', 'banned'])

@@ -1,12 +1,11 @@
-import type { CommunityRelationship } from '@nexus/common'
+import type { CommunityMembersPageData, CommunityRelationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
-import type { getPendingCommunityMembers } from '@/Services/CommunityRelationship'
 import type { Member } from './CommunityMembersPage.types'
 
 export type CommunityPendingMembersSectionProps = {
-  pendingQuery: UseQueryResult<Awaited<ReturnType<typeof getPendingCommunityMembers>>>
+  pageQuery: UseQueryResult<CommunityMembersPageData>
   pending: Member[]
   totalPending: number
   page: number

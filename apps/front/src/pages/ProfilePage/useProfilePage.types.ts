@@ -1,15 +1,18 @@
-import type { Community, PaginatedResult, Profile } from '@nexus/common'
+import type { Community, Profile, ProfilePageData, Relationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 
 export type UseProfilePageResult = {
   requestedUrl: string
-  profileQuery: UseQueryResult<Profile | null>
+  isAuthInitialized: boolean
+  profilePageQuery: UseQueryResult<ProfilePageData>
   profile: Profile | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  viewerRelationship: Relationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   canInteract: boolean
-  friendsQuery: UseQueryResult<PaginatedResult<Profile>>
-  communitiesQuery: UseQueryResult<PaginatedResult<Community>>
   friends: Profile[]
   communities: Community[]
   isOwner: boolean

@@ -9,7 +9,8 @@ import { useTranslations } from '@/Hooks/Language'
 export function ProfileSidebar({
   profile,
   active,
-  showRelationshipActions = true
+  showRelationshipActions = true,
+  relationship
 }: ProfileSidebarProps) {
   const { t } = useTranslations()
 
@@ -29,7 +30,7 @@ export function ProfileSidebar({
         </Link>
         <h1 className="social-identity__name">{profile.name}</h1>
         {showRelationshipActions && (
-          <RelationshipActions targetId={profile.id} />
+          <RelationshipActions targetId={profile.id} relationship={relationship} />
         )}
       </section>
       <nav className="social-side-menu" aria-label={t('PROFILE_TITLE')}>

@@ -11,11 +11,58 @@ export class DomainAccessService {
   ) {}
 
   async readProfiles(): Promise<Profile[]> {
-    const profiles = await this.data.read<Profile>('profiles')
-    return profiles.map(profile => ({
-      ...profile,
-      about: sanitizeRichText(profile.about ?? '')
-    }))
+    return this.normalizeProfiles(await this.data.read<Profile>('profiles'))
+  }
+
+  async readProfilesByIds(ids: string[]): Promise<Profile[]> {
+    return this.normalizeProfiles(
+      await this.data.readByIds<Profile>('profiles', ids)
+    )
+  }
+
+  normalizeProfiles(profiles: Profile[]): Profile[] {
+    return profiles.map(profile => {
+      const createdAt = Number.isFinite(profile.createdAt) ? profile.createdAt : 0
+      return {
+        ...profile,
+        about: sanitizeRichText(profile.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(profile.lastActivity)
+          ? profile.lastActivity
+          : createdAt
+      }
+    })
+  }
+
+  touchProfilesActivity(
+    profiles: readonly Profile[],
+    profileIds: readonly string[],
+    lastActivity: number
+  ): Profile[] {
+    const activeIds = new Set(profileIds)
+    return profiles.map(profile => activeIds.has(profile.id)
+      ? {
+          ...profile,
+          createdAt: Number.isFinite(profile.createdAt) ? profile.createdAt : 0,
+          lastActivity
+        }
+      : profile
+    )
+  }
+
+  touchCommunityActivity(
+    communities: readonly Community[],
+    communityId: string,
+    lastActivity: number
+  ): Community[] {
+    return communities.map(community => community.id === communityId
+      ? {
+          ...community,
+          createdAt: Number.isFinite(community.createdAt) ? community.createdAt : 0,
+          lastActivity
+        }
+      : community
+    )
   }
 
   normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
@@ -39,11 +86,16 @@ export class DomainAccessService {
       const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
         ? community.privacy
         : 'public'
+      const createdAt = Number.isFinite(community.createdAt) ? community.createdAt : 0
       return {
         ...community,
         ...(inheritedType ? { type: inheritedType } : {}),
         privacy,
-        about: sanitizeRichText(community.about ?? '')
+        about: sanitizeRichText(community.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(community.lastActivity)
+          ? community.lastActivity
+          : createdAt
       }
     })
     const hasNormalizationChanges = stored.some((community, index) =>

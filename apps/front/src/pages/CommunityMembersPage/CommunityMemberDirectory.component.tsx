@@ -5,12 +5,12 @@ import { useTranslations } from '@/Hooks/Language'
 import type { CommunityMemberDirectoryProps } from './CommunityMemberDirectory.types'
 
 export function CommunityMemberDirectory({
+  pageQuery,
   typeCompatibility,
   tabs,
   activeTab,
   visibleTab,
   onSelectTab,
-  membersQuery,
   members,
   totalMembers,
   page,
@@ -56,10 +56,10 @@ export function CommunityMemberDirectory({
         ))}
       </div>
       <RequestState
-        isLoading={membersQuery.isLoading}
-        isFetching={membersQuery.isFetching}
-        isError={membersQuery.isError}
-        isEmpty={membersQuery.isSuccess && totalMembers === 0}
+        isLoading={pageQuery.isLoading}
+        isFetching={pageQuery.isFetching}
+        isError={pageQuery.isError}
+        isEmpty={pageQuery.isSuccess && totalMembers === 0}
         emptyMessage={t(
           visibleTab === 'all'
             ? 'COMMUNITY_MEMBERS_EMPTY'
@@ -67,7 +67,7 @@ export function CommunityMemberDirectory({
               ? 'COMMUNITY_STAFF_EMPTY'
               : 'COMMUNITY_BANNED_EMPTY'
         )}
-        onRetry={() => void membersQuery.refetch()}
+        onRetry={() => void pageQuery.refetch()}
       >
         <div className="account-card__profile-list account-card__profile-list--grid">
           {members.map((profile) => (

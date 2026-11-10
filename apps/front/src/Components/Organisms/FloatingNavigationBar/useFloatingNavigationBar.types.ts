@@ -5,7 +5,7 @@ import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 
 export type UseFloatingNavigationBarOptions = FloatingNavigationBarProps
 
-export type NavigationPanel = 'navigation' | 'account'
+export type NavigationPanel = 'account'
 
 export type OpenPanel = {
   panel: NavigationPanel
@@ -28,6 +28,7 @@ export type UseFloatingNavigationBarResult = {
   togglePanel: (panel: NavigationPanel) => void
   toggleProfileSwitcher: () => void
   profiles: Profile[]
+  hasProfiles: boolean
   currentProfileId: string | null
   isProfileSwitcherOpen: boolean
   profilesLoading: boolean

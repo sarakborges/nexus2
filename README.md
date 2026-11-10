@@ -87,6 +87,7 @@ Apply the SQL files in order against the Supabase project:
 2. `apps/back/sql/002_nexus_collection_private_rls.sql` removes the initial public RPC functions, adds a private header-validation helper, and enables narrowly scoped RLS policies.
 3. `apps/back/sql/003_nexus_storage_buckets.sql` creates the permanent public avatar bucket and temporary private editor-image bucket.
 4. `apps/back/sql/004_atomic_collection_transactions.sql` adds the authenticated, atomic multi-collection commit function used by profile and community creation.
+5. `apps/back/sql/005_selective_collection_reads.sql` adds an RLS-protected, security-invoker RPC that returns only records matching requested IDs.
 
 The migrations do not modify the existing tracker tables or migrations. The `public.nexus_collections` table has RLS enabled. The `anon` role can reach only the collection operations that pass the RLS helper check, which reads the backend-only `x-nexus-api-secret` HTTP header. The helper lives in the unexposed `private` schema; no public `SECURITY DEFINER` RPC is left for the application. The database stores only the SHA-256 hash of the API secret.
 
@@ -100,7 +101,7 @@ Editor image references are stored in sanitized HTML as Nexus upload routes. Acc
 
 `SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter continues to protect only the private Nexus collection table. Never expose either secret in frontend environment variables or send it from the browser.
 
-The production adapter still reads and writes each domain collection as one JSONB array, so each update transfers the full collection. Single-collection changes use optimistic compare-and-swap; multi-collection transactions use the PostgreSQL function introduced by migration 004, which checks every collection version and commits all changes in one database transaction. Profile creation (profile + account link) and community creation (community + owner membership) use this path. Database-level uniqueness constraints, row-level domain storage and server-side pagination are still pending; normalize the collections before substantial traffic.
+The production adapter stores each domain collection as one JSONB array. Mutations still read and write the full collection and remain a scaling limitation. ID-based lookups can use the selective-read RPC introduced by migration 005 to return only matching records, reducing response size and backend decoding. PostgreSQL still enumerates the JSONB array to find those records, so this does not remove the database-side scan; row-level domain storage and server-side pagination remain pending. Single-collection changes use optimistic compare-and-swap; multi-collection transactions use the PostgreSQL function introduced by migration 004, which checks every collection version and commits all changes in one database transaction. Profile creation (profile + account link) and community creation (community + owner membership) use this path. Database-level uniqueness constraints, row-level domain storage and server-side pagination are still pending; normalize the collections before substantial traffic.
 
 The local JSON adapter serializes transactions within the Node.js process and restores already-replaced files if a write fails. It is a development fallback, not a multi-process or crash-atomic production database.
 

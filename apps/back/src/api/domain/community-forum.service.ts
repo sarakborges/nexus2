@@ -132,6 +132,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: [...topics, topic],
             media_files: nextMediaFiles
           },
@@ -182,6 +188,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_replies: [...replies, reply],
             community_forum_topics: currentTopics.map(record =>
               record.id === topicId ? { ...record, updatedAt: now } : record
@@ -221,6 +233,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: topics.map(record => record.id === topicId ? updated : record)
           },
           result: updated
@@ -230,6 +248,7 @@ export class CommunityForumService {
   }
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies', 'media_files'],
       collections => {
@@ -274,6 +293,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [actorProfileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: currentTopics.filter(record => record.id !== topicId),
             community_forum_replies: currentReplies.filter(reply =>
               reply.topicId !== topicId || reply.communityId !== communityId
@@ -325,6 +350,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [actorProfileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_replies: currentReplies.filter(record => record.id !== replyId),
             community_forum_topics: currentTopics.map(topic =>
               topic.id === latestReply.topicId ? { ...topic, updatedAt: now } : topic

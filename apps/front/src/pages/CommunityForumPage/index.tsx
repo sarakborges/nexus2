@@ -1,4 +1,5 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import {
   CommunitySidebar,
@@ -16,25 +17,28 @@ export function CommunityForumPage() {
   const { t } = useTranslations()
   const {
     normalized,
+    isAuthInitialized,
     session,
     page,
     pageSize,
     setPage,
-    communityQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
+    forumPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
-    relationshipsQuery,
-    ownedProfilesQuery,
+    canReadForum,
     canPublish,
     openCreateTopic,
-    topicsQuery,
     topics,
-    authorsQuery,
     authorsById
   } = useCommunityForumPage()
 
   if (!normalized) return <NotFoundPage />
-  if (communityQuery.isLoading)
+  if (!isAuthInitialized || forumPageQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -42,14 +46,19 @@ export function CommunityForumPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
+  }
+  if (forumPageQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void forumPageQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!community) return <NotFoundPage />
 
   return (
@@ -62,10 +71,16 @@ export function CommunityForumPage() {
             !session ||
             (typeCompatibility.isCompatible && !typeCompatibility.isChecking)
           }
+          relationship={viewerRelationship}
         />
       }
     >
       <section className="community-forum social-page__content-stack">
+        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+          <p className="profile-type-notice" role="alert">
+            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+          </p>
+        )}
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -74,50 +89,41 @@ export function CommunityForumPage() {
             </p>
           </div>
           {canPublish && (
-            <Button
-              type="button"
-              onClick={openCreateTopic}
-            >
+            <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
             </Button>
           )}
         </header>
 
-        <RequestState
-          isLoading={
-            relationshipsQuery.isLoading || ownedProfilesQuery.isLoading
-          }
-          isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
-          onRetry={() => {
-            void relationshipsQuery.refetch()
-            void ownedProfilesQuery.refetch()
-          }}
-        />
-        {!canPublish &&
-          session &&
-          relationshipsQuery.isSuccess &&
-          ownedProfilesQuery.isSuccess && (
-            <div className="community-forum__join">
-              <p className="account-card__description">
-                {t('FORUM_MEMBERS_ONLY')}
-              </p>
-              <RelationshipActions
-                targetId={community.id}
-                targetKind="community"
-              />
-            </div>
-          )}
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        <RequestState isFetching={forumPageQuery.isFetching} />
+        {!canPublish && session && typeCompatibility.canInteract && (
+          <div className="community-forum__join">
+            <p className="account-card__description">
+              {t('FORUM_MEMBERS_ONLY')}
+            </p>
+            <RelationshipActions
+              targetId={community.id}
+              targetKind="community"
+              relationship={viewerRelationship}
+            />
+          </div>
+        )}
 
         <RequestState
-          isLoading={topicsQuery.isLoading || authorsQuery.isLoading}
-          isFetching={topicsQuery.isFetching || authorsQuery.isFetching}
-          isError={topicsQuery.isError || authorsQuery.isError}
-          isEmpty={topicsQuery.isSuccess && topicsQuery.data.totalItems === 0}
-          emptyMessage={t('FORUM_EMPTY')}
-          onRetry={() => {
-            void topicsQuery.refetch()
-            void authorsQuery.refetch()
-          }}
+          isLoading={forumPageQuery.isLoading}
+          isFetching={forumPageQuery.isFetching}
+          isError={forumPageQuery.isError}
+          isEmpty={
+            forumPageQuery.isSuccess &&
+            (!canReadForum || forumPageQuery.data.topics.totalItems === 0)
+          }
+          emptyMessage={
+            !canReadForum
+              ? t('COMMUNITY_PRIVATE_RESTRICTED')
+              : t('FORUM_EMPTY')
+          }
+          onRetry={() => void forumPageQuery.refetch()}
         >
           <CommunityForumTopicList
             communityUrl={community.url}
@@ -128,7 +134,7 @@ export function CommunityForumPage() {
         <Pagination
           page={page}
           pageSize={pageSize}
-          totalItems={topicsQuery.data?.totalItems ?? 0}
+          totalItems={forumPageQuery.data?.topics.totalItems ?? 0}
           onPageChange={setPage}
         />
       </section>

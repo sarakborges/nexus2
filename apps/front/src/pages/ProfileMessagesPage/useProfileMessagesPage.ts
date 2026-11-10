@@ -1,25 +1,21 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { type FormEvent, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
-
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { useProfileByUrl, useProfilesByIds } from '@/Hooks/Profile'
 import { useCreateProfileMessageMutation } from '@/Hooks/ProfileMessage'
 import {
   ProfileMessageError,
-  getProfileMessages
+  getProfileMessagesPage
 } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { ProfileMessageViewModel } from './ProfileMessageList.types'
 import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.types'
 
 export function useProfileMessagesPage(): UseProfileMessagesPageResult {
@@ -27,52 +23,58 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { url } = useParams<{ url: string }>()
   const requestedUrl = normalizeEntityUrl(url)
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
   const [content, setContent] = useState('')
-  const profileQuery = useProfileByUrl({ url: requestedUrl })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const canInteract = typeCompatibility.canInteract
-  const isProfileOwner = Boolean(
-    profile && session?.user.profiles.includes(profile.id)
-  )
-  const messagesQuery = useQuery({
-    queryKey: queryKeys.profileMessages(
-      profile?.id ?? '',
-      session?.user.id ?? null,
+
+  const profileMessagesPageQuery = useQuery({
+    queryKey: queryKeys.profileMessagesPage(
+      requestedUrl,
       page,
-      pageSize
+      pageSize,
+      session?.user.id ?? null,
+      currentProfileId,
+      query,
+      sort
     ),
-    queryFn: () => getProfileMessages(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
+    queryFn: () =>
+      getProfileMessagesPage(requestedUrl, { page, pageSize, query, sort }),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const totalItems = messagesQuery.data?.totalItems ?? 0
-  const senderIds = useMemo(
+  const pageData = profileMessagesPageQuery.data
+  const profile = pageData?.profile
+  const isProfileOwner = pageData?.isProfileOwner ?? false
+  const viewerRelationship = pageData?.viewerRelationship ?? null
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profileMessagesPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (profileMessagesPageQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const canInteract = typeCompatibility.canInteract
+  const messages = pageData?.messages.items ?? []
+  const totalItems = pageData?.messages.totalItems ?? 0
+  const sendersById = useMemo(
     () =>
-      [
-        ...new Set(
-          (messagesQuery.data?.items ?? []).map(
-            (message) => message.fromProfileId
-          )
+      new Map(
+        (pageData?.senders ?? []).map(
+          (sender) => [sender.id, sender] as const
         )
-      ].sort(),
-    [messagesQuery.data?.items]
+      ),
+    [pageData?.senders]
   )
-  const {
-    profilesQuery: senderProfilesQuery,
-    profilesById: sendersById
-  } = useProfilesByIds(senderIds)
-  const messageItems = useMemo(
+  const messageItems = useMemo<ProfileMessageViewModel[]>(
     () =>
-      (messagesQuery.data?.items ?? []).map((message) => ({
+      messages.map((message) => ({
         message,
         sender: sendersById.get(message.fromProfileId)
       })),
-    [messagesQuery.data?.items, sendersById]
+    [messages, sendersById]
   )
   const messageSenderProfileId =
     currentProfileId ?? (isProfileOwner ? (profile?.id ?? null) : null)
@@ -88,8 +90,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       !canSendMessage ||
       !profile ||
       !messageSenderProfileId
-    )
-      return
+    ) return
 
     await sendMessageMutation.mutateAsync(
       {
@@ -108,28 +109,33 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     )
   }
 
-
   return {
     requestedUrl,
     session,
+    isAuthInitialized,
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     content,
     setContent,
-    profileQuery,
+    profileMessagesPageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     isProfileOwner,
-    messagesQuery,
     totalItems,
-    senderProfilesQuery,
     messageItems,
     canSendMessage,
     canSubmitMessage: hasRichTextContent(content),
     isSendingMessage: sendMessageMutation.isPending,
     hasSendMessageError: sendMessageMutation.isError,
-    isInvalidMessageError: sendMessageMutation.error instanceof ProfileMessageError && sendMessageMutation.error.code === 'INVALID_MESSAGE',
+    isInvalidMessageError:
+      sendMessageMutation.error instanceof ProfileMessageError &&
+      sendMessageMutation.error.code === 'INVALID_MESSAGE',
     handleSubmit,
     uploadEditorImage
   }

@@ -18,6 +18,10 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
+    async readByIds(name, ids) {
+      const requested = new Set(ids)
+      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
+    },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
@@ -66,6 +70,32 @@ const input = {
   type: 'social'
 }
 
+test('profile lookup by IDs filters records before returning the requested profiles', async () => {
+  const { service, collections } = createHarness()
+  const requested = {
+    id: 'requested-profile',
+    name: 'Requested',
+    url: 'requested',
+    picture: '',
+    about: '<p>Requested profile</p>',
+    type: 'social'
+  }
+  const unrequested = {
+    id: 'unrequested-profile',
+    name: 'Unrequested',
+    url: 'unrequested',
+    picture: '',
+    about: '<p>Unrequested profile</p>',
+    type: 'social'
+  }
+  collections.set('profiles', [requested, unrequested])
+
+  const result = await service.getProfilesByIds([requested.id])
+
+  assert.deepEqual(result.map(profile => profile.id), [requested.id])
+  assert.equal(result[0].about, '<p>Requested profile</p>')
+})
+
 test('profile creation atomically persists the profile and links it to the authenticated account', async () => {
   const { service, collections, account } = createHarness()
   const created = await service.createProfile(account.id, input)
@@ -73,6 +103,8 @@ test('profile creation atomically persists the profile and links it to the authe
 
   assert.equal(collections.get('profiles').length, 1)
   assert.deepEqual(collections.get('profiles')[0], created.profile)
+  assert.ok(created.profile.createdAt > 0)
+  assert.equal(created.profile.lastActivity, created.profile.createdAt)
   assert.deepEqual(savedAccount.profiles, ['existing-profile', created.profile.id])
   assert.equal(savedAccount.currentProfile, created.profile.id)
   assert.equal(created.user.id, account.id)
@@ -143,6 +175,8 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
     privacy: 'public'
   })
   assert.equal(created.url, 'meu-caminho')
+  assert.ok(created.createdAt > 0)
+  assert.equal(created.lastActivity, created.createdAt)
   assert.equal(collections.get('community_relationships').length, 1)
   assert.equal(collections.get('community_relationships')[0].type, 'owner')
 

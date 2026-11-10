@@ -14,27 +14,24 @@ export function CommunityPage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
-    communityQuery,
+    isAuthInitialized,
+    communityPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
     canInteract,
-    relationshipsQuery,
     canViewMembers,
     canEditCommunity,
     openEditCommunity,
+    pendingRequestCount,
     members,
     memberCount,
-    pendingActor,
-    pendingRequestsQuery,
-    membersQuery,
-    forumTopicsQuery,
     forumTopics,
-    forumAuthorsQuery,
     forumAuthorsById
   } = useCommunityPage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (communityQuery.isLoading) {
+  if (!isAuthInitialized || communityPageQuery.isLoading) {
     return (
       <main className="social-page">
         <div className="social-page__state">
@@ -43,37 +40,19 @@ export function CommunityPage() {
       </main>
     )
   }
-  if (communityQuery.isError) {
-    return (
-      <main className="social-page">
-        <div className="social-page__state">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
-        </div>
-      </main>
-    )
-  }
-  if (!community) return <NotFoundPage />
-  if (relationshipsQuery.isLoading) {
-    return (
-      <main className="social-page">
-        <div className="social-page__state">
-          <RequestState isLoading />
-        </div>
-      </main>
-    )
-  }
-  if (relationshipsQuery.isError) {
+  if (communityPageQuery.isError) {
     return (
       <main className="social-page">
         <div className="social-page__state">
           <RequestState
             isError
-            onRetry={() => void relationshipsQuery.refetch()}
+            onRetry={() => void communityPageQuery.refetch()}
           />
         </div>
       </main>
     )
   }
+  if (!community) return <NotFoundPage />
 
   return (
     <main className="social-page social-page--community">
@@ -83,15 +62,12 @@ export function CommunityPage() {
             community={community}
             active="about"
             canInteract={canInteract}
+            relationship={viewerRelationship}
           />
         </aside>
 
         <section className="social-page__main-column">
-          <RequestState
-            isFetching={
-              communityQuery.isFetching || relationshipsQuery.isFetching
-            }
-          />
+          <RequestState isFetching={communityPageQuery.isFetching} />
           {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
             <p className="profile-type-notice" role="alert">
               {t('PROFILE_TYPE_MISMATCH_NOTICE')}
@@ -101,16 +77,14 @@ export function CommunityPage() {
             community={community}
             canViewMembers={canViewMembers}
             canEditCommunity={canEditCommunity}
-            pendingRequestCount={
-              pendingActor ? (pendingRequestsQuery.data?.totalItems ?? 0) : 0
-            }
+            pendingRequestCount={pendingRequestCount}
             onEdit={openEditCommunity}
           />
 
           <CommunityPageForumPreview
             communityUrl={community.url}
-            topicsQuery={forumTopicsQuery}
-            authorsQuery={forumAuthorsQuery}
+            communityPageQuery={communityPageQuery}
+            canViewMembers={canViewMembers}
             topics={forumTopics}
             authorsById={forumAuthorsById}
           />
@@ -119,8 +93,8 @@ export function CommunityPage() {
         <aside className="social-page__right-column">
           <CommunityPageMembersPreview
             communityUrl={community.url}
+            communityPageQuery={communityPageQuery}
             canViewMembers={canViewMembers}
-            membersQuery={membersQuery}
             members={members}
             memberCount={memberCount}
           />

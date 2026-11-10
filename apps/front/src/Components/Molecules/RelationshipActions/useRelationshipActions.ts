@@ -18,13 +18,15 @@ import { useToastStore } from '@/Stores/Toast.store'
 
 export function useRelationshipActions({
   targetId,
-  targetKind = 'profile'
+  targetKind = 'profile',
+  relationship: providedRelationship
 }: UseRelationshipActionsOptions): RelationshipActionsController {
   const { t } = useTranslations()
   const session = useAuthStore((state) => state.session)
   const sourceId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const isCommunity = targetKind === 'community'
+  const hasProvidedRelationship = providedRelationship !== undefined
   const canQuery = Boolean(
     session &&
     sourceId &&
@@ -47,10 +49,12 @@ export function useRelationshipActions({
         ? getCommunityRelationships(targetId)
         : getRelationships(sourceId)
     },
-    enabled: canQuery
+    enabled: canQuery && !hasProvidedRelationship
   })
 
-  const relationship = isCommunity
+  const relationship = hasProvidedRelationship
+    ? (providedRelationship ?? null)
+    : isCommunity
     ? (relationshipsQuery.data?.find(
         (item) => item.profiles[0] === sourceId && item.profiles[1] === targetId
       ) ?? null)
@@ -147,9 +151,9 @@ export function useRelationshipActions({
     isAuthenticated: Boolean(session),
     canInteract,
     isCommunity,
-    isLoading: relationshipsQuery.isLoading,
-    isFetching: relationshipsQuery.isFetching,
-    isQueryError: relationshipsQuery.isError,
+    isLoading: !hasProvidedRelationship && relationshipsQuery.isLoading,
+    isFetching: !hasProvidedRelationship && relationshipsQuery.isFetching,
+    isQueryError: !hasProvidedRelationship && relationshipsQuery.isError,
     isMutationPending,
     isMutationError,
     isOwnerOrModerator: Boolean(isOwnerOrModerator),
@@ -163,7 +167,9 @@ export function useRelationshipActions({
     canBlock: !isCommunity && relationship?.type !== 'blocked',
     run,
     handleRequestOrAccept,
-    refetch: () => void relationshipsQuery.refetch(),
+    refetch: () => {
+      if (!hasProvidedRelationship) void relationshipsQuery.refetch()
+    },
     retryLastAction: lastAction ? () => run(lastAction) : undefined
   }
 }

@@ -1,128 +1,111 @@
-import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
+import { useQuery } from '@tanstack/react-query'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
-
-import type { Member, MemberTab } from './CommunityMembersPage.types'
-import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useCommunityAccess, useCommunityByUrl } from '@/Hooks/Community'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import {
-  getCommunityMembers,
-  getPendingCommunityMembers
-} from '@/Services/CommunityRelationship'
+import { getCommunityMembersPage } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { MemberTab } from './CommunityMembersPage.types'
+import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 
 export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
   const session = useAuthStore((state) => state.session)
-  const currentProfileId = session?.user.currentProfile ?? null
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
   const profileIds = session?.user.profiles ?? []
+  const currentProfileId = session?.user.currentProfile ?? null
   const [activeTab, setActiveTab] = useState<MemberTab>('all')
-  const { page, pageSize, setPage } = useUrlPagination('page')
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination('page')
   const {
     page: pendingPage,
     pageSize: pendingPageSize,
     setPage: setPendingPage
   } = useUrlPagination('pendingPage')
 
-  const communityQuery = useCommunityByUrl({
-    url: normalized,
-    viewerUserId: session?.user.id ?? null
-  })
-  const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
-  const {
-    relationshipsQuery,
-    relationships,
-    managementProfileId: actorProfileId,
-    currentRole,
-    isStaff
-  } = useCommunityAccess({
-    communityId: community?.id ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds
-  })
-  const visibleTab: MemberTab = isStaff ? activeTab : 'all'
-  const membersQuery = useQuery({
-    queryKey: queryKeys.communityMembers(
-      community?.id ?? '',
-      visibleTab,
+  const communityMembersPageQuery = useQuery({
+    queryKey: queryKeys.communityMembersPage(
+      normalized,
+      activeTab,
       page,
-      pageSize,
-      actorProfileId ?? currentProfileId ?? undefined,
-      session?.user.id ?? null
-    ),
-    queryFn: () =>
-      getCommunityMembers(
-        community!.id,
-        visibleTab,
-        { page, pageSize },
-        actorProfileId ?? currentProfileId ?? undefined
-      ),
-    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
-  })
-  const pendingQuery = useQuery({
-    queryKey: queryKeys.pendingCommunityMembers(
-      community?.id ?? '',
-      actorProfileId ?? '',
       pendingPage,
-      pendingPageSize,
-      session?.user.id ?? null
+      viewerUserId,
+      profileIds,
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
-      getPendingCommunityMembers(community!.id, actorProfileId!, {
-        page: pendingPage,
-        pageSize: pendingPageSize
+      getCommunityMembersPage(normalized, {
+        tab: activeTab,
+        page,
+        pendingPage,
+        query,
+        sort
       }),
-    enabled: Boolean(
-      community?.id && actorProfileId && isStaff && relationshipsQuery.isSuccess
-    )
+    enabled: Boolean(normalized && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const members: Member[] = membersQuery.data?.items ?? []
-  const totalMembers = membersQuery.data?.totalItems ?? 0
-  const pending: Member[] = pendingQuery.data?.items ?? []
-  const totalPending = pendingQuery.data?.totalItems ?? 0
+  const pageData = communityMembersPageQuery.data
+  const community = pageData?.community
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && communityMembersPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (communityMembersPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const visibleTab = pageData?.visibleTab ?? 'all'
+  const isStaff = pageData?.isStaff ?? false
+  const relationships = pageData?.relationships ?? []
+  const viewerRelationship = pageData?.viewerRelationship ?? null
+  const actorProfileId = pageData?.actorProfileId ?? null
+  const currentRole = pageData?.actorRole ?? null
+  const members = pageData?.members.items ?? []
+  const totalMembers = pageData?.members.totalItems ?? 0
+  const pending = pageData?.pending.items ?? []
+  const totalPending = pageData?.pending.totalItems ?? 0
 
   useEffect(() => {
-    if (membersQuery.data && membersQuery.data.page !== page)
-      setPage(membersQuery.data.page)
-  }, [membersQuery.data, page, setPage])
+    if (pageData?.members && pageData.members.page !== page) {
+      setPage(pageData.members.page)
+    }
+  }, [pageData?.members, page, setPage])
   useEffect(() => {
-    if (pendingQuery.data && pendingQuery.data.page !== pendingPage)
-      setPendingPage(pendingQuery.data.page)
-  }, [pendingQuery.data, pendingPage, setPendingPage])
-
+    if (pageData?.pending && pageData.pending.page !== pendingPage) {
+      setPendingPage(pageData.pending.page)
+    }
+  }, [pageData?.pending, pendingPage, setPendingPage])
 
   return {
     normalized,
+    isAuthInitialized,
     activeTab,
     setActiveTab,
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     pendingPage,
     pendingPageSize,
     setPendingPage,
-    communityQuery,
+    communityMembersPageQuery,
     community,
     typeCompatibility,
-    relationshipsQuery,
     relationships,
+    viewerRelationship,
     actorProfileId,
     currentRole,
     isStaff,
     visibleTab,
-    membersQuery,
-    pendingQuery,
     members,
     totalMembers,
     pending,

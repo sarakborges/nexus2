@@ -6,14 +6,27 @@ import {
   MaxLength,
   MinLength
 } from 'class-validator'
+import { PaginationDto } from '../pagination/pagination.dto'
 
 import type {
   CommunityPrivacy,
   CommunityRelationshipType,
   CreateCommunityInput,
   CreateProfileInput,
-  RelationshipType
+  RelationshipType,
+  SearchScope
 } from '@nexus/common'
+
+export class SearchDto extends PaginationDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(120)
+  query = ''
+
+  @IsOptional()
+  @IsIn(['all', 'profiles', 'communities'])
+  scope: SearchScope = 'all'
+}
 
 export class CreateProfileDto implements CreateProfileInput {
   @IsString()

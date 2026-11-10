@@ -103,3 +103,28 @@ test('does not commit any collection when a transaction callback is invalid', as
   assert.deepEqual(await repository.read('left'), [{ id: 'left-before' }])
   assert.deepEqual(await repository.read('right'), [{ id: 'right-before' }])
 })
+
+test('readByIds returns only matching records and skips empty ID lists', async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'nexus-json-repository-'))
+  const previousDirectory = process.env.DATA_DIRECTORY
+  process.env.DATA_DIRECTORY = directory
+  const repository = new JsonFileRepository()
+
+  t.after(async () => {
+    if (previousDirectory === undefined) delete process.env.DATA_DIRECTORY
+    else process.env.DATA_DIRECTORY = previousDirectory
+    await fs.rm(directory, { recursive: true, force: true })
+  })
+
+  await repository.update('profiles', () => [
+    { id: 'profile-a', name: 'A' },
+    { id: 'profile-b', name: 'B' },
+    { id: 'profile-c', name: 'C' }
+  ])
+
+  assert.deepEqual(await repository.readByIds('profiles', ['profile-c', 'profile-a']), [
+    { id: 'profile-a', name: 'A' },
+    { id: 'profile-c', name: 'C' }
+  ])
+  assert.deepEqual(await repository.readByIds('profiles', []), [])
+})

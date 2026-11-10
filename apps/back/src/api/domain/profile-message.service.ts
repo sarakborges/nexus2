@@ -83,6 +83,7 @@ export class ProfileMessageService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [fromProfileId, toProfileId], message.createdAt),
             profile_messages: [...messages, message],
             media_files: nextMediaFiles
           },

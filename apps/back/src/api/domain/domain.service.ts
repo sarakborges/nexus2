@@ -15,12 +15,17 @@ import type {
   ProfileMessage,
   RecentActivity,
   Relationship,
-  RelationshipType
+  RelationshipType,
+  SearchResultItem,
+  SearchScope
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { CommunityMemberProfile, ForumTopicModerationChanges } from './domain.types'
 import { AuthService } from '../auth/auth.service'
 import { PaginationDto } from '../pagination/pagination.dto'
+import { paginate } from '../pagination/pagination.helper'
+import { filterAndSortList } from '../pagination/list-query.helper'
+import { getRichTextPlainText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import { ActivityService } from './activity.service'
 import { CommunityForumService } from './community-forum.service'
@@ -36,6 +41,8 @@ export class DomainService {
   private readonly forum: CommunityForumService
   private readonly messages: ProfileMessageService
   private readonly activity: ActivityService
+  private readonly data: DataRepository
+  private readonly access: DomainAccessService
 
   constructor(
     @Inject(DATA_REPOSITORY) data: DataRepository,
@@ -48,12 +55,78 @@ export class DomainService {
     @Optional() messages?: ProfileMessageService,
     @Optional() activity?: ActivityService
   ) {
+    this.data = data
     const domainAccess = access ?? new DomainAccessService(data)
+    this.access = domainAccess
     this.profiles = profiles ?? new ProfileService(data, auth, domainAccess, uploads)
     this.communities = communities ?? new CommunityService(data, auth, domainAccess, uploads)
     this.forum = forum ?? new CommunityForumService(data, domainAccess, uploads)
     this.messages = messages ?? new ProfileMessageService(data, domainAccess, uploads)
     this.activity = activity ?? new ActivityService(data, domainAccess)
+  }
+
+  async searchEntities(
+    query: string,
+    scope: SearchScope,
+    q: PaginationDto
+  ): Promise<PaginatedResult<SearchResultItem>> {
+    const normalizedQuery = query.trim().toLocaleLowerCase()
+    if (!normalizedQuery) return paginate([], q)
+
+    const matches = (value: string) =>
+      value.toLocaleLowerCase().includes(normalizedQuery)
+
+    const found = await this.data.transaction<SearchResultItem[]>(
+      ['profiles', 'communities', 'community_relationships'],
+      collections => {
+        const profiles = this.access.normalizeProfiles(collections.profiles as Profile[])
+        const normalized = this.access.normalizeCommunitiesInRecords(collections)
+        const results: SearchResultItem[] = []
+
+        if (scope === 'all' || scope === 'profiles') {
+          for (const profile of profiles) {
+            const about = getRichTextPlainText(profile.about)
+            if (
+              matches(profile.name) ||
+              matches(about) ||
+              matches(profile.url)
+            ) {
+              results.push({ kind: 'profile', profile })
+            }
+          }
+        }
+
+        if (scope === 'all' || scope === 'communities') {
+          for (const community of normalized.communities) {
+            if (community.privacy !== 'public') continue
+            const about = getRichTextPlainText(community.about)
+            if (
+              matches(community.name) ||
+              matches(about) ||
+              matches(community.url)
+            ) {
+              results.push({ kind: 'community', community })
+            }
+          }
+        }
+
+        return { records: normalized.records, result: results }
+      }
+    )
+
+    const lastActivity = (item: SearchResultItem) =>
+      item.kind === 'profile' ? item.profile.lastActivity : item.community.lastActivity
+    const createdAt = (item: SearchResultItem) =>
+      item.kind === 'profile' ? item.profile.createdAt : item.community.createdAt
+
+    const ordered = filterAndSortList(
+      found, undefined, q.sort,
+      item => item.kind === 'profile' ? [item.profile.name,item.profile.about,item.profile.url].join(' ') : [item.community.name,item.community.about,item.community.url].join(' '),
+      item => lastActivity(item) || createdAt(item),
+      item => item.kind === 'profile' ? item.profile.name : item.community.name,
+      item => item.kind === 'profile' ? item.profile.id : item.community.id
+    )
+    return paginate(ordered, q)
   }
 
   listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {

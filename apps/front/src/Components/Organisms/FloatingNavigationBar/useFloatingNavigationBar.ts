@@ -38,19 +38,31 @@ export function useFloatingNavigationBar({
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
+  const currentProfileId = session?.user.currentProfile ?? null
+
+  const currentProfileQuery = useQuery({
+    queryKey: queryKeys.profiles.byId(currentProfileId),
+    queryFn: async () => {
+      if (!currentProfileId) return null
+      const [profile] = await getProfilesByIds([currentProfileId])
+      return profile ?? null
+    },
+    enabled: Boolean(currentProfileId),
+    staleTime: 5 * 60 * 1000
+  })
 
   const profilesQuery = useQuery({
     queryKey: queryKeys.profiles.byIds(profileIds),
     queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0,
+    enabled: profileIds.length > 0 && isProfileSwitcherOpen,
     staleTime: 5 * 60 * 1000
   })
 
-  const currentProfileId = session?.user.currentProfile ?? null
   const profiles = profilesQuery.data ?? []
-  const currentProfile = profiles.find(
-    (profile) => profile.id === currentProfileId
-  )
+  const currentProfile =
+    currentProfileQuery.data ??
+    profiles.find((profile) => profile.id === currentProfileId) ??
+    undefined
   const profileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url
     : null
@@ -135,6 +147,7 @@ export function useFloatingNavigationBar({
     toggleProfileSwitcher: () =>
       setIsProfileSwitcherOpen((open) => !open),
     profiles,
+    hasProfiles: profileIds.length > 0,
     currentProfileId,
     isProfileSwitcherOpen,
     profilesLoading: profilesQuery.isLoading,

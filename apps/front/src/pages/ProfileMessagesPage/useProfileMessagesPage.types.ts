@@ -1,13 +1,12 @@
 import type {
   AuthSession,
-  PaginatedResult,
   Profile,
-  ProfileMessage
+  ProfileMessagesPageData,
+  Relationship
 } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction, FormEvent } from 'react'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
 import type { ProfileMessageViewModel } from './ProfileMessageList.types'
@@ -15,18 +14,26 @@ import type { ProfileMessageViewModel } from './ProfileMessageList.types'
 export type UseProfileMessagesPageResult = {
   requestedUrl: string
   session: AuthSession | null
+  isAuthInitialized: boolean
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   content: string
   setContent: Dispatch<SetStateAction<string>>
-  profileQuery: UseQueryResult<Profile | null>
+  profileMessagesPageQuery: UseQueryResult<ProfileMessagesPageData>
   profile: Profile | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  viewerRelationship: Relationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   isProfileOwner: boolean
-  messagesQuery: UseQueryResult<PaginatedResult<ProfileMessage>>
   totalItems: number
-  senderProfilesQuery: UseQueryResult<Profile[]>
   messageItems: ProfileMessageViewModel[]
   canSendMessage: boolean
   canSubmitMessage: boolean
