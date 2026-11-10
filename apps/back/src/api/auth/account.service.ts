@@ -17,8 +17,7 @@ export class AccountService {
   ) {}
 
   async getUser(userId: string): Promise<AuthenticatedUser> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.id === userId)
+    const account = await this.readAccount(userId)
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     return this.toPublicUser(account)
   }
@@ -73,8 +72,7 @@ export class AccountService {
   }
 
   async getPreferences(userId: string): Promise<UserPreferences> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.id === userId)
+    const account = await this.readAccount(userId)
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     return account.preferences ?? { language: 'system', theme: 'system' }
   }
@@ -94,8 +92,13 @@ export class AccountService {
   }
 
   async ownsProfile(userId: string, profileId: string): Promise<boolean> {
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    return accounts.some(item => item.id === userId && item.profiles.includes(profileId))
+    const account = await this.readAccount(userId)
+    return Boolean(account?.profiles.includes(profileId))
+  }
+
+  private async readAccount(userId: string): Promise<AccountRecord | undefined> {
+    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [userId])
+    return account
   }
 
   private toPublicUser(account: AccountRecord): AuthenticatedUser {
