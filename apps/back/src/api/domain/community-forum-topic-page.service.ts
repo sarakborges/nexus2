@@ -132,7 +132,6 @@ export class CommunityForumTopicPageService {
         )
         if (!topic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
 
-        const profilesById = new Map(profiles.map(profile => [profile.id, profile] as const))
         const allReplies = filterAndSortList(
           (records.community_forum_replies as CommunityForumReply[]).filter(reply => reply.topicId === topicId && reply.communityId === community.id),
           query.query,

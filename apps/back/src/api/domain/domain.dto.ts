@@ -21,7 +21,7 @@ export class SearchDto extends PaginationDto {
   @IsString()
   @MinLength(1)
   @MaxLength(120)
-  query!: string
+  query = ''
 
   @IsOptional()
   @IsIn(['all', 'profiles', 'communities'])
