@@ -19,7 +19,7 @@ COMMON_VIEW_ALL: 'View all',
   HOME_POST_PUBLISH: 'Publish',
   HOME_POST_PUBLISHING: 'Publishing...',
   HOME_POST_PUBLISHED: 'Post published.',
-  HOME_POST_FAILED: 'The post could not be published. Please try again.'
+  HOME_POST_FAILED: 'The post could not be published. Please try again.',
   SETTINGS_DESCRIPTION:
     'Manage your language, appearance, and account shortcuts.',
   APPEARANCE_TITLE: 'Appearance',

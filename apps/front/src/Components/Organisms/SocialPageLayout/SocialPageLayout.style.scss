@@ -336,16 +336,23 @@
   font-variant-numeric: tabular-nums;
 }
 
-.social-preview-panel__all {
+.social-preview-panel__all.button {
   justify-self: end;
+  min-height: 30px;
+  height: 30px;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
   color: var(--color-primary-weak);
   font-size: 12px;
+  box-shadow: none;
   text-decoration: none;
 }
 
-.social-preview-panel__all:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+.social-preview-panel__all.button:hover {
+  background: var(--color-background);
+  color: var(--color-primary-weak);
+  text-decoration: none;
 }
 
 .social-preview-grid {

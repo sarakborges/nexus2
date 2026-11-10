@@ -21,7 +21,7 @@ COMMON_VIEW_ALL: 'Ver todos',
   HOME_POST_PUBLISH: 'Publicar',
   HOME_POST_PUBLISHING: 'Publicando...',
   HOME_POST_PUBLISHED: 'Publicação criada.',
-  HOME_POST_FAILED: 'Não foi possível publicar. Tente novamente.'
+  HOME_POST_FAILED: 'Não foi possível publicar. Tente novamente.',
   SETTINGS_DESCRIPTION:
     'Gerencie o idioma, a aparência e os atalhos da sua conta.',
   APPEARANCE_TITLE: 'Aparência',

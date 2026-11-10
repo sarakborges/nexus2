@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { ButtonLink } from '@/DesignSystem'
 
 import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
@@ -22,12 +22,13 @@ export function HomePageFriendsPreview({
             ({homeQuery.data?.friends.totalItems ?? '—'})
           </span>
         </h2>
-        <Link
+        <ButtonLink
+          variation="transparent"
           className="social-preview-panel__all"
           to={ROUTES.profile + '/' + profileUrl + '/friends'}
         >
           {t('COMMON_VIEW_ALL')}
-        </Link>
+        </ButtonLink>
       </header>
       <RequestState
         isLoading={homeQuery.isLoading}
