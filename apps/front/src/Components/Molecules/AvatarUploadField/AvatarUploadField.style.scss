@@ -91,3 +91,20 @@
   width: 24px;
   height: 24px;
 }
+
+/* Avatar preview keeps its 88px width and accepts portraits up to 176px tall. */
+.avatar-upload-field__preview {
+  height: auto;
+  max-height: 176px;
+}
+
+.avatar-upload-field__preview img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+.avatar-upload-field__fallback {
+  width: 100%;
+  aspect-ratio: 1 / 2;
+}

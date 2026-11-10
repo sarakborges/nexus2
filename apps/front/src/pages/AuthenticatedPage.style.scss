@@ -525,3 +525,44 @@
   outline: 2px solid var(--color-primary-strong);
   outline-offset: 2px;
 }
+
+/* Fixed-width profile and member avatars, capped at a 1:2 width-to-height ratio. */
+.account-card__profile-entry-avatar {
+  height: auto;
+  max-height: 112px;
+  aspect-ratio: auto;
+}
+
+.account-card__profile-entry-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+.account-card__profile-entry-avatar:not(:has(img)) {
+  aspect-ratio: 1 / 2;
+}
+
+.account-card__picture {
+  height: auto;
+  max-height: 192px;
+  border-radius: var(--avatar-shape-radius);
+  object-fit: cover;
+}
+
+/* Message authors share the same portrait cap as the rest of the system. */
+.profile-message__avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: auto;
+  max-height: 80px;
+  flex: 0 0 40px;
+  overflow: hidden;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--avatar-shape-radius);
+  background: var(--avatar-background);
+  color: var(--avatar-fallback-color);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+}

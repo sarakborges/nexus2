@@ -50,7 +50,6 @@
 .social-sidebar-card {
   display: grid;
   align-content: start;
-  gap: 10px;
   min-width: 0;
   padding: 12px;
   border: var(--nexus-border-width, 2px) solid var(--color-border);
@@ -427,7 +426,42 @@
   margin: 0;
 }
 
-.social-identity__picture--profile-portrait {
+/* Profile and community avatars use their container width and a 1:2 height cap. */
+.social-identity__link,
+.social-preview-link {
+  container-type: inline-size;
+}
+
+.social-identity__picture,
+.social-identity__picture--profile,
+.social-identity__picture--community {
+  height: auto;
+  max-height: 200cqi;
+  aspect-ratio: auto;
+}
+
+.social-identity__picture--fallback,
+.social-preview-avatar:not(:has(img)) {
   aspect-ratio: 1 / 2;
-  max-height: 365px;
+}
+
+.social-preview-avatar {
+  height: auto;
+  max-height: 200cqi;
+  aspect-ratio: auto;
+}
+
+.social-preview-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+@media (max-width: 680px) {
+  .social-identity__picture {
+    width: 104px;
+    height: auto;
+    max-height: 200cqi;
+    aspect-ratio: auto;
+  }
 }

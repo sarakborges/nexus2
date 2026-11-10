@@ -1,21 +1,22 @@
 :root {
-  /* Nexus logo palette: coral, cyan and signal yellow. */
-  --color-primary: #ff5733;
-  --color-primary-weak: #ff8b70;
-  --color-primary-strong: #c83d1c;
+  /* Sampled from the supplied Nexus mark: violet-blue, deep violet and electric blue. */
+  --color-primary: #675ada;
+  --color-primary-weak: #a7a7f9;
+  --color-primary-strong: #5720be;
 
-  --color-secondary: #33c1ff;
-  --color-secondary-weak: #83ddff;
-  --color-secondary-strong: #087ea6;
+  --color-secondary: #6228c6;
+  --color-secondary-weak: #8080ff;
+  --color-secondary-strong: #0000ff;
+  --color-brand-accent: #ff00ff;
 
-  /* Semantic status palette: never overridden by appearance themes. */
+  /* Semantic status palette. */
   --color-success: #249b62;
   --color-success-weak: #bcebd3;
   --color-success-strong: #12643d;
 
-  --color-warning: #ffc300;
-  --color-warning-weak: #fff0b0;
-  --color-warning-strong: #8a6500;
+  --color-warning: #e2a323;
+  --color-warning-weak: #ffedb5;
+  --color-warning-strong: #885b00;
 
   --color-error: #e04848;
   --color-error-weak: #f08b8b;

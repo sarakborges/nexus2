@@ -143,7 +143,7 @@ export function FloatingNavigationBar({
           </button>
           <Link className="floating-navigation__brand" to={ROUTES.home}>
             <img
-              src="https://imageyobleus.nyc3.cdn.digitaloceanspaces.com/community/303456/photo/68b203d18ff9c.png"
+              src="/nexus-logo.png"
               alt=""
               aria-hidden="true"
             />

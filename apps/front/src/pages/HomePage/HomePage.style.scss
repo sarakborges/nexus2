@@ -248,3 +248,28 @@
     padding: 12px;
   }
 }
+
+/* Home list avatars keep their width and may grow up to twice that height. */
+.home-page__preview-avatar {
+  height: auto;
+  max-height: 112px;
+  aspect-ratio: auto;
+}
+
+.home-page__preview-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+.home-page__activity-avatar {
+  height: auto;
+  max-height: 88px;
+  aspect-ratio: auto;
+}
+
+.home-page__activity-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}

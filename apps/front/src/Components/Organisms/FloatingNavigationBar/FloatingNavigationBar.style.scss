@@ -252,3 +252,69 @@ html.has-global-navigation .auth-page {
   .floating-navigation__search-form input { padding-inline: 6px; font-size: 11px; }
   .floating-navigation__search-form button { flex-basis: 32px; width: 32px; }
 }
+
+/* All icon-only controls share a square hit area and a 20px glyph. */
+.floating-navigation__icon-button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--nexus-icon-button-size, 40px);
+  height: var(--nexus-icon-button-size, 40px);
+  min-height: var(--nexus-icon-button-size, 40px);
+  flex: 0 0 var(--nexus-icon-button-size, 40px);
+  aspect-ratio: 1;
+  padding: 0;
+}
+
+.floating-navigation__icon-button svg,
+.floating-navigation__search-form button svg,
+.floating-navigation__sidebar-link svg,
+.floating-navigation__menu-item svg,
+.floating-navigation__profile-option > svg,
+.floating-navigation__collapsed-search svg {
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__icon-button svg,
+.floating-navigation__sidebar-link svg,
+.floating-navigation__menu-item svg,
+.floating-navigation__profile-option > svg {
+  flex: 0 0 var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__search-form {
+  box-sizing: border-box;
+  height: 44px;
+}
+
+.floating-navigation__search-form button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+}
+
+.floating-navigation__account-chevron {
+  font-size: var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__avatar {
+  height: auto;
+  max-height: 72px;
+}
+
+.floating-navigation__profile-avatar {
+  height: auto;
+  max-height: 56px;
+}
+
+.floating-navigation__avatar img,
+.floating-navigation__profile-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}

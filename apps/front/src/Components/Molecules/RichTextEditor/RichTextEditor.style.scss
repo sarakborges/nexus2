@@ -315,3 +315,26 @@
 }
 .rich-text-editor__counter.is-over-limit { color: var(--color-error, #c33); }
 .rich-text-editor__counter strong { font-weight: var(--font-weight-bold); }
+
+/* Formatting and image toolbar buttons use the same square icon geometry. */
+.rich-text-editor .rsw-toolbar {
+  min-height: 52px;
+}
+
+.rich-text-editor .rsw-btn {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--nexus-icon-button-size, 40px);
+  min-width: var(--nexus-icon-button-size, 40px);
+  height: var(--nexus-icon-button-size, 40px);
+  min-height: var(--nexus-icon-button-size, 40px);
+  aspect-ratio: 1;
+  padding: 0;
+}
+
+.rich-text-editor .rsw-btn svg {
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
+  flex: 0 0 var(--nexus-icon-size, 20px);
+}

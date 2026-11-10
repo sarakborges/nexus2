@@ -360,3 +360,27 @@
   width: 100%;
   min-width: 0;
 }
+
+/* Forum author avatars use a fixed width with a 2x maximum height. */
+.community-forum__author-avatar {
+  height: auto;
+  max-height: 112px;
+  aspect-ratio: auto;
+}
+
+.community-forum__author-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+.community-forum__author-avatar:not(:has(img)) {
+  aspect-ratio: 1 / 2;
+}
+
+@media (max-width: 600px) {
+  .community-forum__author-avatar {
+    height: auto;
+    max-height: 88px;
+  }
+}
