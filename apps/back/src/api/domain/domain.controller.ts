@@ -16,7 +16,8 @@ import {
   OwnershipDto,
   ProfileRelationDto,
   UpdateCommunityDto,
-  UpdateProfileDto
+  UpdateProfileDto,
+  SearchDto
 } from './domain.dto'
 import { DomainService } from './domain.service'
 import { HomePageService } from './home-page.service'
@@ -50,6 +51,11 @@ export class DomainController {
     private readonly communityEditPage: CommunityEditPageService,
     private readonly profileEditPage: ProfileEditPageService
   ) {}
+
+  @Get('search')
+  search(@Query() q: SearchDto) {
+    return this.domain.searchEntities(q.query, q.scope ?? 'all', q)
+  }
 
   @Get('home') @UseGuards(JwtAccessGuard)
   getHomePage(@CurrentUser() u: AuthenticatedUserContext) {

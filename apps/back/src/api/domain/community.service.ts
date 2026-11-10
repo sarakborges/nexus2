@@ -126,7 +126,15 @@ export class CommunityService {
         }
 
         const community: Community = {
-          id: communityId, name, url, picture, about, type: ownerProfile.type, privacy
+          id: communityId,
+          name,
+          url,
+          picture,
+          about,
+          type: ownerProfile.type,
+          privacy,
+          createdAt,
+          lastActivity: createdAt
         }
         const ownerRelationship: CommunityRelationship = {
           profiles: [ownerProfileId, community.id],
@@ -163,6 +171,7 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
+    const lastActivity = Date.now()
     const result = await this.data.transaction<{ community: Community; previousPicture: string | null }>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
       collections => {
@@ -212,7 +221,9 @@ export class CommunityService {
           picture,
           about,
           type: ownerProfile.type,
-          privacy: input.privacy ?? latest.privacy ?? 'public'
+          privacy: input.privacy ?? latest.privacy ?? 'public',
+          createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+          lastActivity
         }
         return {
           records: {

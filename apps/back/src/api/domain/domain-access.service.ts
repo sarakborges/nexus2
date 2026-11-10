@@ -11,20 +11,27 @@ export class DomainAccessService {
   ) {}
 
   async readProfiles(): Promise<Profile[]> {
-    return this.sanitizeProfiles(await this.data.read<Profile>('profiles'))
+    return this.normalizeProfiles(await this.data.read<Profile>('profiles'))
   }
 
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
-    return this.sanitizeProfiles(
+    return this.normalizeProfiles(
       await this.data.readByIds<Profile>('profiles', ids)
     )
   }
 
-  private sanitizeProfiles(profiles: Profile[]): Profile[] {
-    return profiles.map(profile => ({
-      ...profile,
-      about: sanitizeRichText(profile.about ?? '')
-    }))
+  normalizeProfiles(profiles: Profile[]): Profile[] {
+    return profiles.map(profile => {
+      const createdAt = Number.isFinite(profile.createdAt) ? profile.createdAt : 0
+      return {
+        ...profile,
+        about: sanitizeRichText(profile.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(profile.lastActivity)
+          ? profile.lastActivity
+          : createdAt
+      }
+    })
   }
 
   normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
@@ -48,11 +55,16 @@ export class DomainAccessService {
       const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
         ? community.privacy
         : 'public'
+      const createdAt = Number.isFinite(community.createdAt) ? community.createdAt : 0
       return {
         ...community,
         ...(inheritedType ? { type: inheritedType } : {}),
         privacy,
-        about: sanitizeRichText(community.about ?? '')
+        about: sanitizeRichText(community.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(community.lastActivity)
+          ? community.lastActivity
+          : createdAt
       }
     })
     const hasNormalizationChanges = stored.some((community, index) =>

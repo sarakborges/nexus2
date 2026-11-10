@@ -75,11 +75,15 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
+    const createdAt = Date.now()
     if (!name || about.length > 12000 || aboutText.length > 500 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-    const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
+    const profile: Profile = {
+      id: randomUUID(), name, url, picture, about, type: input.type,
+      createdAt, lastActivity: createdAt
+    }
 
     const user = await this.data.transaction<AuthenticatedUser>(
       ['profiles', 'accounts', 'media_files'],
@@ -133,6 +137,7 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const aboutText = getRichTextPlainText(about)
+    const lastActivity = Date.now()
     const result = await this.data.transaction<{ profile: Profile; previousPicture: string | null }>(
       ['accounts', 'profiles', 'media_files'],
       collections => {
@@ -166,7 +171,15 @@ export class ProfileService {
           )
         }
 
-        const updated: Profile = { ...latest, name, url, picture, about }
+        const updated: Profile = {
+          ...latest,
+          name,
+          url,
+          picture,
+          about,
+          createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+          lastActivity
+        }
         return {
           records: {
             ...collections,

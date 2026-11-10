@@ -4,12 +4,16 @@ export const MAX_PAGE_SIZE = 100
 export type PaginationParams = { page?: number; pageSize?: number }
 export type PaginatedResult<T> = { items: T[]; page: number; pageSize: number; totalItems: number; totalPages: number }
 export type ProfileType = 'social' | 'rp' | 'business'
-export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType }
-export type CreateProfileInput = Omit<Profile, 'id' | 'url'> & { url?: string }
+export type Profile = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; createdAt: number; lastActivity: number }
+export type CreateProfileInput = Omit<Profile, 'id' | 'url' | 'createdAt' | 'lastActivity'> & { url?: string }
 export type CreateProfileResult = { profile: Profile; user: AuthenticatedUser }
 export type CommunityPrivacy = 'public' | 'private' | 'unlisted'
-export type Community = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; privacy: CommunityPrivacy }
-export type CreateCommunityInput = Omit<Community, 'id' | 'type' | 'url'> & { url?: string }
+export type Community = { id: string; name: string; url: string; picture: string; about: string; type: ProfileType; privacy: CommunityPrivacy; createdAt: number; lastActivity: number }
+export type CreateCommunityInput = Omit<Community, 'id' | 'type' | 'url' | 'createdAt' | 'lastActivity'> & { url?: string }
+export type SearchScope = 'all' | 'profiles' | 'communities'
+export type SearchResultItem =
+  | { kind: 'profile'; profile: Profile }
+  | { kind: 'community'; community: Community }
 export type RelationshipType = 'connection' | 'requested' | 'blocked'
 export type Relationship = { profiles: [string, string]; type: RelationshipType; requestedBy: string | null; blockedBy: string | null; updatedAt: number }
 export type CommunityRelationshipType = 'owner' | 'moderator' | 'connection' | 'requested' | 'blocked'
