@@ -154,7 +154,7 @@ test('recent activity includes posts from owned profiles and connected friends',
     ],
     communityRelationships: [],
     profilePosts: [
-      { id: 'own-post', profileId: 'owned-a', content: '<p>Own</p>', createdAt: 600 },
+      { id: 'own-post', profileId: 'owned-a', content: '<p>Own</p><script>alert(1)</script>', createdAt: 600 },
       { id: 'friend-post', profileId: 'friend-a', content: '<p>Friend</p>', createdAt: 500 },
       { id: 'stranger-post', profileId: 'stranger', content: '<p>Hidden</p>', createdAt: 900 }
     ]
@@ -165,5 +165,6 @@ test('recent activity includes posts from owned profiles and connected friends',
 
   assert.deepEqual(posts.map(item => item.id), ['post:own-post', 'post:friend-post'])
   assert.deepEqual(posts.map(item => item.updatedAt), [600, 500])
+  assert.equal(posts[0].content.includes('<script>'), false)
   assert.ok(!activity.some(item => item.id === 'post:stranger-post'))
 })

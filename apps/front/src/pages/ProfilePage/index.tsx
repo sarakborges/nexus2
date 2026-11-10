@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { IdentityAvatar, RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
+import { Button, ButtonLink, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useProfilePage } from './useProfilePage'
@@ -88,10 +88,7 @@ export function ProfilePage() {
               )}
             </header>
             {profile.about ? (
-              <div
-                className="social-panel__body rich-text-content"
-                dangerouslySetInnerHTML={{ __html: profile.about }}
-              />
+              <RichTextContent className="social-panel__body" html={profile.about} />
             ) : (
               <p className="social-panel__body">{t('PROFILE_ABOUT_EMPTY')}</p>
             )}
@@ -107,12 +104,13 @@ export function ProfilePage() {
                   ({profilePageQuery.data?.friends.totalItems ?? '—'})
                 </span>
               </h2>
-              <Link
+              <ButtonLink
+                variation="transparent"
                 className="social-preview-panel__all"
                 to={ROUTES.profile + '/' + profile.url + '/friends'}
               >
-                {t('PROFILE_FRIENDS_LINK')}
-              </Link>
+                {t('COMMON_VIEW_ALL')}
+              </ButtonLink>
             </header>
             <RequestState
               isLoading={profilePageQuery.isLoading}
@@ -150,12 +148,13 @@ export function ProfilePage() {
                   ({profilePageQuery.data?.communities.totalItems ?? '—'})
                 </span>
               </h2>
-              <Link
+              <ButtonLink
+                variation="transparent"
                 className="social-preview-panel__all"
                 to={ROUTES.profile + '/' + profile.url + '/communities'}
               >
-                {t('PROFILE_COMMUNITIES_LINK')}
-              </Link>
+                {t('COMMON_VIEW_ALL')}
+              </ButtonLink>
             </header>
             <RequestState
               isLoading={profilePageQuery.isLoading}

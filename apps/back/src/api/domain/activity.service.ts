@@ -13,6 +13,7 @@ import {
   type DataRepository
 } from '../../storage/repository.interface'
 import { DomainAccessService } from './domain-access.service'
+import { sanitizeRichText } from './rich-text-sanitizer'
 
 const COLLECTIONS = [
   'accounts',
@@ -125,7 +126,7 @@ export class ActivityService {
         type: 'profile_post',
         updatedAt: post.createdAt,
         profile,
-        content: post.content
+        content: sanitizeRichText(post.content ?? '')
       })
     }
 
