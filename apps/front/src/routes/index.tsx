@@ -60,6 +60,9 @@ const ProfileMessagesPage = lazy(() =>
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage }))
 )
+const SearchPage = lazy(() =>
+  import('@/pages/SearchPage').then(module => ({ default: module.SearchPage }))
+)
 const SignInPage = lazy(() =>
   import('@/pages/SignInPage').then(module => ({ default: module.SignInPage }))
 )
@@ -101,6 +104,7 @@ export function AppRoutes() {
             <Route path={ROUTES.home} element={<HomePage />} />
           </Route>
         </Route>
+        <Route path={ROUTES.search} element={<SearchPage />} />
         <Route path={ROUTES.communities} element={<CommunitiesPage />} />
         <Route
           path={`${ROUTES.community}/:url/forum/new`}

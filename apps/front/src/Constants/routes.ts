@@ -11,5 +11,6 @@ export const ROUTES = {
   communityForum: '/forum',
   communityForumCreate: '/forum/new',
   communities: '/communities',
+  search: '/search',
   notFound: '*'
 } as const
