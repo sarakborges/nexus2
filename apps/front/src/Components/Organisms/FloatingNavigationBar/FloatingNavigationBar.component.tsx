@@ -83,7 +83,6 @@ export function FloatingNavigationBar({
   const {
     isAuthenticated,
     navigationRef,
-    isRequestPending,
     activePanel,
     pathname,
     currentProfile,
@@ -152,7 +151,6 @@ export function FloatingNavigationBar({
           <button
             className="floating-navigation__account-trigger"
             type="button"
-            disabled={isRequestPending}
             aria-label={t('NAVIGATION_ACCOUNT_MENU')}
             aria-expanded={activePanel === 'account'}
             aria-controls="floating-account-menu"
@@ -199,7 +197,6 @@ export function FloatingNavigationBar({
           profilesError={profilesError}
           profilesSuccess={profilesSuccess}
           isProfileSwitcherOpen={isProfileSwitcherOpen}
-          isRequestPending={isRequestPending}
           isSelectionPending={isSelectionPending}
           isSelectionError={isSelectionError}
           isSigningOut={isSigningOut}

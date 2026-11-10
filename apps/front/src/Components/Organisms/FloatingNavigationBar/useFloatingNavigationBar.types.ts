@@ -15,7 +15,6 @@ export type OpenPanel = {
 export type UseFloatingNavigationBarResult = {
   isAuthenticated: boolean
   navigationRef: RefObject<HTMLDivElement | null>
-  isRequestPending: boolean
   activePanel: NavigationPanel | null
   pathname: string
   currentProfile: Profile | undefined
