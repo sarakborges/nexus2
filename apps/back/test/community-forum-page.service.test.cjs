@@ -76,7 +76,7 @@ test('forum page aggregate returns topics, reply counts and authors in one trans
 
   assert.equal(repository.transactionCalls, 1)
   assert.equal(result.community.id, 'community-1')
-  assert.equal(result.viewerRelationship.type, 'owner')
+  assert.equal(result.viewerRelationship.type, 'moderator')
   assert.equal(result.currentProfileType, 'social')
   assert.equal(result.canReadForum, true)
   assert.equal(result.canPublish, true)
