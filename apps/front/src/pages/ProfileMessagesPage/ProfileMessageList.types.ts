@@ -1,5 +1,6 @@
 import type { Profile } from '@nexus/common'
 import type { ProfileMessageViewModel } from './ProfileMessageItem.types'
+export type { ProfileMessageViewModel } from './ProfileMessageItem.types'
 
 export type ProfileMessageListProps = {
   items: ProfileMessageViewModel[]
