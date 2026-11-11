@@ -7,6 +7,7 @@ import { ROUTES } from '@/Constants/routes'
 import { IdentityAvatar } from '@/Components/Molecules'
 import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from './AccountMenu.component'
+import { NotificationsMenu } from './NotificationsMenu.component'
 import { FloatingNavigationSearch } from './FloatingNavigationSearch.component'
 import { FloatingNavigationLinks } from './FloatingNavigationLinks.component'
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
@@ -97,6 +98,11 @@ export function FloatingNavigationBar({
             key={`${location.pathname}:${location.search}`}
           />
           <span className="floating-navigation__spacer" />
+          <NotificationsMenu
+            isOpen={activePanel === 'notifications'}
+            onToggle={() => togglePanel('notifications')}
+            onClose={closePanels}
+          />
           <button
             className="floating-navigation__account-trigger"
             type="button"
@@ -105,7 +111,15 @@ export function FloatingNavigationBar({
             aria-controls="floating-account-menu"
             onClick={() => togglePanel('account')}
           >
-            <FiUser className="floating-navigation__account-icon" aria-hidden="true" />
+            {currentProfile ? (
+              <IdentityAvatar
+                className="floating-navigation__topbar-avatar"
+                name={currentProfile.name}
+                picture={currentProfile.picture}
+              />
+            ) : (
+              <FiUser className="floating-navigation__account-icon" aria-hidden="true" />
+            )}
             <span className="floating-navigation__account-label">
               <span>{accountName}</span>
             </span>

@@ -5,6 +5,7 @@ import {
   FiLogOut,
   FiPlusCircle,
   FiSettings,
+  FiSliders,
   FiUserPlus
 } from 'react-icons/fi'
 
@@ -77,6 +78,15 @@ export function AccountMenu({
         <>
           <Link
             className="floating-navigation__menu-item"
+            to={ROUTES.profile + '/' + currentProfile.url + '/settings'}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiSliders aria-hidden="true" />
+            <span>{t('PROFILE_SETTINGS_TITLE')}</span>
+          </Link>
+          <Link
+            className="floating-navigation__menu-item"
             to={ROUTES.createProfile}
             role="menuitem"
             onClick={onClose}
@@ -105,7 +115,7 @@ export function AccountMenu({
         onClick={onOpenSettings}
       >
         <FiSettings aria-hidden="true" />
-        <span>{t('SETTINGS_TITLE')}</span>
+        <span>{t('DISPLAY_SETTINGS_TITLE')}</span>
       </button>
       <button
         className="floating-navigation__menu-item floating-navigation__menu-item--danger"
