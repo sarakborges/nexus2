@@ -201,3 +201,30 @@ test('sign-up does not persist an account when initial refresh-token persistence
   assert.deepEqual(collections.get('refresh_tokens'), [])
 })
 
+
+
+test('sign-in uses the targeted account lookup instead of loading the accounts collection', async () => {
+  const { service, repository } = createAuthHarness()
+  await service.signUp({ email: 'targeted@example.com', password: 'a-secure-password' })
+
+  let fullAccountReads = 0
+  const originalRead = repository.read
+  repository.read = async name => {
+    if (name === 'accounts') fullAccountReads += 1
+    return originalRead(name)
+  }
+  const lookups = []
+  repository.findAccountByEmail = async email => {
+    lookups.push(email)
+    return (await originalRead('accounts')).find(account => account.email === email) ?? null
+  }
+
+  const result = await service.signIn({
+    email: ' TARGETED@example.com ',
+    password: 'a-secure-password'
+  })
+
+  assert.equal(result.user.email, 'targeted@example.com')
+  assert.deepEqual(lookups, ['targeted@example.com'])
+  assert.equal(fullAccountReads, 0)
+})

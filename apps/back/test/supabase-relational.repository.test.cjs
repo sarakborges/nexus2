@@ -166,3 +166,78 @@ test('reports PostgREST errors with the failing status', async t => {
   const repo = new SupabaseRelationalRepository(url, key, secret)
   await assert.rejects(() => repo.read('feed_activities'), /Supabase relational request failed \(403\)/)
 })
+
+
+test('readByIds queries only the requested relational profiles', async t => {
+  let call
+  withFetch(t, async input => {
+    call = new URL(String(input))
+    return new Response(JSON.stringify([{
+      id: 'profile-1',
+      name: 'Requested',
+      url: 'requested',
+      picture: '',
+      about: '',
+      type: 'social',
+      created_at_ms: '100',
+      last_activity_ms: '200'
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const result = await repo.readByIds('profiles', ['profile-1'])
+
+  assert.deepEqual(result, [{
+    id: 'profile-1',
+    name: 'Requested',
+    url: 'requested',
+    picture: '',
+    about: '',
+    type: 'social',
+    createdAt: 100,
+    lastActivity: 200
+  }])
+  assert.equal(call.pathname, '/rest/v1/profiles')
+  assert.equal(call.searchParams.get('id'), 'in.("profile-1")')
+})
+
+test('findAccountByEmail filters accounts in Postgres and maps only that account relation data', async t => {
+  const calls = []
+  withFetch(t, async input => {
+    const requestUrl = new URL(String(input))
+    calls.push(requestUrl)
+    if (requestUrl.pathname.endsWith('/accounts')) {
+      assert.equal(requestUrl.searchParams.get('email'), 'eq.person@example.com')
+      return new Response(JSON.stringify([{
+        id: 'account-1',
+        email: 'person@example.com',
+        password_hash: 'hash',
+        password_salt: 'salt',
+        current_profile_id: 'profile-1'
+      }]), { status: 200 })
+    }
+    if (requestUrl.pathname.endsWith('/account_profiles')) {
+      assert.equal(requestUrl.searchParams.get('account_id'), 'in.("account-1")')
+      return new Response(JSON.stringify([
+        { account_id: 'account-1', profile_id: 'profile-1', position: 0 }
+      ]), { status: 200 })
+    }
+    if (requestUrl.pathname.endsWith('/account_preferences')) {
+      assert.equal(requestUrl.searchParams.get('account_id'), 'in.("account-1")')
+      return new Response(JSON.stringify([]), { status: 200 })
+    }
+    throw new Error('Unexpected request: ' + requestUrl.pathname)
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const account = await repo.findAccountByEmail('person@example.com')
+
+  assert.deepEqual(account, {
+    id: 'account-1',
+    email: 'person@example.com',
+    password: { hash: 'hash', salt: 'salt' },
+    profiles: ['profile-1'],
+    currentProfile: 'profile-1'
+  })
+  assert.equal(calls.length, 3)
+})
