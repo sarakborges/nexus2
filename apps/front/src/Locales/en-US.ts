@@ -65,6 +65,8 @@ COMMON_VIEW_ALL: 'View all',
   HOME_SUGGESTED_COMMUNITIES_EMPTY:
     'There are no new communities to suggest right now.',
   HOME_ACTIVITY_TITLE: 'Recent activity',
+  HOME_ACTIVITY_LOAD_MORE: 'Load more',
+  HOME_ACTIVITY_CREATED_COMMUNITY: 'Created the community',
   HOME_ACTIVITY_DESCRIPTION:
     'The 10 latest updates from your friends, communities, and posts.',
   HOME_ACTIVITY_EMPTY:
