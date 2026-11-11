@@ -63,7 +63,8 @@ test('home page aggregate returns the active profile, previews and suggestions f
         'relationships',
         'community_relationships',
         'profile_posts',
-        'profile_settings'
+        'profile_settings',
+        'feed_activities'
       ])
       const outcome = updater(structuredClone(records))
       return outcome.result
