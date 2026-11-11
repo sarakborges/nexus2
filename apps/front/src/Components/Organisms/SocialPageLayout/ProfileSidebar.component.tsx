@@ -29,6 +29,7 @@ export function ProfileSidebar({
           />
         </Link>
         <h1 className="social-identity__name">{profile.name}</h1>
+        <span className="social-identity__url">@{profile.url}</span>
         {showRelationshipActions && (
           <RelationshipActions targetId={profile.id} relationship={relationship} />
         )}
