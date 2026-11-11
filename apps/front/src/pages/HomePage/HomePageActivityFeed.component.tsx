@@ -21,13 +21,6 @@ export function HomePageActivityFeed({
   const [loadMoreError, setLoadMoreError] = useState(false)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  useEffect(() => {
-    setLoadedActivities(activities)
-    setCursor(activityCursor)
-    setHasMore(hasMoreActivities)
-    setLoadMoreError(false)
-  }, [activities, activityCursor, hasMoreActivities])
-
   const loadMore = useCallback(async () => {
     if (!cursor || !hasMore || isLoadingMore) return
 

@@ -32,6 +32,7 @@ export function HomePage() {
         </header>
         <HomePagePostComposer currentProfile={currentProfile} />
         <HomePageActivityFeed
+          key={currentProfile.id + ':' + homeQuery.dataUpdatedAt}
           homeQuery={homeQuery}
           activities={home?.activities ?? []}
           activityCursor={home?.activityCursor ?? null}
