@@ -1,12 +1,5 @@
-import type { Profile, ProfileMessage } from '@nexus/common'
-
-export type ProfileMessageViewModel = {
-  message: ProfileMessage
-  sender: Profile | undefined
-  canDelete: boolean
-  canFavorite: boolean
-  canReply: boolean
-}
+import type { Profile } from '@nexus/common'
+import type { ProfileMessageViewModel } from './ProfileMessageItem.types'
 
 export type ProfileMessageListProps = {
   items: ProfileMessageViewModel[]
