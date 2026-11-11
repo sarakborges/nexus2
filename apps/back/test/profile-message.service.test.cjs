@@ -124,3 +124,70 @@ test('friends-only message setting allows another profile owned by the sender ac
   const message = await service.sendMessage('user-1', 'sender', 'recipient', '<p>Hello</p>')
   assert.equal(message.toProfileId, 'recipient')
 })
+
+
+test('profile message mutations use targeted relational writes without collection snapshots', async () => {
+  const calls = []
+  const created = {
+    id: 'message-1',
+    fromProfileId: 'sender',
+    toProfileId: 'recipient',
+    content: '<p>Hello</p>',
+    createdAt: 123,
+    isFavorite: false
+  }
+  const repository = {
+    async createProfileMessage(change) {
+      calls.push(['send', change])
+      return created
+    },
+    async deleteProfileMessage(change) {
+      calls.push(['delete', change])
+    },
+    async setProfileMessageFavorite(change) {
+      calls.push(['favorite', change])
+      return { ...created, isFavorite: change.isFavorite }
+    },
+    async transaction() {
+      throw new Error('Profile message mutations must not use collection snapshots.')
+    }
+  }
+  const uploads = { getEditorImageIds() { return ['image-1'] } }
+  const service = new ProfileMessageService(repository, {}, uploads)
+
+  const sent = await service.sendMessage('account-1', 'sender', 'recipient', '<p>Hello</p>')
+  await service.deleteMessage('account-1', 'recipient', 'message-1', 'sender')
+  const favorited = await service.setMessageFavorite(
+    'account-1', 'recipient', 'message-1', 'recipient', true
+  )
+
+  assert.equal(sent.id, 'message-1')
+  assert.equal(favorited.isFavorite, true)
+  assert.deepEqual(calls.map(call => call[0]), ['send', 'delete', 'favorite'])
+  assert.deepEqual(calls[0][1].imageIds, ['image-1'])
+  assert.equal(calls[0][1].userId, 'account-1')
+  assert.deepEqual(calls[1][1], {
+    userId: 'account-1',
+    recipientProfileId: 'recipient',
+    messageId: 'message-1',
+    actorProfileId: 'sender'
+  })
+  assert.equal(calls[2][1].isFavorite, true)
+})
+
+test('empty profile messages are rejected before the relational write', async () => {
+  let writeCalled = false
+  const repository = {
+    async createProfileMessage() {
+      writeCalled = true
+      throw new Error('Invalid messages must not reach the relational write.')
+    }
+  }
+  const service = new ProfileMessageService(repository, {})
+
+  await assert.rejects(
+    service.sendMessage('account-1', 'sender', 'recipient', '<p><br></p>'),
+    error => error.message === 'INVALID_MESSAGE'
+  )
+  assert.equal(writeCalled, false)
+})

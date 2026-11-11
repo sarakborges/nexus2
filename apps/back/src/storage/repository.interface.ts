@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -55,6 +55,27 @@ export type CommunityRelationshipChange = {
   updatedAt: number
 }
 
+export type ProfileMessageWrite = {
+  userId: string
+  message: ProfileMessage
+  imageIds: readonly string[]
+}
+
+export type ProfileMessageRemoval = {
+  userId: string
+  recipientProfileId: string
+  messageId: string
+  actorProfileId: string
+}
+
+export type ProfileMessageFavoriteChange = {
+  userId: string
+  recipientProfileId: string
+  messageId: string
+  actorProfileId: string
+  isFavorite: boolean
+}
+
 export type CollectionTransaction<T> = {
   records: CollectionRecordMap
   result: T
@@ -100,6 +121,9 @@ export interface DataRepository {
     profileId: string,
     patch: Partial<ProfileSettings>
   ): Promise<ProfileSettings>
+  createProfileMessage?(change: ProfileMessageWrite): Promise<ProfileMessage>
+  deleteProfileMessage?(change: ProfileMessageRemoval): Promise<void>
+  setProfileMessageFavorite?(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
   getActivityFeedRows?(
     userId: string,
     limit: number,

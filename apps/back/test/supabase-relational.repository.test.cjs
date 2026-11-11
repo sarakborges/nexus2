@@ -496,3 +496,110 @@ test('updates profile settings with a partial patch through the targeted RPC', a
   })
   assert.equal(settings.showFriendActivityTypes.length, 4)
 })
+
+
+test('sends profile messages through an atomic relational write RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'message-1',
+      from_profile_id: 'profile-1',
+      to_profile_id: 'profile-2',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000',
+      is_favorite: false
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const message = await repo.createProfileMessage({
+    userId: 'account-1',
+    message: {
+      id: 'message-1',
+      fromProfileId: 'profile-1',
+      toProfileId: 'profile-2',
+      content: '<p>Hello</p>',
+      createdAt: 1700000000000,
+      isFavorite: false
+    },
+    imageIds: ['image-1']
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_send_profile_message')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_message_id: 'message-1',
+    p_from_profile_id: 'profile-1',
+    p_to_profile_id: 'profile-2',
+    p_content: '<p>Hello</p>',
+    p_created_at_ms: 1700000000000,
+    p_image_ids: ['image-1']
+  })
+  assert.deepEqual(message, {
+    id: 'message-1',
+    fromProfileId: 'profile-1',
+    toProfileId: 'profile-2',
+    content: '<p>Hello</p>',
+    createdAt: 1700000000000,
+    isFavorite: false
+  })
+})
+
+test('deletes profile messages through a targeted relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.deleteProfileMessage({
+    userId: 'account-1',
+    recipientProfileId: 'profile-2',
+    messageId: 'message-1',
+    actorProfileId: 'profile-1'
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_delete_profile_message')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_recipient_profile_id: 'profile-2',
+    p_message_id: 'message-1',
+    p_actor_profile_id: 'profile-1'
+  })
+})
+
+test('updates a profile message favorite through a targeted relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'message-1',
+      from_profile_id: 'profile-1',
+      to_profile_id: 'profile-2',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000',
+      is_favorite: true
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const message = await repo.setProfileMessageFavorite({
+    userId: 'account-1',
+    recipientProfileId: 'profile-2',
+    messageId: 'message-1',
+    actorProfileId: 'profile-2',
+    isFavorite: true
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_set_profile_message_favorite')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_recipient_profile_id: 'profile-2',
+    p_message_id: 'message-1',
+    p_actor_profile_id: 'profile-2',
+    p_is_favorite: true
+  })
+  assert.equal(message.isFavorite, true)
+})

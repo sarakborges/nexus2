@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -7,6 +7,9 @@ import type {
   ProfileRelationshipRemoval,
   ProfileRelationshipWrite,
   CommunityRelationshipChange,
+  ProfileMessageWrite,
+  ProfileMessageRemoval,
+  ProfileMessageFavoriteChange,
   RefreshTokenRotation,
   RefreshTokenWrite
 } from './repository.interface'
@@ -315,6 +318,109 @@ export class SupabaseRelationalRepository implements DataRepository {
       messageAudience: row.message_audience,
       publishActivityTypes: row.publish_activity_types as ProfileSettings['publishActivityTypes'],
       showFriendActivityTypes: row.show_friend_activity_types as ProfileSettings['showFriendActivityTypes']
+    }
+  }
+
+  async createProfileMessage(change: ProfileMessageWrite): Promise<ProfileMessage> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_send_profile_message', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_message_id: change.message.id,
+        p_from_profile_id: change.message.fromProfileId,
+        p_to_profile_id: change.message.toProfileId,
+        p_content: change.message.content,
+        p_created_at_ms: change.message.createdAt,
+        p_image_ids: [...change.imageIds]
+      })
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase profile message write returned an invalid result.')
+    }
+    const row = rows[0] as Record<string, unknown>
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.from_profile_id !== 'string' ||
+      typeof row.to_profile_id !== 'string' ||
+      typeof row.content !== 'string' ||
+      !Number.isFinite(Number(row.created_at_ms)) ||
+      typeof row.is_favorite !== 'boolean'
+    ) {
+      throw new Error('Supabase profile message write returned an invalid row.')
+    }
+    return {
+      id: row.id,
+      fromProfileId: row.from_profile_id,
+      toProfileId: row.to_profile_id,
+      content: row.content,
+      createdAt: Number(row.created_at_ms),
+      isFavorite: row.is_favorite
+    }
+  }
+
+  async deleteProfileMessage(change: ProfileMessageRemoval): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile_message', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_recipient_profile_id: change.recipientProfileId,
+        p_message_id: change.messageId,
+        p_actor_profile_id: change.actorProfileId
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async setProfileMessageFavorite(change: ProfileMessageFavoriteChange): Promise<ProfileMessage> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_message_favorite', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_recipient_profile_id: change.recipientProfileId,
+        p_message_id: change.messageId,
+        p_actor_profile_id: change.actorProfileId,
+        p_is_favorite: change.isFavorite
+      })
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase profile message favorite returned an invalid result.')
+    }
+    const row = rows[0] as Record<string, unknown>
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.from_profile_id !== 'string' ||
+      typeof row.to_profile_id !== 'string' ||
+      typeof row.content !== 'string' ||
+      !Number.isFinite(Number(row.created_at_ms)) ||
+      typeof row.is_favorite !== 'boolean'
+    ) {
+      throw new Error('Supabase profile message favorite returned an invalid row.')
+    }
+    return {
+      id: row.id,
+      fromProfileId: row.from_profile_id,
+      toProfileId: row.to_profile_id,
+      content: row.content,
+      createdAt: Number(row.created_at_ms),
+      isFavorite: row.is_favorite
     }
   }
 
