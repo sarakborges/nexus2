@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { FiSearch } from 'react-icons/fi'
 import type { SearchScope } from '@nexus/common'
@@ -20,6 +20,18 @@ export function FloatingNavigationSearch() {
     const scope = new URLSearchParams(location.search).get('scope')
     return scope === 'profiles' || scope === 'communities' ? scope : 'all'
   })
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const scope = params.get('scope')
+
+    setSearchText(location.pathname === ROUTES.search ? params.get('query') ?? '' : '')
+    setSearchScope(
+      location.pathname === ROUTES.search && (scope === 'profiles' || scope === 'communities')
+        ? scope
+        : 'all'
+    )
+  }, [location.pathname, location.search])
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
