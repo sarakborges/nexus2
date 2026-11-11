@@ -50,6 +50,20 @@ export function ProfileMessageItem({
             <FiStar aria-hidden="true" />
           </span>
         )}
+        <div className="profile-message__header-actions">
+          {item.canFavorite && (
+            <Button type="button" variation="transparent" className="profile-message__action" disabled={isActionPending} aria-pressed={Boolean(message.isFavorite)} onClick={() => onFavorite(item)}>
+              <FiStar aria-hidden="true" />
+              <span>{t(message.isFavorite ? 'PROFILE_MESSAGE_UNFAVORITE' : 'PROFILE_MESSAGE_FAVORITE')}</span>
+            </Button>
+          )}
+          {item.canDelete && (
+            <Button type="button" variation="transparent" className="profile-message__action profile-message__action--danger" disabled={isActionPending} onClick={() => onDelete(item)}>
+              <FiTrash2 aria-hidden="true" />
+              <span>{t('PROFILE_MESSAGE_DELETE')}</span>
+            </Button>
+          )}
+        </div>
       </header>
       <RichTextContent
         className="profile-message__content"
@@ -66,37 +80,6 @@ export function ProfileMessageItem({
           >
             <FiCornerUpLeft aria-hidden="true" />
             <span>{t('PROFILE_MESSAGE_REPLY')}</span>
-          </Button>
-        )}
-        {item.canFavorite && (
-          <Button
-            type="button"
-            variation="transparent"
-            className="profile-message__action"
-            disabled={isActionPending}
-            aria-pressed={Boolean(message.isFavorite)}
-            onClick={() => onFavorite(item)}
-          >
-            <FiStar aria-hidden="true" />
-            <span>
-              {t(
-                message.isFavorite
-                  ? 'PROFILE_MESSAGE_UNFAVORITE'
-                  : 'PROFILE_MESSAGE_FAVORITE'
-              )}
-            </span>
-          </Button>
-        )}
-        {item.canDelete && (
-          <Button
-            type="button"
-            variation="transparent"
-            className="profile-message__action profile-message__action--danger"
-            disabled={isActionPending}
-            onClick={() => onDelete(item)}
-          >
-            <FiTrash2 aria-hidden="true" />
-            <span>{t('PROFILE_MESSAGE_DELETE')}</span>
           </Button>
         )}
       </footer>
