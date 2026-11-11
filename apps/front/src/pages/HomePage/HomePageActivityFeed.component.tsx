@@ -53,7 +53,7 @@ export function HomePageActivityFeed({
 
   useEffect(() => {
     const sentinel = sentinelRef.current
-    if (!sentinel || !hasMore || !cursor) return
+    if (!sentinel || !hasMore || !cursor || loadMoreError) return
 
     const observer = new IntersectionObserver((entries) => {
       if (entries.some((entry) => entry.isIntersecting)) {
@@ -63,7 +63,7 @@ export function HomePageActivityFeed({
 
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [cursor, hasMore, loadMore])
+  }, [cursor, hasMore, loadMore, loadMoreError])
 
   return (
     <section className="home-page__activity" aria-labelledby="home-activity-title">
@@ -91,15 +91,6 @@ export function HomePageActivityFeed({
             >
               {t('HOME_ACTIVITY_LOAD_MORE')}
             </Button>
-            {loadMoreError && (
-              <Button
-                type="button"
-                variation="secondary"
-                onClick={() => void loadMore()}
-              >
-                {t('HOME_ACTIVITY_LOAD_MORE')}
-              </Button>
-            )}
           </div>
         )}
       </RequestState>
