@@ -78,7 +78,6 @@ export function ProfileFriendsPage() {
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}
           isError={profileDirectoryQuery.isError}
-          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           onRetry={() => void profileDirectoryQuery.refetch()}
         >
           {totalItems === 0 ? (
