@@ -40,12 +40,7 @@ export class HomePageService {
       HOME_PAGE_COLLECTIONS,
       (collections) => {
         const normalized = this.access.normalizeCommunitiesInRecords(collections)
-        const activity = this.activity.getRecentActivityFromNormalizedRecords(
-          userId,
-          normalized.records,
-          normalized.communities
-        )
-        const records = activity.records
+        const records = normalized.records
         const account = (records.accounts as AccountRecord[]).find(
           (item) => item.id === userId
         )!
