@@ -24,3 +24,16 @@
   object-fit: cover;
   object-position: center;
 }
+
+.identity-avatar__initial {
+  height: auto;
+  max-height: inherit;
+  aspect-ratio: 1 / 2;
+}
+
+.identity-avatar__image {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+  object-position: center;
+}

@@ -2,7 +2,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type { Community, CommunitiesPageData, Profile } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
-import type { PaginationDto } from '../pagination/pagination.dto'
+import type { CommunitiesPageDto } from './domain.dto'
 import { paginate } from '../pagination/pagination.helper'
 import { filterAndSortList } from '../pagination/list-query.helper'
 import { DomainAccessService } from './domain-access.service'
@@ -24,7 +24,7 @@ export class CommunitiesPageService {
 
   getCommunitiesPage(
     userId: string,
-    query: PaginationDto
+    query: CommunitiesPageDto
   ): Promise<CommunitiesPageData> {
     return this.data.transaction<CommunitiesPageData>(
       COMMUNITIES_PAGE_COLLECTIONS,
@@ -53,8 +53,16 @@ export class CommunitiesPageService {
               about: sanitizeRichText(currentProfileRecord.about ?? '')
             }
           : null
+        const communityTab = query.communityTab === 'managed' ? 'managed' : 'all'
+        const ownedProfileIds = new Set(account.profiles)
+        const managedCommunityIds = new Set((records.community_relationships as import('@nexus/common').CommunityRelationship[])
+          .filter(relationship => ownedProfileIds.has(relationship.profiles[0]) && (relationship.type === 'owner' || relationship.type === 'moderator'))
+          .map(relationship => relationship.profiles[1]))
+        const visibleCommunities = communityTab === 'managed'
+          ? normalized.communities.filter(community => managedCommunityIds.has(community.id))
+          : normalized.communities.filter(community => community.privacy === 'public')
         const communities = filterAndSortList(
-          normalized.communities.filter((community: Community) => community.privacy === 'public'), query.query, query.sort,
+          visibleCommunities, query.query, query.sort,
           community => [community.name,community.about,community.url].join(' '),
           community => community.lastActivity || community.createdAt, community => community.name, community => community.id
         )
@@ -63,6 +71,7 @@ export class CommunitiesPageService {
           records,
           result: {
             currentProfile,
+            communityTab,
             communities: paginate(communities, query)
           }
         }

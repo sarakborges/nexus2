@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
+import { Button, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPageAboutPreviewProps } from './CommunityPageAboutPreview.types'
 
@@ -43,10 +43,7 @@ export function CommunityPageAboutPreview({
           {t('COMMUNITY_PRIVATE_RESTRICTED')}
         </p>
       ) : community.about ? (
-        <div
-          className="social-panel__body rich-text-content"
-          dangerouslySetInnerHTML={{ __html: community.about }}
-        />
+        <RichTextContent className="social-panel__body" html={community.about} />
       ) : (
         <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>
       )}

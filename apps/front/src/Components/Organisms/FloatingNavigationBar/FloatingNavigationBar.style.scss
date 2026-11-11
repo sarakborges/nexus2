@@ -4,13 +4,14 @@
   &__content { display:flex; align-items:center; gap:18px; box-sizing:border-box; width:100%; min-height:64px; padding:6px 12px; }
   &__icon-button,&__account-trigger { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:transparent; color:var(--text-color); cursor:pointer; transition:background-color 150ms ease; }
   &__icon-button { position:relative; width:40px; height:40px; flex:0 0 40px; font-size:18px; }
-  &__icon-button::after { content:""; position:absolute; top:50%; right:-10px; width:2px; height:26px; transform:translateY(-50%); background:var(--color-border); }
+  &__icon-button::after { content:none; }
   &__icon-button svg { display:block; width:18px; height:18px; flex:0 0 18px; }
-  &__brand { display:inline-flex; align-items:center; gap:8px; flex:0 0 auto; color:var(--text-color); font-size:18px; font-weight:var(--font-weight-bold); letter-spacing:.14em; text-decoration:none; white-space:nowrap; }
+  &__brand { display:inline-flex; align-items:center; gap:8px; margin-left:0; flex:0 0 auto; color:var(--text-color); font-size:18px; font-weight:var(--font-weight-bold); letter-spacing:.14em; text-decoration:none; white-space:nowrap; }
   &__brand img { display:block; width:28px; height:28px; flex:0 0 28px; object-fit:contain; }
   &__brand span { display:block; }
   &__spacer { flex:1; }
-  &__account-trigger { max-width:240px; gap:10px; padding:8px; text-align:left; }
+  &__account-trigger { max-width:240px; min-height:40px; gap:8px; padding:8px; text-align:left; }
+  &__account-icon { display:none; width:20px; height:20px; flex:0 0 20px; }
   &__icon-button:hover,&__account-trigger:hover { background:var(--color-background); }
   &__icon-button:focus-visible,&__sidebar-link:focus-visible,&__account-trigger:focus-visible,&__menu-item:focus-visible { outline:2px solid var(--color-primary-strong); outline-offset:2px; }
   &__sidebar { position:fixed; z-index:119; top:64px; left:0; bottom:0; display:flex; flex-direction:column; gap:14px; box-sizing:border-box; width:248px; overflow-x:hidden; overflow-y:auto; padding:16px 12px 24px; border-right:1px solid var(--color-border); background:transparent; border:0; box-shadow:none; transition:width 160ms ease; }
@@ -29,8 +30,7 @@
   &__search-form:focus-within { border-color:var(--color-primary-strong); box-shadow:0 0 0 1px var(--color-primary-strong); }
   &__collapsed-search { display:grid; place-items:center; width:100%; min-height:46px; color:var(--text-color); }
   &__collapsed-search svg { width:19px; height:19px; }
-  &__avatar { display:grid; place-items:center; width:36px; height:36px; flex:0 0 36px; overflow:hidden; border:2px solid var(--color-border); background:var(--avatar-background); color:var(--avatar-fallback-color); font-size:15px; font-weight:var(--font-weight-bold); }
-  &__avatar img,&__profile-avatar img { width:100%; height:100%; object-fit:cover; }
+  &__profile-avatar img { width:100%; height:100%; object-fit:cover; }
   &__account-label { display:grid; min-width:0; gap:3px; }
   &__account-label > span,&__menu-heading > span { overflow:hidden; color:var(--text-color); font-size:13px; font-weight:var(--font-weight-bold); text-overflow:ellipsis; white-space:nowrap; }
   &__account-chevron { flex:0 0 auto; color:var(--color-neutral); font-size:16px; }
@@ -205,6 +205,7 @@ html.has-global-navigation .social-page,html.has-global-navigation .account-page
   .floating-navigation.is-collapsed .floating-navigation__sidebar { width:64px; }
   .floating-navigation__account-trigger { gap:0; padding:4px; }
   .floating-navigation__account-label,.floating-navigation__account-chevron { display:none; }
+  .floating-navigation__account-icon { display:block; }
 }
 
 /* The search stays beside the wordmark regardless of sidebar state. */
@@ -213,7 +214,7 @@ html.has-global-navigation .social-page,html.has-global-navigation .account-page
   width: min(100%, 420px);
   max-width: 420px;
   min-width: 180px;
-  margin-left: 4px;
+  margin-left: 0;
 }
 .floating-navigation__search-form select {
   appearance: auto;
@@ -252,3 +253,74 @@ html.has-global-navigation .auth-page {
   .floating-navigation__search-form input { padding-inline: 6px; font-size: 11px; }
   .floating-navigation__search-form button { flex-basis: 32px; width: 32px; }
 }
+
+/* All icon-only controls share a square hit area and a 20px glyph. */
+.floating-navigation__icon-button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--nexus-icon-button-size, 40px);
+  height: var(--nexus-icon-button-size, 40px);
+  min-height: var(--nexus-icon-button-size, 40px);
+  flex: 0 0 var(--nexus-icon-button-size, 40px);
+  aspect-ratio: 1;
+  padding: 0;
+}
+
+.floating-navigation__icon-button svg,
+.floating-navigation__search-form button svg,
+.floating-navigation__sidebar-link svg,
+.floating-navigation__menu-item svg,
+.floating-navigation__profile-option > svg,
+.floating-navigation__collapsed-search svg {
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__icon-button svg,
+.floating-navigation__sidebar-link svg,
+.floating-navigation__menu-item svg,
+.floating-navigation__profile-option > svg {
+  flex: 0 0 var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__search-form {
+  box-sizing: border-box;
+  height: 44px;
+}
+
+.floating-navigation__search-form button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+}
+
+.floating-navigation__account-chevron {
+  font-size: var(--nexus-icon-size, 20px);
+}
+
+.floating-navigation__profile-avatar {
+  height: auto;
+  max-height: 56px;
+}
+
+.floating-navigation__profile-avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+.floating-navigation__profile-toggle > svg,
+.floating-navigation__profile-chevron,
+.floating-navigation__account-chevron {
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
+  flex: 0 0 var(--nexus-icon-size, 20px);
+}
+
+/* Keep the wordmark directly beside the menu; separate the search from the brand. */
+.floating-navigation__search-form { margin-left: 4px; }

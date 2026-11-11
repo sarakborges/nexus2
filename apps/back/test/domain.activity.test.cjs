@@ -10,7 +10,7 @@ function community(id) {
   return { id, name: id, url: id, picture: '', about: '', type: 'social' }
 }
 
-function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, beforeTransaction }) {
+function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, profilePosts = [], beforeTransaction }) {
   const collections = new Map([
     ['accounts', [{
       id: 'user',
@@ -21,7 +21,8 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
     ['profiles', profiles],
     ['communities', communities],
     ['relationships', relationships],
-    ['community_relationships', communityRelationships]
+    ['community_relationships', communityRelationships],
+    ['profile_posts', profilePosts]
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
@@ -141,4 +142,29 @@ test('recent activity does not include relationships after profile ownership is 
   })
 
   assert.deepEqual(await service.getRecentActivity('user'), [])
+})
+
+test('recent activity includes posts from owned profiles and connected friends', async () => {
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: ['owned-a', 'friend-a', 'stranger'].map(profile),
+    communities: [],
+    relationships: [
+      { profiles: ['owned-a', 'friend-a'], type: 'connection', updatedAt: 100 }
+    ],
+    communityRelationships: [],
+    profilePosts: [
+      { id: 'own-post', profileId: 'owned-a', content: '<p>Own</p><script>alert(1)</script>', createdAt: 600 },
+      { id: 'friend-post', profileId: 'friend-a', content: '<p>Friend</p>', createdAt: 500 },
+      { id: 'stranger-post', profileId: 'stranger', content: '<p>Hidden</p>', createdAt: 900 }
+    ]
+  })
+
+  const activity = await service.getRecentActivity('user')
+  const posts = activity.filter(item => item.type === 'profile_post')
+
+  assert.deepEqual(posts.map(item => item.id), ['post:own-post', 'post:friend-post'])
+  assert.deepEqual(posts.map(item => item.updatedAt), [600, 500])
+  assert.equal(posts[0].content.includes('<script>'), false)
+  assert.ok(!activity.some(item => item.id === 'post:stranger-post'))
 })

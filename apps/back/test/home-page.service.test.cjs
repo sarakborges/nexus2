@@ -33,6 +33,7 @@ test('home page aggregate returns the active profile, previews and suggestions f
       blockedBy: null,
       updatedAt: 100
     }],
+    profile_posts: [],
     community_relationships: [
       {
         profiles: ['profile-1', 'community-1'],
@@ -60,7 +61,8 @@ test('home page aggregate returns the active profile, previews and suggestions f
         'profiles',
         'communities',
         'relationships',
-        'community_relationships'
+        'community_relationships',
+        'profile_posts'
       ])
       const outcome = updater(structuredClone(records))
       return outcome.result

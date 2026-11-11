@@ -246,3 +246,23 @@
   outline: 2px solid var(--color-primary-strong);
   outline-offset: 2px;
 }
+
+/* Search result avatars use a fixed width and cap portrait images at 1:2. */
+.search-result__avatar {
+  height: auto;
+  max-height: 108px;
+  aspect-ratio: auto;
+}
+
+.search-result__avatar img {
+  height: auto;
+  max-height: inherit;
+  object-fit: cover;
+}
+
+@media (max-width: 680px) {
+  .search-result__avatar {
+    height: auto;
+    max-height: 88px;
+  }
+}

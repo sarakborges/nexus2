@@ -10,7 +10,6 @@ export function ProfileSidebar({
   profile,
   active,
   showRelationshipActions = true,
-  portraitPicture = false,
   relationship
 }: ProfileSidebarProps) {
   const { t } = useTranslations()
@@ -24,7 +23,7 @@ export function ProfileSidebar({
           aria-label={t('PROFILE_PICTURE_ALT', { name: profile.name })}
         >
           <IdentityAvatar
-            className={['social-identity__picture', 'social-identity__picture--profile', portraitPicture ? 'social-identity__picture--profile-portrait' : ''].filter(Boolean).join(' ')}
+            className="social-identity__picture social-identity__picture--profile"
             name={profile.name}
             picture={profile.picture}
           />

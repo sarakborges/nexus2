@@ -9,6 +9,10 @@ const {
   CreateCommunityDto,
   UpdateCommunityDto,
   MessageDto,
+  ProfileMessagesPageDto,
+  CommunitiesPageDto,
+  ProfileMessageFavoriteDto,
+  ProfilePostDto,
   CreateForumTopicDto,
   CreateForumReplyDto
 } = require('../dist/api/domain/domain.dto.js')
@@ -69,3 +73,25 @@ for (const [label, Dto, makePayload, property] of cases) {
     assert.equal(hasLengthError(Dto, makePayload('x'.repeat(8001)), property), true)
   })
 }
+
+test('profile message page tabs accept all and favorites only', () => {
+  assert.equal(validateSync(Object.assign(new ProfileMessagesPageDto(), { messageTab: 'favorites' })).length, 0)
+  assert.equal(validateSync(Object.assign(new ProfileMessagesPageDto(), { messageTab: 'all' })).length, 0)
+  assert.ok(validateSync(Object.assign(new ProfileMessagesPageDto(), { messageTab: 'other' })).length > 0)
+})
+
+test('community page tabs accept all and managed only', () => {
+  assert.equal(validateSync(Object.assign(new CommunitiesPageDto(), { communityTab: 'managed' })).length, 0)
+  assert.equal(validateSync(Object.assign(new CommunitiesPageDto(), { communityTab: 'all' })).length, 0)
+  assert.ok(validateSync(Object.assign(new CommunitiesPageDto(), { communityTab: 'unknown' })).length > 0)
+})
+
+test('message favorite requires a boolean state', () => {
+  assert.equal(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: 'profile-1', isFavorite: true })).length, 0)
+  assert.ok(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: 'profile-1', isFavorite: 'yes' })).length > 0)
+})
+
+test('profile posts accept 8000 characters and reject 8001', () => {
+  assert.equal(hasLengthError(ProfilePostDto, { content: 'x'.repeat(8000) }, 'content'), false)
+  assert.equal(hasLengthError(ProfilePostDto, { content: 'x'.repeat(8001) }, 'content'), true)
+})

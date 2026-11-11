@@ -6,35 +6,38 @@
   --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
-  --nexus-accent-glow: rgb(255 87 51 / 22%);
+  --nexus-accent-glow: rgb(103 90 218 / 22%);
+  --nexus-accent-highlight: #ff00ff;
+  --nexus-icon-button-size: 40px;
+  --nexus-icon-size: 20px;
   --avatar-shape-radius: 0;
 }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --color-background: #151515;
-  --color-surface: #212121;
-  --color-surface-raised: #2e2e2e;
-  --color-neutral-weak: #242424;
-  --color-neutral: #aaa4a0;
-  --color-neutral-strong: #f6f3f1;
-  --text-color: #f8f7f6;
-  --color-border: rgb(255 255 255 / 24%);
+  --color-background: #0b0b0f;
+  --color-surface: #1d1b25;
+  --color-surface-raised: #282431;
+  --color-neutral-weak: #0a090d;
+  --color-neutral: #b3adc2;
+  --color-neutral-strong: #f0f0f5;
+  --text-color: #f0f0f5;
+  --color-border: rgb(140 128 168 / 62%);
 
-  --color-primary-strong: #e94c2b;
-  --color-primary: #ff7957;
-  --color-primary-weak: #ffad98;
-  --color-secondary-strong: #087ea6;
-  --color-secondary: #33c1ff;
-  --color-secondary-weak: #83ddff;
+  --color-primary-strong: #675ada;
+  --color-primary: #8080ff;
+  --color-primary-weak: #a7a7f9;
+  --color-secondary-strong: #5720be;
+  --color-secondary: #6228c6;
+  --color-secondary-weak: #a7a7f9;
 
   --color-success: #8ed27b;
   --color-success-weak: rgb(142 210 123 / 18%);
   --color-success-strong: #8ed27b;
-  --color-warning: #ffc300;
-  --color-warning-weak: rgb(255 195 0 / 16%);
-  --color-warning-strong: #ffc300;
+  --color-warning: #e3c86d;
+  --color-warning-weak: rgb(227 200 109 / 16%);
+  --color-warning-strong: #e3c86d;
   --color-error: #c73333;
   --color-error-weak: rgb(199 51 51 / 20%);
   --color-error-strong: #c73333;
@@ -43,13 +46,13 @@
 }
 
 :root[data-theme='light'] {
-  --color-primary-strong: #a93218;
-  --color-primary: #ff5733;
-  --color-primary-weak: #d94a2a;
-  --color-secondary-strong: #075a7c;
-  --color-secondary: #159edb;
-  --color-secondary-weak: #087cae;
-  --color-border: rgb(125 98 82 / 40%);
+  --color-primary-strong: #5720be;
+  --color-primary: #675ada;
+  --color-primary-weak: #5720be;
+  --color-secondary-strong: #0000ff;
+  --color-secondary: #6228c6;
+  --color-secondary-weak: #675ada;
+  --color-border: rgb(99 72 134 / 44%);
 
   --nexus-card-shadow: 0 5px 14px rgb(19 13 31 / 8%);
 }

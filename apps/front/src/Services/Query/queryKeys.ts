@@ -8,8 +8,9 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     query: string,
-    sort: string
-  ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort] as const,
+    sort: string,
+    communityTab: 'all' | 'managed'
+  ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort, communityTab] as const,
   profilePage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
     ['profile-page', url, viewerUserId, currentProfileId] as const,
   profileMessagesPage: (
@@ -19,8 +20,9 @@ export const queryKeys = {
     viewerUserId: string | null,
     currentProfileId: string | null,
     query: string,
-    sort: string
-  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
+    sort: string,
+    messageTab: 'all' | 'favorites'
+  ) => ['profile-messages-page', url, page, pageSize, viewerUserId, currentProfileId, query, sort, messageTab] as const,
   profileDirectoryPage: (
     url: string,
     kind: 'friends' | 'communities',

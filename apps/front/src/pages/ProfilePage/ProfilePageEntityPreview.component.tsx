@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { IdentityAvatar, RequestState } from '@/Components'
+import { ButtonLink } from '@/DesignSystem'
 import type { ProfilePageEntityPreviewProps } from './ProfilePageEntityPreview.types'
 
 export function ProfilePageEntityPreview({
@@ -25,9 +26,13 @@ export function ProfilePageEntityPreview({
             ({totalItems ?? '—'})
           </span>
         </h2>
-        <Link className="social-preview-panel__all" to={allHref}>
+        <ButtonLink
+          variation="transparent"
+          className="social-preview-panel__all"
+          to={allHref}
+        >
           {allLabel}
-        </Link>
+        </ButtonLink>
       </header>
       <RequestState
         isLoading={isLoading}

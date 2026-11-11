@@ -17,7 +17,9 @@ export function ProfileMessageComposer({
   hasSendMessageError,
   isInvalidMessageError,
   onUploadImage,
-  onSubmit
+  onSubmit,
+  replyToName,
+  onCancelReply
 }: ProfileMessageComposerProps) {
   const { t } = useTranslations()
 
@@ -40,6 +42,14 @@ export function ProfileMessageComposer({
 
   return (
     <form className="profile-message-form" onSubmit={onSubmit}>
+      {replyToName && (
+        <div className="profile-message-form__reply-context">
+          <span>{t('PROFILE_MESSAGE_REPLYING_TO', { name: replyToName })}</span>
+          <Button type="button" variation="transparent" onClick={onCancelReply}>
+            {t('PROFILE_MESSAGE_CANCEL_REPLY')}
+          </Button>
+        </div>
+      )}
       <div className="form-field">
         <Label
           id="profile-message-content-label"

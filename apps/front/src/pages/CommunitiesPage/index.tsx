@@ -1,12 +1,12 @@
 import { Pagination, RequestState } from '@/Components'
+import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
-import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { ROUTES } from '@/Constants/routes'
-import { ButtonLink } from '@/DesignSystem'
+import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunitiesPage } from './useCommunitiesPage'
 
@@ -25,6 +25,8 @@ export function CommunitiesPage() {
     sort,
     setQuery,
     setSort,
+    communityTab,
+    handleCommunityTabChange,
     communities,
     totalItems
   } = useCommunitiesPage()
@@ -63,6 +65,10 @@ export function CommunitiesPage() {
             {t('COMMUNITIES_CREATE')}
           </ButtonLink>
         </header>
+        <Tabs ariaLabel={t('COMMUNITIES_TABS_LABEL')} value={communityTab} onChange={handleCommunityTabChange} options={[
+          { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
+          { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
+        ]} />
         <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState
           isLoading={communitiesPageQuery.isLoading}

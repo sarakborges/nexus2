@@ -1,9 +1,8 @@
 import { Pagination, RequestState } from '@/Components'
+import { Tabs } from '@/DesignSystem'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
-import { useHomePage } from '@/pages/HomePage/useHomePage'
-import { HomePageSuggestedCommunitiesPreview } from '@/pages/HomePage/HomePageSuggestedCommunitiesPreview.component'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfileMessageComposer } from './ProfileMessageComposer.component'
 import { ProfileMessageList } from './ProfileMessageList.component'
@@ -13,7 +12,6 @@ import '../AuthenticatedPage.style.scss'
 
 export function ProfileMessagesPage() {
   const { t } = useTranslations()
-  const { homeQuery } = useHomePage()
   const {
     requestedUrl,
     session,
@@ -27,6 +25,10 @@ export function ProfileMessagesPage() {
     setSort,
     content,
     setContent,
+    replyTo,
+    handleCancelReply,
+    messageTab,
+    handleMessageTabChange,
     profileMessagesPageQuery,
     profile,
     viewerRelationship,
@@ -34,6 +36,10 @@ export function ProfileMessagesPage() {
     isProfileOwner,
     totalItems,
     messageItems,
+    handleDeleteMessage,
+    handleFavoriteMessage,
+    handleReplyMessage,
+    isMessageActionPending,
     canSendMessage,
     canSubmitMessage,
     uploadEditorImage,
@@ -67,10 +73,10 @@ export function ProfileMessagesPage() {
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} portraitPicture />}
-      rightSidebar={<HomePageSuggestedCommunitiesPreview homeQuery={homeQuery} />}
+      sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
+        <RequestState isFetching={profileMessagesPageQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
@@ -90,7 +96,6 @@ export function ProfileMessagesPage() {
             </p>
           </div>
         </header>
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <ProfileMessageComposer
           hasSession={Boolean(session)}
           isProfileOwner={isProfileOwner}
@@ -103,7 +108,16 @@ export function ProfileMessagesPage() {
           isInvalidMessageError={isInvalidMessageError}
           onUploadImage={uploadEditorImage}
           onSubmit={handleSubmit}
+          replyToName={replyTo?.name}
+          onCancelReply={handleCancelReply}
         />
+        {isProfileOwner && (
+          <Tabs ariaLabel={t('PROFILE_MESSAGES_TABS_LABEL')} value={messageTab} onChange={handleMessageTabChange} options={[
+            { value: 'all', label: t('PROFILE_MESSAGES_TAB_ALL') },
+            { value: 'favorites', label: t('PROFILE_MESSAGES_TAB_FAVORITES') }
+          ]} />
+        )}
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState
           isLoading={profileMessagesPageQuery.isLoading}
           isFetching={profileMessagesPageQuery.isFetching}
@@ -115,7 +129,7 @@ export function ProfileMessagesPage() {
           emptyMessage={t('PROFILE_MESSAGES_EMPTY')}
           onRetry={() => void profileMessagesPageQuery.refetch()}
         >
-          <ProfileMessageList items={messageItems} />
+          <ProfileMessageList items={messageItems} isActionPending={isMessageActionPending} onDelete={handleDeleteMessage} onFavorite={handleFavoriteMessage} onReply={handleReplyMessage} />
         </RequestState>
         <Pagination
           page={page}

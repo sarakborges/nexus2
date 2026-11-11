@@ -2,6 +2,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type {
   Community,
   CommunityRelationship,
+  ProfilePost,
   RecentActivity,
   Relationship
 } from '@nexus/common'
@@ -12,13 +13,15 @@ import {
   type DataRepository
 } from '../../storage/repository.interface'
 import { DomainAccessService } from './domain-access.service'
+import { sanitizeRichText } from './rich-text-sanitizer'
 
 const COLLECTIONS = [
   'accounts',
   'profiles',
   'communities',
   'relationships',
-  'community_relationships'
+  'community_relationships',
+  'profile_posts'
 ] as const
 
 @Injectable()
@@ -58,6 +61,7 @@ export class ActivityService {
     const relationships = records.relationships as Relationship[]
     const communityRelationships =
       records.community_relationships as CommunityRelationship[]
+    const profilePosts = (records.profile_posts as ProfilePost[] | undefined) ?? []
     const profilesById = new Map(
       profiles.map((profile) => [profile.id, profile] as const)
     )
@@ -65,6 +69,7 @@ export class ActivityService {
       communities.map((community) => [community.id, community] as const)
     )
     const activities: RecentActivity[] = []
+    const visibleProfileIds = new Set(ownedProfileIds)
 
     for (const relationship of relationships) {
       if (relationship.type !== 'connection') continue
@@ -79,6 +84,7 @@ export class ActivityService {
       )
       const friend = friendId ? profilesById.get(friendId) : undefined
       if (!profile || !friend || profile.type !== friend.type) continue
+      visibleProfileIds.add(friend.id)
 
       activities.push({
         id: 'friend:' + relationship.profiles[0] + ':' + relationship.profiles[1],
@@ -108,6 +114,19 @@ export class ActivityService {
         profile,
         community,
         role: relationship.type
+      })
+    }
+
+    for (const post of profilePosts) {
+      if (!visibleProfileIds.has(post.profileId)) continue
+      const profile = profilesById.get(post.profileId)
+      if (!profile) continue
+      activities.push({
+        id: 'post:' + post.id,
+        type: 'profile_post',
+        updatedAt: post.createdAt,
+        profile,
+        content: sanitizeRichText(post.content ?? '')
       })
     }
 

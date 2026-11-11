@@ -65,3 +65,18 @@
     }
   }
 }
+
+/* Modal close is an icon-only control and follows the shared 40px square size. */
+.modal__close {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--nexus-icon-button-size, 40px);
+  height: var(--nexus-icon-button-size, 40px);
+  padding: 0;
+
+  svg {
+    width: var(--nexus-icon-size, 20px);
+    height: var(--nexus-icon-size, 20px);
+  }
+}

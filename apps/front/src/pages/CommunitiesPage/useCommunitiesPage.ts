@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -13,6 +13,7 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
+  const [requestedCommunityTab, setRequestedCommunityTab] = useState<'all' | 'managed'>('all')
 
   const communitiesPageQuery = useQuery({
     queryKey: queryKeys.communitiesPage(
@@ -21,9 +22,10 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
       page,
       pageSize,
       query,
-      sort
+      sort,
+      requestedCommunityTab
     ),
-    queryFn: () => getCommunitiesPage({ page, pageSize, query, sort }),
+    queryFn: () => getCommunitiesPage({ page, pageSize, query, sort, communityTab: requestedCommunityTab }),
     enabled: Boolean(isAuthInitialized && userId),
     staleTime: 30 * 1000
   })
@@ -31,6 +33,11 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const currentProfile = pageData?.currentProfile ?? null
   const communities = pageData?.communities.items ?? []
   const totalItems = pageData?.communities.totalItems ?? 0
+  const communityTab = pageData?.communityTab ?? requestedCommunityTab
+  const handleCommunityTabChange = (tab: string) => {
+    setRequestedCommunityTab(tab === 'managed' ? 'managed' : 'all')
+    if (page !== 1) setPage(1)
+  }
 
   useEffect(() => {
     if (pageData?.communities && pageData.communities.page !== page) {
@@ -49,6 +56,8 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
     sort,
     setQuery,
     setSort,
+    communityTab,
+    handleCommunityTabChange,
     communities,
     totalItems
   }

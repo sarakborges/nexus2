@@ -7,6 +7,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from './HomePageActivityFeed.component'
+import { HomePagePostComposer } from './HomePagePostComposer.component'
 import { HomePageRightSidebar } from './HomePageRightSidebar.component'
 
 import './HomePage.style.scss'
@@ -57,6 +58,7 @@ export function HomePage() {
             </p>
           </div>
         </header>
+        <HomePagePostComposer currentProfile={currentProfile} />
         <HomePageActivityFeed
           homeQuery={homeQuery}
           activities={home?.activities ?? []}

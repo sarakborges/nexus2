@@ -7,7 +7,7 @@ import type {
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
-import type { PaginationDto } from '../pagination/pagination.dto'
+import type { ProfileMessagesPageDto } from './domain.dto'
 import { paginate } from '../pagination/pagination.helper'
 import { filterAndSortList } from '../pagination/list-query.helper'
 import { normalizeEntityUrl } from './domain.utils'
@@ -28,7 +28,7 @@ export class ProfileMessagesPageService {
 
   getProfileMessagesPage(
     profileUrl: string,
-    query: PaginationDto,
+    query: ProfileMessagesPageDto,
     userId: string | null
   ): Promise<ProfileMessagesPageData> {
     const normalizedUrl = normalizeEntityUrl(profileUrl)
@@ -56,8 +56,10 @@ export class ProfileMessagesPageService {
               viewerRelationship: null,
               currentProfileType: null,
               isProfileOwner: false,
+              messageTab: 'all',
               messages: paginate<ProfileMessage>([], query),
-              senders: []
+              senders: [],
+              messagePermissions: {}
             }
           }
         }
@@ -74,10 +76,11 @@ export class ProfileMessagesPageService {
           : null
         const isProfileOwner = viewerProfileIds.has(profile.id)
         const profilesById = new Map(profiles.map(sender => [sender.id, sender] as const))
+        const messageTab: ProfileMessagesPageData['messageTab'] = isProfileOwner && query.messageTab === 'favorites' ? 'favorites' : 'all'
         const visibleMessages = filterAndSortList(
           (collections.profile_messages as ProfileMessage[])
-            .filter(message => message.toProfileId === profile.id && (isProfileOwner || viewerProfileIds.has(message.fromProfileId)))
-            .map(message => ({ ...message, content: sanitizeRichText(message.content ?? '') })),
+            .filter(message => message.toProfileId === profile.id && (isProfileOwner || viewerProfileIds.has(message.fromProfileId)) && (messageTab !== 'favorites' || message.isFavorite === true))
+            .map(message => ({ ...message, content: sanitizeRichText(message.content ?? ''), isFavorite: message.isFavorite === true })),
           query.query, query.sort,
           message => [message.content, profilesById.get(message.fromProfileId)?.name ?? '', profilesById.get(message.fromProfileId)?.url ?? ''].join(' '),
           message => message.createdAt, message => profilesById.get(message.fromProfileId)?.name ?? '', message => message.id
@@ -100,8 +103,14 @@ export class ProfileMessagesPageService {
             viewerRelationship,
             currentProfileType,
             isProfileOwner,
+            messageTab,
             messages,
-            senders
+            senders,
+            messagePermissions: Object.fromEntries(messages.items.map(message => [message.id, {
+              canDelete: isProfileOwner || viewerProfileIds.has(message.fromProfileId),
+              canFavorite: isProfileOwner,
+              canReply: isProfileOwner && Boolean(currentProfileId && currentProfileType === profile.type) && message.fromProfileId !== profile.id
+            }]))
           }
         }
       }

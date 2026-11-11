@@ -304,4 +304,12 @@ export class DomainService {
   sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     return this.messages.sendMessage(userId, fromProfileId, toProfileId, content)
   }
+
+  deleteProfileMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
+    return this.messages.deleteMessage(userId, recipientProfileId, messageId, actorProfileId)
+  }
+
+  setProfileMessageFavorite(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string, isFavorite: boolean): Promise<ProfileMessage> {
+    return this.messages.setMessageFavorite(userId, recipientProfileId, messageId, actorProfileId, isFavorite)
+  }
 }

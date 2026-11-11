@@ -1,7 +1,7 @@
 import { RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
-import { Button } from '@/DesignSystem'
+import { Button, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
@@ -87,10 +87,7 @@ export function ProfilePage() {
               )}
             </header>
             {profile.about ? (
-              <div
-                className="social-panel__body rich-text-content"
-                dangerouslySetInnerHTML={{ __html: profile.about }}
-              />
+              <RichTextContent className="social-panel__body" html={profile.about} />
             ) : (
               <p className="social-panel__body">{t('PROFILE_ABOUT_EMPTY')}</p>
             )}
@@ -102,7 +99,7 @@ export function ProfilePage() {
             title={t('PROFILE_FRIENDS_TITLE')}
             totalItems={profilePageQuery.data?.friends.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/friends`}
-            allLabel={t('PROFILE_FRIENDS_LINK')}
+            allLabel={t('COMMON_VIEW_ALL')}
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}
@@ -120,7 +117,7 @@ export function ProfilePage() {
             title={t('PROFILE_COMMUNITIES_TITLE')}
             totalItems={profilePageQuery.data?.communities.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/communities`}
-            allLabel={t('PROFILE_COMMUNITIES_LINK')}
+            allLabel={t('COMMON_VIEW_ALL')}
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}

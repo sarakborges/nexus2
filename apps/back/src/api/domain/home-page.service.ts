@@ -19,7 +19,8 @@ const HOME_PAGE_COLLECTIONS = [
   'profiles',
   'communities',
   'relationships',
-  'community_relationships'
+  'community_relationships',
+  'profile_posts'
 ] as const
 
 const FIRST_PAGE = { page: 1, pageSize: 20 } as PaginationDto
