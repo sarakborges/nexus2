@@ -6,7 +6,10 @@ export function SocialPageLayout({
   rightSidebar,
   className = ''
 }: SocialPageLayoutProps) {
-  const columnsClass = rightSidebar ? '' : 'social-page__layout--two-column'
+  const columnsClass = [
+    rightSidebar ? '' : 'social-page__layout--two-column',
+    sidebar ? '' : 'social-page__layout--no-sidebar'
+  ].filter(Boolean).join(' ')
 
   return (
     <main className={['social-page', className].filter(Boolean).join(' ')}>
@@ -15,7 +18,7 @@ export function SocialPageLayout({
           .filter(Boolean)
           .join(' ')}
       >
-        <aside className="social-page__left-column">{sidebar}</aside>
+        {sidebar && <aside className="social-page__left-column">{sidebar}</aside>}
         <section className="social-page__main-column">{children}</section>
         {rightSidebar && (
           <aside className="social-page__right-column">{rightSidebar}</aside>
