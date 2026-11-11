@@ -177,3 +177,41 @@ test('unlisted forum page is readable without a session', async () => {
   assert.equal(result.canPublish, false)
   assert.equal(result.topics.totalItems, 2)
 })
+
+
+test('community forum page uses a targeted page read and sanitizes only current-page authors', async () => {
+  const calls = []
+  const result = {
+    community: null,
+    viewerRelationship: null,
+    currentProfileType: null,
+    canReadForum: true,
+    canPublish: false,
+    topics: { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 },
+    authors: [{
+      id: 'profile-1', name: 'Author', url: 'author', picture: '',
+      about: '<p>About</p><script>unsafe()</script>',
+      type: 'social', createdAt: 1, lastActivity: 2
+    }]
+  }
+  const repository = {
+    async getCommunityForumPage(url, userId, page, query, sort) {
+      calls.push({ url, userId, page, query, sort })
+      return result
+    },
+    async transaction() {
+      throw new Error('Forum page reads must not load collection snapshots.')
+    }
+  }
+  const service = new CommunityForumPageService(repository, {})
+
+  const page = await service.getCommunityForumPage(
+    '@COMMUNITY', { page: 2, query: 'term', sort: 'name-asc' }, 'account-1'
+  )
+
+  assert.deepEqual(calls, [{
+    url: 'community', userId: 'account-1', page: 2, query: 'term', sort: 'name-asc'
+  }])
+  assert.equal(page.authors[0].about.includes('<script>'), false)
+  assert.equal(page.topics.pageSize, 20)
+})

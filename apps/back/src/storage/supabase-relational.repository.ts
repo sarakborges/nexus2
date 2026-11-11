@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumReply, CommunityForumTopic, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, ListSort, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,52 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getCommunityForumPage(
+    url: string,
+    userId: string | null,
+    page: number,
+    query: string | undefined,
+    sort: ListSort
+  ): Promise<CommunityForumPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_url: url,
+        p_user_id: userId,
+        p_page: page,
+        p_query: query ?? null,
+        p_sort: sort
+      })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (
+      typeof result !== 'object' || result === null ||
+      !('canReadForum' in result) || typeof result.canReadForum !== 'boolean' ||
+      !('canPublish' in result) || typeof result.canPublish !== 'boolean' ||
+      !('topics' in result) || typeof result.topics !== 'object' || result.topics === null ||
+      !('authors' in result) || !Array.isArray(result.authors)
+    ) {
+      throw new Error('Supabase community forum page returned an invalid result.')
+    }
+    const pageResult = result as CommunityForumPageData
+    if (
+      !pageResult.topics ||
+      !Array.isArray(pageResult.topics.items) ||
+      pageResult.topics.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.topics.totalItems) ||
+      !Number.isSafeInteger(pageResult.topics.totalPages) ||
+      (pageResult.community !== null && typeof pageResult.community !== 'object') ||
+      (pageResult.viewerRelationship !== null && typeof pageResult.viewerRelationship !== 'object') ||
+      (pageResult.currentProfileType !== null && typeof pageResult.currentProfileType !== 'string')
+    ) {
+      throw new Error('Supabase community forum page returned invalid data.')
+    }
+    return pageResult
   }
 
   async createCommunityForumTopic(change: CommunityForumTopicWrite): Promise<CommunityForumTopic> {

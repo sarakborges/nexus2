@@ -45,6 +45,22 @@ export class CommunityForumPageService {
   ): Promise<CommunityForumPageData> {
     const normalizedUrl = normalizeEntityUrl(url)
 
+    if (this.data.getCommunityForumPage) {
+      return this.data.getCommunityForumPage(
+        normalizedUrl,
+        userId,
+        query.page,
+        query.query,
+        query.sort
+      ).then(page => ({
+        ...page,
+        authors: page.authors.map(profile => ({
+          ...profile,
+          about: sanitizeRichText(profile.about ?? '')
+        }))
+      }))
+    }
+
     return this.data.transaction<CommunityForumPageData>(
       COMMUNITY_FORUM_PAGE_COLLECTIONS,
       (collections) => {
