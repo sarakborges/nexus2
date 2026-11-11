@@ -1032,3 +1032,59 @@ test('reads a searchable, sortable profile messages page through one targeted RP
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads the community page aggregate through one targeted relational RPC', async t => {
+  let call
+  const expected = {
+    community: {
+      id: 'community-1', name: 'Community', url: 'community', picture: '',
+      about: '<p>About</p>', type: 'social', privacy: 'public', createdAt: 1, lastActivity: 2
+    },
+    relationships: [{
+      profiles: ['profile-1', 'community-1'],
+      type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 1
+    }],
+    viewerRelationship: {
+      profiles: ['profile-1', 'community-1'],
+      type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 1
+    },
+    currentProfileType: 'social',
+    canViewMembers: true,
+    canEditCommunity: true,
+    pendingRequestCount: 1,
+    members: {
+      items: [{
+        id: 'profile-1', name: 'Owner', url: 'owner', picture: '',
+        about: '', type: 'social', createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    forumTopics: {
+      items: [{
+        id: 'topic-1', communityId: 'community-1', profileId: 'profile-1',
+        title: 'Topic', content: '<p>Topic</p>', createdAt: 1, updatedAt: 2,
+        isPinned: true, isLocked: false, replyCount: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    forumAuthors: [{
+      id: 'profile-1', name: 'Owner', url: 'owner', picture: '',
+      about: '', type: 'social', createdAt: 1, lastActivity: 2
+    }]
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getCommunityPage('community', 'account-1')
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_community_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_url: 'community',
+    p_user_id: 'account-1'
+  })
+  assert.deepEqual(page, expected)
+})

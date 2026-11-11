@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, ListSort, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityPageData, ListSort, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,47 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url, p_user_id: userId })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Supabase community page returned an invalid result.')
+    }
+    const record = result as Record<string, unknown>
+    const members = record.members as Record<string, unknown> | null
+    const forumTopics = record.forumTopics as Record<string, unknown> | null
+    if (
+      !Array.isArray(record.relationships) ||
+      !members || typeof members !== 'object' ||
+      !Array.isArray(members.items) ||
+      !forumTopics || typeof forumTopics !== 'object' ||
+      !Array.isArray(forumTopics.items) ||
+      !Array.isArray(record.forumAuthors) ||
+      typeof record.canViewMembers !== 'boolean' ||
+      typeof record.canEditCommunity !== 'boolean' ||
+      !Number.isSafeInteger(record.pendingRequestCount)
+    ) {
+      throw new Error('Supabase community page returned invalid data.')
+    }
+
+    const pageResult = result as CommunityPageData
+    if (
+      pageResult.members.pageSize !== 20 ||
+      pageResult.forumTopics.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.members.totalItems) ||
+      !Number.isSafeInteger(pageResult.forumTopics.totalItems)
+    ) {
+      throw new Error('Supabase community page returned invalid pagination metadata.')
+    }
+    return pageResult
   }
 
   async getProfileMessagesPage(

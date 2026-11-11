@@ -146,3 +146,47 @@ test('unlisted community aggregate remains readable for visitors without a sessi
   assert.equal(result.forumTopics.totalItems, 2)
   assert.deepEqual(result.relationships, [])
 })
+
+
+test('community page uses a targeted relational read and sanitizes member and forum author profiles', async () => {
+  const calls = []
+  const result = {
+    community: { id: 'community-1' },
+    relationships: [],
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    canViewMembers: true,
+    canEditCommunity: false,
+    pendingRequestCount: 0,
+    members: {
+      items: [{
+        id: 'profile-1', name: 'Member', url: 'member', picture: '',
+        about: '<p>Member</p><script>unsafe()</script>', type: 'social',
+        createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    forumTopics: { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 },
+    forumAuthors: [{
+      id: 'profile-2', name: 'Author', url: 'author', picture: '',
+      about: '<p>Author</p><script>unsafe()</script>', type: 'social',
+      createdAt: 1, lastActivity: 2
+    }]
+  }
+  const repository = {
+    async getCommunityPage(url, userId) {
+      calls.push({ url, userId })
+      return result
+    },
+    async transaction() {
+      throw new Error('Community page reads must not load collection snapshots.')
+    }
+  }
+  const service = new CommunityPageService(repository, {})
+
+  const page = await service.getCommunityPage('@COMMUNITY', 'account-1')
+
+  assert.deepEqual(calls, [{ url: 'community', userId: 'account-1' }])
+  assert.equal(page.members.items[0].about.includes('<script>'), false)
+  assert.equal(page.forumAuthors[0].about.includes('<script>'), false)
+})
