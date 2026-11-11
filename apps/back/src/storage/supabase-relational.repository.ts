@@ -1,4 +1,4 @@
-import type { CollectionRecordMap, DataRepository } from './repository.interface'
+import type { ActivityFeedCursor, CollectionRecordMap, DataRepository, ActivityFeedRow } from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
 type CollectionSnapshot = {
@@ -53,6 +53,41 @@ export class SupabaseRelationalRepository implements DataRepository {
     const requestedIds = new Set(ids)
     if (requestedIds.size === 0) return []
     return (await this.read<T>(collection)).filter(record => requestedIds.has(record.id))
+  }
+
+  async getActivityFeedRows(
+    userId: string,
+    limit: number,
+    cursor: ActivityFeedCursor | null
+  ): Promise<ActivityFeedRow[]> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_feed_page', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_limit: limit,
+        p_cursor_updated_at_ms: cursor?.updatedAt ?? null,
+        p_cursor_id: cursor?.id ?? null
+      })
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.some(row =>
+      typeof row !== 'object' || row === null ||
+      typeof (row as Record<string, unknown>).id !== 'string' ||
+      typeof (row as Record<string, unknown>).type !== 'string' ||
+      !Number.isFinite(Number((row as Record<string, unknown>).updated_at_ms)) ||
+      typeof (row as Record<string, unknown>).profile !== 'object' ||
+      (row as Record<string, unknown>).profile === null
+    )) {
+      throw new Error('Supabase relational activity feed returned an invalid page.')
+    }
+
+    return rows as ActivityFeedRow[]
   }
 
   async update<T>(
