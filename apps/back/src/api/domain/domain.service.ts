@@ -78,6 +78,10 @@ export class DomainService {
     const matches = (value: string) =>
       value.toLocaleLowerCase().includes(normalizedQuery)
 
+    if (this.data.searchEntities) {
+      return this.data.searchEntities(normalizedQuery, scope, q.page, q.sort)
+    }
+
     const found = await this.data.transaction<SearchResultItem[]>(
       ['profiles', 'communities', 'community_relationships'],
       collections => {

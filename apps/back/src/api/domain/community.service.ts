@@ -47,6 +47,14 @@ export class CommunityService {
     return paginate((await this.access.readCommunities()).filter(community => community.privacy === 'public'), q)
   }
   async getCommunity(url: string, userId: string | null = null): Promise<Community> {
+    if (this.data.getCommunityByUrl) {
+      return this.data.getCommunityByUrl(normalizeEntityUrl(url), userId).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        throw error
+      }).then(community => ({ ...community, about: sanitizeRichText(community.about ?? '') }))
+    }
     return this.data.transaction<Community>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -72,6 +80,17 @@ export class CommunityService {
       .filter(community => community.privacy === 'public')
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
+    if (this.data.getProfileCommunities) {
+      return this.data.getProfileCommunities(profileId, q.page).then(page => ({
+        ...page, items: page.items.map(community => ({
+          ...community, about: sanitizeRichText(community.about ?? '')
+        }))
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+        throw error
+      })
+    }
     return this.data.transaction<PaginatedResult<Community>>(
       ['profiles', 'communities', 'community_relationships'],
       collections => {

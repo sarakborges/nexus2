@@ -1328,3 +1328,27 @@ test('reads community member and pending lists through their targeted RPCs', asy
     }
   ])
 })
+
+
+test('reads owned profiles, profile communities, community by URL and entity search through targeted RPCs', async t => {
+  const calls = []
+  const page = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  const community = { id: 'community-1', name: 'Community', url: 'community', privacy: 'public' }
+  const responses = [page, community, page, page]
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    return new Response(JSON.stringify(responses[calls.length - 1]), { status: 200 })
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.getOwnedProfiles('account-1',2)
+  assert.deepEqual(await repo.getCommunityByUrl('community','account-1'),community)
+  await repo.getProfileCommunities('profile-1',3)
+  await repo.searchEntities('term','all',4,'name-asc')
+  assert.deepEqual(calls,[
+    {path:'/rest/v1/rpc/nexus_get_owned_profiles',body:{p_user_id:'account-1',p_page:2}},
+    {path:'/rest/v1/rpc/nexus_get_community_by_url',body:{p_url:'community',p_user_id:'account-1'}},
+    {path:'/rest/v1/rpc/nexus_get_profile_communities',body:{p_profile_id:'profile-1',p_page:3}},
+    {path:'/rest/v1/rpc/nexus_search_entities',body:{p_query:'term',p_scope:'all',p_page:4,p_sort:'name-asc'}}
+  ])
+})

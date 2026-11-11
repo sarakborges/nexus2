@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType, SearchResultItem, SearchScope } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -168,6 +168,10 @@ export interface DataRepository {
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
   getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
+  getOwnedProfiles?(userId: string, page: number): Promise<PaginatedResult<Profile>>
+  getCommunityByUrl?(url: string, userId: string | null): Promise<Community>
+  getProfileCommunities?(profileId: string, page: number): Promise<PaginatedResult<Community>>
+  searchEntities?(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
   getProfileRelationships?(userId: string, profileId: string): Promise<Relationship[]>
   getProfileFriends?(profileId: string, page: number): Promise<PaginatedResult<Profile>>
   getCommunityRelationships?(userId: string | null, communityId: string): Promise<CommunityRelationship[]>

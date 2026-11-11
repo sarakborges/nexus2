@@ -46,6 +46,18 @@ export class ProfileService {
     return paginate(await this.access.readProfiles(), q)
   }
   async listOwnedProfiles(userId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
+    if (this.data.getOwnedProfiles) {
+      try {
+        const page = await this.data.getOwnedProfiles(userId, q.page)
+        return { ...page, items: page.items.map(profile => ({
+          ...profile, about: sanitizeRichText(profile.about ?? '')
+        })) }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        throw error
+      }
+    }
     return this.data.transaction<PaginatedResult<Profile>>(
       ['accounts', 'profiles'],
       collections => {
