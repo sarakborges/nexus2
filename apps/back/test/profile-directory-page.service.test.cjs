@@ -193,3 +193,68 @@ test('unsupported directory kind is rejected', async () => {
   )
   assert.equal(repository.transactionCalls, 0)
 })
+
+
+test('profile directory pages use targeted reads and sanitize the returned page records', async () => {
+  const calls = []
+  const baseProfile = {
+    id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+    about: '<p>About</p><script>unsafe()</script>', type: 'social',
+    createdAt: 1, lastActivity: 2
+  }
+  const repository = {
+    async getProfileDirectoryPage(url, kind, userId, page, query, sort) {
+      calls.push({ url, kind, userId, page, query, sort })
+      if (kind === 'friends') {
+        return {
+          kind,
+          profile: baseProfile,
+          viewerRelationship: null,
+          currentProfileType: 'social',
+          friendRelationships: [],
+          friends: {
+            items: [{
+              ...baseProfile, id: 'profile-2',
+              about: '<p>Friend</p><script>unsafe()</script>'
+            }],
+            page, pageSize: 20, totalItems: 1, totalPages: 1
+          }
+        }
+      }
+      return {
+        kind,
+        profile: baseProfile,
+        viewerRelationship: null,
+        currentProfileType: 'social',
+        communities: {
+          items: [{
+            id: 'community-1', name: 'Community', url: 'community',
+            picture: '', about: '<p>Community</p><script>unsafe()</script>',
+            type: 'social', privacy: 'public', createdAt: 1, lastActivity: 2
+          }],
+          page, pageSize: 20, totalItems: 1, totalPages: 1
+        }
+      }
+    },
+    async transaction() {
+      throw new Error('Profile directory reads must not load collection snapshots.')
+    }
+  }
+  const service = new ProfileDirectoryPageService(repository, {})
+
+  const friends = await service.getProfileDirectoryPage(
+    '@PROFILE', 'friends', { page: 2, query: 'friend', sort: 'name-asc' }, 'account-1'
+  )
+  const communities = await service.getProfileDirectoryPage(
+    'profile', 'communities', { page: 1 }, null
+  )
+
+  assert.deepEqual(calls, [
+    { url: 'profile', kind: 'friends', userId: 'account-1', page: 2, query: 'friend', sort: 'name-asc' },
+    { url: 'profile', kind: 'communities', userId: null, page: 1, query: undefined, sort: undefined }
+  ])
+  assert.equal(friends.profile.about.includes('<script>'), false)
+  assert.equal(friends.friends.items[0].about.includes('<script>'), false)
+  assert.equal(communities.profile.about.includes('<script>'), false)
+  assert.equal(communities.communities.items[0].about.includes('<script>'), false)
+})

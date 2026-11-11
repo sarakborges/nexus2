@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,77 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getProfileDirectoryPage(
+    url: string,
+    kind: 'friends' | 'communities',
+    userId: string | null,
+    page: number,
+    query: string | undefined,
+    sort: ListSort
+  ): Promise<ProfileDirectoryPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_directory_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_url: url,
+        p_kind: kind,
+        p_user_id: userId,
+        p_page: page,
+        p_query: query ?? null,
+        p_sort: sort
+      })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Supabase profile directory page returned an invalid result.')
+    }
+    const record = result as Record<string, unknown>
+    if (
+      record.kind !== kind ||
+      !('profile' in record) ||
+      !('viewerRelationship' in record) ||
+      !('currentProfileType' in record)
+    ) {
+      throw new Error('Supabase profile directory page returned invalid identity data.')
+    }
+
+    if (kind === 'friends') {
+      const friends = record.friends as Record<string, unknown> | null
+      if (
+        !Array.isArray(record.friendRelationships) ||
+        !friends || typeof friends !== 'object' ||
+        !Array.isArray(friends.items)
+      ) {
+        throw new Error('Supabase friends directory returned invalid data.')
+      }
+      const pageResult = result as Extract<ProfileDirectoryPageData, { kind: 'friends' }>
+      if (
+        pageResult.friends.pageSize !== 20 ||
+        !Number.isSafeInteger(pageResult.friends.totalItems) ||
+        !Number.isSafeInteger(pageResult.friends.totalPages)
+      ) {
+        throw new Error('Supabase friends directory returned invalid pagination metadata.')
+      }
+      return pageResult
+    }
+
+    const communities = record.communities as Record<string, unknown> | null
+    if (!communities || typeof communities !== 'object' || !Array.isArray(communities.items)) {
+      throw new Error('Supabase communities directory returned invalid data.')
+    }
+    const pageResult = result as Extract<ProfileDirectoryPageData, { kind: 'communities' }>
+    if (
+      pageResult.communities.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.communities.totalItems) ||
+      !Number.isSafeInteger(pageResult.communities.totalPages)
+    ) {
+      throw new Error('Supabase communities directory returned invalid pagination metadata.')
+    }
+    return pageResult
   }
 
   async getCommunityMembersPage(

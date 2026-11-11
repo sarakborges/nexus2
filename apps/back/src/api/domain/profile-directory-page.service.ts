@@ -41,6 +41,54 @@ export class ProfileDirectoryPageService {
     }
 
     const normalizedUrl = normalizeEntityUrl(url)
+    if (this.data.getProfileDirectoryPage) {
+      return this.data.getProfileDirectoryPage(
+        normalizedUrl,
+        kind,
+        userId,
+        query.page,
+        query.query,
+        query.sort
+      ).then(page => {
+        if (page.kind === 'friends') {
+          return {
+            ...page,
+            profile: page.profile ? {
+              ...page.profile,
+              about: sanitizeRichText(page.profile.about ?? '')
+            } : null,
+            friends: {
+              ...page.friends,
+              items: page.friends.items.map(friend => ({
+                ...friend,
+                about: sanitizeRichText(friend.about ?? '')
+              }))
+            }
+          }
+        }
+        return {
+          ...page,
+          profile: page.profile ? {
+            ...page.profile,
+            about: sanitizeRichText(page.profile.about ?? '')
+          } : null,
+          communities: {
+            ...page.communities,
+            items: page.communities.items.map(community => ({
+              ...community,
+              about: sanitizeRichText(community.about ?? '')
+            }))
+          }
+        }
+      }).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
+
     return this.data.transaction<ProfileDirectoryPageData>(
       PROFILE_DIRECTORY_COLLECTIONS,
       (collections) => {

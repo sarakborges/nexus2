@@ -1141,3 +1141,74 @@ test('reads community member and pending pages through one targeted RPC', async 
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads profile friends and communities directories through the targeted RPC', async t => {
+  const calls = []
+  const friendResult = {
+    kind: 'friends',
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '', type: 'social', createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    friendRelationships: [{
+      profiles: ['profile-2', 'profile-3'], type: 'connection',
+      requestedBy: null, blockedBy: null, updatedAt: 2
+    }],
+    friends: {
+      items: [{
+        id: 'profile-2', name: 'Friend', url: 'friend', picture: '',
+        about: '', type: 'social', createdAt: 1, lastActivity: 2
+      }],
+      page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+    }
+  }
+  const communityResult = {
+    kind: 'communities',
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '', type: 'social', createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    communities: {
+      items: [{
+        id: 'community-1', name: 'Community', url: 'community', picture: '',
+        about: '', type: 'social', privacy: 'public', createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    }
+  }
+  withFetch(t, async (input, options) => {
+    const body = JSON.parse(options.body)
+    calls.push({ url: new URL(String(input)), body })
+    return new Response(JSON.stringify(body.p_kind === 'friends' ? friendResult : communityResult), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const friends = await repo.getProfileDirectoryPage(
+    'profile', 'friends', 'account-1', 2, 'friend', 'name-asc'
+  )
+  const communities = await repo.getProfileDirectoryPage(
+    'profile', 'communities', null, 1, undefined, 'activity-desc'
+  )
+
+  assert.deepEqual(calls.map(call => call.url.pathname), [
+    '/rest/v1/rpc/nexus_get_profile_directory_page',
+    '/rest/v1/rpc/nexus_get_profile_directory_page'
+  ])
+  assert.deepEqual(calls.map(call => call.body), [
+    {
+      p_url: 'profile', p_kind: 'friends', p_user_id: 'account-1',
+      p_page: 2, p_query: 'friend', p_sort: 'name-asc'
+    },
+    {
+      p_url: 'profile', p_kind: 'communities', p_user_id: null,
+      p_page: 1, p_query: null, p_sort: 'activity-desc'
+    }
+  ])
+  assert.deepEqual(friends, friendResult)
+  assert.deepEqual(communities, communityResult)
+})
