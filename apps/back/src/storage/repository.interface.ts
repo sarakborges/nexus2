@@ -17,6 +17,14 @@ export type RefreshTokenRotation = {
   tokenHash: string
 }
 
+export type AccountProfileChange = {
+  accountId: string
+  profileId: string
+  action: 'select' | 'add' | 'remove'
+  makeCurrent: boolean
+  previousCurrentProfileId: string | null
+}
+
 export type CollectionTransaction<T> = {
   records: CollectionRecordMap
   result: T
@@ -52,6 +60,7 @@ export interface DataRepository {
     now: number
   ): Promise<void>
   deleteRefreshTokenByHash?(tokenHash: string): Promise<void>
+  changeAccountProfile?(change: AccountProfileChange): Promise<void>
   getActivityFeedRows?(
     userId: string,
     limit: number,

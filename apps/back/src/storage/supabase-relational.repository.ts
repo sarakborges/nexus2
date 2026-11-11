@@ -3,6 +3,7 @@ import type {
   CollectionRecordMap,
   DataRepository,
   ActivityFeedRow,
+  AccountProfileChange,
   RefreshTokenRotation,
   RefreshTokenWrite
 } from './repository.interface'
@@ -177,6 +178,24 @@ export class SupabaseRelationalRepository implements DataRepository {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ p_token_hash: tokenHash })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async changeAccountProfile(change: AccountProfileChange): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_account_id: change.accountId,
+        p_profile_id: change.profileId,
+        p_action: change.action,
+        p_make_current: change.makeCurrent,
+        p_previous_current_profile_id: change.previousCurrentProfileId
+      })
     })
     await this.assertSuccess(response)
   }

@@ -331,3 +331,30 @@ test('revokes a refresh token by hash without reading the refresh-token table', 
   assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_revoke_refresh_token')
   assert.deepEqual(JSON.parse(call.options.body), { p_token_hash: 'stored-token-hash' })
 })
+
+
+test('changes account profile membership through a targeted relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.changeAccountProfile({
+    accountId: 'account-1',
+    profileId: 'profile-2',
+    action: 'remove',
+    makeCurrent: false,
+    previousCurrentProfileId: 'profile-1'
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_change_account_profile')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_account_id: 'account-1',
+    p_profile_id: 'profile-2',
+    p_action: 'remove',
+    p_make_current: false,
+    p_previous_current_profile_id: 'profile-1'
+  })
+})

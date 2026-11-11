@@ -23,6 +23,17 @@ export class AccountService {
   }
 
   async updateCurrentProfile(userId: string, profileId: string): Promise<AuthenticatedUser> {
+    if (this.repository.changeAccountProfile) {
+      await this.changeAccountProfile({
+        accountId: userId,
+        profileId,
+        action: 'select',
+        makeCurrent: true,
+        previousCurrentProfileId: null
+      })
+      return this.getUser(userId)
+    }
+
     let updated: AccountRecord | undefined
     await this.repository.update<AccountRecord>('accounts', accounts => {
       const account = accounts.find(item => item.id === userId)
@@ -36,6 +47,17 @@ export class AccountService {
   }
 
   async addProfile(userId: string, profileId: string, makeCurrent = false): Promise<AuthenticatedUser> {
+    if (this.repository.changeAccountProfile) {
+      await this.changeAccountProfile({
+        accountId: userId,
+        profileId,
+        action: 'add',
+        makeCurrent,
+        previousCurrentProfileId: null
+      })
+      return this.getUser(userId)
+    }
+
     let updated: AccountRecord | undefined
     await this.repository.update<AccountRecord>('accounts', accounts => {
       const account = accounts.find(item => item.id === userId)
@@ -55,6 +77,17 @@ export class AccountService {
     profileId: string,
     previousCurrentProfileId: string | null = null
   ): Promise<void> {
+    if (this.repository.changeAccountProfile) {
+      await this.changeAccountProfile({
+        accountId: userId,
+        profileId,
+        action: 'remove',
+        makeCurrent: false,
+        previousCurrentProfileId
+      })
+      return
+    }
+
     await this.repository.update<AccountRecord>('accounts', accounts => {
       const account = accounts.find(item => item.id === userId)
       if (!account || !account.profiles.includes(profileId)) return accounts
@@ -94,6 +127,30 @@ export class AccountService {
   async ownsProfile(userId: string, profileId: string): Promise<boolean> {
     const account = await this.readAccount(userId)
     return Boolean(account?.profiles.includes(profileId))
+  }
+
+  private async changeAccountProfile(change: {
+    accountId: string
+    profileId: string
+    action: 'select' | 'add' | 'remove'
+    makeCurrent: boolean
+    previousCurrentProfileId: string | null
+  }): Promise<void> {
+    try {
+      await this.repository.changeAccountProfile!(change)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('PROFILE_NOT_OWNED')) {
+        throw new UnauthorizedException('PROFILE_NOT_OWNED')
+      }
+      if (message.includes('ACCOUNT_NOT_FOUND')) {
+        throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      }
+      if (message.includes('PROFILE_NOT_FOUND')) {
+        throw new UnauthorizedException('PROFILE_NOT_FOUND')
+      }
+      throw error
+    }
   }
 
   private async readAccount(userId: string): Promise<AccountRecord | undefined> {

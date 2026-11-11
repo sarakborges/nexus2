@@ -270,3 +270,54 @@ test('sign-out revokes a refresh token by its stored hash without collection upd
   assert.equal(revokedHash.length, 64)
   assert.notEqual(revokedHash, initial.refreshToken)
 })
+
+
+test('account profile changes use targeted relational writes instead of account collection snapshots', async () => {
+  const { service, collections, repository } = createAuthHarness()
+  const { user } = await service.signUp({
+    email: 'relational-profiles@example.com',
+    password: 'a-secure-password'
+  })
+  const changes = []
+  repository.changeAccountProfile = async change => {
+    changes.push(change)
+    const accounts = collections.get('accounts')
+    const index = accounts.findIndex(account => account.id === change.accountId)
+    if (index < 0) throw new Error('ACCOUNT_NOT_FOUND')
+    const account = accounts[index]
+    let profiles = [...account.profiles]
+    let currentProfile = account.currentProfile
+    if (change.action === 'add') {
+      if (!profiles.includes(change.profileId)) profiles.push(change.profileId)
+      if (change.makeCurrent || !currentProfile) currentProfile = change.profileId
+    } else if (change.action === 'select') {
+      if (!profiles.includes(change.profileId)) throw new Error('PROFILE_NOT_OWNED')
+      currentProfile = change.profileId
+    } else {
+      if (!profiles.includes(change.profileId)) return
+      profiles = profiles.filter(id => id !== change.profileId)
+      if (currentProfile === change.profileId) {
+        currentProfile = change.previousCurrentProfileId && profiles.includes(change.previousCurrentProfileId)
+          ? change.previousCurrentProfileId
+          : profiles[0] ?? null
+      }
+    }
+    accounts[index] = { ...account, profiles, currentProfile }
+    collections.set('accounts', accounts)
+  }
+  repository.update = async () => {
+    throw new Error('Relational account-profile changes must not update full collection snapshots.')
+  }
+
+  await service.addProfile(user.id, 'profile-1', true)
+  await service.addProfile(user.id, 'profile-2')
+  const selected = await service.updateCurrentProfile(user.id, 'profile-2')
+  await service.removeProfile(user.id, 'profile-2', 'profile-1')
+  const finalUser = await service.getUser(user.id)
+
+  assert.deepEqual(selected.profiles, ['profile-1', 'profile-2'])
+  assert.equal(selected.currentProfile, 'profile-2')
+  assert.deepEqual(finalUser.profiles, ['profile-1'])
+  assert.equal(finalUser.currentProfile, 'profile-1')
+  assert.deepEqual(changes.map(change => change.action), ['add', 'add', 'select', 'remove'])
+})
