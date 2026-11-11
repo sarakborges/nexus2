@@ -4,7 +4,7 @@
   padding: 6px 8px;
 
   background-color: var(--color-neutral-weak);
-  border: 2px solid var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-neutral-weak);
   border-radius: var(--nexus-control-radius, 0);
 
   color: var(--color-neutral-strong);
