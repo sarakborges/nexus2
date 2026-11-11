@@ -31,7 +31,13 @@ export function HomePage() {
           <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
         </header>
         <HomePagePostComposer currentProfile={currentProfile} />
-        <HomePageActivityFeed homeQuery={homeQuery} activities={home?.activities ?? []} formatDate={formatHomeActivityDate} />
+        <HomePageActivityFeed
+          homeQuery={homeQuery}
+          activities={home?.activities ?? []}
+          activityCursor={home?.activityCursor ?? null}
+          hasMoreActivities={home?.hasMoreActivities ?? false}
+          formatDate={formatHomeActivityDate}
+        />
       </section>
     </SocialPageLayout>
   )
