@@ -51,9 +51,48 @@ export class SupabaseRelationalRepository implements DataRepository {
     collection: string,
     ids: readonly string[]
   ): Promise<T[]> {
-    const requestedIds = new Set(ids)
-    if (requestedIds.size === 0) return []
-    return (await this.read<T>(collection)).filter(record => requestedIds.has(record.id))
+    const requestedIds = [...new Set(ids)]
+    if (requestedIds.length === 0) return []
+
+    switch (collection) {
+      case 'accounts':
+        return await this.readAccounts(
+          await this.selectRowsByValues('accounts', 'id', requestedIds)
+        ) as T[]
+      case 'profiles':
+        return (await this.selectRowsByValues('profiles', 'id', requestedIds)).map(row => ({
+          id: this.string(row.id),
+          name: this.string(row.name),
+          url: this.string(row.url),
+          picture: this.string(row.picture),
+          about: this.string(row.about),
+          type: this.string(row.type),
+          createdAt: this.number(row.created_at_ms),
+          lastActivity: this.number(row.last_activity_ms)
+        })) as T[]
+      case 'communities':
+        return (await this.selectRowsByValues('communities', 'id', requestedIds)).map(row => ({
+          id: this.string(row.id),
+          name: this.string(row.name),
+          url: this.string(row.url),
+          picture: this.string(row.picture),
+          about: this.string(row.about),
+          type: this.string(row.type),
+          privacy: this.string(row.privacy),
+          createdAt: this.number(row.created_at_ms),
+          lastActivity: this.number(row.last_activity_ms)
+        })) as T[]
+      default: {
+        const requested = new Set(requestedIds)
+        return (await this.read<T>(collection)).filter(record => requested.has(record.id))
+      }
+    }
+  }
+
+  async findAccountByEmail<T>(email: string): Promise<T | null> {
+    const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
+    const [account] = await this.readAccounts(rows)
+    return (account as T | undefined) ?? null
   }
 
   async getActivityFeedRows(
@@ -429,6 +468,81 @@ export class SupabaseRelationalRepository implements DataRepository {
       default:
         throw new Error('Unsupported relational collection: ' + collection)
     }
+  }
+
+  private async readAccounts(rows: DatabaseRow[]): Promise<unknown[]> {
+    if (rows.length === 0) return []
+    const accountIds = rows.map(row => this.string(row.id))
+    const [memberships, preferences] = await Promise.all([
+      this.selectRowsByValues('account_profiles', 'account_id', accountIds),
+      this.selectRowsByValues('account_preferences', 'account_id', accountIds)
+    ])
+
+    return rows.map(row => {
+      const preference = preferences.find(item => item.account_id === row.id)
+      return {
+        id: this.string(row.id),
+        email: this.string(row.email),
+        password: {
+          hash: this.string(row.password_hash),
+          salt: this.string(row.password_salt)
+        },
+        profiles: memberships
+          .filter(item => item.account_id === row.id)
+          .sort((a, b) => this.number(a.position) - this.number(b.position))
+          .map(item => this.string(item.profile_id)),
+        currentProfile: this.nullableString(row.current_profile_id),
+        ...(preference ? {
+          preferences: {
+            language: this.string(preference.language),
+            theme: this.string(preference.theme)
+          }
+        } : {})
+      }
+    })
+  }
+
+  private async selectRowsByValues(
+    table: string,
+    column: string,
+    values: readonly string[]
+  ): Promise<DatabaseRow[]> {
+    if (values.length === 0) return []
+    const url = new URL(this.baseUrl + '/rest/v1/' + table)
+    url.searchParams.set('select', '*')
+    url.searchParams.set(
+      column,
+      'in.(' + values.map(value => '"' + value.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"').join(',') + ')'
+    )
+    url.searchParams.set('limit', String(Math.max(values.length * 10, PAGE_SIZE)))
+    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows = await response.json() as DatabaseRow[]
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase returned an invalid filtered row set for "' + table + '".')
+    }
+    return rows
+  }
+
+  private async selectRowsByField(
+    table: string,
+    column: string,
+    expression: string
+  ): Promise<DatabaseRow[]> {
+    const url = new URL(this.baseUrl + '/rest/v1/' + table)
+    url.searchParams.set('select', '*')
+    url.searchParams.set(column, expression)
+    url.searchParams.set('limit', '2')
+    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows = await response.json() as DatabaseRow[]
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase returned an invalid filtered row set for "' + table + '".')
+    }
+    if (rows.length > 1) {
+      throw new Error('Supabase returned more than one account for a unique email.')
+    }
+    return rows
   }
 
   private async selectRows(table: string): Promise<DatabaseRow[]> {

@@ -27,6 +27,7 @@ export type ActivityFeedRow = {
  */
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
+  findAccountByEmail?<T>(email: string): Promise<T | null>
   getActivityFeedRows?(
     userId: string,
     limit: number,

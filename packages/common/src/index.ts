@@ -28,7 +28,14 @@ export type ProfileMessage = { id: string; fromProfileId: string; toProfileId: s
 export type ProfilePost = { id: string; profileId: string; content: string; createdAt: number }
 export type AuthenticatedUser = { id: string; email: string; profiles: string[]; currentProfile: string | null }
 export type AuthTokenPair = { accessToken: string; refreshToken: string; expiresIn: number; user: AuthenticatedUser }
-export type AuthSession = { user: AuthenticatedUser; authenticatedAt: number }
+export type AuthMeResponse = {
+  user: AuthenticatedUser
+  currentProfile: Profile | null
+  activities: RecentActivity[]
+  activityCursor: ActivityFeedCursor | null
+  hasMoreActivities: boolean
+}
+export type AuthSession = AuthMeResponse & { authenticatedAt: number }
 export type SignInCredentials = { email: string; password: string }
 export type SignUpCredentials = SignInCredentials
 export type UserPreferences = { language: 'system' | 'pt-BR' | 'en-US'; theme: 'system' | 'light' | 'dark' }

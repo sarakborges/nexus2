@@ -47,8 +47,9 @@ export class AuthService {
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.email === email)
+    const account = this.repository.findAccountByEmail
+      ? await this.repository.findAccountByEmail<AccountRecord>(email)
+      : (await this.repository.read<AccountRecord>('accounts')).find(item => item.email === email)
     if (!account || !(await this.verifyPassword(credentials.password, account))) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
