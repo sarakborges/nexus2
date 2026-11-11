@@ -510,12 +510,17 @@ export class SupabaseRelationalRepository implements DataRepository {
     await this.assertSuccess(response)
 
     const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Supabase profile page returned an invalid result.')
+    }
+    const resultRecord = result as Record<string, unknown>
+    const friendsPage = resultRecord.friends as Record<string, unknown> | null
+    const communitiesPage = resultRecord.communities as Record<string, unknown> | null
     if (
-      typeof result !== 'object' || result === null ||
-      !('friends' in result) || typeof result.friends !== 'object' || result.friends === null ||
-      !('communities' in result) || typeof result.communities !== 'object' || result.communities === null ||
-      !Array.isArray(result.friends.items) ||
-      !Array.isArray(result.communities.items)
+      !friendsPage || typeof friendsPage !== 'object' ||
+      !communitiesPage || typeof communitiesPage !== 'object' ||
+      !Array.isArray(friendsPage.items) ||
+      !Array.isArray(communitiesPage.items)
     ) {
       throw new Error('Supabase profile page returned an invalid result.')
     }
