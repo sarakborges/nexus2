@@ -71,8 +71,7 @@ export class AuthService {
       throw new UnauthorizedException('REFRESH_TOKEN_INVALID')
     }
 
-    const accounts = await this.repository.read<AccountRecord>('accounts')
-    const account = accounts.find(item => item.id === payload.sub)
+    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [payload.sub])
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
 
     return this.issueTokens(account, {

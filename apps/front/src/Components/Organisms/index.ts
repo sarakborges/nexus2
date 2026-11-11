@@ -1,4 +1,5 @@
 export { CommunityDetailsFields } from './CommunityDetailsFields'
+export { EntityDetailsFields } from './EntityDetailsFields'
 export { EntityDirectoryGrid } from './EntityDirectoryGrid'
 export { CommunityPrivacySelector } from './CommunityPrivacySelector'
 export { FloatingNavigationBar } from './FloatingNavigationBar'
