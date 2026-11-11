@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router'
 import { FiChevronDown, FiMenu, FiUser } from 'react-icons/fi'
 
 import { ROUTES } from '@/Constants/routes'
+import { IdentityAvatar } from '@/Components/Molecules'
 import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from './AccountMenu.component'
 import { FloatingNavigationSearch } from './FloatingNavigationSearch.component'
@@ -120,6 +121,12 @@ export function FloatingNavigationBar({
         id="floating-navigation-sidebar"
         aria-label={t('NAVIGATION_LABEL')}
       >
+        {currentProfile && (
+          <Link className="floating-navigation__current-profile" to={`${ROUTES.profile}/${currentProfile.url}`} onClick={closePanels}>
+            <IdentityAvatar className="floating-navigation__current-profile-avatar" name={currentProfile.name} picture={currentProfile.picture} />
+            <span><strong>{currentProfile.name}</strong><small>@{currentProfile.url}</small></span>
+          </Link>
+        )}
         <FloatingNavigationLinks
           pathname={pathname}
           hasCurrentProfile={Boolean(currentProfile?.url)}
