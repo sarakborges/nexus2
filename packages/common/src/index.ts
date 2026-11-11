@@ -32,6 +32,7 @@ export type AuthSession = { user: AuthenticatedUser; authenticatedAt: number }
 export type SignInCredentials = { email: string; password: string }
 export type SignUpCredentials = SignInCredentials
 export type UserPreferences = { language: 'system' | 'pt-BR' | 'en-US'; theme: 'system' | 'light' | 'dark' }
+export type ProfileSettings = { messageAudience: 'friends' | 'everyone'; publishActivityTypes: RecentActivity['type'][]; showFriendActivityTypes: RecentActivity['type'][] }
 export type ApiErrorResponse = { statusCode: number; message: string | string[]; error?: string }
 
 export type RecentActivity =

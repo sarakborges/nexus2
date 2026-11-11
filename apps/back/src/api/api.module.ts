@@ -28,6 +28,7 @@ import { CommunitiesPageService } from './domain/communities-page.service'
 import { CommunityForumComposerPageService } from './domain/community-forum-composer-page.service'
 import { CommunityEditPageService } from './domain/community-edit-page.service'
 import { ProfileEditPageService } from './domain/profile-edit-page.service'
+import { ProfileSettingsService } from './domain/profile-settings.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -75,6 +76,7 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
     CommunityForumComposerPageService,
     CommunityEditPageService,
     ProfileEditPageService,
+    ProfileSettingsService,
     DomainService,
     CommunityMembershipService,
     UploadsService,
