@@ -2,9 +2,9 @@ import type { Profile } from '@nexus/common'
 
 export type ProfileSwitcherProps = {
   profiles: Profile[]
+  hasProfiles: boolean
   currentProfileId: string | null
   isOpen: boolean
-  isRequestPending: boolean
   isSelectionPending: boolean
   isSelectionError: boolean
   profilesLoading: boolean

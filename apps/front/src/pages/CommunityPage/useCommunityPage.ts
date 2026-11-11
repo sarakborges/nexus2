@@ -1,136 +1,74 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
-import { useCommunityAccess, useCommunityByUrl } from '@/Hooks/Community'
 import { ROUTES } from '@/Constants/routes'
-import { getCommunityForumTopics } from '@/Services/CommunityForum'
-import {
-  getCommunityMembers,
-  getPendingCommunityMembers
-} from '@/Services/CommunityRelationship'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { getCommunityPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import type { UseCommunityPageResult } from './useCommunityPage.types'
 
 export function useCommunityPage(): UseCommunityPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)
 
-  const communityQuery = useCommunityByUrl({
-    url: requestedUrl,
-    viewerUserId: session?.user.id ?? null
+  const communityPageQuery = useQuery({
+    queryKey: queryKeys.communityPage(requestedUrl, viewerUserId, currentProfileId),
+    queryFn: () => getCommunityPage(requestedUrl),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
-  const {
-    relationshipsQuery,
-    relationships,
-    isOwner,
-    managementRelationship
-  } = useCommunityAccess({
-    communityId: community?.id ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds: session?.user.profiles ?? []
-  })
-  const privateMembership = relationships.some((record) =>
-    ['owner', 'moderator', 'connection'].includes(record.type)
-  )
-  const canViewMembers = community?.privacy !== 'private' || privateMembership
-  const canEditCommunity = isOwner
-  const pendingActor = managementRelationship
-  const pendingRequestsQuery = useQuery({
-    queryKey: queryKeys.pendingCommunityMembers(
-      community?.id ?? '',
-      pendingActor?.profiles[0] ?? '',
-      1,
-      1,
-      session?.user.id ?? null
-    ),
-    queryFn: () =>
-      getPendingCommunityMembers(community!.id, pendingActor!.profiles[0], {
-        page: 1,
-        pageSize: 1
-      }),
-    enabled: Boolean(community?.id && pendingActor)
-  })
-  const membersQuery = useQuery({
-    queryKey: queryKeys.communityMembers(
-      community?.id ?? '',
-      'all',
-      1,
-      16,
-      currentProfileId ?? undefined,
-      session?.user.id ?? null
-    ),
-    queryFn: () =>
-      getCommunityMembers(
-        community!.id,
-        'all',
-        { page: 1, pageSize: 16 },
-        currentProfileId ?? undefined
+  const page = communityPageQuery.data
+  const community = page?.community
+  const currentProfileType = page?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && communityPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (communityPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const members = page?.members.items ?? []
+  const memberCount = page?.members.totalItems
+  const forumTopics = page?.forumTopics.items ?? []
+  const viewerRelationship = page?.viewerRelationship ?? null
+  const forumAuthorsById = useMemo(
+    () =>
+      new Map(
+        (page?.forumAuthors ?? []).map(
+          (profile) => [profile.id, profile] as const
+        )
       ),
-    enabled: Boolean(
-      community?.id && relationshipsQuery.isSuccess && canViewMembers
-    )
-  })
+    [page?.forumAuthors]
+  )
 
-  const members = membersQuery.data?.items ?? []
-  const memberCount = membersQuery.data?.totalItems
   const openEditCommunity = () => {
-    if (community) {
+    if (community && typeCompatibility.canInteract) {
       navigate(ROUTES.community + '/' + community.url + '/edit')
     }
   }
 
-  const forumTopicsQuery = useQuery({
-    queryKey: queryKeys.communityForumTopics(community?.id ?? '', 1, 20, session?.user.id ?? null),
-    queryFn: () =>
-      getCommunityForumTopics(community!.id, { page: 1, pageSize: 20 }),
-    enabled: Boolean(community?.id && relationshipsQuery.isSuccess)
-  })
-  const forumTopics = useMemo(
-    () => forumTopicsQuery.data?.items ?? [],
-    [forumTopicsQuery.data?.items]
-  )
-  const forumAuthorIds = useMemo(
-    () => [...new Set(forumTopics.map((topic) => topic.profileId))].sort(),
-    [forumTopics]
-  )
-  const {
-    profilesQuery: forumAuthorsQuery,
-    profilesById: forumAuthorsById
-  } = useProfilesByIds(forumAuthorIds)
-
   return {
     requestedUrl,
-    communityQuery,
+    communityPageQuery,
+    isAuthInitialized,
     community,
+    viewerRelationship,
     typeCompatibility,
     canInteract: typeCompatibility.canInteract,
-    relationshipsQuery,
-    canViewMembers,
-    canEditCommunity,
+    canViewMembers: page?.canViewMembers ?? false,
+    canEditCommunity: Boolean(page?.canEditCommunity && typeCompatibility.canInteract),
     openEditCommunity,
+    pendingRequestCount: typeCompatibility.canInteract ? (page?.pendingRequestCount ?? 0) : 0,
     members,
     memberCount,
-    pendingActor,
-    pendingRequestsQuery,
-    membersQuery,
-    forumTopicsQuery,
     forumTopics,
-    forumAuthorIds,
-    forumAuthorsQuery,
     forumAuthorsById
   }
 }

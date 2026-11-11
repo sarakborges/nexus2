@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -15,19 +16,24 @@ export function ProfileCommunitiesPage() {
   const { t } = useTranslations()
   const {
     normalized,
-    profileQuery,
+    isAuthInitialized,
+    profileDirectoryQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     page,
     pageSize,
     setPage,
-    communitiesQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   } = useProfileCommunitiesPage()
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -35,19 +41,24 @@ export function ProfileCommunitiesPage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  }
+  if (profileDirectoryQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileDirectoryQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!profile) return <NotFoundPage />
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="communities" />}
+      sidebar={<ProfileSidebar profile={profile} active="communities" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
         <header className="account-card__header">
@@ -55,19 +66,20 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
-        <RequestState isFetching={profileQuery.isFetching} />
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
           </p>
         )}
         <RequestState
-          isLoading={communitiesQuery.isLoading}
-          isFetching={communitiesQuery.isFetching}
-          isError={communitiesQuery.isError}
-          isEmpty={communitiesQuery.isSuccess && totalItems === 0}
+          isLoading={profileDirectoryQuery.isLoading}
+          isFetching={profileDirectoryQuery.isFetching}
+          isError={profileDirectoryQuery.isError}
+          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-          onRetry={() => void communitiesQuery.refetch()}
+          onRetry={() => void profileDirectoryQuery.refetch()}
         >
           <EntityDirectoryGrid
             entries={communities.map((community) => ({

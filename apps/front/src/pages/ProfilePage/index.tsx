@@ -1,10 +1,10 @@
-import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
 import { RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
 import { useProfilePage } from './useProfilePage'
 
 import '../AuthenticatedPage.style.scss'
@@ -14,12 +14,12 @@ export function ProfilePage() {
   const { t } = useTranslations()
   const {
     requestedUrl,
-    profileQuery,
+    isAuthInitialized,
+    profilePageQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     canInteract,
-    friendsQuery,
-    communitiesQuery,
     friends,
     communities,
     isOwner,
@@ -27,7 +27,7 @@ export function ProfilePage() {
   } = useProfilePage()
 
   if (!requestedUrl) return <NotFoundPage />
-  if (profileQuery.isLoading) {
+  if (!isAuthInitialized || profilePageQuery.isLoading) {
     return (
       <main className="social-page">
         <div className="social-page__state">
@@ -36,11 +36,14 @@ export function ProfilePage() {
       </main>
     )
   }
-  if (profileQuery.isError) {
+  if (profilePageQuery.isError) {
     return (
       <main className="social-page">
         <div className="social-page__state">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profilePageQuery.refetch()}
+          />
         </div>
       </main>
     )
@@ -55,11 +58,12 @@ export function ProfilePage() {
             profile={profile}
             active="profile"
             showRelationshipActions={canInteract}
+            relationship={viewerRelationship}
           />
         </aside>
 
         <section className="social-page__main-column">
-          <RequestState isFetching={profileQuery.isFetching} />
+          <RequestState isFetching={profilePageQuery.isFetching} />
           {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
             <p className="profile-type-notice" role="alert">
               {t('PROFILE_TYPE_MISMATCH_NOTICE')}
@@ -96,15 +100,15 @@ export function ProfilePage() {
         <aside className="social-page__right-column">
           <ProfilePageEntityPreview
             title={t('PROFILE_FRIENDS_TITLE')}
-            totalItems={friendsQuery.data?.totalItems}
+            totalItems={profilePageQuery.data?.friends.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/friends`}
             allLabel={t('PROFILE_FRIENDS_LINK')}
-            isLoading={friendsQuery.isLoading}
-            isFetching={friendsQuery.isFetching}
-            isError={friendsQuery.isError}
-            isSuccess={friendsQuery.isSuccess}
+            isLoading={profilePageQuery.isLoading}
+            isFetching={profilePageQuery.isFetching}
+            isError={profilePageQuery.isError}
+            isSuccess={profilePageQuery.isSuccess}
             emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-            onRetry={() => void friendsQuery.refetch()}
+            onRetry={() => void profilePageQuery.refetch()}
             entries={friends.map((friend) => ({
               id: friend.id,
               name: friend.name,
@@ -114,15 +118,15 @@ export function ProfilePage() {
           />
           <ProfilePageEntityPreview
             title={t('PROFILE_COMMUNITIES_TITLE')}
-            totalItems={communitiesQuery.data?.totalItems}
+            totalItems={profilePageQuery.data?.communities.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/communities`}
             allLabel={t('PROFILE_COMMUNITIES_LINK')}
-            isLoading={communitiesQuery.isLoading}
-            isFetching={communitiesQuery.isFetching}
-            isError={communitiesQuery.isError}
-            isSuccess={communitiesQuery.isSuccess}
+            isLoading={profilePageQuery.isLoading}
+            isFetching={profilePageQuery.isFetching}
+            isError={profilePageQuery.isError}
+            isSuccess={profilePageQuery.isSuccess}
             emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-            onRetry={() => void communitiesQuery.refetch()}
+            onRetry={() => void profilePageQuery.refetch()}
             entries={communities.map((community) => ({
               id: community.id,
               name: community.name,

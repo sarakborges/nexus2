@@ -1,17 +1,15 @@
-import { useQueryClient } from '@tanstack/react-query'
-
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
 import { ROUTES } from '@/Constants/routes'
-import { useCommunityAccess, useCommunityByUrl, useUpdateCommunityMutation } from '@/Hooks/Community'
+import { useUpdateCommunityMutation } from '@/Hooks/Community'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
+import { getCommunityEditPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -23,20 +21,33 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
-  const communityQuery = useCommunityByUrl({ url: requestedUrl })
-  const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
-  )
-  const { relationshipsQuery, ownerProfileId } = useCommunityAccess({
-    communityId: community?.id ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds: session?.user.profiles ?? [],
-    enabled: Boolean(community?.id && session?.user.id)
+  const communityEditPageQuery = useQuery({
+    queryKey: queryKeys.communityEditPage(
+      requestedUrl,
+      viewerUserId,
+      currentProfileId
+    ),
+    queryFn: () => getCommunityEditPage(requestedUrl),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
+    staleTime: 30 * 1000
   })
+  const community = communityEditPageQuery.data?.community
+  const ownerProfileId = communityEditPageQuery.data?.ownerProfileId ?? null
+  const currentProfileType =
+    communityEditPageQuery.data?.currentProfileType ?? null
+  const typeCompatibility = {
+    isChecking: Boolean(currentProfileId && communityEditPageQuery.isLoading),
+    isCompatible:
+      !currentProfileId ||
+      (communityEditPageQuery.isSuccess &&
+        currentProfileType === (community?.type ?? 'social'))
+  }
   const initialForm = useMemo(
     () =>
       community
@@ -59,9 +70,15 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const updateCommunityPicture = (picture: string) => {
     if (!community) return
     queryClient.setQueryData(
-      queryKeys.communities.byUrl(community.url),
-      (current: typeof community | undefined) =>
-        current ? { ...current, picture } : current
+      queryKeys.communityEditPage(
+        requestedUrl,
+        viewerUserId,
+        currentProfileId
+      ),
+      (current: typeof communityEditPageQuery.data) =>
+        current?.community
+          ? { ...current, community: { ...current.community, picture } }
+          : current
     )
   }
 
@@ -102,11 +119,11 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
 
   return {
     requestedUrl,
-    communityQuery,
+    communityEditPageQuery,
     community,
     typeCompatibility,
-    relationshipsQuery,
     ownerProfileId,
+    isAuthInitialized,
     form,
     errorMessage,
     isSubmitting: updateMutation.isPending,

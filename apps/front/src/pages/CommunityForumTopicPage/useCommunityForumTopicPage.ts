@@ -1,27 +1,24 @@
-import { useQuery } from '@tanstack/react-query'
-
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { useQuery } from '@tanstack/react-query'
 
 import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityForumTopic } from '@/Services/CommunityForum'
-import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
 import {
   useCreateCommunityForumReplyMutation,
   useDeleteCommunityForumReplyMutation,
   useDeleteCommunityForumTopicMutation,
   useModerateCommunityForumTopicMutation
 } from '@/Hooks/CommunityForum'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { getCommunityForumTopicPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { subscribeToCommunityForumTopic } from '@/Services/Realtime'
 
 import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicPage.types'
 
@@ -31,62 +28,65 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-  const profileIds = session?.user.profiles ?? []
+  const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const normalized = normalizeEntityUrl(url)
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination('page', 'activity-asc')
   const [replyContent, setReplyContent] = useState('')
 
-  const communityQuery = useCommunityByUrl({
-    url: normalized,
-    viewerUserId: session?.user.id ?? null
-  })
-  const community = communityQuery.data
-  const {
-    relationshipsQuery,
-    ownedProfilesQuery,
-    forumProfileId,
-    isMember,
-    isStaff
-  } = useCommunityForumAccess({
-    communityId: community?.id ?? null,
-    communityType: community?.type ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds,
-    currentProfileId
-  })
-  const canInteract = isMember
-  const topicQuery = useQuery({
-    queryKey: queryKeys.communityForumTopic(
-      community?.id ?? '',
+  const topicPageQuery = useQuery({
+    queryKey: queryKeys.communityForumTopicPage(
+      normalized,
       topicId ?? '',
       page,
       pageSize,
-      session?.user.id ?? null
+      viewerUserId,
+      currentProfileId,
+      query,
+      sort
     ),
     queryFn: () =>
-      getCommunityForumTopic(community!.id, topicId!, { page, pageSize }),
-    enabled: Boolean(community?.id && topicId)
+      getCommunityForumTopicPage(normalized, topicId!, { page, pageSize, query, sort }),
+    enabled: Boolean(normalized && topicId && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const detail = topicQuery.data
+  useEffect(() => {
+    if (!topicId || !topicPageQuery.isSuccess) return
+
+    return subscribeToCommunityForumTopic(topicId, () => {
+      void topicPageQuery.refetch()
+    })
+  }, [topicId, topicPageQuery.isSuccess, topicPageQuery.refetch])
+
+  const pageData = topicPageQuery.data
+  const community = pageData?.community
+  const detail = pageData?.detail
   const topic = detail?.topic
-  const authorIds = useMemo(
+  const forumProfileId = pageData?.forumProfileId ?? null
+  const viewerRelationship = pageData?.viewerRelationship ?? null
+  const isMember = pageData?.isMember ?? false
+  const isStaff = pageData?.isStaff ?? false
+  const currentProfileType = pageData?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && topicPageQuery.isLoading)
+  const isCompatible =
+    !currentProfileId ||
+    (topicPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const canInteract = isMember && typeCompatibility.canInteract && !isChecking
+  const authorsById = useMemo(
     () =>
-      [
-        ...new Set(
-          [
-            topic?.profileId,
-            ...(detail?.replies.items ?? []).map((reply) => reply.profileId)
-          ].filter((id): id is string => Boolean(id))
+      new Map(
+        (pageData?.authors ?? []).map(
+          (profile) => [profile.id, profile] as const
         )
-      ].sort(),
-    [topic?.profileId, detail?.replies.items]
+      ),
+    [pageData?.authors]
   )
-  const {
-    profilesQuery: authorsQuery,
-    profilesById: authorsById
-  } = useProfilesByIds(authorIds)
 
   const topicAuthor = topic ? authorsById.get(topic.profileId) : undefined
   const canDeleteTopic = Boolean(
@@ -115,7 +115,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const deleteReplyMutation = useDeleteCommunityForumReplyMutation()
 
   const togglePinned = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
     moderationMutation.mutate(
       {
         communityId: community.id,
@@ -130,7 +130,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const toggleLocked = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
     moderationMutation.mutate(
       {
         communityId: community.id,
@@ -145,7 +145,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const deleteTopic = () => {
-    if (!community || !topic || !forumProfileId) return
+    if (!canInteract || !community || !topic || !forumProfileId) return
     deleteTopicMutation.mutate(
       {
         communityId: community.id,
@@ -162,7 +162,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     )
   }
   const deleteReply = (replyId: string) => {
-    if (!community || !forumProfileId) return
+    if (!canInteract || !community || !forumProfileId) return
     deleteReplyMutation.mutate(
       { communityId: community.id, replyId, profileId: forumProfileId },
       {
@@ -176,12 +176,13 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     event.preventDefault()
     if (
       !hasRichTextContent(replyContent) ||
+      replyContent.length > 8000 ||
       !isMember ||
       !canInteract ||
       topic?.isLocked
-    )
-      return
+    ) return
     if (!community || !topic || !forumProfileId) return
+
     try {
       await replyMutation.mutateAsync({
         communityId: community.id,
@@ -204,24 +205,26 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     replyContent,
     setReplyContent,
-    communityQuery,
+    topicPageQuery,
     community,
-    relationshipsQuery,
-    ownedProfilesQuery,
+    viewerRelationship,
+    typeCompatibility,
     isMember,
     isStaff,
     canInteract,
-    topicQuery,
     detail,
     topic,
     topicAuthor,
     canDeleteTopic,
     replyItems,
-    authorsQuery,
     hasReplyError: replyMutation.isError,
-    canSubmitReply: hasRichTextContent(replyContent),
+    canSubmitReply: hasRichTextContent(replyContent) && replyContent.length <= 8000,
     isSendingReply: replyMutation.isPending,
     isUpdatingTopic: moderationMutation.isPending,
     isDeletingTopic: deleteTopicMutation.isPending,

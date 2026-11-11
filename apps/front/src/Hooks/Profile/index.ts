@@ -1,13 +1,11 @@
 export { useCreateProfileMutation } from './useCreateProfileMutation.hook'
 export { useUpdateProfileMutation } from './useUpdateProfileMutation.hook'
-export { useProfileDirectoryContext } from './useProfileDirectoryContext.hook'
 
 export type { UseCreateProfileMutationResult } from './useCreateProfileMutation.types'
 export type {
   UpdateProfileMutationVariables,
   UseUpdateProfileMutationResult
 } from './useUpdateProfileMutation.types'
-export type { UseProfileDirectoryContextResult } from './useProfileDirectoryContext.types'
 export { useProfilesByIds } from './useProfilesByIds.hook'
 export type { UseProfilesByIdsResult } from './useProfilesByIds.types'
 export { useProfileByUrl } from './useProfileByUrl.hook'

@@ -66,15 +66,12 @@ export function CommunityDetailsFields({
           id="community-about"
           value={about}
           onChange={onAboutChange}
-          maxTextLength={500}
+          maxHtmlLength={8000}
           imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
           imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
           onUploadImage={onUploadImage}
           placeholder={t('RICH_TEXT_PLACEHOLDER')}
         />
-        <p className="account-card__description">
-          {t('COMMUNITY_ABOUT_MAX_LENGTH')}
-        </p>
       </div>
     </div>
   )

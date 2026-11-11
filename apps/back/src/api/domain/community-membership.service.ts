@@ -171,6 +171,8 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
+            communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: [
               ...all.filter(record =>
                 record.profiles[0] !== targetId || record.profiles[1] !== communityId
@@ -185,6 +187,7 @@ export class CommunityMembershipService {
   }
 
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -215,6 +218,8 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
+            communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.filter(record =>
               record.profiles[0] !== targetId || record.profiles[1] !== communityId
             )
@@ -247,6 +252,8 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
+            communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.map(record =>
               record.profiles[0] === targetId && record.profiles[1] === communityId
                 ? { ...record, type: 'connection', updatedAt: now }
@@ -279,6 +286,8 @@ export class CommunityMembershipService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [actorId, newOwnerId], now),
+            communities: this.access.touchCommunityActivity(communities, communityId, now),
             community_relationships: all.map(record => {
               if (record.profiles[1] !== communityId) return record
               if (record.profiles[0] === actorId) return { ...record, type: 'moderator', updatedAt: now }

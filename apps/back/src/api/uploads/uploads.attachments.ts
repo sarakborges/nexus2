@@ -32,6 +32,33 @@ export function attachEditorImages(
     : item)
 }
 
+export function detachEditorImages(
+  records: UploadedFileRecord[],
+  html: string,
+  resourceType: UploadResourceType,
+  resourceId: string
+): UploadedFileRecord[] {
+  const ids = new Set([...html.matchAll(new RegExp(UPLOAD_REFERENCE.source, 'gi'))]
+    .map(match => match[2]))
+
+  if (!ids.size) return records
+
+  return records.map(item =>
+    ids.has(item.id) &&
+    item.purpose === 'editor-image' &&
+    item.resourceType === resourceType &&
+    item.resourceId === resourceId
+      ? {
+          ...item,
+          resourceType: null,
+          resourceId: null,
+          messageFromProfileId: null,
+          messageToProfileId: null
+        }
+      : item
+  )
+}
+
 export function detachResourceAttachments(
   records: UploadedFileRecord[],
   userId: string | null,

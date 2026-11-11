@@ -16,6 +16,7 @@ import { useTranslations } from '@/Hooks/Language'
 export function AccountMenu({
   accountName,
   profiles,
+  hasProfiles,
   currentProfileId,
   currentProfile,
   editProfileRoute,
@@ -23,7 +24,6 @@ export function AccountMenu({
   profilesError,
   profilesSuccess,
   isProfileSwitcherOpen,
-  isRequestPending,
   isSelectionPending,
   isSelectionError,
   isSigningOut,
@@ -49,9 +49,9 @@ export function AccountMenu({
 
       <ProfileSwitcher
         profiles={profiles}
+        hasProfiles={hasProfiles}
         currentProfileId={currentProfileId}
         isOpen={isProfileSwitcherOpen}
-        isRequestPending={isRequestPending}
         isSelectionPending={isSelectionPending}
         isSelectionError={isSelectionError}
         profilesLoading={profilesLoading}
@@ -101,7 +101,6 @@ export function AccountMenu({
       <button
         className="floating-navigation__menu-item"
         type="button"
-        disabled={isRequestPending}
         role="menuitem"
         onClick={onOpenSettings}
       >
@@ -112,7 +111,7 @@ export function AccountMenu({
         className="floating-navigation__menu-item floating-navigation__menu-item--danger"
         type="button"
         role="menuitem"
-        disabled={isRequestPending || isSigningOut}
+        disabled={isSigningOut}
         onClick={onSignOut}
       >
         <FiLogOut aria-hidden="true" />

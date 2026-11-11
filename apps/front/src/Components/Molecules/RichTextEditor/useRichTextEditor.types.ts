@@ -1,13 +1,9 @@
 import type { MouseEvent } from 'react'
 import type { RichTextEditorProps } from './RichTextEditor.types'
 
-export type UseRichTextEditorOptions = Pick<
-  RichTextEditorProps,
-  'onChange' | 'maxTextLength'
->
+export type UseRichTextEditorOptions = Pick<RichTextEditorProps, 'onChange'>
 
 export type UseRichTextEditorController = {
-  isRequestPending: boolean
   isImageUploading: boolean
   isHtmlMode: boolean
   setImageUploading: (isUploading: boolean) => void

@@ -1,49 +1,79 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useParams } from 'react-router'
 
-import { useProfileDirectoryContext } from '@/Hooks/Profile'
-import { getProfileCommunities } from '@/Services/Community'
+import { useUrlPagination } from '@/Hooks/useUrlPagination'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
+import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseProfileCommunitiesPageResult } from './useProfileCommunitiesPage.types'
 
 export function useProfileCommunitiesPage(): UseProfileCommunitiesPageResult {
-  const {
-    normalized,
-    profileQuery,
-    profile,
-    typeCompatibility,
-    page,
-    pageSize,
-    setPage
-  } = useProfileDirectoryContext()
+  const { url } = useParams<{ url: string }>()
+  const normalized = normalizeEntityUrl(url)
+  const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.communities.byProfile(
-      profile?.id ?? '',
+  const profileDirectoryQuery = useQuery({
+    queryKey: queryKeys.profileDirectoryPage(
+      normalized,
+      'communities',
       page,
-      pageSize
+      pageSize,
+      viewerUserId,
+      currentProfileId,
+      query,
+      sort
     ),
-    queryFn: () => getProfileCommunities(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
+    queryFn: () =>
+      getProfileDirectoryPage(normalized, 'communities', { page, pageSize, query, sort }),
+    enabled: Boolean(normalized && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const communities = communitiesQuery.data?.items ?? []
-  const totalItems = communitiesQuery.data?.totalItems ?? 0
+  const profile = profileDirectoryQuery.data?.profile
+  const viewerRelationship = profileDirectoryQuery.data?.viewerRelationship ?? null
+  const currentProfileType = profileDirectoryQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profileDirectoryQuery.isLoading)
+  const isCompatible = !currentProfileId || (profileDirectoryQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const communities =
+    profileDirectoryQuery.data?.kind === 'communities'
+      ? profileDirectoryQuery.data.communities.items
+      : []
+  const totalItems =
+    profileDirectoryQuery.data?.kind === 'communities'
+      ? profileDirectoryQuery.data.communities.totalItems
+      : 0
 
   useEffect(() => {
-    if (communitiesQuery.data && communitiesQuery.data.page !== page)
-      setPage(communitiesQuery.data.page)
-  }, [communitiesQuery.data, page, setPage])
+    const result = profileDirectoryQuery.data
+    if (result?.kind === 'communities' && result.communities.page !== page) {
+      setPage(result.communities.page)
+    }
+  }, [profileDirectoryQuery.data, page, setPage])
 
   return {
     normalized,
-    profileQuery,
+    isAuthInitialized,
+    profileDirectoryQuery,
     profile,
+    viewerRelationship,
     typeCompatibility,
     page,
     pageSize,
     setPage,
-    communitiesQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   }

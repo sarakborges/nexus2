@@ -7,7 +7,7 @@
 - `apps/back`: NestJS domain API. Owns authentication, authorization, validation, domain services and persistence.
 - `packages/common`: shared domain models, DTO contracts and pagination types.
 
-The three applications are deployed together in one Vercel project using Vercel Services. The BFF is the only public API service; the domain backend remains private and is reached through a Vercel service binding.
+The three applications are deployed together in one Vercel project using Vercel Services. Only community forum topic pages use live updates: the frontend opens a Supabase Realtime WebSocket for the active topic. Other views still load normally when opened, but do not refresh in the background on a timer, window focus or network reconnect. Explicit mutations continue to refresh the data they change. The BFF is the only public API service; the domain backend remains private and is reached through a Vercel service binding.
 
 ## Development
 
@@ -70,12 +70,12 @@ Create the following variables in the Vercel project for Preview and Production:
 - `JWT_ACCESS_TTL_SECONDS=900`.
 - `JWT_REFRESH_TTL_SECONDS=2592000`.
 - `SUPABASE_URL`: Supabase project URL.
-- `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key.
+- `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key, also used by the topic page's public Realtime channel. The frontend receives this public key and the project URL from the backend's `/api/realtime/config` endpoint; do not use the Supabase secret key here.
 - `SUPABASE_API_SECRET`: the existing independent secret used only by the Nexus database RPCs.
-- `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
+- `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations and to publish forum-topic change events to Realtime. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
 - `CRON_SECRET`: a long random value shared by the BFF and backend to authenticate the daily cleanup cron.
 
-The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
+The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Forum topic broadcasts carry only a change notification; the topic's content is always loaded through the existing authorized backend API. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
 
 ### Persistent storage
 
@@ -87,6 +87,7 @@ Apply the SQL files in order against the Supabase project:
 2. `apps/back/sql/002_nexus_collection_private_rls.sql` removes the initial public RPC functions, adds a private header-validation helper, and enables narrowly scoped RLS policies.
 3. `apps/back/sql/003_nexus_storage_buckets.sql` creates the permanent public avatar bucket and temporary private editor-image bucket.
 4. `apps/back/sql/004_atomic_collection_transactions.sql` adds the authenticated, atomic multi-collection commit function used by profile and community creation.
+5. `apps/back/sql/005_selective_collection_reads.sql` adds an RLS-protected, security-invoker RPC that returns only records matching requested IDs.
 
 The migrations do not modify the existing tracker tables or migrations. The `public.nexus_collections` table has RLS enabled. The `anon` role can reach only the collection operations that pass the RLS helper check, which reads the backend-only `x-nexus-api-secret` HTTP header. The helper lives in the unexposed `private` schema; no public `SECURITY DEFINER` RPC is left for the application. The database stores only the SHA-256 hash of the API secret.
 
@@ -100,7 +101,7 @@ Editor image references are stored in sanitized HTML as Nexus upload routes. Acc
 
 `SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter continues to protect only the private Nexus collection table. Never expose either secret in frontend environment variables or send it from the browser.
 
-The production adapter still reads and writes each domain collection as one JSONB array, so each update transfers the full collection. Single-collection changes use optimistic compare-and-swap; multi-collection transactions use the PostgreSQL function introduced by migration 004, which checks every collection version and commits all changes in one database transaction. Profile creation (profile + account link) and community creation (community + owner membership) use this path. Database-level uniqueness constraints, row-level domain storage and server-side pagination are still pending; normalize the collections before substantial traffic.
+The production adapter stores each domain collection as one JSONB array. Mutations still read and write the full collection and remain a scaling limitation. ID-based lookups can use the selective-read RPC introduced by migration 005 to return only matching records, reducing response size and backend decoding. PostgreSQL still enumerates the JSONB array to find those records, so this does not remove the database-side scan; row-level domain storage and server-side pagination remain pending. Single-collection changes use optimistic compare-and-swap; multi-collection transactions use the PostgreSQL function introduced by migration 004, which checks every collection version and commits all changes in one database transaction. Profile creation (profile + account link) and community creation (community + owner membership) use this path. Database-level uniqueness constraints, row-level domain storage and server-side pagination are still pending; normalize the collections before substantial traffic.
 
 The local JSON adapter serializes transactions within the Node.js process and restores already-replaced files if a write fails. It is a development fallback, not a multi-process or crash-atomic production database.
 

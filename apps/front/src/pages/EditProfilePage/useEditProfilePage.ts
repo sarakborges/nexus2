@@ -1,5 +1,5 @@
-import type { Profile } from '@nexus/common'
-import { useQueryClient } from '@tanstack/react-query'
+import type { Profile, ProfileEditPageData } from '@nexus/common'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { type FormEvent, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
@@ -7,12 +7,12 @@ import { useNavigate, useParams } from 'react-router'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { ROUTES } from '@/Constants/routes'
-import { useProfileByUrl, useUpdateProfileMutation } from '@/Hooks/Profile'
+import { useUpdateProfileMutation } from '@/Hooks/Profile'
 import { useEntityFormDraft } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { getApiErrorCode } from '@/Services/Http/api'
+import { getProfileEditPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
@@ -24,14 +24,32 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
-  const profileQuery = useProfileByUrl({ url: requestedUrl })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
+  const profileEditPageQuery = useQuery({
+    queryKey: queryKeys.profileEditPage(
+      requestedUrl,
+      viewerUserId,
+      currentProfileId
+    ),
+    queryFn: () => getProfileEditPage(requestedUrl),
+    enabled: Boolean(requestedUrl && isAuthInitialized),
+    staleTime: 30 * 1000
+  })
+  const profile = profileEditPageQuery.data?.profile
+  const currentProfileType =
+    profileEditPageQuery.data?.currentProfileType ?? null
+  const typeCompatibility = {
+    isChecking: Boolean(currentProfileId && profileEditPageQuery.isLoading),
+    isCompatible:
+      !currentProfileId ||
+      (profileEditPageQuery.isSuccess &&
+        currentProfileType === (profile?.type ?? 'social'))
+  }
   const initialForm = useMemo(
     () =>
       profile
@@ -55,6 +73,13 @@ export function useEditProfilePage(): UseEditProfilePageResult {
     queryClient.setQueryData<Profile>(
       queryKeys.profiles.byUrl(profile.url),
       (current) => (current ? { ...current, picture } : current)
+    )
+    queryClient.setQueryData<ProfileEditPageData>(
+      queryKeys.profileEditPage(requestedUrl, viewerUserId, currentProfileId),
+      (current) =>
+        current?.profile
+          ? { ...current, profile: { ...current.profile, picture } }
+          : current
     )
   }
 
@@ -91,7 +116,8 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   return {
     requestedUrl,
     session,
-    profileQuery,
+    isAuthInitialized,
+    profileEditPageQuery,
     profile,
     typeCompatibility,
     form,
