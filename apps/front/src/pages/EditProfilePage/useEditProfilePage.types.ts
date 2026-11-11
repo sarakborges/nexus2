@@ -1,17 +1,20 @@
-import type { AuthSession, Profile } from '@nexus/common'
+import type { AuthSession, Profile, ProfileEditPageData } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { FormEvent } from 'react'
 
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import type { uploadEditorImage } from '@/Services/Uploads'
 import type { ProfileForm } from './EditProfilePage.types'
 
 export type UseEditProfilePageResult = {
   requestedUrl: string
   session: AuthSession | null
-  profileQuery: UseQueryResult<Profile | null>
+  isAuthInitialized: boolean
+  profileEditPageQuery: UseQueryResult<ProfileEditPageData>
   profile: Profile | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+  }
   form: ProfileForm | null
   errorMessage: string
   isSubmitting: boolean

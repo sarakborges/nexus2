@@ -3,6 +3,7 @@ import { HtmlSourceEditor } from './HtmlSourceEditor.component'
 import { RichTextToolbar } from './RichTextToolbar.component'
 import { useRichTextEditor } from './useRichTextEditor'
 import Editor from 'react-simple-wysiwyg'
+import { useTranslations } from '@/Hooks/Language'
 
 import './RichTextEditor.style.scss'
 
@@ -13,11 +14,10 @@ export function RichTextEditor({
   imageButtonLabel,
   imageUploadErrorLabel,
   onUploadImage,
-  maxTextLength,
+  maxHtmlLength,
   placeholder
 }: RichTextEditorProps) {
   const {
-    isRequestPending,
     isImageUploading,
     isHtmlMode,
     setImageUploading,
@@ -25,7 +25,8 @@ export function RichTextEditor({
     closeHtmlMode,
     handleChange,
     handleHtmlModeMouseDown
-  } = useRichTextEditor({ onChange, maxTextLength })
+  } = useRichTextEditor({ onChange })
+  const { t } = useTranslations()
 
   return (
     <div className="rich-text-editor" data-editor-id={id}>
@@ -48,13 +49,13 @@ export function RichTextEditor({
             id={id}
             value={value}
             onChange={handleChange}
-            disabled={isRequestPending}
+            disabled={isImageUploading}
           />
         </div>
       ) : (
         <fieldset
           className="rich-text-editor__fieldset"
-          disabled={isRequestPending || isImageUploading}
+          disabled={isImageUploading}
         >
           <Editor
             id={id}
@@ -76,6 +77,12 @@ export function RichTextEditor({
             />
           </Editor>
         </fieldset>
+      )}
+      {maxHtmlLength !== undefined && (
+        <p className={`rich-text-editor__counter ${value.length > maxHtmlLength ? 'is-over-limit' : ''}`} aria-live="polite">
+          <span>{t('RICH_TEXT_HTML_CHARACTER_COUNT', { count: value.length.toLocaleString(), max: maxHtmlLength.toLocaleString() })}</span>
+          {value.length > maxHtmlLength && <strong>{t('RICH_TEXT_HTML_CHARACTER_LIMIT')}</strong>}
+        </p>
       )}
     </div>
   )

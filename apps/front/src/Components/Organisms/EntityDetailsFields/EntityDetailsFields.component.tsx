@@ -18,7 +18,7 @@ const FIELD_CONFIG: Record<EntityDetailsEntity, EntityDetailsFieldConfig> = {
     urlPlaceholder: 'PROFILE_URL_AUTO_PLACEHOLDER',
     urlHelp: 'PROFILE_URL_AUTO_HELP',
     aboutLabel: 'PROFILE_ABOUT_LABEL',
-    aboutMaxLength: 'PROFILE_ABOUT_MAX_LENGTH'
+    autoComplete: 'nickname'
   },
   community: {
     avatarLabel: 'COMMUNITY_PICTURE_LABEL',
@@ -27,8 +27,7 @@ const FIELD_CONFIG: Record<EntityDetailsEntity, EntityDetailsFieldConfig> = {
     urlLabel: 'COMMUNITY_URL_LABEL',
     urlPlaceholder: 'COMMUNITY_URL_AUTO_PLACEHOLDER',
     urlHelp: 'COMMUNITY_URL_AUTO_HELP',
-    aboutLabel: 'COMMUNITY_ABOUT_LABEL',
-    aboutMaxLength: 'COMMUNITY_ABOUT_MAX_LENGTH'
+    aboutLabel: 'COMMUNITY_ABOUT_LABEL'
   }
 }
 
@@ -70,7 +69,7 @@ export function EntityDetailsFields({
         id={`${entity}-name`}
         label={t(config.nameLabel)}
         type="text"
-        autoComplete={entity === 'profile' ? 'nickname' : undefined}
+        autoComplete={config.autoComplete}
         value={name}
         onChange={(event) => onNameChange(event.target.value)}
         maxLength={80}
@@ -94,15 +93,12 @@ export function EntityDetailsFields({
           id={`${entity}-about`}
           value={about}
           onChange={onAboutChange}
-          maxTextLength={500}
+          maxHtmlLength={8000}
           imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
           imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
           onUploadImage={onUploadImage}
           placeholder={t('RICH_TEXT_PLACEHOLDER')}
         />
-        <p className="account-card__description">
-          {t(config.aboutMaxLength)}
-        </p>
       </div>
     </div>
   )

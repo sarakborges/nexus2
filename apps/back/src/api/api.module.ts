@@ -7,8 +7,22 @@ import { DomainController } from './domain/domain.controller'
 import { DomainService } from './domain/domain.service'
 import { DomainAccessService } from './domain/domain-access.service'
 import { CommunityForumService } from './domain/community-forum.service'
+import { CommunityForumRealtimeService } from './domain/community-forum-realtime.service'
+import { RealtimeController } from './realtime.controller'
 import { ProfileMessageService } from './domain/profile-message.service'
 import { ActivityService } from './domain/activity.service'
+import { HomePageService } from './domain/home-page.service'
+import { ProfilePageService } from './domain/profile-page.service'
+import { CommunityPageService } from './domain/community-page.service'
+import { CommunityForumPageService } from './domain/community-forum-page.service'
+import { CommunityForumTopicPageService } from './domain/community-forum-topic-page.service'
+import { CommunityMembersPageService } from './domain/community-members-page.service'
+import { ProfileMessagesPageService } from './domain/profile-messages-page.service'
+import { ProfileDirectoryPageService } from './domain/profile-directory-page.service'
+import { CommunitiesPageService } from './domain/communities-page.service'
+import { CommunityForumComposerPageService } from './domain/community-forum-composer-page.service'
+import { CommunityEditPageService } from './domain/community-edit-page.service'
+import { ProfileEditPageService } from './domain/profile-edit-page.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -21,7 +35,7 @@ import { UploadsAvatarService } from './uploads/uploads.avatar.service'
 import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
-  controllers: [AuthController, DomainController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumService, ProfileMessageService, ActivityService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  controllers: [AuthController, DomainController, RealtimeController, UploadsController, UploadsInternalController],
+  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumRealtimeService, CommunityForumService, ProfileMessageService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, ProfileEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
 })
 export class ApiModule {}

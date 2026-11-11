@@ -4,16 +4,14 @@ import type {
   CommunityForumReply,
   CommunityForumTopic,
   CommunityForumTopicDetail,
+  CommunityForumTopicPageData,
   CommunityRelationship,
   Profile
 } from '@nexus/common'
-import type {
-  UseQueryResult
-} from '@tanstack/react-query'
+import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
-import type { getCommunityByUrl } from '@/Services/Community'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
 export type CommunityForumReplyViewModel = {
@@ -29,23 +27,29 @@ export type UseCommunityForumTopicPageResult = {
   normalized: string
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: ReturnType<typeof useUrlPagination>['setPage']
   replyContent: string
   setReplyContent: Dispatch<SetStateAction<string>>
-  communityQuery: UseQueryResult<Awaited<ReturnType<typeof getCommunityByUrl>>>
-  community: Community | null | undefined
-  relationshipsQuery: UseQueryResult<CommunityRelationship[]>
-  ownedProfilesQuery: UseQueryResult<Profile[]>
+  topicPageQuery: UseQueryResult<CommunityForumTopicPageData>
+  community: Community | undefined
+  viewerRelationship: CommunityRelationship | null
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   isMember: boolean
   isStaff: boolean
   canInteract: boolean
-  topicQuery: UseQueryResult<CommunityForumTopicDetail>
   detail: CommunityForumTopicDetail | undefined
   topic: CommunityForumTopic | undefined
   topicAuthor: Profile | undefined
   canDeleteTopic: boolean
   replyItems: CommunityForumReplyViewModel[]
-  authorsQuery: UseQueryResult<Profile[]>
   hasReplyError: boolean
   canSubmitReply: boolean
   isSendingReply: boolean

@@ -12,7 +12,7 @@ export type EntityDetailsFieldConfig = {
   urlPlaceholder: TranslationKey
   urlHelp: TranslationKey
   aboutLabel: TranslationKey
-  aboutMaxLength: TranslationKey
+  autoComplete?: string
 }
 
 type SharedEntityDetailsFieldsProps = {

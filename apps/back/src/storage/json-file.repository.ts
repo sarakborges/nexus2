@@ -14,6 +14,20 @@ export class JsonFileRepository implements DataRepository {
     return this.withLocks([path], async () => this.readUnlocked<T>(path))
   }
 
+  async readByIds<T extends { id: string }>(
+    collection: string,
+    ids: readonly string[]
+  ): Promise<T[]> {
+    const path = this.getPath(collection)
+    const requestedIds = new Set(ids)
+    if (requestedIds.size === 0) return []
+
+    return this.withLocks([path], async () => {
+      const records = await this.readUnlocked<T>(path)
+      return records.filter(record => requestedIds.has(record.id))
+    })
+  }
+
   async update<T>(collection: string, updater: (records: T[]) => T[]): Promise<T[]> {
     const path = this.getPath(collection)
     return this.withLocks([path], async () => {

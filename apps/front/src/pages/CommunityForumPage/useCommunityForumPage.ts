@@ -1,49 +1,59 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router'
 
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { getCommunityForumTopics } from '@/Services/CommunityForum'
-import { useCommunityByUrl, useCommunityForumAccess } from '@/Hooks/Community'
-import { useProfilesByIds } from '@/Hooks/Profile'
+import { getCommunityForumPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
 
 export function useCommunityForumPage(): UseCommunityForumPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
   const session = useAuthStore((state) => state.session)
-  const profileIds = session?.user.profiles ?? []
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const normalized = normalizeEntityUrl(url)
-  const { page, pageSize, setPage } = useUrlPagination()
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
 
-  const communityQuery = useCommunityByUrl({
-    url: normalized,
-    viewerUserId: session?.user.id ?? null
+  const forumPageQuery = useQuery({
+    queryKey: queryKeys.communityForumPage(
+      normalized,
+      page,
+      pageSize,
+      viewerUserId,
+      currentProfileId,
+      query,
+      sort
+    ),
+    queryFn: () => getCommunityForumPage(normalized, { page, pageSize, query, sort }),
+    enabled: Boolean(normalized && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const community = communityQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    community?.type ?? 'social'
+  const community = forumPageQuery.data?.community
+  const currentProfileType = forumPageQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && forumPageQuery.isLoading)
+  const isCompatible = !currentProfileId || (forumPageQuery.isSuccess && currentProfileType === (community?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const viewerRelationship = forumPageQuery.data?.viewerRelationship ?? null
+  const topics = forumPageQuery.data?.topics.items ?? []
+  const authorsById = useMemo(
+    () =>
+      new Map(
+        (forumPageQuery.data?.authors ?? []).map(
+          (profile) => [profile.id, profile] as const
+        )
+      ),
+    [forumPageQuery.data?.authors]
   )
-  const {
-    relationshipsQuery,
-    ownedProfilesQuery,
-    canPublish
-  } = useCommunityForumAccess({
-    communityId: community?.id ?? null,
-    communityType: community?.type ?? null,
-    viewerUserId: session?.user.id ?? null,
-    profileIds,
-    currentProfileId,
-    relationshipsEnabled: Boolean(session?.user.id)
-  })
 
   const openCreateTopic = () => {
     if (community) {
@@ -51,45 +61,25 @@ export function useCommunityForumPage(): UseCommunityForumPageResult {
     }
   }
 
-  const topicsQuery = useQuery({
-    queryKey: queryKeys.communityForumTopics(
-      community?.id ?? '',
-      page,
-      pageSize,
-      session?.user.id ?? null
-    ),
-    queryFn: () => getCommunityForumTopics(community!.id, { page, pageSize }),
-    enabled: Boolean(community?.id)
-  })
-  const topics = useMemo(
-    () => topicsQuery.data?.items ?? [],
-    [topicsQuery.data?.items]
-  )
-  const authorIds = useMemo(
-    () => [...new Set(topics.map((topic) => topic.profileId))].sort(),
-    [topics]
-  )
-  const {
-    profilesQuery: authorsQuery,
-    profilesById: authorsById
-  } = useProfilesByIds(authorIds)
-
   return {
     normalized,
+    isAuthInitialized,
     session,
     page,
     pageSize,
     setPage,
-    communityQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
+    forumPageQuery,
     community,
+    viewerRelationship,
     typeCompatibility,
-    relationshipsQuery,
-    ownedProfilesQuery,
-    canPublish,
+    canReadForum: forumPageQuery.data?.canReadForum ?? false,
+    canPublish: Boolean(forumPageQuery.data?.canPublish && typeCompatibility.canInteract),
     openCreateTopic,
-    topicsQuery,
     topics,
-    authorsQuery,
     authorsById
   }
 }

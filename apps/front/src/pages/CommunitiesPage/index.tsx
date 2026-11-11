@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -15,12 +16,16 @@ import '../AuthenticatedPage.style.scss'
 export function CommunitiesPage() {
   const { t } = useTranslations()
   const {
-    profilesQuery,
+    isAuthInitialized,
+    communitiesPageQuery,
     currentProfile,
     page,
     pageSize,
     setPage,
-    communitiesQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
     communities,
     totalItems
   } = useCommunitiesPage()
@@ -30,9 +35,9 @@ export function CommunitiesPage() {
       <main className="account-page">
         <section className="account-card">
           <RequestState
-            isLoading={profilesQuery.isLoading}
-            isError={profilesQuery.isError}
-            onRetry={() => void profilesQuery.refetch()}
+            isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
+            isError={communitiesPageQuery.isError}
+            onRetry={() => void communitiesPageQuery.refetch()}
           />
         </section>
       </main>
@@ -59,13 +64,14 @@ export function CommunitiesPage() {
             {t('COMMUNITIES_CREATE')}
           </ButtonLink>
         </header>
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         <RequestState
-          isLoading={communitiesQuery.isLoading}
-          isFetching={communitiesQuery.isFetching}
-          isError={communitiesQuery.isError}
-          isEmpty={communitiesQuery.isSuccess && totalItems === 0}
+          isLoading={communitiesPageQuery.isLoading}
+          isFetching={communitiesPageQuery.isFetching}
+          isError={communitiesPageQuery.isError}
+          isEmpty={communitiesPageQuery.isSuccess && totalItems === 0}
           emptyMessage={t('COMMUNITIES_EMPTY')}
-          onRetry={() => void communitiesQuery.refetch()}
+          onRetry={() => void communitiesPageQuery.refetch()}
         >
           <div className="account-card__profile-list account-card__profile-list--grid">
             {communities.map((community) => (

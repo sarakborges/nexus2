@@ -6,7 +6,7 @@ import { useTranslations } from '@/Hooks/Language'
 import type { HomePageActivityFeedProps } from './HomePageActivityFeed.types'
 
 export function HomePageActivityFeed({
-  activityQuery,
+  homeQuery,
   activities,
   formatDate
 }: HomePageActivityFeedProps) {
@@ -21,12 +21,12 @@ export function HomePageActivityFeed({
         {t('HOME_ACTIVITY_TITLE')}
       </h2>
       <RequestState
-        isLoading={activityQuery.isLoading}
-        isFetching={activityQuery.isFetching}
-        isError={activityQuery.isError}
-        isEmpty={activityQuery.isSuccess && activities.length === 0}
+        isLoading={homeQuery.isLoading}
+        isFetching={homeQuery.isFetching}
+        isError={homeQuery.isError}
+        isEmpty={homeQuery.isSuccess && activities.length === 0}
         emptyMessage={t('HOME_ACTIVITY_EMPTY')}
-        onRetry={() => void activityQuery.refetch()}
+        onRetry={() => void homeQuery.refetch()}
       >
         <div className="home-page__activity-list">
           {activities.map((activity) => (

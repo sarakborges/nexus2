@@ -8,10 +8,10 @@ import type { HomePageCommunitiesPreviewProps } from './HomePageCommunitiesPrevi
 
 export function HomePageCommunitiesPreview({
   profileUrl,
-  communitiesQuery,
-  communities
+  homeQuery
 }: HomePageCommunitiesPreviewProps) {
   const { t } = useTranslations()
+  const communities = homeQuery.data?.communities.items ?? []
 
   return (
     <section className="social-preview-panel">
@@ -19,7 +19,7 @@ export function HomePageCommunitiesPreview({
         <h2>
           {t('PROFILE_COMMUNITIES_TITLE')}
           <span className="social-preview-panel__count">
-            ({communitiesQuery.data?.totalItems ?? '—'})
+            ({homeQuery.data?.communities.totalItems ?? '—'})
           </span>
         </h2>
         <Link
@@ -30,12 +30,12 @@ export function HomePageCommunitiesPreview({
         </Link>
       </header>
       <RequestState
-        isLoading={communitiesQuery.isLoading}
-        isFetching={communitiesQuery.isFetching}
-        isError={communitiesQuery.isError}
-        isEmpty={communitiesQuery.isSuccess && communities.length === 0}
+        isLoading={homeQuery.isLoading}
+        isFetching={homeQuery.isFetching}
+        isError={homeQuery.isError}
+        isEmpty={homeQuery.isSuccess && communities.length === 0}
         emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-        onRetry={() => void communitiesQuery.refetch()}
+        onRetry={() => void homeQuery.refetch()}
       >
         <div className="home-page__preview-list">
           {communities.map((community) => (

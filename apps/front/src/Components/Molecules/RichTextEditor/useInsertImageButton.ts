@@ -1,4 +1,3 @@
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { useEditorState } from 'react-simple-wysiwyg'
 
 import { useRef, useState } from 'react'
@@ -18,13 +17,10 @@ export function useInsertImageButton({
   const selectionRef = useRef<Range | null>(null)
   const [error, setError] = useState('')
   const [isUploading, setIsUploading] = useState(false)
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
 
   const handleMouseDown: UseInsertImageButtonController['handleMouseDown'] = event => {
     event.preventDefault()
-    if (isRequestPending || isUploading) return
+    if (isUploading) return
 
     const selection = window.getSelection()
     selectionRef.current =
@@ -68,7 +64,7 @@ export function useInsertImageButton({
   return {
     inputRef,
     error,
-    isDisabled: isRequestPending || isUploading,
+    isDisabled: isUploading,
     handleMouseDown,
     handleFileChange
   }

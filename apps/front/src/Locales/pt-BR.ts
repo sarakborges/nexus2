@@ -16,6 +16,22 @@ export const ptBRTranslations = {
   THEME_LIGHT: 'Claro',
   THEME_DARK: 'Escuro',
   NAVIGATION_LABEL: 'Navegação principal',
+  SEARCH_PLACEHOLDER: 'Buscar perfis e comunidades',
+  SEARCH_SCOPE_LABEL: 'Buscar em',
+  SEARCH_SCOPE_ALL: 'Tudo',
+  SEARCH_SCOPE_PROFILES: 'Perfis',
+  SEARCH_SCOPE_COMMUNITIES: 'Comunidades',
+  SEARCH_SUBMIT: 'Buscar',
+  SEARCH_TITLE: 'Busca',
+  SEARCH_QUERY_LABEL: 'Resultados para “{{query}}”',
+  SEARCH_EMPTY_QUERY: 'Digite um termo no campo de busca da barra superior.',
+  SEARCH_LOADING: 'Buscando...',
+  SEARCH_FAILED: 'Não foi possível realizar a busca.',
+  SEARCH_RETRY: 'Tentar novamente',
+  SEARCH_NO_RESULTS: 'Nenhum resultado encontrado.',
+  SEARCH_RESULTS_COUNT: '{{count}} resultados',
+  SEARCH_PROFILE: 'Perfil',
+  SEARCH_COMMUNITY: 'Comunidade',
   NAVIGATION_MENU: 'Abrir menu de navegação',
   NAVIGATION_ACCOUNT_MENU: 'Abrir menu da conta',
   NAVIGATION_ACCOUNT: 'Conta',
@@ -144,6 +160,8 @@ export const ptBRTranslations = {
   PROFILE_PICTURE_LABEL: 'Imagem de perfil (opcional)',
   PROFILE_ABOUT_LABEL: 'Sobre',
   RICH_TEXT_PLACEHOLDER: 'Escreva aqui…',
+  RICH_TEXT_HTML_CHARACTER_COUNT: '{{count}} / {{max}} caracteres HTML',
+  RICH_TEXT_HTML_CHARACTER_LIMIT: 'MAIS DE OITO MIL!',
   RICH_TEXT_IMAGE_UPLOAD_FAILED:
     'Não foi possível enviar a imagem. Verifique o formato e o tamanho do arquivo.',
   RICH_TEXT_INSERT_IMAGE: 'Enviar imagem',
@@ -155,7 +173,7 @@ export const ptBRTranslations = {
   UPLOAD_EMPTY: 'Nenhuma imagem selecionada',
   PROFILE_ABOUT_EMPTY: 'Este perfil ainda não adicionou uma apresentação.',
   PROFILE_ABOUT_MAX_LENGTH:
-    'Até 500 caracteres de texto. Imagens e formatação são permitidas.',
+    'Até 8.000 caracteres HTML.',
   PROFILE_PICTURE_ALT: 'Foto de perfil de {{name}}',
   PROFILE_ERROR_URL_TAKEN: 'Este endereço de perfil já está em uso.',
   PROFILE_ERROR_INVALID:
@@ -180,7 +198,6 @@ export const ptBRTranslations = {
   REQUEST_LOADING: 'Carregando informações...',
   REQUEST_FAILED: 'Não foi possível carregar estas informações.',
   REQUEST_RETRY: 'Tentar novamente',
-  REQUEST_UPDATING: 'Atualizando informações...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Página não encontrada',
   NOT_FOUND_DESCRIPTION:
@@ -227,7 +244,7 @@ export const ptBRTranslations = {
   COMMUNITY_ABOUT_LABEL: 'Sobre a comunidade',
   COMMUNITY_ABOUT_EMPTY: 'Esta comunidade ainda não adicionou uma descrição.',
   COMMUNITY_ABOUT_MAX_LENGTH:
-    'Até 500 caracteres de texto. Imagens e formatação são permitidas.',
+    'Até 8.000 caracteres HTML.',
   COMMUNITY_MEMBER_COUNT: 'Membros',
   COMMUNITY_ERROR_URL_TAKEN: 'Este endereço de comunidade já está em uso.',
   COMMUNITY_ERROR_INVALID:
@@ -298,10 +315,10 @@ export const ptBRTranslations = {
     'Você pode ver apenas as mensagens que enviou para este perfil.',
   PROFILE_MESSAGES_COMPOSE_LABEL: 'Escreva uma mensagem',
   PROFILE_MESSAGES_MAX_LENGTH:
-    'Máximo de 4.000 caracteres de texto. Formatação e imagens são permitidas.',
+    'Máximo de 8.000 caracteres HTML.',
   PROFILE_MESSAGES_SEND: 'Enviar mensagem',
   PROFILE_MESSAGES_ERROR_INVALID:
-    'Escreva uma mensagem com até 4.000 caracteres.',
+    'Escreva uma mensagem com até 8.000 caracteres HTML.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'Não foi possível salvar a mensagem.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Selecione um dos seus perfis para enviar uma mensagem.',
@@ -362,6 +379,13 @@ export const ptBRTranslations = {
   FORUM_UNKNOWN_AUTHOR: 'Perfil desconhecido',
   FORUM_TOPIC_ERROR: 'Não foi possível salvar o tópico.',
 
+  LIST_FILTER_PLACEHOLDER: 'Filtrar nesta listagem',
+  LIST_FILTER_SUBMIT: 'Filtrar',
+  LIST_SORT_LABEL: 'Ordenar por',
+  LIST_SORT_ACTIVITY_DESC: 'Atividade mais recente',
+  LIST_SORT_ACTIVITY_ASC: 'Atividade mais antiga',
+  LIST_SORT_NAME_ASC: 'Nome (A–Z)',
+  LIST_SORT_NAME_DESC: 'Nome (Z–A)',
   COMMUNITY_PENDING_EMPTY: 'Não há solicitações pendentes.',
   PAGINATION_LABEL: 'Páginas da listagem',
   PAGINATION_PREVIOUS: 'Anterior',

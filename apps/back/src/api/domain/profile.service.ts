@@ -21,12 +21,12 @@ import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import { ProfileRelationshipService } from './profile-relationship.service'
-import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
+import { getNewEditorImages, getRemovedEditorImages, normalizeEntityUrl } from './domain.utils'
 
 @Injectable()
 export class ProfileService {
@@ -66,21 +66,23 @@ export class ProfileService {
     if (!found) throw new NotFoundException('PROFILE_NOT_FOUND')
     return found
   }
-  async getProfilesByIds(ids: string[]): Promise<Profile[]> {
-    const set = new Set(ids)
-    return (await this.access.readProfiles()).filter(p => set.has(p.id))
+  getProfilesByIds(ids: string[]): Promise<Profile[]> {
+    return this.access.readProfilesByIds(ids)
   }
   async createProfile(userId: string, input: CreateProfileInput): Promise<CreateProfileResult> {
     const name = input.name.trim()
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
-    if (!name || about.length > 12000 || aboutText.length > 500 ||
+    const createdAt = Date.now()
+    if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
       (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
-    const profile: Profile = { id: randomUUID(), name, url, picture, about, type: input.type }
+    const profile: Profile = {
+      id: randomUUID(), name, url, picture, about, type: input.type,
+      createdAt, lastActivity: createdAt
+    }
 
     const user = await this.data.transaction<AuthenticatedUser>(
       ['profiles', 'accounts', 'media_files'],
@@ -133,7 +135,7 @@ export class ProfileService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
+    const lastActivity = Date.now()
     const result = await this.data.transaction<{ profile: Profile; previousPicture: string | null }>(
       ['accounts', 'profiles', 'media_files'],
       collections => {
@@ -144,7 +146,7 @@ export class ProfileService {
 
         const latest = currentProfiles.find(profile => profile.id === profileId)
         if (!latest) throw new NotFoundException('PROFILE_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_PROFILE')
         if (currentProfiles.some(profile => profile.id !== profileId && profile.url === url)) {
@@ -158,6 +160,12 @@ export class ProfileService {
               nextMediaFiles, userId, picture, 'profile-avatar', 'profile', profileId
             )
           }
+          nextMediaFiles = this.uploads.detachEditorImagesFromRecords(
+            nextMediaFiles,
+            getRemovedEditorImages(latest.about, about),
+            'profile',
+            profileId
+          )
           nextMediaFiles = this.uploads.attachEditorImagesToRecords(
             nextMediaFiles,
             userId,
@@ -167,7 +175,15 @@ export class ProfileService {
           )
         }
 
-        const updated: Profile = { ...latest, name, url, picture, about }
+        const updated: Profile = {
+          ...latest,
+          name,
+          url,
+          picture,
+          about,
+          createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+          lastActivity
+        }
         return {
           records: {
             ...collections,

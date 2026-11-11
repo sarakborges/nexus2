@@ -10,9 +10,9 @@ import { useTranslations } from '@/Hooks/Language'
 
 export function ProfileSwitcher({
   profiles,
+  hasProfiles,
   currentProfileId,
   isOpen,
-  isRequestPending,
   isSelectionPending,
   isSelectionError,
   profilesLoading,
@@ -25,6 +25,7 @@ export function ProfileSwitcher({
   const { t } = useTranslations()
 
   if (
+    !hasProfiles &&
     !profiles.length &&
     !profilesLoading &&
     !profilesError &&
@@ -38,7 +39,6 @@ export function ProfileSwitcher({
       <button
         className="floating-navigation__menu-item floating-navigation__profile-toggle"
         type="button"
-        disabled={isRequestPending}
         role="menuitem"
         aria-expanded={isOpen}
         aria-controls="floating-profile-switcher"
@@ -73,7 +73,6 @@ export function ProfileSwitcher({
               <span>{t('NAVIGATION_PROFILES_ERROR')}</span>
               <button
                 type="button"
-                disabled={isRequestPending}
                 onClick={onRetry}
               >
                 {t('NAVIGATION_PROFILES_RETRY')}
@@ -94,7 +93,7 @@ export function ProfileSwitcher({
                 type="button"
                 role="menuitemradio"
                 aria-checked={isCurrent}
-                disabled={isRequestPending || isSelectionPending}
+                disabled={isSelectionPending}
                 onClick={() => onSelect(profile.id)}
               >
                 <IdentityAvatar

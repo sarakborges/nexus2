@@ -150,12 +150,20 @@ test('transaction commits multiple collection snapshots through one authenticate
     const requestUrl = new URL(String(input))
     calls.push({ url: requestUrl, options })
     if (options.method === 'GET') {
-      const collection = requestUrl.searchParams.get('collection').slice(3)
-      const records = collection === 'accounts' ? [{ id: 'account' }] : [{ id: 'profile' }]
-      return new Response(JSON.stringify([{
-        records,
-        updated_at: collection === 'accounts' ? updatedAt : '2026-11-04T12:00:02.000Z'
-      }]), { status: 200 })
+      assert.equal(requestUrl.searchParams.get('select'), 'collection,records,updated_at')
+      assert.equal(requestUrl.searchParams.get('collection'), 'in.(accounts,profiles)')
+      return new Response(JSON.stringify([
+        {
+          collection: 'accounts',
+          records: [{ id: 'account' }],
+          updated_at: updatedAt
+        },
+        {
+          collection: 'profiles',
+          records: [{ id: 'profile' }],
+          updated_at: '2026-11-04T12:00:02.000Z'
+        }
+      ]), { status: 200 })
     }
 
     assert.equal(requestUrl.pathname, '/rest/v1/rpc/nexus_commit_collections')
@@ -175,6 +183,9 @@ test('transaction commits multiple collection snapshots through one authenticate
   }))
 
   assert.equal(result, 'created')
+  const snapshotCalls = calls.filter(call => call.options.method === 'GET')
+  assert.equal(snapshotCalls.length, 1)
+  assert.equal(calls.length, 2)
   const rpcCalls = calls.filter(call => call.options.method === 'POST')
   assert.equal(rpcCalls.length, 1)
   const body = JSON.parse(rpcCalls[0].options.body)
@@ -185,23 +196,30 @@ test('transaction commits multiple collection snapshots through one authenticate
 })
 
 test('transaction retries all collection snapshots after an atomic version conflict', async t => {
-  const reads = new Map()
+  let snapshotReads = 0
   let rpcAttempts = 0
   let updaterCalls = 0
   let secondAttemptAccounts
   withFetch(t, async (input, options) => {
     const requestUrl = new URL(String(input))
     if (options.method === 'GET') {
-      const collection = requestUrl.searchParams.get('collection').slice(3)
-      const count = (reads.get(collection) ?? 0) + 1
-      reads.set(collection, count)
-      const records = collection === 'accounts'
-        ? (count === 1 ? [{ id: 'account' }] : [{ id: 'account' }, { id: 'concurrent' }])
-        : [{ id: 'profile' }]
-      return new Response(JSON.stringify([{
-        records,
-        updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
-      }]), { status: 200 })
+      snapshotReads += 1
+      const count = snapshotReads
+      assert.equal(requestUrl.searchParams.get('collection'), 'in.(accounts,profiles)')
+      return new Response(JSON.stringify([
+        {
+          collection: 'accounts',
+          records: count === 1
+            ? [{ id: 'account' }]
+            : [{ id: 'account' }, { id: 'concurrent' }],
+          updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
+        },
+        {
+          collection: 'profiles',
+          records: [{ id: 'profile' }],
+          updated_at: count === 1 ? updatedAt : '2026-11-04T12:00:01.000Z'
+        }
+      ]), { status: 200 })
     }
 
     rpcAttempts += 1
@@ -227,9 +245,59 @@ test('transaction retries all collection snapshots after an atomic version confl
   assert.equal(result, 2)
   assert.equal(rpcAttempts, 2)
   assert.equal(updaterCalls, 2)
-  assert.equal(reads.get('accounts'), 2)
-  assert.equal(reads.get('profiles'), 2)
+  assert.equal(snapshotReads, 2)
   assert.deepEqual(secondAttemptAccounts.map(record => record.id), ['account', 'concurrent', 'new-account'])
+})
+
+
+test('readByIds uses the protected RPC and returns only selected records', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{ id: 'profile-a' }, { id: 'profile-c' }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.readByIds('profiles', ['profile-a', 'profile-c', 'profile-a']), [
+    { id: 'profile-a' },
+    { id: 'profile-c' }
+  ])
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_read_collection_by_ids')
+  assert.equal(call.options.method, 'POST')
+  assert.equal(call.options.headers.apikey, key)
+  assert.equal(call.options.headers['x-nexus-api-secret'], headerSecret)
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_collection: 'profiles',
+    p_ids: ['profile-a', 'profile-c']
+  })
+})
+
+test('readByIds skips empty lists and rejects invalid collection names', async () => {
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  await assert.rejects(() => repo.readByIds('invalid collection', ['profile-a']), /Invalid collection name/)
+  assert.deepEqual(await repo.readByIds('profiles', []), [])
+})
+
+test('readByIds falls back to a full collection read while the selective-read RPC migration is absent', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    calls.push({ url: new URL(String(input)), options })
+    if (calls.length === 1) {
+      return new Response(JSON.stringify({
+        code: 'PGRST202',
+        message: 'Could not find the function public.nexus_read_collection_by_ids'
+      }), { status: 404 })
+    }
+    return new Response(JSON.stringify([{
+      records: [{ id: 'profile-a' }, { id: 'profile-b' }, { id: 'profile-c' }],
+      updated_at: updatedAt
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRestRepository(url, key, headerSecret)
+  assert.deepEqual(await repo.readByIds('profiles', ['profile-b']), [{ id: 'profile-b' }])
+  assert.equal(calls.length, 2)
+  assert.equal(calls[1].url.pathname, '/rest/v1/nexus_collections')
 })
 
 test('transaction rejects empty, duplicate and invalid collection names', async () => {

@@ -25,6 +25,7 @@ import { UploadsContentService } from './uploads.content.service'
 import { UploadsAvatarService } from './uploads.avatar.service'
 import {
   attachEditorImages,
+  detachEditorImages,
   detachResourceAttachments
 } from './uploads.attachments'
 import type {
@@ -298,6 +299,15 @@ export class UploadsService {
     resources: UploadResourceReference[]
   ): UploadedFileRecord[] {
     return detachResourceAttachments(records, userId, resources)
+  }
+
+  detachEditorImagesFromRecords(
+    records: UploadedFileRecord[],
+    html: string,
+    resourceType: UploadResourceType,
+    resourceId: string
+  ): UploadedFileRecord[] {
+    return detachEditorImages(records, html, resourceType, resourceId)
   }
 
   async cleanupExpired(suppliedSecret: string | undefined): Promise<{ deleted: number }> {

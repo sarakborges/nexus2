@@ -1,7 +1,8 @@
 .social-page {
+  box-sizing: border-box;
   width: 100%;
   min-height: 100dvh;
-  padding: 104px 0 40px;
+  padding: 88px 0 40px;
   color: var(--text-color);
   font-size: 14px;
 }
@@ -49,6 +50,7 @@
 .social-sidebar-card {
   display: grid;
   align-content: start;
+  gap: 10px;
   min-width: 0;
   padding: 12px;
   border: var(--nexus-border-width, 2px) solid var(--color-border);
@@ -82,7 +84,8 @@
 }
 
 .social-identity__picture {
-  display: block;
+  display: grid;
+  place-items: center;
   width: 100%;
   max-height: 340px;
   border: var(--nexus-border-width, 2px) solid var(--color-border);
@@ -181,7 +184,7 @@
 
 @media (max-width: 680px) {
   .social-page {
-    padding: 88px 0 28px;
+    padding: 78px 0 28px;
   }
 
   .social-page__layout,
@@ -422,4 +425,9 @@
   width: 100%;
   min-width: 0;
   margin: 0;
+}
+
+.social-identity__picture--profile-portrait {
+  aspect-ratio: 1 / 2;
+  max-height: 365px;
 }

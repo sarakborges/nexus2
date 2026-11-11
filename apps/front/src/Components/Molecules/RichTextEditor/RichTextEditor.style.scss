@@ -300,3 +300,18 @@
 .rich-text-editor__token--doctype {
   color: #e3c86d;
 }
+
+.rich-text-editor__counter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 4px 0 0;
+  color: var(--color-neutral);
+  font-size: 12px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.rich-text-editor__counter.is-over-limit { color: var(--color-error, #c33); }
+.rich-text-editor__counter strong { font-weight: var(--font-weight-bold); }
