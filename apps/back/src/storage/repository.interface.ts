@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, Profile, ProfilePost, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfilePost, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -40,6 +40,21 @@ export type ProfileRelationshipRemoval = {
   updatedAt: number
 }
 
+export type CommunityRelationshipAction =
+  | CommunityRelationshipType
+  | 'remove'
+  | 'demote'
+  | 'transfer'
+
+export type CommunityRelationshipChange = {
+  userId: string
+  communityId: string
+  targetProfileId: string
+  actorProfileId: string
+  action: CommunityRelationshipAction
+  updatedAt: number
+}
+
 export type CollectionTransaction<T> = {
   records: CollectionRecordMap
   result: T
@@ -78,6 +93,7 @@ export interface DataRepository {
   changeAccountProfile?(change: AccountProfileChange): Promise<void>
   upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
+  changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
   getActivityFeedRows?(
     userId: string,
     limit: number,

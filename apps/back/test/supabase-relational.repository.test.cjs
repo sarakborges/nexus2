@@ -410,3 +410,33 @@ test('removes profile relationships through a targeted relational RPC', async t 
     p_updated_at_ms: 1700000000000
   })
 })
+
+
+test('changes community memberships through the targeted relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.changeCommunityRelationship({
+    userId: 'account-1',
+    communityId: 'community-1',
+    targetProfileId: 'profile-2',
+    actorProfileId: 'profile-1',
+    action: 'connection',
+    updatedAt: 1700000000000
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_change_community_relationship')
+  assert.equal(call.options.method, 'POST')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_community_id: 'community-1',
+    p_target_profile_id: 'profile-2',
+    p_actor_profile_id: 'profile-1',
+    p_action: 'connection',
+    p_updated_at_ms: 1700000000000
+  })
+})

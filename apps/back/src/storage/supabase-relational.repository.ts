@@ -6,6 +6,7 @@ import type {
   AccountProfileChange,
   ProfileRelationshipRemoval,
   ProfileRelationshipWrite,
+  CommunityRelationshipChange,
   RefreshTokenRotation,
   RefreshTokenWrite
 } from './repository.interface'
@@ -231,6 +232,25 @@ export class SupabaseRelationalRepository implements DataRepository {
         p_user_id: change.userId,
         p_source_profile_id: change.sourceProfileId,
         p_target_profile_id: change.targetProfileId,
+        p_updated_at_ms: change.updatedAt
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async changeCommunityRelationship(change: CommunityRelationshipChange): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_community_relationship', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_community_id: change.communityId,
+        p_target_profile_id: change.targetProfileId,
+        p_actor_profile_id: change.actorProfileId,
+        p_action: change.action,
         p_updated_at_ms: change.updatedAt
       })
     })

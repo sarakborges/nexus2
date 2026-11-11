@@ -132,6 +132,23 @@ export class CommunityMembershipService {
   }
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     const now = Date.now()
+    if (this.data.changeCommunityRelationship) {
+      try {
+        await this.changeRelationship({
+          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
+          action: type, updatedAt: now
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      return {
+        profiles: [targetId, communityId],
+        type,
+        requestedBy: type === 'requested' ? actorId : null,
+        blockedBy: type === 'blocked' ? actorId : null,
+        updatedAt: now
+      }
+    }
     return this.data.transaction<CommunityRelationship>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -188,6 +205,17 @@ export class CommunityMembershipService {
 
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
     const now = Date.now()
+    if (this.data.changeCommunityRelationship) {
+      try {
+        await this.changeRelationship({
+          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
+          action: 'remove', updatedAt: now
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      return
+    }
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -232,6 +260,17 @@ export class CommunityMembershipService {
 
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
     const now = Date.now()
+    if (this.data.changeCommunityRelationship) {
+      try {
+        await this.changeRelationship({
+          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
+          action: 'demote', updatedAt: now
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      return
+    }
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -268,6 +307,17 @@ export class CommunityMembershipService {
 
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
     const now = Date.now()
+    if (this.data.changeCommunityRelationship) {
+      try {
+        await this.changeRelationship({
+          userId, communityId, targetProfileId: newOwnerId, actorProfileId: actorId,
+          action: 'transfer', updatedAt: now
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      return
+    }
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -299,5 +349,45 @@ export class CommunityMembershipService {
         }
       }
     )
+  }
+
+  private async changeRelationship(change: {
+    userId: string
+    communityId: string
+    targetProfileId: string
+    actorProfileId: string
+    action: 'owner' | 'moderator' | 'connection' | 'requested' | 'blocked' | 'remove' | 'demote' | 'transfer'
+    updatedAt: number
+  }): Promise<void> {
+    await this.data.changeCommunityRelationship!(change)
+  }
+
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('ACCOUNT_NOT_FOUND')) {
+      throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    }
+    if (message.includes('PROFILE_NOT_OWNED')) {
+      throw new ForbiddenException('PROFILE_NOT_OWNED')
+    }
+    if (message.includes('PROFILE_TYPE_MISMATCH')) {
+      throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    }
+    if (message.includes('PROFILE_NOT_FOUND')) {
+      throw new NotFoundException('PROFILE_NOT_FOUND')
+    }
+    if (message.includes('COMMUNITY_NOT_FOUND')) {
+      throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    }
+    if (message.includes('COMMUNITY_ACTION_NOT_ALLOWED')) {
+      throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
+    }
+    if (message.includes('ONLY_OWNER_CAN_DEMOTE_MODERATOR')) {
+      throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
+    }
+    if (message.includes('OWNERSHIP_TRANSFER_NOT_ALLOWED')) {
+      throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
+    }
+    throw error
   }
 }
