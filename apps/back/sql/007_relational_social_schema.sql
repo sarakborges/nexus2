@@ -205,7 +205,7 @@ on conflict (id) do update set email = excluded.email, password_hash = excluded.
 
 delete from public.account_profiles;
 insert into public.account_profiles (account_id, profile_id, position)
-select a.id, p.profile_id, p.ordinality::integer - 1
+select (a.value ->> 'id')::uuid, p.profile_id, p.ordinality::integer - 1
 from jsonb_array_elements(coalesce((select records from public.nexus_collections where collection = 'accounts'), '[]'::jsonb)) a(value)
 cross join lateral jsonb_array_elements_text(coalesce(a.value -> 'profiles', '[]'::jsonb)) with ordinality p(profile_id, ordinality)
 on conflict (account_id, profile_id) do update set position = excluded.position;
