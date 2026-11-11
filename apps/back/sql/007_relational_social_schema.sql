@@ -305,6 +305,8 @@ on conflict (id) do update set owner_user_id = excluded.owner_user_id, purpose =
   resource_id = excluded.resource_id, message_from_profile_id = excluded.message_from_profile_id,
   message_to_profile_id = excluded.message_to_profile_id;
 
+set constraints all immediate;
+
 -- Durable feed projection.
 insert into public.feed_activities (id, type, actor_profile_id, target_profile_id, updated_at_ms)
 select 'friend:' || profile_id::text || ':' || related_profile_id::text,
