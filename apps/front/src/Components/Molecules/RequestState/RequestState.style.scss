@@ -16,7 +16,7 @@
 .request-state__spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid var(--border-color, currentColor);
+  border: var(--nexus-border-width, 2px) solid var(--border-color, currentColor);
   border-right-color: transparent;
   border-radius: 50%;
   animation: request-state-spin 0.7s linear infinite;
