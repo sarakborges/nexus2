@@ -37,6 +37,7 @@ export type ApiErrorResponse = { statusCode: number; message: string | string[];
 export type RecentActivity =
   | { id: string; type: 'friend_connected'; updatedAt: number; profile: Profile; friend: Profile }
   | { id: string; type: 'profile_post'; updatedAt: number; profile: Profile; content: string }
+  | { id: string; type: 'community_created'; updatedAt: number; profile: Profile; community: Community }
   | {
       id: string
       type: 'community_membership'
