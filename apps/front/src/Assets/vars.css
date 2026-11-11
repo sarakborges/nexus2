@@ -5,6 +5,7 @@
   --main-content-max-width: 1280px;
   --main-content-gutter: 24px;
   --main-card-max-width: var(--main-content-max-width);
+  --nexus-border-width: 1px;
   --avatar-shape-radius: 12px;
   --avatar-background: var(--color-surface-raised);
   --avatar-fallback-color: var(--color-neutral-strong);
