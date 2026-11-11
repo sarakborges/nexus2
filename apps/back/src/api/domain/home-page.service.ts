@@ -21,7 +21,8 @@ const HOME_PAGE_COLLECTIONS = [
   'relationships',
   'community_relationships',
   'profile_posts',
-  'profile_settings'
+  'profile_settings',
+  'feed_activities'
 ] as const
 
 const FIRST_PAGE = { page: 1, pageSize: 20 } as PaginationDto
@@ -159,7 +160,7 @@ export class HomePageService {
           records,
           result: {
             currentProfile,
-            activities: activity.result,
+            activities: this.activity.getRecentActivityFromFeedRecords(userId, records, communities),
             friends: paginate(friends, FIRST_PAGE),
             communities: paginate(profileCommunities, FIRST_PAGE),
             suggestions
