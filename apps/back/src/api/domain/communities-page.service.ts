@@ -26,6 +26,35 @@ export class CommunitiesPageService {
     userId: string,
     query: CommunitiesPageDto
   ): Promise<CommunitiesPageData> {
+    if (this.data.getCommunitiesPage) {
+      return this.data.getCommunitiesPage(
+        userId,
+        query.page,
+        query.query,
+        query.sort,
+        query.communityTab
+      ).then(page => ({
+        ...page,
+        currentProfile: page.currentProfile ? {
+          ...page.currentProfile,
+          about: sanitizeRichText(page.currentProfile.about ?? '')
+        } : null,
+        communities: {
+          ...page.communities,
+          items: page.communities.items.map(community => ({
+            ...community,
+            about: sanitizeRichText(community.about ?? '')
+          }))
+        }
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
+
     return this.data.transaction<CommunitiesPageData>(
       COMMUNITIES_PAGE_COLLECTIONS,
       (collections) => {

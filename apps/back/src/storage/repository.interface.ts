@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -168,6 +168,13 @@ export interface DataRepository {
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
   getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
+  getCommunitiesPage?(
+    userId: string,
+    page: number,
+    query: string | undefined,
+    sort: ListSort,
+    communityTab: 'all' | 'managed'
+  ): Promise<CommunitiesPageData>
   getProfileDirectoryPage?(
     url: string,
     kind: 'friends' | 'communities',

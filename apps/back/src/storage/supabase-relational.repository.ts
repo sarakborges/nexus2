@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,51 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getCommunitiesPage(
+    userId: string,
+    page: number,
+    query: string | undefined,
+    sort: ListSort,
+    communityTab: 'all' | 'managed'
+  ): Promise<CommunitiesPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_communities_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_page: page,
+        p_query: query ?? null,
+        p_sort: sort,
+        p_community_tab: communityTab
+      })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Supabase communities page returned an invalid result.')
+    }
+    const record = result as Record<string, unknown>
+    const communities = record.communities as Record<string, unknown> | null
+    if (
+      !communities || typeof communities !== 'object' ||
+      !Array.isArray(communities.items) ||
+      (record.communityTab !== 'all' && record.communityTab !== 'managed') ||
+      !('currentProfile' in record)
+    ) {
+      throw new Error('Supabase communities page returned invalid data.')
+    }
+    const pageResult = result as CommunitiesPageData
+    if (
+      pageResult.communities.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.communities.totalItems) ||
+      !Number.isSafeInteger(pageResult.communities.totalPages)
+    ) {
+      throw new Error('Supabase communities page returned invalid pagination metadata.')
+    }
+    return pageResult
   }
 
   async getProfileDirectoryPage(

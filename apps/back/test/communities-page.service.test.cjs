@@ -126,3 +126,44 @@ test('managed communities includes owner and moderator roles across owned profil
   )
   assert.ok(!result.communities.items.some(community => community.id === 'community-rp'))
 })
+
+
+test('communities page uses a targeted relational read and sanitizes the returned page', async () => {
+  const calls = []
+  const result = {
+    currentProfile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>About</p><script>unsafe()</script>', type: 'social',
+      createdAt: 1, lastActivity: 2
+    },
+    communityTab: 'all',
+    communities: {
+      items: [{
+        id: 'community-1', name: 'Community', url: 'community', picture: '',
+        about: '<p>About</p><script>unsafe()</script>', type: 'social',
+        privacy: 'public', createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    }
+  }
+  const repository = {
+    async getCommunitiesPage(userId, page, query, sort, communityTab) {
+      calls.push({ userId, page, query, sort, communityTab })
+      return result
+    },
+    async transaction() {
+      throw new Error('Communities page reads must not load collection snapshots.')
+    }
+  }
+  const service = new CommunitiesPageService(repository, {})
+
+  const page = await service.getCommunitiesPage(
+    'account-1', { page: 2, query: 'community', sort: 'name-asc', communityTab: 'managed' }
+  )
+
+  assert.deepEqual(calls, [{
+    userId: 'account-1', page: 2, query: 'community', sort: 'name-asc', communityTab: 'managed'
+  }])
+  assert.equal(page.currentProfile.about.includes('<script>'), false)
+  assert.equal(page.communities.items[0].about.includes('<script>'), false)
+})

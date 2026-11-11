@@ -1212,3 +1212,40 @@ test('reads profile friends and communities directories through the targeted RPC
   assert.deepEqual(friends, friendResult)
   assert.deepEqual(communities, communityResult)
 })
+
+
+test('reads the authenticated communities directory through a targeted relational RPC', async t => {
+  let call
+  const expected = {
+    currentProfile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>About</p>', type: 'social', createdAt: 1, lastActivity: 2
+    },
+    communityTab: 'managed',
+    communities: {
+      items: [{
+        id: 'community-1', name: 'Community', url: 'community', picture: '',
+        about: '<p>About</p>', type: 'rp', privacy: 'private',
+        createdAt: 1, lastActivity: 2
+      }],
+      page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+    }
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getCommunitiesPage('account-1', 2, 'community', 'name-asc', 'managed')
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_communities_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_page: 2,
+    p_query: 'community',
+    p_sort: 'name-asc',
+    p_community_tab: 'managed'
+  })
+  assert.deepEqual(page, expected)
+})
