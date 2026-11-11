@@ -1352,3 +1352,25 @@ test('reads owned profiles, profile communities, community by URL and entity sea
     {path:'/rest/v1/rpc/nexus_search_entities',body:{p_query:'term',p_scope:'all',p_page:4,p_sort:'name-asc'}}
   ])
 })
+
+
+test('reads legacy forum topic lists and details through targeted relational RPCs', async t => {
+  const calls = []
+  const topicPage = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  const detail = {
+    topic: { id: 'topic-1', replyCount: 0 },
+    replies: { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  }
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    return new Response(JSON.stringify(calls.length === 1 ? topicPage : detail), { status: 200 })
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.deepEqual(await repo.listCommunityForumTopics('community-1','account-1',2),topicPage)
+  assert.deepEqual(await repo.getCommunityForumTopic('community-1','topic-1',null,3),detail)
+  assert.deepEqual(calls,[
+    {path:'/rest/v1/rpc/nexus_get_community_forum_topics',body:{p_community_id:'community-1',p_user_id:'account-1',p_page:2}},
+    {path:'/rest/v1/rpc/nexus_get_community_forum_topic',body:{p_community_id:'community-1',p_topic_id:'topic-1',p_user_id:null,p_page:3}}
+  ])
+})

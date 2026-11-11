@@ -92,3 +92,31 @@ test('empty replies are rejected before a relational write', async () => {
   )
   assert.equal(calls.length, 0)
 })
+
+
+test('legacy forum list and topic reads use targeted relational queries without snapshots', async () => {
+  const calls = []
+  const repository = {
+    async listCommunityForumTopics(communityId, userId, page) {
+      calls.push(['topics',communityId,userId,page])
+      return { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
+    },
+    async getCommunityForumTopic(communityId, topicId, userId, page) {
+      calls.push(['topic',communityId,topicId,userId,page])
+      return {
+        topic: { id: topicId, replyCount: 0 },
+        replies: { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
+      }
+    },
+    async transaction() { throw new Error('Forum legacy reads must not load collection snapshots.') }
+  }
+  const service = new CommunityForumService(repository, {})
+  const topics = await service.listCommunityForumTopics('community-1',{page:2},'account-1')
+  const topic = await service.getCommunityForumTopic('community-1','topic-1',{page:3},null)
+  assert.equal(topics.page,2)
+  assert.equal(topic.topic.id,'topic-1')
+  assert.deepEqual(calls,[
+    ['topics','community-1','account-1',2],
+    ['topic','community-1','topic-1',null,3]
+  ])
+})

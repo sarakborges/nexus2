@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -651,6 +651,50 @@ export class SupabaseRelationalRepository implements DataRepository {
       throw new Error('Supabase entity search returned invalid pagination data.')
     }
     return result as PaginatedResult<SearchResultItem>
+  }
+
+  async listCommunityForumTopics(
+    communityId: string,
+    userId: string | null,
+    page: number
+  ): Promise<PaginatedResult<CommunityForumTopicSummary>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topics', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_community_id: communityId, p_user_id: userId, p_page: page })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase forum topics returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase forum topics returned invalid pagination data.')
+    }
+    return result as PaginatedResult<CommunityForumTopicSummary>
+  }
+
+  async getCommunityForumTopic(
+    communityId: string,
+    topicId: string,
+    userId: string | null,
+    page: number
+  ): Promise<CommunityForumTopicDetail> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_community_id: communityId,
+        p_topic_id: topicId,
+        p_user_id: userId,
+        p_page: page
+      })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null || !('topic' in result) || !('replies' in result)) {
+      throw new Error('Supabase forum topic returned an invalid result.')
+    }
+    return result as CommunityForumTopicDetail
   }
 
   async getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData> {

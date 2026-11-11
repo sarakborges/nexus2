@@ -188,3 +188,25 @@ test('reads relational activity pages with a stable cursor and maps typed rows',
   assert.deepEqual(page.nextCursor, { updatedAt: 200, id: 'post:post-1' })
   assert.equal(page.hasMore, true)
 })
+
+
+test('legacy recent activity retrieval pages through relational feed rows instead of snapshots', async () => {
+  const calls = []
+  const row = {
+    id: 'activity-1', type: 'profile_post', updated_at_ms: 100,
+    profile: { id: 'profile-1', name: 'Profile', type: 'social' },
+    friend: null, community: null, content: '<p>Post</p>', role: null
+  }
+  const repository = {
+    async getActivityFeedRows(userId, limit, cursor) {
+      calls.push({ userId, limit, cursor })
+      return calls.length === 1 ? [row] : []
+    },
+    async transaction() { throw new Error('Legacy activity reads must not load collection snapshots.') }
+  }
+  const service = new ActivityService(repository, {})
+  const result = await service.getRecentActivity('account-1')
+  assert.equal(result.length,1)
+  assert.equal(result[0].type,'profile_post')
+  assert.deepEqual(calls,[{userId:'account-1',limit:51,cursor:null}])
+})

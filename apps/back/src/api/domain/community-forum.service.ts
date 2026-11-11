@@ -38,6 +38,13 @@ export class CommunityForumService {
   ) {}
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
+    if (this.data.listCommunityForumTopics) {
+      try {
+        return await this.data.listCommunityForumTopics(communityId, userId, q.page)
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<PaginatedResult<CommunityForumTopicSummary>>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {
@@ -68,6 +75,13 @@ export class CommunityForumService {
   }
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
+    if (this.data.getCommunityForumTopic) {
+      try {
+        return await this.data.getCommunityForumTopic(communityId, topicId, userId, q.page)
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<CommunityForumTopicDetail>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies'],
       collections => {

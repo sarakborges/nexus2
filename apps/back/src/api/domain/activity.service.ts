@@ -393,9 +393,25 @@ export class ActivityService {
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
+    if (this.data.getActivityFeedRows) {
+      const limit = 50
+      const items: RecentActivity[] = []
+      let cursor: ActivityFeedCursor | null = null
+      for (;;) {
+        const rows = await this.data.getActivityFeedRows(userId, limit + 1, cursor)
+        const hasMore = rows.length > limit
+        const pageRows = hasMore ? rows.slice(0, limit) : rows
+        items.push(...pageRows.map(row => this.toRecentActivity(row)))
+        const last = pageRows[pageRows.length - 1]
+        if (!hasMore || !last) break
+        cursor = { updatedAt: last.updated_at_ms, id: last.id }
+      }
+      return items
+    }
+
     return this.data.transaction<RecentActivity[]>(
       COLLECTIONS,
-      (collections) => {
+      collections => {
         const normalized = this.access.normalizeCommunitiesInRecords(collections)
         return {
           records: normalized.records,
