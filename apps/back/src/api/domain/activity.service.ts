@@ -1,5 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type {
+  ActivityFeedCursor,
+  ActivityFeedPage,
   Community,
   CommunityRelationship,
   ProfilePost,
@@ -8,6 +10,7 @@ import type {
 } from '@nexus/common'
 import {
   DATA_REPOSITORY,
+  type ActivityFeedRow,
   type CollectionRecordMap,
   type CollectionTransaction,
   type DataRepository
@@ -295,6 +298,96 @@ export class ActivityService {
     }
 
     return activities.sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
+  }
+
+  async getRecentActivityPage(
+    userId: string,
+    limit = 10,
+    cursor: ActivityFeedCursor | null = null
+  ): Promise<ActivityFeedPage> {
+    const safeLimit = Math.min(Math.max(Math.trunc(limit) || 10, 1), 50)
+
+    if (this.data.getActivityFeedRows) {
+      const rows = await this.data.getActivityFeedRows(userId, safeLimit, cursor)
+      const hasMore = rows.length > safeLimit
+      const pageRows = hasMore ? rows.slice(0, safeLimit) : rows
+      const items = pageRows.map(row => this.toRecentActivity(row))
+      const lastItem = pageRows[pageRows.length - 1]
+
+      return {
+        items,
+        nextCursor: hasMore && lastItem
+          ? { updatedAt: lastItem.updated_at_ms, id: lastItem.id }
+          : null,
+        hasMore
+      }
+    }
+
+    const activities = await this.getRecentActivity(userId)
+    const remaining = cursor
+      ? activities.filter(activity =>
+          activity.updatedAt < cursor.updatedAt ||
+          (activity.updatedAt === cursor.updatedAt && activity.id > cursor.id)
+        )
+      : activities
+    const pageItems = remaining.slice(0, safeLimit)
+    const hasMore = remaining.length > safeLimit
+    const lastItem = pageItems[pageItems.length - 1]
+
+    return {
+      items: pageItems,
+      nextCursor: hasMore && lastItem
+        ? { updatedAt: lastItem.updatedAt, id: lastItem.id }
+        : null,
+      hasMore
+    }
+  }
+
+  private toRecentActivity(row: ActivityFeedRow): RecentActivity {
+    if (!Number.isFinite(row.updated_at_ms)) {
+      throw new Error('Supabase relational activity feed returned an invalid timestamp.')
+    }
+
+    switch (row.type) {
+      case 'friend_connected':
+        if (!row.friend) throw new Error('Friend activity is missing its related profile.')
+        return {
+          id: row.id,
+          type: row.type,
+          updatedAt: row.updated_at_ms,
+          profile: row.profile,
+          friend: row.friend
+        }
+      case 'profile_post':
+        return {
+          id: row.id,
+          type: row.type,
+          updatedAt: row.updated_at_ms,
+          profile: row.profile,
+          content: sanitizeRichText(row.content ?? '')
+        }
+      case 'community_created':
+        if (!row.community) throw new Error('Community activity is missing its community.')
+        return {
+          id: row.id,
+          type: row.type,
+          updatedAt: row.updated_at_ms,
+          profile: row.profile,
+          community: row.community
+        }
+      case 'community_membership':
+        if (!row.community || !row.role) {
+          throw new Error('Community membership activity is missing its community or role.')
+        }
+        return {
+          id: row.id,
+          type: row.type,
+          updatedAt: row.updated_at_ms,
+          profile: row.profile,
+          community: row.community,
+          role: row.role
+        }
+    }
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
