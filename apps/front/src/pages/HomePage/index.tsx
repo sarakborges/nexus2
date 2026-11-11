@@ -1,14 +1,10 @@
 import { RequestState } from '@/Components'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from './HomePageActivityFeed.component'
 import { HomePagePostComposer } from './HomePagePostComposer.component'
-import { HomePageRightSidebar } from './HomePageRightSidebar.component'
 
 import './HomePage.style.scss'
 
@@ -22,48 +18,20 @@ export function HomePage() {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState
-            isLoading={homeQuery.isLoading}
-            isError={homeQuery.isError}
-            onRetry={() => void homeQuery.refetch()}
-          />
+          <RequestState isLoading={homeQuery.isLoading} isError={homeQuery.isError} onRetry={() => void homeQuery.refetch()} />
         </section>
       </main>
     )
   }
 
   return (
-    <SocialPageLayout
-      className="home-page"
-      sidebar={
-        <ProfileSidebar
-          profile={currentProfile}
-          active="home"
-          showRelationshipActions={false}
-        />
-      }
-      rightSidebar={
-        <HomePageRightSidebar
-          currentProfile={currentProfile}
-          homeQuery={homeQuery}
-        />
-      }
-    >
-      <section className="social-panel home-page__card">
-        <header className="social-panel__header">
-          <div>
-            <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
-            <p className="account-card__description">
-              {t('HOME_ACTIVITY_DESCRIPTION')}
-            </p>
-          </div>
+    <SocialPageLayout className="home-page">
+      <section className="home-page__content">
+        <header className="home-page__header">
+          <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
         </header>
         <HomePagePostComposer currentProfile={currentProfile} />
-        <HomePageActivityFeed
-          homeQuery={homeQuery}
-          activities={home?.activities ?? []}
-          formatDate={formatHomeActivityDate}
-        />
+        <HomePageActivityFeed homeQuery={homeQuery} activities={home?.activities ?? []} formatDate={formatHomeActivityDate} />
       </section>
     </SocialPageLayout>
   )
