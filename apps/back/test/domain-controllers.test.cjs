@@ -20,7 +20,6 @@ const controllers = [
 
 const expectedRoutes = [
   'GET search',
-  'GET home',
   'GET activity',
   'GET profiles/by-url/:url/directory/:kind/page',
   'GET profiles/by-url/:url/edit/page',
