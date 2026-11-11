@@ -68,6 +68,8 @@ COMMON_VIEW_ALL: 'Ver todos',
   HOME_SUGGESTED_COMMUNITIES_EMPTY:
     'Não há novas comunidades para sugerir no momento.',
   HOME_ACTIVITY_TITLE: 'Atualizações recentes',
+  HOME_ACTIVITY_LOAD_MORE: 'Ver mais',
+  HOME_ACTIVITY_CREATED_COMMUNITY: 'Criou a comunidade',
   HOME_ACTIVITY_DESCRIPTION:
     'As 10 atualizações mais recentes das suas amizades, comunidades e publicações.',
   HOME_ACTIVITY_EMPTY: 'Ainda não há publicações ou atividades recentes.',
