@@ -371,8 +371,8 @@ html.has-global-navigation .auth-page {
   background: var(--color-background);
 }
 .floating-navigation__notification-trigger svg {
-  width: 19px;
-  height: 19px;
+  width: var(--nexus-icon-size, 20px);
+  height: var(--nexus-icon-size, 20px);
 }
 .floating-navigation__notification-count {
   position: absolute;
