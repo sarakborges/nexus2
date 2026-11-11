@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityRelationshipType, PaginatedResult, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityForumReply, CommunityForumTopic, CommunityRelationshipType, PaginatedResult, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -76,6 +76,44 @@ export type ProfileMessageFavoriteChange = {
   isFavorite: boolean
 }
 
+export type CommunityForumTopicWrite = {
+  userId: string
+  topic: CommunityForumTopic
+  imageIds: readonly string[]
+}
+
+export type CommunityForumReplyWrite = {
+  userId: string
+  reply: CommunityForumReply
+  imageIds: readonly string[]
+}
+
+export type CommunityForumTopicModerationWrite = {
+  userId: string
+  communityId: string
+  topicId: string
+  actorProfileId: string
+  isPinned?: boolean
+  isLocked?: boolean
+  updatedAt: number
+}
+
+export type CommunityForumTopicRemoval = {
+  userId: string
+  communityId: string
+  topicId: string
+  actorProfileId: string
+  updatedAt: number
+}
+
+export type CommunityForumReplyRemoval = {
+  userId: string
+  communityId: string
+  replyId: string
+  actorProfileId: string
+  updatedAt: number
+}
+
 export type CollectionTransaction<T> = {
   records: CollectionRecordMap
   result: T
@@ -129,7 +167,12 @@ export interface DataRepository {
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
-  getActivityFeedRows?(
+  createCommunityForumTopic?(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
+  createCommunityForumReply?(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
+  moderateCommunityForumTopic?(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
+  deleteCommunityForumTopic?(change: CommunityForumTopicRemoval): Promise<void>
+  deleteCommunityForumReply?(change: CommunityForumReplyRemoval): Promise<string>
+  getActivityFeedRows?
     userId: string,
     limit: number,
     cursor: ActivityFeedCursor | null

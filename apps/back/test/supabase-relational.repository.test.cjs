@@ -657,3 +657,190 @@ test('an empty private-message page has the same empty pagination contract', asy
     { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
   )
 })
+
+
+test('creates a community forum topic with its image references through a targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'topic-1',
+      community_id: 'community-1',
+      profile_id: 'profile-1',
+      title: 'Topic',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000',
+      updated_at_ms: '1700000000000',
+      is_pinned: false,
+      is_locked: false
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const topic = await repo.createCommunityForumTopic({
+    userId: 'account-1',
+    topic: {
+      id: 'topic-1',
+      communityId: 'community-1',
+      profileId: 'profile-1',
+      title: 'Topic',
+      content: '<p>Hello</p>',
+      createdAt: 1700000000000,
+      updatedAt: 1700000000000,
+      isPinned: false,
+      isLocked: false
+    },
+    imageIds: ['image-1']
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_create_community_forum_topic')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_topic_id: 'topic-1',
+    p_community_id: 'community-1',
+    p_profile_id: 'profile-1',
+    p_title: 'Topic',
+    p_content: '<p>Hello</p>',
+    p_created_at_ms: 1700000000000,
+    p_image_ids: ['image-1']
+  })
+  assert.equal(topic.id, 'topic-1')
+})
+
+test('creates a community forum reply through a targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'reply-1',
+      topic_id: 'topic-1',
+      community_id: 'community-1',
+      profile_id: 'profile-1',
+      content: '<p>Reply</p>',
+      created_at_ms: '1700000000100',
+      updated_at_ms: '1700000000100'
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const reply = await repo.createCommunityForumReply({
+    userId: 'account-1',
+    reply: {
+      id: 'reply-1',
+      topicId: 'topic-1',
+      communityId: 'community-1',
+      profileId: 'profile-1',
+      content: '<p>Reply</p>',
+      createdAt: 1700000000100,
+      updatedAt: 1700000000100
+    },
+    imageIds: []
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_create_community_forum_reply')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_reply_id: 'reply-1',
+    p_topic_id: 'topic-1',
+    p_community_id: 'community-1',
+    p_profile_id: 'profile-1',
+    p_content: '<p>Reply</p>',
+    p_created_at_ms: 1700000000100,
+    p_updated_at_ms: 1700000000100,
+    p_image_ids: []
+  })
+  assert.equal(reply.topicId, 'topic-1')
+})
+
+test('moderates a community forum topic through a targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'topic-1',
+      community_id: 'community-1',
+      profile_id: 'profile-1',
+      title: 'Topic',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000',
+      updated_at_ms: '1700000000200',
+      is_pinned: true,
+      is_locked: false
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const topic = await repo.moderateCommunityForumTopic({
+    userId: 'account-1',
+    communityId: 'community-1',
+    topicId: 'topic-1',
+    actorProfileId: 'profile-1',
+    isPinned: true,
+    updatedAt: 1700000000200
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_moderate_community_forum_topic')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_community_id: 'community-1',
+    p_topic_id: 'topic-1',
+    p_actor_profile_id: 'profile-1',
+    p_is_pinned: true,
+    p_is_locked: null,
+    p_updated_at_ms: 1700000000200
+  })
+  assert.equal(topic.isPinned, true)
+})
+
+test('deletes a community forum topic through a targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.deleteCommunityForumTopic({
+    userId: 'account-1',
+    communityId: 'community-1',
+    topicId: 'topic-1',
+    actorProfileId: 'profile-1',
+    updatedAt: 1700000000300
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_delete_community_forum_topic')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_community_id: 'community-1',
+    p_topic_id: 'topic-1',
+    p_actor_profile_id: 'profile-1',
+    p_updated_at_ms: 1700000000300
+  })
+})
+
+test('deletes a community forum reply and returns the updated topic id', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify('topic-1'), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const topicId = await repo.deleteCommunityForumReply({
+    userId: 'account-1',
+    communityId: 'community-1',
+    replyId: 'reply-1',
+    actorProfileId: 'profile-1',
+    updatedAt: 1700000000400
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_delete_community_forum_reply')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_community_id: 'community-1',
+    p_reply_id: 'reply-1',
+    p_actor_profile_id: 'profile-1',
+    p_updated_at_ms: 1700000000400
+  })
+  assert.equal(topicId, 'topic-1')
+})
