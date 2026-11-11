@@ -72,7 +72,7 @@ test('forum mutations use direct relational operations and keep realtime notific
   ])
   assert.deepEqual(calls[0][1].imageIds, ['image-1'])
   assert.deepEqual(calls[1][1].imageIds, ['image-1'])
-  assert.deepEqual(notifications, ['topic-1', 'topic-1', 'topic-1', 'topic-1', 'topic-1'])
+  assert.deepEqual(notifications, [topic.id, 'topic-1', 'topic-1', 'topic-1', 'topic-1'])
 })
 
 test('invalid topics are rejected before a relational write', async () => {
