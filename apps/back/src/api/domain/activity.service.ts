@@ -107,11 +107,11 @@ export class ActivityService {
       const community = communitiesById.get(relationship.profiles[1])
       if (!profile || !community || profile.type !== community.type) continue
 
-      if (relationship.type === 'owner') {
+      if (relationship.type === 'owner' && Number.isFinite(community.createdAt)) {
         activities.push({
           id: 'community-created:' + community.id,
           type: 'community_created',
-          updatedAt: community.createdAt ?? relationship.updatedAt,
+          updatedAt: community.createdAt,
           profile,
           community
         })
