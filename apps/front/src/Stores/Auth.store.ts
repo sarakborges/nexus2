@@ -1,5 +1,6 @@
 import { useProfileStore } from './Profile.store'
 import { queryClient } from '@/Services/Query/queryClient'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import type {
   AuthSession,
   AuthenticatedUser,
@@ -40,36 +41,70 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       useProfileStore.getState().clearProfile()
     }
     set({ session, isInitialized: true, initializationError })
+    if (session) queryClient.setQueryData(queryKeys.auth.session, session)
+    else queryClient.removeQueries({ queryKey: queryKeys.auth.session })
   },
   initialize: async () => {
     if (get().isInitialized) return
     try {
       const session = await getCurrentAuthSession()
       set({ session, isInitialized: true, initializationError: false })
+      if (session) queryClient.setQueryData(queryKeys.auth.session, session)
+      else queryClient.removeQueries({ queryKey: queryKeys.auth.session })
     } catch {
       set({ session: null, isInitialized: true, initializationError: true })
     }
   },
   signIn: async (credentials) => {
     const user = await signInUser(credentials)
+    const hydratedSession = await getCurrentAuthSession().catch(() => null)
+    const session = hydratedSession?.user.id === user.id
+      ? hydratedSession
+      : {
+          user,
+          currentProfile: null,
+          activities: [],
+          activityCursor: null,
+          hasMoreActivities: false,
+          authenticatedAt: Date.now()
+        }
     queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({
-      session: { user, authenticatedAt: Date.now() },
+      session,
       isInitialized: true,
       initializationError: false
     })
+    queryClient.setQueryData(queryKeys.auth.session, session)
+    if (!hydratedSession) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.session })
+    }
     return user
   },
   signUp: async (credentials) => {
     const user = await signUpUser(credentials)
+    const hydratedSession = await getCurrentAuthSession().catch(() => null)
+    const session = hydratedSession?.user.id === user.id
+      ? hydratedSession
+      : {
+          user,
+          currentProfile: null,
+          activities: [],
+          activityCursor: null,
+          hasMoreActivities: false,
+          authenticatedAt: Date.now()
+        }
     queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({
-      session: { user, authenticatedAt: Date.now() },
+      session,
       isInitialized: true,
       initializationError: false
     })
+    queryClient.setQueryData(queryKeys.auth.session, session)
+    if (!hydratedSession) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.auth.session })
+    }
     return user
   },
   setCurrentProfile: async (profileId) => {
@@ -90,5 +125,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     queryClient.clear()
     useProfileStore.getState().clearProfile()
     set({ session: null, isInitialized: true, initializationError: false })
+    queryClient.removeQueries({ queryKey: queryKeys.auth.session })
   }
 }))

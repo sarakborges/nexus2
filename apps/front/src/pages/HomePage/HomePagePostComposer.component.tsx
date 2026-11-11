@@ -27,7 +27,7 @@ export function HomePagePostComposer({ currentProfile }: HomePagePostComposerPro
     mutationFn: () => createProfilePost(currentProfile.id, content),
     onSuccess: async () => {
       setContent('')
-      await queryClient.invalidateQueries({ queryKey: queryKeys.home(userId ?? '') })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session })
       showToast(t('HOME_POST_PUBLISHED'))
     },
     onError: () => showToast(t('HOME_POST_FAILED'), 'error')

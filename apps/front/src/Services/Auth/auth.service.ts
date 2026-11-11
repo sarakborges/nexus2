@@ -1,5 +1,6 @@
 import { api, getApiErrorCode } from '../Http/api'
 import type {
+  AuthMeResponse,
   AuthSession,
   AuthenticatedUser,
   SignInCredentials,
@@ -22,8 +23,8 @@ export class AuthError extends Error {
   }
 }
 type AuthResponse = { user: AuthenticatedUser; authenticated: true }
-const toSession = (user: AuthenticatedUser): AuthSession => ({
-  user,
+const toSession = (response: AuthMeResponse): AuthSession => ({
+  ...response,
   authenticatedAt: Date.now()
 })
 const AUTH_CODES = [
@@ -41,6 +42,27 @@ function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
       : fallback
   )
 }
+function isAuthMeResponse(value: unknown): value is AuthMeResponse {
+  if (typeof value !== 'object' || value === null) return false
+  const response = value as Record<string, unknown>
+  const cursor = response.activityCursor
+  const currentProfile = response.currentProfile
+  const validProfile = currentProfile === null ||
+    (typeof currentProfile === 'object' && currentProfile !== null &&
+      typeof (currentProfile as Record<string, unknown>).id === 'string')
+  const validCursor = cursor === null ||
+    (typeof cursor === 'object' && cursor !== null &&
+      typeof (cursor as Record<string, unknown>).id === 'string' &&
+      Number.isFinite((cursor as Record<string, unknown>).updatedAt))
+  return (
+    isAuthenticatedUser(response.user) &&
+    validProfile &&
+    Array.isArray(response.activities) &&
+    validCursor &&
+    typeof response.hasMoreActivities === 'boolean'
+  )
+}
+
 function isAuthenticatedUser(value: unknown): value is AuthenticatedUser {
   if (typeof value !== 'object' || value === null) return false
   const user = value as Record<string, unknown>
@@ -76,10 +98,7 @@ export async function signUpUser(
 export async function getCurrentAuthSession(): Promise<AuthSession | null> {
   try {
     const { data } = await api.get<unknown>('/auth/me')
-    if (typeof data !== 'object' || data === null || !('user' in data))
-      return null
-    const user = (data as { user?: unknown }).user
-    return isAuthenticatedUser(user) ? toSession(user) : null
+    return isAuthMeResponse(data) ? toSession(data) : null
   } catch (error) {
     if (
       axios.isAxiosError(error) &&

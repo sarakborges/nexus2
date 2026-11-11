@@ -11,8 +11,8 @@ import './HomePage.style.scss'
 export function HomePage() {
   const { t } = useTranslations()
   const { homeQuery } = useHomePage()
-  const home = homeQuery.data
-  const currentProfile = home?.currentProfile ?? null
+  const me = homeQuery.data
+  const currentProfile = me?.currentProfile ?? null
 
   if (!currentProfile) {
     return (
@@ -34,9 +34,9 @@ export function HomePage() {
         <HomePageActivityFeed
           key={currentProfile.id + ':' + homeQuery.dataUpdatedAt}
           homeQuery={homeQuery}
-          activities={home?.activities ?? []}
-          activityCursor={home?.activityCursor ?? null}
-          hasMoreActivities={home?.hasMoreActivities ?? false}
+          activities={me?.activities ?? []}
+          activityCursor={me?.activityCursor ?? null}
+          hasMoreActivities={me?.hasMoreActivities ?? false}
           formatDate={formatHomeActivityDate}
         />
       </section>
