@@ -75,7 +75,6 @@ export function CommunitiesPage() {
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}
           isError={communitiesPageQuery.isError}
-          isEmpty={communitiesPageQuery.isSuccess && totalItems === 0}
           onRetry={() => void communitiesPageQuery.refetch()}
         >
           {totalItems === 0 ? (
