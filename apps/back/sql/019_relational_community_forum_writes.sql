@@ -123,11 +123,11 @@ begin
   where relationship.profile_id = p_actor_profile_id
     and relationship.community_id = p_community_id;
 
-  if p_require_staff and v_role not in ('owner', 'moderator') then
+  if p_require_staff and coalesce(v_role, '') not in ('owner', 'moderator') then
     raise exception 'COMMUNITY_STAFF_REQUIRED' using errcode = '42501';
   end if;
 
-  if p_require_member and v_role not in ('owner', 'moderator', 'connection') then
+  if p_require_member and coalesce(v_role, '') not in ('owner', 'moderator', 'connection') then
     raise exception 'COMMUNITY_MEMBER_REQUIRED' using errcode = '42501';
   end if;
 
@@ -510,7 +510,7 @@ begin
   end if;
 
   if v_author_profile_id <> p_actor_profile_id
-     and v_actor_role not in ('owner', 'moderator') then
+     and coalesce(v_actor_role, '') not in ('owner', 'moderator') then
     raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
   end if;
 
@@ -604,7 +604,7 @@ begin
   end if;
 
   if v_author_profile_id <> p_actor_profile_id
-     and v_actor_role not in ('owner', 'moderator') then
+     and coalesce(v_actor_role, '') not in ('owner', 'moderator') then
     raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
   end if;
 
