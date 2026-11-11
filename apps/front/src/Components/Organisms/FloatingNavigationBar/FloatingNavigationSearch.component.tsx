@@ -24,8 +24,9 @@ export function FloatingNavigationSearch() {
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const query = searchText.trim()
-    if (!query) return
-    navigate(`${ROUTES.search}?${new URLSearchParams({ query, scope: searchScope }).toString()}`)
+    const params = new URLSearchParams({ scope: searchScope })
+    if (query) params.set('query', query)
+    navigate(`${ROUTES.search}?${params.toString()}`)
   }
 
   return (
@@ -54,7 +55,6 @@ export function FloatingNavigationSearch() {
       <button
         type="submit"
         aria-label={t('SEARCH_SUBMIT')}
-        disabled={!searchText.trim()}
       >
         <FiSearch aria-hidden="true" />
       </button>
