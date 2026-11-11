@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import type { DataRepository } from './repository.interface'
 import { DATA_REPOSITORY } from './repository.interface'
 import { JsonFileRepository } from './json-file.repository'
-import { SupabaseRestRepository } from './supabase-rest.repository'
+import { SupabaseRelationalRepository } from './supabase-relational.repository'
 
 @Global()
 @Module({
@@ -18,7 +18,7 @@ import { SupabaseRestRepository } from './supabase-rest.repository'
 
         const configured = [projectUrl, publishableKey, apiSecret].filter(Boolean).length
         if (configured === 3) {
-          return new SupabaseRestRepository(projectUrl!, publishableKey!, apiSecret!)
+          return new SupabaseRelationalRepository(projectUrl!, publishableKey!, apiSecret!)
         }
 
         if (configured > 0) {
