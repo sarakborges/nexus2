@@ -5,7 +5,7 @@ import { FiBell } from 'react-icons/fi'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { getHomePage } from '@/Services/Home'
+import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 
@@ -28,11 +28,13 @@ export function NotificationsMenu({
   onClose
 }: NotificationsMenuProps) {
   const { t } = useTranslations()
-  const userId = useAuthStore(state => state.session?.user.id ?? null)
+  const session = useAuthStore(state => state.session)
+  const userId = session?.user.id ?? null
   const activityQuery = useQuery({
-    queryKey: queryKeys.home(userId ?? ''),
-    queryFn: getHomePage,
+    queryKey: queryKeys.auth.session,
+    queryFn: getCurrentAuthSession,
     enabled: Boolean(userId),
+    initialData: session ?? undefined,
     staleTime: 30_000
   })
   const activities = activityQuery.data?.activities.slice(0, 8) ?? []

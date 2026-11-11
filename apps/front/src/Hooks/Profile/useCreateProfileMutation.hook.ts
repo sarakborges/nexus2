@@ -4,6 +4,7 @@ import type {
 } from '@nexus/common'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
+import { getCurrentAuthSession } from '@/Services/Auth'
 import { createUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -26,10 +27,16 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
         throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
       }
 
-      useAuthStore.getState().setSession({
-        user: result.user,
-        authenticatedAt: currentSession.authenticatedAt
-      })
+      const refreshedSession = await getCurrentAuthSession()
+      if (
+        !refreshedSession ||
+        refreshedSession.user.id !== result.user.id ||
+        refreshedSession.user.currentProfile !== result.profile.id
+      ) {
+        throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
+      }
+
+      useAuthStore.getState().setSession(refreshedSession)
 
       return result
     },
@@ -46,8 +53,8 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['auth'] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.session }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
-        queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] }),
         queryClient.invalidateQueries({ queryKey: ['community-members-page'] })
       ])
