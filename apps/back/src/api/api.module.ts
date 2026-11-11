@@ -4,6 +4,10 @@ import { AuthService } from './auth/auth.service'
 import { AccountService } from './auth/account.service'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from './auth/jwt-access.guard'
 import { DomainController } from './domain/domain.controller'
+import { ProfilesController } from './domain/profiles.controller'
+import { ProfileMessagesController } from './domain/profile-messages.controller'
+import { CommunitiesController } from './domain/communities.controller'
+import { RelationshipsController } from './domain/relationships.controller'
 import { DomainService } from './domain/domain.service'
 import { DomainAccessService } from './domain/domain-access.service'
 import { CommunityForumService } from './domain/community-forum.service'
@@ -36,7 +40,50 @@ import { UploadsAvatarService } from './uploads/uploads.avatar.service'
 import { UploadsStorageService } from './uploads/uploads.storage.service'
 
 @Module({
-  controllers: [AuthController, DomainController, RealtimeController, UploadsController, UploadsInternalController],
-  providers: [AccountService, AuthService, DomainAccessService, ProfileService, ProfileRelationshipService, CommunityService, CommunityForumRealtimeService, CommunityForumService, ProfileMessageService, ProfilePostService, ActivityService, HomePageService, ProfilePageService, CommunityPageService, CommunityForumPageService, CommunityForumTopicPageService, CommunityMembersPageService, ProfileMessagesPageService, ProfileDirectoryPageService, CommunitiesPageService, CommunityForumComposerPageService, CommunityEditPageService, ProfileEditPageService, DomainService, CommunityMembershipService, UploadsService, UploadsStorageService, UploadsCleanupService, UploadsContentService, UploadsAvatarService, JwtAccessGuard, OptionalJwtAccessGuard]
+  controllers: [
+    AuthController,
+    DomainController,
+    ProfilesController,
+    ProfileMessagesController,
+    CommunitiesController,
+    RelationshipsController,
+    RealtimeController,
+    UploadsController,
+    UploadsInternalController
+  ],
+  providers: [
+    AccountService,
+    AuthService,
+    DomainAccessService,
+    ProfileService,
+    ProfileRelationshipService,
+    CommunityService,
+    CommunityForumRealtimeService,
+    CommunityForumService,
+    ProfileMessageService,
+    ProfilePostService,
+    ActivityService,
+    HomePageService,
+    ProfilePageService,
+    CommunityPageService,
+    CommunityForumPageService,
+    CommunityForumTopicPageService,
+    CommunityMembersPageService,
+    ProfileMessagesPageService,
+    ProfileDirectoryPageService,
+    CommunitiesPageService,
+    CommunityForumComposerPageService,
+    CommunityEditPageService,
+    ProfileEditPageService,
+    DomainService,
+    CommunityMembershipService,
+    UploadsService,
+    UploadsStorageService,
+    UploadsCleanupService,
+    UploadsContentService,
+    UploadsAvatarService,
+    JwtAccessGuard,
+    OptionalJwtAccessGuard
+  ]
 })
 export class ApiModule {}
