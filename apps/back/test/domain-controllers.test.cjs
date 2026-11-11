@@ -77,9 +77,10 @@ test('domain controllers preserve the complete HTTP route inventory', () => {
       if (typeof handler !== 'function') return []
 
       const path = Reflect.getMetadata(PATH_METADATA, handler)
-      if (path === undefined) return []
+      const requestMethod = Reflect.getMetadata(METHOD_METADATA, handler)
+      if (path === undefined || requestMethod === undefined) return []
 
-      const method = RequestMethod[Reflect.getMetadata(METHOD_METADATA, handler)]
+      const method = RequestMethod[requestMethod]
       return (Array.isArray(path) ? path : [path]).map(route => `${method} ${route}`)
     })
   )
