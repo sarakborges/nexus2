@@ -80,7 +80,7 @@ export function CommunitiesPage() {
           {totalItems === 0 ? (
             <div className="directory-empty-state">
               <p>{t('COMMUNITIES_EMPTY')}</p>
-              <Link to={`${ROUTES.search}?scope=communities`}>{t('SEARCH_TITLE')}</Link>
+              <Link to={`${ROUTES.search}?scope=communities`}>{t('COMMUNITIES_EMPTY_SEARCH')}</Link>
             </div>
           ) : <EntityDirectoryGrid
             entries={communities.map((community) => ({

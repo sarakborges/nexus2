@@ -83,7 +83,7 @@ export function ProfileFriendsPage() {
           {totalItems === 0 ? (
             <div className="directory-empty-state">
               <p>{t('RELATIONSHIP_FRIENDS_EMPTY')}</p>
-              <Link to={`${ROUTES.search}?scope=profiles`}>{t('SEARCH_TITLE')}</Link>
+              <Link to={`${ROUTES.search}?scope=profiles`}>{t('RELATIONSHIP_FRIENDS_EMPTY_SEARCH')}</Link>
             </div>
           ) : <EntityDirectoryGrid
             entries={friends.map((friend) => ({
