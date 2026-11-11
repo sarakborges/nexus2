@@ -4,6 +4,8 @@ import type {
   DataRepository,
   ActivityFeedRow,
   AccountProfileChange,
+  ProfileRelationshipRemoval,
+  ProfileRelationshipWrite,
   RefreshTokenRotation,
   RefreshTokenWrite
 } from './repository.interface'
@@ -195,6 +197,41 @@ export class SupabaseRelationalRepository implements DataRepository {
         p_action: change.action,
         p_make_current: change.makeCurrent,
         p_previous_current_profile_id: change.previousCurrentProfileId
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async upsertProfileRelationship(change: ProfileRelationshipWrite): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_upsert_profile_relationship', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_source_profile_id: change.sourceProfileId,
+        p_target_profile_id: change.targetProfileId,
+        p_type: change.type,
+        p_updated_at_ms: change.updatedAt
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async removeProfileRelationship(change: ProfileRelationshipRemoval): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_remove_profile_relationship', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_source_profile_id: change.sourceProfileId,
+        p_target_profile_id: change.targetProfileId,
+        p_updated_at_ms: change.updatedAt
       })
     })
     await this.assertSuccess(response)

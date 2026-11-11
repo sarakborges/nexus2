@@ -358,3 +358,55 @@ test('changes account profile membership through a targeted relational RPC', asy
     p_previous_current_profile_id: 'profile-1'
   })
 })
+
+
+test('writes profile relationships through an atomic relational upsert RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.upsertProfileRelationship({
+    userId: 'account-1',
+    sourceProfileId: 'profile-1',
+    targetProfileId: 'profile-2',
+    type: 'requested',
+    updatedAt: 1700000000000
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_upsert_profile_relationship')
+  assert.equal(call.options.method, 'POST')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_source_profile_id: 'profile-1',
+    p_target_profile_id: 'profile-2',
+    p_type: 'requested',
+    p_updated_at_ms: 1700000000000
+  })
+})
+
+test('removes profile relationships through a targeted relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.removeProfileRelationship({
+    userId: 'account-1',
+    sourceProfileId: 'profile-1',
+    targetProfileId: 'profile-2',
+    updatedAt: 1700000000000
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_remove_profile_relationship')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_source_profile_id: 'profile-1',
+    p_target_profile_id: 'profile-2',
+    p_updated_at_ms: 1700000000000
+  })
+})
