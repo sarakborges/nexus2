@@ -95,6 +95,8 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
         )
       })),
     [detail?.replies.items, authorsById, canInteract, forumProfileId, isStaff]
+  )
+
   const {
     canDeleteTopic,
     isUpdatingTopic,
