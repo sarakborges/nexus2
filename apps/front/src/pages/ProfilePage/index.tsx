@@ -1,11 +1,10 @@
-import { Link } from 'react-router'
-
-import { IdentityAvatar, RequestState } from '@/Components'
+import { RequestState } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
-import { Button, ButtonLink, RichTextContent } from '@/DesignSystem'
+import { Button, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
 import { useProfilePage } from './useProfilePage'
 
 import '../AuthenticatedPage.style.scss'
@@ -96,93 +95,42 @@ export function ProfilePage() {
         </section>
 
         <aside className="social-page__right-column">
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('PROFILE_FRIENDS_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({profilePageQuery.data?.friends.totalItems ?? '—'})
-                </span>
-              </h2>
-              <ButtonLink
-                variation="transparent"
-                className="social-preview-panel__all"
-                to={ROUTES.profile + '/' + profile.url + '/friends'}
-              >
-                {t('COMMON_VIEW_ALL')}
-              </ButtonLink>
-            </header>
-            <RequestState
-              isLoading={profilePageQuery.isLoading}
-              isFetching={profilePageQuery.isFetching}
-              isError={profilePageQuery.isError}
-              isEmpty={profilePageQuery.isSuccess && friends.length === 0}
-              emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-              onRetry={() => void profilePageQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {friends.map((friend) => (
-                  <Link
-                    className="social-preview-link"
-                    key={friend.id}
-                    to={ROUTES.profile + '/' + friend.url}
-                    aria-label={friend.name}
-                    title={friend.name}
-                  >
-                    <IdentityAvatar
-                      className="social-preview-avatar"
-                      name={friend.name}
-                      picture={friend.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
-
-          <section className="social-preview-panel">
-            <header className="social-preview-panel__header">
-              <h2>
-                {t('PROFILE_COMMUNITIES_TITLE')}
-                <span className="social-preview-panel__count">
-                  ({profilePageQuery.data?.communities.totalItems ?? '—'})
-                </span>
-              </h2>
-              <ButtonLink
-                variation="transparent"
-                className="social-preview-panel__all"
-                to={ROUTES.profile + '/' + profile.url + '/communities'}
-              >
-                {t('COMMON_VIEW_ALL')}
-              </ButtonLink>
-            </header>
-            <RequestState
-              isLoading={profilePageQuery.isLoading}
-              isFetching={profilePageQuery.isFetching}
-              isError={profilePageQuery.isError}
-              isEmpty={profilePageQuery.isSuccess && communities.length === 0}
-              emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-              onRetry={() => void profilePageQuery.refetch()}
-            >
-              <div className="social-preview-grid">
-                {communities.map((community) => (
-                  <Link
-                    className="social-preview-link"
-                    key={community.id}
-                    to={ROUTES.community + '/' + community.url}
-                    aria-label={community.name}
-                    title={community.name}
-                  >
-                    <IdentityAvatar
-                      className="social-preview-avatar"
-                      name={community.name}
-                      picture={community.picture}
-                    />
-                  </Link>
-                ))}
-              </div>
-            </RequestState>
-          </section>
+          <ProfilePageEntityPreview
+            title={t('PROFILE_FRIENDS_TITLE')}
+            totalItems={profilePageQuery.data?.friends.totalItems}
+            allHref={`${ROUTES.profile}/${profile.url}/friends`}
+            allLabel={t('COMMON_VIEW_ALL')}
+            isLoading={profilePageQuery.isLoading}
+            isFetching={profilePageQuery.isFetching}
+            isError={profilePageQuery.isError}
+            isSuccess={profilePageQuery.isSuccess}
+            emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
+            onRetry={() => void profilePageQuery.refetch()}
+            entries={friends.map((friend) => ({
+              id: friend.id,
+              name: friend.name,
+              picture: friend.picture,
+              href: `${ROUTES.profile}/${friend.url}`
+            }))}
+          />
+          <ProfilePageEntityPreview
+            title={t('PROFILE_COMMUNITIES_TITLE')}
+            totalItems={profilePageQuery.data?.communities.totalItems}
+            allHref={`${ROUTES.profile}/${profile.url}/communities`}
+            allLabel={t('COMMON_VIEW_ALL')}
+            isLoading={profilePageQuery.isLoading}
+            isFetching={profilePageQuery.isFetching}
+            isError={profilePageQuery.isError}
+            isSuccess={profilePageQuery.isSuccess}
+            emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
+            onRetry={() => void profilePageQuery.refetch()}
+            entries={communities.map((community) => ({
+              id: community.id,
+              name: community.name,
+              picture: community.picture,
+              href: `${ROUTES.community}/${community.url}`
+            }))}
+          />
         </aside>
       </div>
     </main>

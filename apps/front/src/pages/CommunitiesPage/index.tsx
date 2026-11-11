@@ -1,6 +1,5 @@
-import { Link } from 'react-router'
-
 import { Pagination, RequestState } from '@/Components'
+import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
@@ -79,35 +78,15 @@ export function CommunitiesPage() {
           emptyMessage={t('COMMUNITIES_EMPTY')}
           onRetry={() => void communitiesPageQuery.refetch()}
         >
-          <div className="account-card__profile-list account-card__profile-list--grid">
-            {communities.map((community) => (
-              <article
-                className="account-card__profile-entry account-card__profile-entry--card"
-                key={community.id}
-              >
-                <Link
-                  className="account-card__profile-entry-identity"
-                  to={`${ROUTES.community}/${community.url}`}
-                >
-                  <span className="account-card__profile-entry-avatar">
-                    {community.picture ? (
-                      <img src={community.picture} alt="" />
-                    ) : (
-                      <span aria-hidden="true">
-                        {community.name.trim().charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </span>
-                  <span className="account-card__profile-entry-copy">
-                    <span className="account-card__link">{community.name}</span>
-                    <span className="account-card__profile-entry-secondary">
-                      /community/{community.url}
-                    </span>
-                  </span>
-                </Link>
-              </article>
-            ))}
-          </div>
+          <EntityDirectoryGrid
+            entries={communities.map((community) => ({
+              id: community.id,
+              name: community.name,
+              picture: community.picture,
+              href: `${ROUTES.community}/${community.url}`,
+              secondaryText: `/community/${community.url}`
+            }))}
+          />
         </RequestState>
         <Pagination
           page={page}
