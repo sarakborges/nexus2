@@ -28,6 +28,13 @@ export class CommunityMembershipService {
   ) {}
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
+    if (this.data.getCommunityRelationships) {
+      try {
+        return await this.data.getCommunityRelationships(userId, communityId)
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<CommunityRelationship[]>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -58,6 +65,15 @@ export class CommunityMembershipService {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<CommunityMemberProfile>> {
+    if (this.data.listCommunityMembers) {
+      try {
+        return await this.data.listCommunityMembers(
+          communityId, tab, q.page, userId, actorProfileId
+        )
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -100,6 +116,13 @@ export class CommunityMembershipService {
   }
 
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<CommunityMemberProfile>> {
+    if (this.data.listPendingMembers) {
+      try {
+        return await this.data.listPendingMembers(userId, communityId, actorProfileId, q.page)
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
       ['accounts', 'profiles', 'communities', 'community_relationships'],
       collections => {
@@ -375,6 +398,12 @@ export class CommunityMembershipService {
     }
     if (message.includes('PROFILE_NOT_FOUND')) {
       throw new NotFoundException('PROFILE_NOT_FOUND')
+    }
+    if (message.includes('COMMUNITY_STAFF_REQUIRED')) {
+      throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+    }
+    if (message.includes('INVALID_MEMBER_TAB')) {
+      throw new BadRequestException('INVALID_MEMBER_TAB')
     }
     if (message.includes('COMMUNITY_NOT_FOUND')) {
       throw new NotFoundException('COMMUNITY_NOT_FOUND')

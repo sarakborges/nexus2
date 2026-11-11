@@ -71,3 +71,35 @@ test('community relationship RPC errors preserve the existing authorization mess
     )
   }
 })
+
+
+test('community relationship and member list reads use targeted repository queries', async () => {
+  const calls = []
+  const repository = {
+    async getCommunityRelationships(userId, communityId) {
+      calls.push(['relationships',userId,communityId])
+      return [{ profiles: ['profile-1','community-1'], type: 'owner' }]
+    },
+    async listCommunityMembers(communityId, tab, page, userId, actorProfileId) {
+      calls.push(['members',communityId,tab,page,userId,actorProfileId])
+      return { items: [{ id: 'profile-1', role: 'owner' }], page, pageSize: 20, totalItems: 1, totalPages: 1 }
+    },
+    async listPendingMembers(userId, communityId, actorProfileId, page) {
+      calls.push(['pending',userId,communityId,actorProfileId,page])
+      return { items: [{ id: 'profile-2', role: 'requested' }], page, pageSize: 20, totalItems: 1, totalPages: 1 }
+    },
+    async transaction() { throw new Error('Community membership reads must not load collection snapshots.') }
+  }
+  const service = new CommunityMembershipService(repository, {})
+  const relationships = await service.getCommunityRelationships('account-1','community-1')
+  const members = await service.listCommunityMembers('community-1','staff',{ page: 2 },'account-1','profile-1')
+  const pending = await service.listPendingMembers('account-1','community-1','profile-1',{ page: 3 })
+  assert.equal(relationships.length, 1)
+  assert.equal(members.items[0].role, 'owner')
+  assert.equal(pending.items[0].role, 'requested')
+  assert.deepEqual(calls, [
+    ['relationships','account-1','community-1'],
+    ['members','community-1','staff',2,'account-1','profile-1'],
+    ['pending','account-1','community-1','profile-1',3]
+  ])
+})

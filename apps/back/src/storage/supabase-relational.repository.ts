@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,100 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_relationships', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_profile_id: profileId })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (!Array.isArray(result)) throw new Error('Supabase profile relationships returned an invalid result.')
+    return result as Relationship[]
+  }
+
+  async getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_friends', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_profile_id: profileId, p_page: page })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase profile friends returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase profile friends returned invalid pagination data.')
+    }
+    return result as PaginatedResult<Profile>
+  }
+
+  async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_relationships', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_community_id: communityId })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (!Array.isArray(result)) throw new Error('Supabase community relationships returned an invalid result.')
+    return result as CommunityRelationship[]
+  }
+
+  async listCommunityMembers(
+    communityId: string,
+    tab: string,
+    page: number,
+    userId: string | null,
+    actorProfileId?: string
+  ): Promise<PaginatedResult<CommunityMember>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_community_members', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_community_id: communityId,
+        p_tab: tab,
+        p_user_id: userId,
+        p_actor_profile_id: actorProfileId ?? null,
+        p_page: page
+      })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase community members returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase community members returned invalid pagination data.')
+    }
+    return result as PaginatedResult<CommunityMember>
+  }
+
+  async listPendingMembers(
+    userId: string,
+    communityId: string,
+    actorProfileId: string,
+    page: number
+  ): Promise<PaginatedResult<CommunityMember>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_pending_members', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_community_id: communityId,
+        p_actor_profile_id: actorProfileId,
+        p_page: page
+      })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase pending members returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase pending members returned invalid pagination data.')
+    }
+    return result as PaginatedResult<CommunityMember>
   }
 
   async getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData> {

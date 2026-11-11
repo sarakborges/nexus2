@@ -1275,3 +1275,56 @@ test('reads profile edit, community edit and forum composer pages through target
     { path: '/rest/v1/rpc/nexus_get_community_forum_composer_page', body: { p_url: 'community', p_user_id: 'account-1' } }
   ])
 })
+
+
+test('reads profile and community relationship collections through targeted RPCs', async t => {
+  const calls = []
+  const responses = [
+    [{ profiles: ['profile-1','profile-2'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 2 }],
+    { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 },
+    [{ profiles: ['profile-1','community-1'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 2 }]
+  ]
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    return new Response(JSON.stringify(responses[calls.length - 1]), { status: 200 })
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.deepEqual(await repo.getProfileRelationships('account-1','profile-1'), responses[0])
+  assert.deepEqual(await repo.getProfileFriends('profile-1',1), responses[1])
+  assert.deepEqual(await repo.getCommunityRelationships('account-1','community-1'), responses[2])
+  assert.deepEqual(calls.map(call => call.path), [
+    '/rest/v1/rpc/nexus_get_profile_relationships',
+    '/rest/v1/rpc/nexus_get_profile_friends',
+    '/rest/v1/rpc/nexus_get_community_relationships'
+  ])
+})
+
+test('reads community member and pending lists through their targeted RPCs', async t => {
+  const calls = []
+  const page = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    return new Response(JSON.stringify(page), { status: 200 })
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.listCommunityMembers('community-1','staff',2,'account-1','profile-1')
+  await repo.listPendingMembers('account-1','community-1','profile-1',3)
+  assert.deepEqual(calls, [
+    {
+      path: '/rest/v1/rpc/nexus_list_community_members',
+      body: {
+        p_community_id: 'community-1', p_tab: 'staff', p_user_id: 'account-1',
+        p_actor_profile_id: 'profile-1', p_page: 2
+      }
+    },
+    {
+      path: '/rest/v1/rpc/nexus_list_pending_members',
+      body: {
+        p_user_id: 'account-1', p_community_id: 'community-1',
+        p_actor_profile_id: 'profile-1', p_page: 3
+      }
+    }
+  ])
+})

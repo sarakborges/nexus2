@@ -71,3 +71,28 @@ test('profile relationship RPC errors preserve domain error codes', async () => 
     )
   }
 })
+
+
+test('profile relationship reads use targeted repository queries without snapshots', async () => {
+  const repository = {
+    async getProfileRelationships(userId, profileId) {
+      assert.equal(userId, 'account-1')
+      assert.equal(profileId, 'profile-1')
+      return [{ profiles: ['profile-1','profile-2'], type: 'connection', updatedAt: 1 }]
+    },
+    async getProfileFriends(profileId, page) {
+      assert.equal(profileId, 'profile-1')
+      assert.equal(page, 2)
+      return {
+        items: [{ id: 'profile-2', about: '<p>Friend</p><script>unsafe()</script>' }],
+        page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+      }
+    },
+    async transaction() { throw new Error('Relationship reads must not load collection snapshots.') }
+  }
+  const service = new ProfileRelationshipService(repository, {})
+  const relationships = await service.getProfileRelationships('account-1','profile-1')
+  const friends = await service.getProfileFriends('profile-1',{ page: 2 })
+  assert.equal(relationships.length, 1)
+  assert.equal(friends.items[0].about.includes('<script>'), false)
+})

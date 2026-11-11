@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -168,6 +168,22 @@ export interface DataRepository {
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
   getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
+  getProfileRelationships?(userId: string, profileId: string): Promise<Relationship[]>
+  getProfileFriends?(profileId: string, page: number): Promise<PaginatedResult<Profile>>
+  getCommunityRelationships?(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
+  listCommunityMembers?(
+    communityId: string,
+    tab: string,
+    page: number,
+    userId: string | null,
+    actorProfileId?: string
+  ): Promise<PaginatedResult<CommunityMember>>
+  listPendingMembers?(
+    userId: string,
+    communityId: string,
+    actorProfileId: string,
+    page: number
+  ): Promise<PaginatedResult<CommunityMember>>
   getProfileEditPage?(url: string, userId: string | null): Promise<ProfileEditPageData>
   getCommunityEditPage?(url: string, userId: string | null): Promise<CommunityEditPageData>
   getCommunityForumComposerPage?(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
