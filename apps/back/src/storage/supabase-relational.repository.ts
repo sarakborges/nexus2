@@ -1,5 +1,11 @@
 import type { ActivityFeedCursor, ProfilePost } from '@nexus/common'
-import type { CollectionRecordMap, DataRepository, ActivityFeedRow } from './repository.interface'
+import type {
+  CollectionRecordMap,
+  DataRepository,
+  ActivityFeedRow,
+  RefreshTokenRotation,
+  RefreshTokenWrite
+} from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
 type CollectionSnapshot = {
@@ -136,6 +142,43 @@ export class SupabaseRelationalRepository implements DataRepository {
       content: row.content,
       createdAt: Number(row.created_at_ms)
     }
+  }
+
+  async issueRefreshToken(
+    record: RefreshTokenWrite,
+    rotation: RefreshTokenRotation | null,
+    now: number
+  ): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_issue_refresh_token', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_id: record.id,
+        p_user_id: record.userId,
+        p_token_hash: record.tokenHash,
+        p_expires_at_ms: record.expiresAt,
+        p_now_ms: now,
+        p_previous_id: rotation?.id ?? null,
+        p_previous_user_id: rotation?.userId ?? null,
+        p_previous_token_hash: rotation?.tokenHash ?? null
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async deleteRefreshTokenByHash(tokenHash: string): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_revoke_refresh_token', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ p_token_hash: tokenHash })
+    })
+    await this.assertSuccess(response)
   }
 
   async getActivityFeedRows(

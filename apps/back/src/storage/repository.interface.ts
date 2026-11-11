@@ -4,6 +4,19 @@ export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
 export type CollectionRecordMap = Record<string, unknown[]>
 
+export type RefreshTokenWrite = {
+  id: string
+  userId: string
+  tokenHash: string
+  expiresAt: number
+}
+
+export type RefreshTokenRotation = {
+  id: string
+  userId: string
+  tokenHash: string
+}
+
 export type CollectionTransaction<T> = {
   records: CollectionRecordMap
   result: T
@@ -33,6 +46,12 @@ export interface DataRepository {
     post: ProfilePost,
     imageIds: readonly string[]
   ): Promise<ProfilePost>
+  issueRefreshToken?(
+    record: RefreshTokenWrite,
+    rotation: RefreshTokenRotation | null,
+    now: number
+  ): Promise<void>
+  deleteRefreshTokenByHash?(tokenHash: string): Promise<void>
   getActivityFeedRows?(
     userId: string,
     limit: number,

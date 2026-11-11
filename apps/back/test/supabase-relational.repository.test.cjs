@@ -286,3 +286,48 @@ test('creates a profile post through the atomic relational RPC', async t => {
     p_image_ids: ['image-1']
   })
 })
+
+
+test('issues and rotates refresh tokens through an atomic relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.issueRefreshToken(
+    { id: 'next-token', userId: 'account-1', tokenHash: 'next-hash', expiresAt: 2000 },
+    { id: 'previous-token', userId: 'account-1', tokenHash: 'previous-hash' },
+    1000
+  )
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_issue_refresh_token')
+  assert.equal(call.options.method, 'POST')
+  assert.equal(call.options.headers.apikey, key)
+  assert.equal(call.options.headers['x-nexus-api-secret'], secret)
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_id: 'next-token',
+    p_user_id: 'account-1',
+    p_token_hash: 'next-hash',
+    p_expires_at_ms: 2000,
+    p_now_ms: 1000,
+    p_previous_id: 'previous-token',
+    p_previous_user_id: 'account-1',
+    p_previous_token_hash: 'previous-hash'
+  })
+})
+
+test('revokes a refresh token by hash without reading the refresh-token table', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.deleteRefreshTokenByHash('stored-token-hash')
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_revoke_refresh_token')
+  assert.deepEqual(JSON.parse(call.options.body), { p_token_hash: 'stored-token-hash' })
+})

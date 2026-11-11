@@ -228,3 +228,45 @@ test('sign-in uses the targeted account lookup instead of loading the accounts c
   assert.deepEqual(lookups, ['targeted@example.com'])
   assert.equal(fullAccountReads, 0)
 })
+
+
+test('refresh rotation uses the relational atomic token writer instead of a collection update', async () => {
+  const { service, repository } = createAuthHarness()
+  const initial = await service.signUp({ email: 'relational-refresh@example.com', password: 'a-secure-password' })
+  const rotations = []
+  repository.issueRefreshToken = async (record, rotation, now) => {
+    rotations.push({ record, rotation, now })
+  }
+  repository.update = async () => {
+    throw new Error('Relational refresh rotation must not read or rewrite a collection snapshot.')
+  }
+
+  const result = await service.refresh(initial.refreshToken)
+
+  assert.notEqual(result.refreshToken, initial.refreshToken)
+  assert.equal(rotations.length, 1)
+  assert.equal(rotations[0].record.userId, initial.user.id)
+  assert.match(rotations[0].record.id, /^[0-9a-f-]{36}$/)
+  assert.equal(rotations[0].record.tokenHash.length, 64)
+  assert.ok(rotations[0].rotation)
+  assert.match(rotations[0].rotation.id, /^[0-9a-f-]{36}$/)
+  assert.equal(rotations[0].rotation.userId, initial.user.id)
+  assert.equal(rotations[0].rotation.tokenHash.length, 64)
+  assert.ok(rotations[0].now > 0)
+})
+
+test('sign-out revokes a refresh token by its stored hash without collection updates', async () => {
+  const { service, repository } = createAuthHarness()
+  const initial = await service.signUp({ email: 'relational-signout@example.com', password: 'a-secure-password' })
+  let revokedHash
+  repository.deleteRefreshTokenByHash = async hash => { revokedHash = hash }
+  repository.update = async () => {
+    throw new Error('Relational sign-out must not read or rewrite a collection snapshot.')
+  }
+
+  await service.signOut(initial.refreshToken)
+
+  assert.equal(typeof revokedHash, 'string')
+  assert.equal(revokedHash.length, 64)
+  assert.notEqual(revokedHash, initial.refreshToken)
+})

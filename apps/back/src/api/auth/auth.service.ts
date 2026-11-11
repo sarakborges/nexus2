@@ -88,6 +88,10 @@ export class AuthService {
   async signOut(token?: string): Promise<void> {
     if (!token) return
     const hash = this.hashToken(token)
+    if (this.repository.deleteRefreshTokenByHash) {
+      await this.repository.deleteRefreshTokenByHash(hash)
+      return
+    }
     await this.repository.update<RefreshTokenRecord>('refresh_tokens', records =>
       records.filter(item => item.tokenHash !== hash)
     )
@@ -187,6 +191,8 @@ export class AuthService {
           }
         }
       )
+    } else if (this.repository.issueRefreshToken) {
+      await this.repository.issueRefreshToken(nextRecord, rotation ?? null, now)
     } else {
       await this.repository.update<RefreshTokenRecord>('refresh_tokens', rotateRecords)
     }
