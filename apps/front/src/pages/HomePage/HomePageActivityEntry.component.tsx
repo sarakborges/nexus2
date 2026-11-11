@@ -35,6 +35,7 @@ export function HomePageActivityEntry({
           >
             {activity.profile.name}
           </Link>
+          <Link className="home-page__activity-author-url" to={profileHref}>@{activity.profile.url}</Link>
           <time dateTime={new Date(activity.updatedAt).toISOString()}>
             {formatDate(activity.updatedAt)}
           </time>
@@ -48,7 +49,7 @@ export function HomePageActivityEntry({
       ) : activity.type === 'friend_connected' ? (
         <p className="home-page__activity-description">
           <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
-          <Link to={profileHref}>{activity.profile.name}</Link>
+          <Link to={profileHref}>{activity.profile.name} (@{activity.profile.url})</Link>
           <span> {t('HOME_ACTIVITY_FRIEND_CONNECTOR')} </span>
           <Link to={`${ROUTES.profile}/${activity.friend.url}`}>
             {activity.friend.name}
