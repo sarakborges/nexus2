@@ -300,7 +300,13 @@ export class ActivityService {
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
     return this.data.transaction<RecentActivity[]>(
       COLLECTIONS,
-      (collections) => this.getRecentActivityFromRecords(userId, collections)
+      (collections) => {
+        const normalized = this.access.normalizeCommunitiesInRecords(collections)
+        return {
+          records: normalized.records,
+          result: this.getRecentActivityFromFeedRecords(userId, normalized.records, normalized.communities)
+        }
+      }
     )
   }
 }
