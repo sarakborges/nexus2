@@ -43,6 +43,13 @@ export class ProfileService {
   }
 
   async listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
+    if (this.data.getProfilesPage) {
+      const page = await this.data.getProfilesPage(q.page)
+      return {
+        ...page,
+        items: this.access.normalizeProfiles(page.items)
+      }
+    }
     return paginate(await this.access.readProfiles(), q)
   }
   async listOwnedProfiles(userId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
@@ -74,6 +81,16 @@ export class ProfileService {
   }
   async getProfile(url: string): Promise<Profile> {
     const value = normalizeEntityUrl(url)
+    if (this.data.getProfileByUrl) {
+      try {
+        const profile = await this.data.getProfileByUrl(value)
+        return this.access.normalizeProfiles([profile])[0]
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+        throw error
+      }
+    }
     const found = (await this.access.readProfiles()).find(p => p.url === value)
     if (!found) throw new NotFoundException('PROFILE_NOT_FOUND')
     return found

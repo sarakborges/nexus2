@@ -179,6 +179,9 @@ export interface DataRepository {
     userId: string | null,
     page: number
   ): Promise<CommunityForumTopicDetail>
+  getProfilesPage?(page: number): Promise<PaginatedResult<Profile>>
+  getProfileByUrl?(url: string): Promise<Profile>
+  getPublicCommunities?(page: number): Promise<PaginatedResult<Community>>
   getOwnedProfiles?(userId: string, page: number): Promise<PaginatedResult<Profile>>
   getCommunityByUrl?(url: string, userId: string | null): Promise<Community>
   getProfileCommunities?(profileId: string, page: number): Promise<PaginatedResult<Community>>

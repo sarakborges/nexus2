@@ -595,6 +595,52 @@ export class SupabaseRelationalRepository implements DataRepository {
     return result as PaginatedResult<CommunityMember>
   }
 
+  async getProfilesPage(page: number): Promise<PaginatedResult<Profile>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_profiles', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_page: page })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase profile list returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase profile list returned invalid pagination data.')
+    }
+    return result as PaginatedResult<Profile>
+  }
+
+  async getProfileByUrl(url: string): Promise<Profile> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_by_url', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null || !('id' in result) || !('type' in result)) {
+      throw new Error('Supabase profile lookup returned an invalid result.')
+    }
+    return result as Profile
+  }
+
+  async getPublicCommunities(page: number): Promise<PaginatedResult<Community>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_public_communities', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_page: page })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) throw new Error('Supabase public community list returned an invalid result.')
+    const record = result as Record<string, unknown>
+    if (!Array.isArray(record.items) || record.pageSize !== 20 || !Number.isSafeInteger(record.totalItems) || !Number.isSafeInteger(record.totalPages)) {
+      throw new Error('Supabase public community list returned invalid pagination data.')
+    }
+    return result as PaginatedResult<Community>
+  }
+
   async getOwnedProfiles(userId: string, page: number): Promise<PaginatedResult<Profile>> {
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_owned_profiles', {
       method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },

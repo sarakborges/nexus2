@@ -613,3 +613,30 @@ test('profile community list reads membership and community privacy from the sam
   assert.deepEqual(result.items, [])
 })
 
+
+
+test('public profile lists and URL lookups use targeted repository queries without snapshots', async () => {
+  const profile = {
+    id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+    about: '<p>About</p><script>unsafe()</script>', type: 'social',
+    createdAt: 1, lastActivity: 2
+  }
+  const calls = []
+  const data = {
+    async getProfilesPage(page) {
+      calls.push(['list',page])
+      return { items: [profile], page, pageSize: 20, totalItems: 1, totalPages: 1 }
+    },
+    async getProfileByUrl(url) {
+      calls.push(['url',url])
+      return profile
+    },
+    async transaction() { throw new Error('Profile reads must not load collection snapshots.') }
+  }
+  const service = new DomainService(data, {})
+  const page = await service.listProfiles({ page: 1 })
+  const found = await service.getProfile('@PROFILE')
+  assert.deepEqual(calls,[['list',1],['url','profile']])
+  assert.equal(page.items[0].about.includes('<script>'),false)
+  assert.equal(found.about.includes('<script>'),false)
+})

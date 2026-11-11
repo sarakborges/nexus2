@@ -1374,3 +1374,26 @@ test('reads legacy forum topic lists and details through targeted relational RPC
     {path:'/rest/v1/rpc/nexus_get_community_forum_topic',body:{p_community_id:'community-1',p_topic_id:'topic-1',p_user_id:null,p_page:3}}
   ])
 })
+
+
+test('reads public profile lists, profile URL lookups and public community lists through paged RPCs', async t => {
+  const calls = []
+  const profilePage = { items: [], page: 2, pageSize: 20, totalItems: 21, totalPages: 2 }
+  const profile = { id: 'profile-1', name: 'Profile', url: 'profile', picture: '', about: '', type: 'social', createdAt: 1, lastActivity: 2 }
+  const communityPage = { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  const responses = [profilePage, profile, communityPage]
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    return new Response(JSON.stringify(responses[calls.length - 1]), { status: 200 })
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.deepEqual(await repo.getProfilesPage(2), profilePage)
+  assert.deepEqual(await repo.getProfileByUrl('profile'), profile)
+  assert.deepEqual(await repo.getPublicCommunities(1), communityPage)
+  assert.deepEqual(calls, [
+    { path: '/rest/v1/rpc/nexus_list_profiles', body: { p_page: 2 } },
+    { path: '/rest/v1/rpc/nexus_get_profile_by_url', body: { p_url: 'profile' } },
+    { path: '/rest/v1/rpc/nexus_list_public_communities', body: { p_page: 1 } }
+  ])
+})

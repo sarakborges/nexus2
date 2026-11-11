@@ -44,6 +44,16 @@ export class CommunityService {
   }
 
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
+    if (this.data.getPublicCommunities) {
+      const page = await this.data.getPublicCommunities(q.page)
+      return {
+        ...page,
+        items: page.items.map(community => ({
+          ...community,
+          about: sanitizeRichText(community.about ?? '')
+        }))
+      }
+    }
     return paginate((await this.access.readCommunities()).filter(community => community.privacy === 'public'), q)
   }
   async getCommunity(url: string, userId: string | null = null): Promise<Community> {
