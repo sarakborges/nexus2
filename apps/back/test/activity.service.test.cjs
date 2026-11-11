@@ -132,3 +132,59 @@ test('applies the viewer feed preferences to stored friend activity', async () =
 
   assert.deepEqual(await service.getRecentActivity('account-1'), [])
 })
+
+
+test('reads relational activity pages with a stable cursor and maps typed rows', async () => {
+  let transactionCalled = false
+  let readArguments
+  const repository = {
+    async transaction() {
+      transactionCalled = true
+      throw new Error('The relational feed must not load collection snapshots.')
+    },
+    async getActivityFeedRows(userId, limit, cursor) {
+      readArguments = { userId, limit, cursor }
+      return [
+        {
+          id: 'post:post-1',
+          type: 'profile_post',
+          updated_at_ms: 200,
+          profile: profile('profile-own'),
+          friend: null,
+          community: null,
+          content: '<p>First page</p>',
+          role: null
+        },
+        {
+          id: 'post:post-2',
+          type: 'profile_post',
+          updated_at_ms: 100,
+          profile: profile('profile-own'),
+          friend: null,
+          community: null,
+          content: '<p>Next page</p>',
+          role: null
+        }
+      ]
+    }
+  }
+  const service = new ActivityService(repository, {})
+
+  const page = await service.getRecentActivityPage(
+    'account-1',
+    1,
+    { updatedAt: 300, id: 'cursor-before-feed' }
+  )
+
+  assert.equal(transactionCalled, false)
+  assert.deepEqual(readArguments, {
+    userId: 'account-1',
+    limit: 1,
+    cursor: { updatedAt: 300, id: 'cursor-before-feed' }
+  })
+  assert.deepEqual(page.items.map(item => item.id), ['post:post-1'])
+  assert.equal(page.items[0].type, 'profile_post')
+  assert.equal(page.items[0].content, '<p>First page</p>')
+  assert.deepEqual(page.nextCursor, { updatedAt: 200, id: 'post:post-1' })
+  assert.equal(page.hasMore, true)
+})

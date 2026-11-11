@@ -56,16 +56,21 @@ test('home page aggregate returns the active profile, previews and suggestions f
   const repository = {
     async transaction(collections, updater) {
       transactionCalls += 1
-      assert.deepEqual(collections, [
-        'accounts',
-        'profiles',
-        'communities',
-        'relationships',
-        'community_relationships',
-        'profile_posts',
-        'profile_settings',
-        'feed_activities'
-      ])
+      assert.deepEqual(
+        collections,
+        transactionCalls === 1
+          ? ['accounts', 'profiles', 'communities', 'relationships', 'community_relationships']
+          : [
+              'accounts',
+              'profiles',
+              'communities',
+              'relationships',
+              'community_relationships',
+              'profile_posts',
+              'profile_settings',
+              'feed_activities'
+            ]
+      )
       const outcome = updater(structuredClone(records))
       return outcome.result
     }
@@ -76,13 +81,15 @@ test('home page aggregate returns the active profile, previews and suggestions f
 
   const result = await service.getHomePage('user-1')
 
-  assert.equal(transactionCalls, 1)
+  assert.equal(transactionCalls, 2)
   assert.equal(result.currentProfile.id, 'profile-1')
   assert.deepEqual(result.friends.items.map(profile => profile.id), ['profile-3'])
   assert.equal(result.friends.totalItems, 1)
   assert.deepEqual(result.communities.items.map(community => community.id), ['community-1'])
   assert.equal(result.communities.totalItems, 1)
   assert.deepEqual(result.suggestions.map(community => community.id), ['community-3'])
+  assert.equal(result.hasMoreActivities, false)
+  assert.equal(result.activityCursor, null)
   assert.ok(result.activities.some(activity => activity.type === 'friend_connected'))
   assert.ok(result.activities.some(activity =>
     activity.type === 'community_membership' && activity.community.id === 'community-2'
