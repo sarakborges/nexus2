@@ -4,7 +4,7 @@ const { DomainAccessService } = require('../dist/api/domain/domain-access.servic
 const { ActivityService } = require('../dist/api/domain/activity.service.js')
 const { HomePageService } = require('../dist/api/domain/home-page.service.js')
 
-test('home page aggregate returns the active profile, previews and suggestions from one transaction', async () => {
+test('home page aggregate separates feed loading from profile previews', async () => {
   const records = {
     accounts: [{
       id: 'user-1',

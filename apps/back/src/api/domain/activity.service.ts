@@ -388,6 +388,8 @@ export class ActivityService {
           role: row.role
         }
     }
+
+    throw new Error('Unsupported relational activity type.')
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {

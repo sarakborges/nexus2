@@ -1,4 +1,5 @@
-import type { ActivityFeedCursor, CollectionRecordMap, DataRepository, ActivityFeedRow } from './repository.interface'
+import type { ActivityFeedCursor } from '@nexus/common'
+import type { CollectionRecordMap, DataRepository, ActivityFeedRow } from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
 type CollectionSnapshot = {
