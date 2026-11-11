@@ -1088,3 +1088,56 @@ test('reads the community page aggregate through one targeted relational RPC', a
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads community member and pending pages through one targeted RPC', async t => {
+  let call
+  const expected = {
+    community: { id: 'community-1', name: 'Community', url: 'community', type: 'social' },
+    relationships: [{
+      profiles: ['profile-owner', 'community-1'],
+      type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 10
+    }],
+    viewerRelationship: {
+      profiles: ['profile-owner', 'community-1'],
+      type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 10
+    },
+    currentProfileType: 'social',
+    actorProfileId: 'profile-owner',
+    actorRole: 'owner',
+    isStaff: true,
+    visibleTab: 'banned',
+    members: {
+      items: [{
+        id: 'profile-blocked', name: 'Blocked', url: 'blocked', picture: '',
+        about: '', type: 'social', createdAt: 1, lastActivity: 2, role: 'blocked'
+      }],
+      page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+    },
+    pending: {
+      items: [],
+      page: 1, pageSize: 20, totalItems: 0, totalPages: 1
+    }
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getCommunityMembersPage(
+    'community', 'account-1', 2, 1, 'blocked', 'name-asc', 'banned'
+  )
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_community_members_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_url: 'community',
+    p_user_id: 'account-1',
+    p_page: 2,
+    p_pending_page: 1,
+    p_query: 'blocked',
+    p_sort: 'name-asc',
+    p_tab: 'banned'
+  })
+  assert.deepEqual(page, expected)
+})

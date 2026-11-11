@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityPageData, ListSort, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,58 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getCommunityMembersPage(
+    url: string,
+    userId: string | null,
+    page: number,
+    pendingPage: number,
+    query: string | undefined,
+    sort: ListSort,
+    tab: string | undefined
+  ): Promise<CommunityMembersPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_members_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_url: url,
+        p_user_id: userId,
+        p_page: page,
+        p_pending_page: pendingPage,
+        p_query: query ?? null,
+        p_sort: sort,
+        p_tab: tab ?? null
+      })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null) {
+      throw new Error('Supabase community members page returned an invalid result.')
+    }
+    const record = result as Record<string, unknown>
+    const members = record.members as Record<string, unknown> | null
+    const pending = record.pending as Record<string, unknown> | null
+    if (
+      !Array.isArray(record.relationships) ||
+      !members || typeof members !== 'object' || !Array.isArray(members.items) ||
+      !pending || typeof pending !== 'object' || !Array.isArray(pending.items) ||
+      typeof record.isStaff !== 'boolean' ||
+      !['all', 'staff', 'banned'].includes(String(record.visibleTab))
+    ) {
+      throw new Error('Supabase community members page returned invalid data.')
+    }
+    const pageResult = result as CommunityMembersPageData
+    if (
+      pageResult.members.pageSize !== 20 ||
+      pageResult.pending.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.members.totalItems) ||
+      !Number.isSafeInteger(pageResult.pending.totalItems)
+    ) {
+      throw new Error('Supabase community members page returned invalid pagination metadata.')
+    }
+    return pageResult
   }
 
   async getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData> {

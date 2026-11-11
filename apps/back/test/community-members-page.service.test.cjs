@@ -232,3 +232,55 @@ test('unknown community returns empty paginated member and pending lists', async
   assert.equal(result.pending.items.length, 0)
   assert.equal(result.pending.page, 1)
 })
+
+
+test('community members page uses a targeted read and sanitizes members and pending profiles', async () => {
+  const calls = []
+  const result = {
+    community: { id: 'community-1' },
+    relationships: [],
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    actorProfileId: null,
+    actorRole: null,
+    isStaff: false,
+    visibleTab: 'all',
+    members: {
+      items: [{
+        id: 'profile-1', name: 'Member', url: 'member', picture: '',
+        about: '<p>Member</p><script>unsafe()</script>', type: 'social',
+        createdAt: 1, lastActivity: 2, role: 'connection'
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    pending: {
+      items: [{
+        id: 'profile-2', name: 'Pending', url: 'pending', picture: '',
+        about: '<p>Pending</p><script>unsafe()</script>', type: 'social',
+        createdAt: 1, lastActivity: 2, role: 'requested'
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    }
+  }
+  const repository = {
+    async getCommunityMembersPage(url, userId, page, pendingPage, query, sort, tab) {
+      calls.push({ url, userId, page, pendingPage, query, sort, tab })
+      return result
+    },
+    async transaction() {
+      throw new Error('Community members reads must not load collection snapshots.')
+    }
+  }
+  const service = new CommunityMembersPageService(repository, {})
+
+  const page = await service.getCommunityMembersPage(
+    'community', { page: 2, pendingPage: 3, query: 'member', sort: 'name-asc', tab: 'staff' }, 'account-1'
+  )
+
+  assert.deepEqual(calls, [{
+    url: 'community', userId: 'account-1', page: 2, pendingPage: 3,
+    query: 'member', sort: 'name-asc', tab: 'staff'
+  }])
+  assert.equal(page.members.items[0].about.includes('<script>'), false)
+  assert.equal(page.pending.items[0].about.includes('<script>'), false)
+})
