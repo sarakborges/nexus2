@@ -118,3 +118,44 @@ test('profile page aggregate returns empty previews when the profile does not ex
   assert.deepEqual(result.friends.items, [])
   assert.deepEqual(result.communities.items, [])
 })
+
+
+test('profile page uses a targeted relational read and sanitizes profile and friend about fields', async () => {
+  const calls = []
+  const result = {
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>About</p><script>unsafe()</script>', type: 'social',
+      createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    friends: {
+      items: [{
+        id: 'profile-2', name: 'Friend', url: 'friend', picture: '',
+        about: '<p>Friend</p><script>unsafe()</script>', type: 'social',
+        createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    communities: {
+      items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1
+    }
+  }
+  const repository = {
+    async getProfilePage(url, userId) {
+      calls.push({ url, userId })
+      return result
+    },
+    async transaction() {
+      throw new Error('Profile page reads must not load collection snapshots.')
+    }
+  }
+  const service = new ProfilePageService(repository, {})
+
+  const page = await service.getProfilePage('@PROFILE', 'account-1')
+
+  assert.deepEqual(calls, [{ url: 'profile', userId: 'account-1' }])
+  assert.equal(page.profile.about.includes('<script>'), false)
+  assert.equal(page.friends.items[0].about.includes('<script>'), false)
+})

@@ -35,6 +35,29 @@ export class ProfilePageService {
   getProfilePage(url: string, userId: string | null): Promise<ProfilePageData> {
     const normalizedUrl = normalizeEntityUrl(url)
 
+    if (this.data.getProfilePage) {
+      return this.data.getProfilePage(normalizedUrl, userId).then(page => ({
+        ...page,
+        profile: page.profile ? {
+          ...page.profile,
+          about: sanitizeRichText(page.profile.about ?? '')
+        } : null,
+        friends: {
+          ...page.friends,
+          items: page.friends.items.map(friend => ({
+            ...friend,
+            about: sanitizeRichText(friend.about ?? '')
+          }))
+        }
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
+
     return this.data.transaction<ProfilePageData>(
       PROFILE_PAGE_COLLECTIONS,
       (collections) => {

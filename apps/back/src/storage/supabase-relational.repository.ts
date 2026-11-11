@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, ListSort, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, ListSort, ProfileMessage, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,36 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getProfilePage(url: string, userId: string | null): Promise<ProfilePageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url, p_user_id: userId })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (
+      typeof result !== 'object' || result === null ||
+      !('friends' in result) || typeof result.friends !== 'object' || result.friends === null ||
+      !('communities' in result) || typeof result.communities !== 'object' || result.communities === null ||
+      !Array.isArray(result.friends.items) ||
+      !Array.isArray(result.communities.items)
+    ) {
+      throw new Error('Supabase profile page returned an invalid result.')
+    }
+    const pageResult = result as ProfilePageData
+    if (
+      pageResult.friends.pageSize !== 20 ||
+      pageResult.communities.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.friends.totalItems) ||
+      !Number.isSafeInteger(pageResult.communities.totalItems)
+    ) {
+      throw new Error('Supabase profile page returned invalid pagination data.')
+    }
+    return pageResult
   }
 
   async getCommunityForumPage(

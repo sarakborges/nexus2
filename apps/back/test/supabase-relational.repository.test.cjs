@@ -942,3 +942,44 @@ test('reads a community forum topic page with paginated replies through one targ
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('loads a profile page, friends and public communities through a targeted RPC', async t => {
+  let call
+  const expected = {
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>About</p>', type: 'social', createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    friends: {
+      items: [{
+        id: 'profile-2', name: 'Friend', url: 'friend', picture: '',
+        about: '<p>Friend</p>', type: 'social', createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    communities: {
+      items: [{
+        id: 'community-1', name: 'Community', url: 'community', picture: '',
+        about: 'Public', type: 'social', privacy: 'public', createdAt: 1, lastActivity: 2
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    }
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getProfilePage('profile', 'account-1')
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_profile_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_url: 'profile',
+    p_user_id: 'account-1'
+  })
+  assert.deepEqual(page, expected)
+})
