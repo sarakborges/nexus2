@@ -46,3 +46,34 @@ test('profile settings cannot be read or changed for profiles not owned by the a
   await assert.rejects(service.getSettings('user-1', 'profile-2'), error => error instanceof ForbiddenException)
   await assert.rejects(service.updateSettings('user-1', 'profile-2', { messageAudience: 'friends' }), error => error instanceof ForbiddenException)
 })
+
+
+test('profile settings use targeted relational reads and writes without collection snapshots', async () => {
+  const calls = []
+  const settings = {
+    messageAudience: 'friends',
+    publishActivityTypes: ['profile_post'],
+    showFriendActivityTypes: ['community_created']
+  }
+  const repository = {
+    async getProfileSettings(userId, profileId) {
+      calls.push(['get', userId, profileId])
+      return settings
+    },
+    async updateProfileSettings(userId, profileId, patch) {
+      calls.push(['update', userId, profileId, patch])
+      return { ...settings, ...patch }
+    },
+    async transaction() {
+      throw new Error('Targeted profile settings must not load collection snapshots.')
+    }
+  }
+  const service = new ProfileSettingsService(repository)
+
+  assert.deepEqual(await service.getSettings('user-1', 'profile-1'), settings)
+  assert.deepEqual(
+    await service.updateSettings('user-1', 'profile-1', { messageAudience: 'everyone' }),
+    { ...settings, messageAudience: 'everyone' }
+  )
+  assert.deepEqual(calls.map(call => call[0]), ['get', 'update'])
+})

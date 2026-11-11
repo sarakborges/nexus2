@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfilePost, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -94,6 +94,12 @@ export interface DataRepository {
   upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
   changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
+  getProfileSettings?(userId: string, profileId: string): Promise<ProfileSettings>
+  updateProfileSettings?(
+    userId: string,
+    profileId: string,
+    patch: Partial<ProfileSettings>
+  ): Promise<ProfileSettings>
   getActivityFeedRows?(
     userId: string,
     limit: number,

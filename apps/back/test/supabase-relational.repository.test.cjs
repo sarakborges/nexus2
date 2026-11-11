@@ -440,3 +440,59 @@ test('changes community memberships through the targeted relational RPC', async 
     p_updated_at_ms: 1700000000000
   })
 })
+
+
+test('reads one profile settings record and its activity preferences through the targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      message_audience: 'friends',
+      publish_activity_types: ['profile_post'],
+      show_friend_activity_types: ['community_created']
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const settings = await repo.getProfileSettings('account-1', 'profile-1')
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_profile_settings')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_profile_id: 'profile-1'
+  })
+  assert.deepEqual(settings, {
+    messageAudience: 'friends',
+    publishActivityTypes: ['profile_post'],
+    showFriendActivityTypes: ['community_created']
+  })
+})
+
+test('updates profile settings with a partial patch through the targeted RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      message_audience: 'everyone',
+      publish_activity_types: ['friend_connected', 'community_created'],
+      show_friend_activity_types: ['friend_connected', 'profile_post', 'community_created', 'community_membership']
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const settings = await repo.updateProfileSettings('account-1', 'profile-1', {
+    messageAudience: 'everyone',
+    publishActivityTypes: ['friend_connected', 'community_created']
+  })
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_update_profile_settings')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_profile_id: 'profile-1',
+    p_patch: {
+      messageAudience: 'everyone',
+      publishActivityTypes: ['friend_connected', 'community_created']
+    }
+  })
+  assert.equal(settings.showFriendActivityTypes.length, 4)
+})

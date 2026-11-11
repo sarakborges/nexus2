@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, ProfilePost } from '@nexus/common'
+import type { ActivityFeedCursor, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -255,6 +255,67 @@ export class SupabaseRelationalRepository implements DataRepository {
       })
     })
     await this.assertSuccess(response)
+  }
+
+  async getProfileSettings(userId: string, profileId: string): Promise<ProfileSettings> {
+    return this.requestProfileSettings('nexus_get_profile_settings', {
+      p_user_id: userId,
+      p_profile_id: profileId
+    })
+  }
+
+  async updateProfileSettings(
+    userId: string,
+    profileId: string,
+    patch: Partial<ProfileSettings>
+  ): Promise<ProfileSettings> {
+    return this.requestProfileSettings('nexus_update_profile_settings', {
+      p_user_id: userId,
+      p_profile_id: profileId,
+      p_patch: patch
+    })
+  }
+
+  private async requestProfileSettings(
+    rpcName: string,
+    body: Record<string, unknown>
+  ): Promise<ProfileSettings> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/' + rpcName, {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase profile settings RPC returned an invalid result.')
+    }
+    const row = rows[0] as Record<string, unknown>
+    const allowed = new Set([
+      'friend_connected',
+      'profile_post',
+      'community_created',
+      'community_membership'
+    ])
+    if (
+      (row.message_audience !== 'friends' && row.message_audience !== 'everyone') ||
+      !Array.isArray(row.publish_activity_types) ||
+      !row.publish_activity_types.every(item => typeof item === 'string' && allowed.has(item)) ||
+      !Array.isArray(row.show_friend_activity_types) ||
+      !row.show_friend_activity_types.every(item => typeof item === 'string' && allowed.has(item))
+    ) {
+      throw new Error('Supabase profile settings RPC returned an invalid settings row.')
+    }
+
+    return {
+      messageAudience: row.message_audience,
+      publishActivityTypes: row.publish_activity_types as ProfileSettings['publishActivityTypes'],
+      showFriendActivityTypes: row.show_friend_activity_types as ProfileSettings['showFriendActivityTypes']
+    }
   }
 
   async getActivityFeedRows(

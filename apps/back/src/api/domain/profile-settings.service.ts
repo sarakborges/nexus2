@@ -28,6 +28,12 @@ export class ProfileSettingsService {
   ) {}
 
   getSettings(userId: string, profileId: string): Promise<ProfileSettings> {
+    if (this.data.getProfileSettings) {
+      return this.data.getProfileSettings(userId, profileId).catch(error => {
+        this.throwRelationalWriteError(error)
+      })
+    }
+
     return this.data.transaction<ProfileSettings>(
       ['accounts', 'profiles', 'profile_settings'],
       collections => {
@@ -50,6 +56,12 @@ export class ProfileSettingsService {
     profileId: string,
     patch: Partial<ProfileSettings>
   ): Promise<ProfileSettings> {
+    if (this.data.updateProfileSettings) {
+      return this.data.updateProfileSettings(userId, profileId, patch).catch(error => {
+        this.throwRelationalWriteError(error)
+      })
+    }
+
     return this.data.transaction<ProfileSettings>(
       ['accounts', 'profiles', 'profile_settings'],
       collections => {
@@ -107,5 +119,19 @@ export class ProfileSettingsService {
       publishActivityTypes: normalizeTypes(value?.publishActivityTypes),
       showFriendActivityTypes: normalizeTypes(value?.showFriendActivityTypes)
     }
+  }
+
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('ACCOUNT_NOT_FOUND')) {
+      throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    }
+    if (message.includes('PROFILE_NOT_FOUND')) {
+      throw new NotFoundException('PROFILE_NOT_FOUND')
+    }
+    if (message.includes('PROFILE_NOT_OWNED')) {
+      throw new ForbiddenException('PROFILE_NOT_OWNED')
+    }
+    throw error
   }
 }
