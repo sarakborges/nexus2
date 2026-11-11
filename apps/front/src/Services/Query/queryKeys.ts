@@ -11,6 +11,7 @@ export const queryKeys = {
     sort: string,
     communityTab: 'all' | 'managed'
   ) => ['communities-page', userId, currentProfileId, page, pageSize, query, sort, communityTab] as const,
+  profileSettings: (url: string, userId: string) => ['profile-settings', url, userId] as const,
   profilePage: (url: string, viewerUserId: string | null, currentProfileId: string | null) =>
     ['profile-page', url, viewerUserId, currentProfileId] as const,
   profileMessagesPage: (
