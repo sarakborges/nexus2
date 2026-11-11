@@ -55,6 +55,12 @@ export function HomePageActivityEntry({
             {activity.friend.name}
           </Link>
         </p>
+      ) : activity.type === 'community_created' ? (
+        <p className="home-page__activity-description">
+          <Link to={profileHref}>{activity.profile.name} (@{activity.profile.url})</Link>
+          {' '}{t('HOME_ACTIVITY_CREATED_COMMUNITY')}{' '}
+          <Link to={`${ROUTES.community}/${activity.community.url}`}>{activity.community.name}</Link>.
+        </p>
       ) : (
         <p className="home-page__activity-description">
           <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
