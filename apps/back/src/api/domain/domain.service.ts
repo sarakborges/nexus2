@@ -1,5 +1,7 @@
 import { Inject, Injectable, Optional } from '@nestjs/common'
 import type {
+  ActivityFeedCursor,
+  ActivityFeedPage,
   Community,
   CommunityForumReply,
   CommunityForumTopic,
@@ -240,6 +242,14 @@ export class DomainService {
 
   getRecentActivity(userId: string): Promise<RecentActivity[]> {
     return this.activity.getRecentActivity(userId)
+  }
+
+  getRecentActivityPage(
+    userId: string,
+    limit = 10,
+    cursor: ActivityFeedCursor | null = null
+  ): Promise<ActivityFeedPage> {
+    return this.activity.getRecentActivityPage(userId, limit, cursor)
   }
 
   listCommunityForumTopics(
