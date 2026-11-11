@@ -49,9 +49,18 @@ export type RecentActivity =
     }
 
 
+export type ActivityFeedCursor = { updatedAt: number; id: string }
+export type ActivityFeedPage = {
+  items: RecentActivity[]
+  nextCursor: ActivityFeedCursor | null
+  hasMore: boolean
+}
+
 export type HomePageData = {
   currentProfile: Profile | null
   activities: RecentActivity[]
+  activityCursor: ActivityFeedCursor | null
+  hasMoreActivities: boolean
   friends: PaginatedResult<Profile>
   communities: PaginatedResult<Community>
   suggestions: Community[]
