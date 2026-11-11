@@ -69,7 +69,7 @@ export class SupabaseRelationalRepository implements DataRepository {
           type: this.string(row.type),
           createdAt: this.number(row.created_at_ms),
           lastActivity: this.number(row.last_activity_ms)
-        })) as T[]
+        })) as unknown as T[]
       case 'communities':
         return (await this.selectRowsByValues('communities', 'id', requestedIds)).map(row => ({
           id: this.string(row.id),
@@ -81,7 +81,7 @@ export class SupabaseRelationalRepository implements DataRepository {
           privacy: this.string(row.privacy),
           createdAt: this.number(row.created_at_ms),
           lastActivity: this.number(row.last_activity_ms)
-        })) as T[]
+        })) as unknown as T[]
       default: {
         const requested = new Set(requestedIds)
         return (await this.read<T>(collection)).filter(record => requested.has(record.id))
