@@ -111,7 +111,7 @@ export class ActivityService {
         activities.push({
           id: 'community-created:' + community.id,
           type: 'community_created',
-          updatedAt: community.createdAt,
+          updatedAt: community.createdAt ?? relationship.updatedAt,
           profile,
           community
         })
