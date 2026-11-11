@@ -1,26 +1,9 @@
-import type { Community, Profile, ProfileDirectoryPageData, Relationship } from '@nexus/common'
-import type { UseQueryResult } from '@tanstack/react-query'
+import type { Community } from '@nexus/common'
 
-import type { useUrlPagination } from '@/Hooks/useUrlPagination'
+import type { UseProfileDirectoryPageResult } from '@/Hooks/Profile'
 
-export type UseProfileCommunitiesPageResult = {
-  normalized: string
-  isAuthInitialized: boolean
-  profileDirectoryQuery: UseQueryResult<ProfileDirectoryPageData>
-  profile: Profile | null | undefined
-  viewerRelationship: Relationship | null
-  typeCompatibility: {
-    isChecking: boolean
-    isCompatible: boolean
-    canInteract: boolean
+export type UseProfileCommunitiesPageResult =
+  UseProfileDirectoryPageResult & {
+    communities: Community[]
+    totalItems: number
   }
-  page: number
-  pageSize: number
-  query: string
-  sort: ReturnType<typeof useUrlPagination>['sort']
-  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
-  setSort: ReturnType<typeof useUrlPagination>['setSort']
-  setPage: ReturnType<typeof useUrlPagination>['setPage']
-  communities: Community[]
-  totalItems: number
-}
