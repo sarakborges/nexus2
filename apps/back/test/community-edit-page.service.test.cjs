@@ -87,3 +87,22 @@ test('unknown community returns an empty aggregate and invalid account is reject
   )
   assert.equal(repository.transactionCalls, 2)
 })
+
+
+test('community edit page uses a targeted relational read', async () => {
+  const repository = {
+    async getCommunityEditPage(url, userId) {
+      assert.equal(url, 'community')
+      assert.equal(userId, 'user-1')
+      return {
+        community: { id: 'community-1', picture: '', about: '' },
+        ownerProfileId: 'profile-owner',
+        currentProfileType: 'social'
+      }
+    },
+    async transaction() { throw new Error('Community edit page must not load collection snapshots.') }
+  }
+  const service = new CommunityEditPageService(repository, {})
+  const result = await service.getCommunityEditPage('COMMUNITY', 'user-1')
+  assert.equal(result.ownerProfileId, 'profile-owner')
+})

@@ -1249,3 +1249,29 @@ test('reads the authenticated communities directory through a targeted relationa
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads profile edit, community edit and forum composer pages through targeted RPCs', async t => {
+  const calls = []
+  const responses = [
+    { profile: { id: 'profile-1' }, currentProfileType: 'social' },
+    { community: { id: 'community-1' }, ownerProfileId: 'profile-1', currentProfileType: 'social' },
+    { community: { id: 'community-1' }, forumProfile: { id: 'profile-1' }, viewerRelationship: null, currentProfileType: 'social' }
+  ]
+  withFetch(t, async (input, options) => {
+    const url = new URL(String(input))
+    calls.push({ path: url.pathname, body: JSON.parse(options.body) })
+    const index = calls.length - 1
+    return new Response(JSON.stringify(responses[index]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.deepEqual(await repo.getProfileEditPage('profile', 'account-1'), responses[0])
+  assert.deepEqual(await repo.getCommunityEditPage('community', null), responses[1])
+  assert.deepEqual(await repo.getCommunityForumComposerPage('community', 'account-1'), responses[2])
+  assert.deepEqual(calls, [
+    { path: '/rest/v1/rpc/nexus_get_profile_edit_page', body: { p_url: 'profile', p_user_id: 'account-1' } },
+    { path: '/rest/v1/rpc/nexus_get_community_edit_page', body: { p_url: 'community', p_user_id: null } },
+    { path: '/rest/v1/rpc/nexus_get_community_forum_composer_page', body: { p_url: 'community', p_user_id: 'account-1' } }
+  ])
+})

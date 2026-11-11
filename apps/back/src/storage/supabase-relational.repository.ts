@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityMembersPageData, CommunityPageData, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -499,6 +499,48 @@ export class SupabaseRelationalRepository implements DataRepository {
       totalItems,
       totalPages
     }
+  }
+
+  async getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_edit_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url, p_user_id: userId })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null || !('profile' in result) || !('currentProfileType' in result)) {
+      throw new Error('Supabase profile edit page returned an invalid result.')
+    }
+    return result as ProfileEditPageData
+  }
+
+  async getCommunityEditPage(url: string, userId: string | null): Promise<CommunityEditPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_edit_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url, p_user_id: userId })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null || !('community' in result) || !('ownerProfileId' in result) || !('currentProfileType' in result)) {
+      throw new Error('Supabase community edit page returned an invalid result.')
+    }
+    return result as CommunityEditPageData
+  }
+
+  async getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_composer_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_url: url, p_user_id: userId })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'object' || result === null || !('community' in result) || !('forumProfile' in result) || !('viewerRelationship' in result) || !('currentProfileType' in result)) {
+      throw new Error('Supabase community forum composer page returned an invalid result.')
+    }
+    return result as CommunityForumComposerPageData
   }
 
   async getCommunitiesPage(

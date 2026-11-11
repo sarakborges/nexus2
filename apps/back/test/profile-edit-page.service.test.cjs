@@ -75,3 +75,21 @@ test('unknown profile returns an empty aggregate and invalid account is rejected
   )
   assert.equal(repository.transactionCalls, 2)
 })
+
+
+test('profile edit page uses a targeted relational read', async () => {
+  const repository = {
+    async getProfileEditPage(url, userId) {
+      assert.equal(url, 'target')
+      assert.equal(userId, 'user-1')
+      return {
+        profile: { id: 'profile-target', about: '<p>Target</p><script>unsafe()</script>' },
+        currentProfileType: 'social'
+      }
+    },
+    async transaction() { throw new Error('Profile edit page must not load collection snapshots.') }
+  }
+  const service = new ProfileEditPageService(repository)
+  const result = await service.getProfileEditPage('@TARGET', 'user-1')
+  assert.equal(result.profile.about.includes('<script>'), false)
+})

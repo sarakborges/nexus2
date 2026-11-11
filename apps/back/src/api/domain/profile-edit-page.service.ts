@@ -16,6 +16,21 @@ export class ProfileEditPageService {
     userId: string | null
   ): Promise<ProfileEditPageData> {
     const normalizedUrl = normalizeEntityUrl(url)
+    if (this.data.getProfileEditPage) {
+      return this.data.getProfileEditPage(normalizedUrl, userId).then(page => ({
+        ...page,
+        profile: page.profile ? {
+          ...page.profile,
+          about: sanitizeRichText(page.profile.about ?? '')
+        } : null
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
     return this.data.transaction<ProfileEditPageData>(
       PROFILE_EDIT_PAGE_COLLECTIONS,
       (collections) => {

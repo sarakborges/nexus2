@@ -36,6 +36,21 @@ export class CommunityForumComposerPageService {
     userId: string | null
   ): Promise<CommunityForumComposerPageData> {
     const normalizedUrl = normalizeEntityUrl(url)
+    if (this.data.getCommunityForumComposerPage) {
+      return this.data.getCommunityForumComposerPage(normalizedUrl, userId).then(page => ({
+        ...page,
+        forumProfile: page.forumProfile ? {
+          ...page.forumProfile,
+          about: sanitizeRichText(page.forumProfile.about ?? '')
+        } : null
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
     return this.data.transaction<CommunityForumComposerPageData>(
       COMMUNITY_FORUM_COMPOSER_COLLECTIONS,
       (collections) => {

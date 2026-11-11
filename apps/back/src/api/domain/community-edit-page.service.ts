@@ -29,6 +29,15 @@ export class CommunityEditPageService {
     userId: string | null
   ): Promise<CommunityEditPageData> {
     const normalizedUrl = normalizeEntityUrl(url)
+    if (this.data.getCommunityEditPage) {
+      return this.data.getCommunityEditPage(normalizedUrl, userId).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
     return this.data.transaction<CommunityEditPageData>(
       COMMUNITY_EDIT_PAGE_COLLECTIONS,
       (collections) => {

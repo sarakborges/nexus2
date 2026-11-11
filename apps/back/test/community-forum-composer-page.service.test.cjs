@@ -130,3 +130,23 @@ test('unknown community returns an empty aggregate and invalid account is reject
   )
   assert.equal(repository.transactionCalls, 2)
 })
+
+
+test('forum composer page uses a targeted relational read and sanitizes the selected profile', async () => {
+  const repository = {
+    async getCommunityForumComposerPage(url, userId) {
+      assert.equal(url, 'public')
+      assert.equal(userId, 'user-1')
+      return {
+        community: { id: 'community-1' },
+        forumProfile: { id: 'profile-member', about: '<p>Member</p><script>unsafe()</script>' },
+        viewerRelationship: null,
+        currentProfileType: 'social'
+      }
+    },
+    async transaction() { throw new Error('Forum composer page must not load collection snapshots.') }
+  }
+  const service = new CommunityForumComposerPageService(repository, {})
+  const result = await service.getCommunityForumComposerPage('PUBLIC', 'user-1')
+  assert.equal(result.forumProfile.about.includes('<script>'), false)
+})
