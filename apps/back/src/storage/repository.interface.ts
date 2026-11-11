@@ -172,7 +172,7 @@ export interface DataRepository {
   moderateCommunityForumTopic?(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
   deleteCommunityForumTopic?(change: CommunityForumTopicRemoval): Promise<void>
   deleteCommunityForumReply?(change: CommunityForumReplyRemoval): Promise<string>
-  getActivityFeedRows?
+  getActivityFeedRows?(
     userId: string,
     limit: number,
     cursor: ActivityFeedCursor | null

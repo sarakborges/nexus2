@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumReply, CommunityForumTopic, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
