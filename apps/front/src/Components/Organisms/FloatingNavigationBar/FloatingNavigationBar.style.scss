@@ -214,7 +214,7 @@ html.has-global-navigation .social-page,html.has-global-navigation .account-page
   width: min(100%, 420px);
   max-width: 420px;
   min-width: 180px;
-  margin-left: 4px;
+  margin-left: 0;
 }
 .floating-navigation__search-form select {
   appearance: auto;
@@ -303,17 +303,11 @@ html.has-global-navigation .auth-page {
   font-size: var(--nexus-icon-size, 20px);
 }
 
-.floating-navigation__avatar {
-  height: auto;
-  max-height: 72px;
-}
-
 .floating-navigation__profile-avatar {
   height: auto;
   max-height: 56px;
 }
 
-.floating-navigation__avatar img,
 .floating-navigation__profile-avatar img {
   height: auto;
   max-height: inherit;
