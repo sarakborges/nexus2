@@ -191,3 +191,38 @@ test('empty profile messages are rejected before the relational write', async ()
   )
   assert.equal(writeCalled, false)
 })
+
+
+test('private inbox reads use the paginated relational query instead of collection snapshots', async () => {
+  const calls = []
+  const repository = {
+    async getProfileMessages(profileId, userId, page) {
+      calls.push({ profileId, userId, page })
+      return {
+        items: [{
+          id: 'message-1',
+          fromProfileId: 'sender-1',
+          toProfileId: profileId,
+          content: '<p>Hello</p><script>bad()</script>',
+          createdAt: 123,
+          isFavorite: false
+        }],
+        page: 2,
+        pageSize: 20,
+        totalItems: 21,
+        totalPages: 2
+      }
+    },
+    async transaction() {
+      throw new Error('Private inbox reads must not load collection snapshots.')
+    }
+  }
+  const service = new ProfileMessageService(repository, {})
+
+  const page = await service.getMessages('recipient-1', 'user-1', { page: 2 })
+
+  assert.deepEqual(calls, [{ profileId: 'recipient-1', userId: 'user-1', page: 2 }])
+  assert.equal(page.page, 2)
+  assert.equal(page.totalItems, 21)
+  assert.equal(page.items[0].content.includes('<script>'), false)
+})

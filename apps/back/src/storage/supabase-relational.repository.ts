@@ -424,6 +424,78 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
   }
 
+  async getProfileMessages(
+    profileId: string,
+    userId: string | null,
+    page: number
+  ): Promise<import('@nexus/common').PaginatedResult<ProfileMessage>> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_messages', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_profile_id: profileId,
+        p_user_id: userId,
+        p_page: page
+      })
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase profile messages read returned an invalid page.')
+    }
+    if (rows.length === 0) {
+      return { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+    }
+
+    const metadata = rows[0] as Record<string, unknown>
+    const totalItems = Number(metadata.total_items)
+    const currentPage = Number(metadata.page)
+    const pageSize = Number(metadata.page_size)
+    const totalPages = Number(metadata.total_pages)
+    if (
+      !Number.isSafeInteger(totalItems) || totalItems < 1 ||
+      !Number.isSafeInteger(currentPage) || currentPage < 1 ||
+      pageSize !== 20 ||
+      !Number.isSafeInteger(totalPages) || totalPages < 1
+    ) {
+      throw new Error('Supabase profile messages read returned invalid pagination metadata.')
+    }
+
+    const items = rows.map(value => {
+      const row = value as Record<string, unknown>
+      if (
+        typeof row.id !== 'string' ||
+        typeof row.from_profile_id !== 'string' ||
+        typeof row.to_profile_id !== 'string' ||
+        typeof row.content !== 'string' ||
+        !Number.isFinite(Number(row.created_at_ms)) ||
+        typeof row.is_favorite !== 'boolean'
+      ) {
+        throw new Error('Supabase profile messages read returned an invalid row.')
+      }
+      return {
+        id: row.id,
+        fromProfileId: row.from_profile_id,
+        toProfileId: row.to_profile_id,
+        content: row.content,
+        createdAt: Number(row.created_at_ms),
+        isFavorite: row.is_favorite
+      }
+    })
+
+    return {
+      items,
+      page: currentPage,
+      pageSize,
+      totalItems,
+      totalPages
+    }
+  }
+
   async getActivityFeedRows(
     userId: string,
     limit: number,

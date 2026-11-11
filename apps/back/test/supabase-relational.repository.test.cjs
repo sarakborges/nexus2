@@ -603,3 +603,57 @@ test('updates a profile message favorite through a targeted relational RPC', asy
   })
   assert.equal(message.isFavorite, true)
 })
+
+
+test('reads the requested private-message page through one relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'message-1',
+      from_profile_id: 'profile-1',
+      to_profile_id: 'profile-2',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000',
+      is_favorite: false,
+      total_items: 41,
+      page: 2,
+      page_size: 20,
+      total_pages: 3
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getProfileMessages('profile-2', 'account-1', 2)
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_profile_messages')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_profile_id: 'profile-2',
+    p_user_id: 'account-1',
+    p_page: 2
+  })
+  assert.deepEqual(page, {
+    items: [{
+      id: 'message-1',
+      fromProfileId: 'profile-1',
+      toProfileId: 'profile-2',
+      content: '<p>Hello</p>',
+      createdAt: 1700000000000,
+      isFavorite: false
+    }],
+    page: 2,
+    pageSize: 20,
+    totalItems: 41,
+    totalPages: 3
+  })
+})
+
+test('an empty private-message page has the same empty pagination contract', async t => {
+  withFetch(t, async () => new Response(JSON.stringify([]), { status: 200 }))
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+
+  assert.deepEqual(
+    await repo.getProfileMessages('profile-2', null, 6),
+    { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+  )
+})

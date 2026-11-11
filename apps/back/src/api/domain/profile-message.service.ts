@@ -19,6 +19,21 @@ export class ProfileMessageService {
   ) {}
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
+    if (this.data.getProfileMessages) {
+      try {
+        const page = await this.data.getProfileMessages(profileId, userId, q.page)
+        return {
+          ...page,
+          items: page.items.map(message => ({
+            ...message,
+            content: sanitizeRichText(message.content ?? '')
+          }))
+        }
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
+
     return this.data.transaction<PaginatedResult<ProfileMessage>>(
       ['accounts', 'profile_messages'],
       collections => {

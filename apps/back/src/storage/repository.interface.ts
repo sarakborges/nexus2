@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityRelationshipType, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityRelationshipType, PaginatedResult, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -124,6 +124,11 @@ export interface DataRepository {
   createProfileMessage?(change: ProfileMessageWrite): Promise<ProfileMessage>
   deleteProfileMessage?(change: ProfileMessageRemoval): Promise<void>
   setProfileMessageFavorite?(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
+  getProfileMessages?(
+    profileId: string,
+    userId: string | null,
+    page: number
+  ): Promise<PaginatedResult<ProfileMessage>>
   getActivityFeedRows?(
     userId: string,
     limit: number,
