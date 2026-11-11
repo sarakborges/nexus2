@@ -16,15 +16,88 @@ import {
   OwnershipDto,
   ProfileRelationDto,
   UpdateCommunityDto,
-  UpdateProfileDto
+  UpdateProfileDto,
+  SearchDto
 } from './domain.dto'
 import { DomainService } from './domain.service'
+import { HomePageService } from './home-page.service'
+import { ProfilePageService } from './profile-page.service'
+import { CommunityPageService } from './community-page.service'
+import { CommunityForumPageService } from './community-forum-page.service'
+import { CommunityForumTopicPageService } from './community-forum-topic-page.service'
+import { CommunityMembersPageService } from './community-members-page.service'
+import { CommunityMembersPageDto } from './community-members-page.dto'
+import { ProfileMessagesPageService } from './profile-messages-page.service'
+import { ProfileDirectoryPageService } from './profile-directory-page.service'
+import { CommunitiesPageService } from './communities-page.service'
+import { CommunityForumComposerPageService } from './community-forum-composer-page.service'
+import { CommunityEditPageService } from './community-edit-page.service'
+import { ProfileEditPageService } from './profile-edit-page.service'
 
 @Controller()
 export class DomainController {
-  constructor(private readonly domain: DomainService) {}
+  constructor(
+    private readonly domain: DomainService,
+    private readonly homePage: HomePageService,
+    private readonly profilePage: ProfilePageService,
+    private readonly communityPage: CommunityPageService,
+    private readonly communityForumPage: CommunityForumPageService,
+    private readonly communityForumTopicPage: CommunityForumTopicPageService,
+    private readonly communityMembersPage: CommunityMembersPageService,
+    private readonly profileMessagesPage: ProfileMessagesPageService,
+    private readonly profileDirectoryPage: ProfileDirectoryPageService,
+    private readonly communitiesPage: CommunitiesPageService,
+    private readonly communityForumComposerPage: CommunityForumComposerPageService,
+    private readonly communityEditPage: CommunityEditPageService,
+    private readonly profileEditPage: ProfileEditPageService
+  ) {}
+
+  @Get('search')
+  search(@Query() q: SearchDto) {
+    return this.domain.searchEntities(q.query, q.scope ?? 'all', q)
+  }
+
+  @Get('home') @UseGuards(JwtAccessGuard)
+  getHomePage(@CurrentUser() u: AuthenticatedUserContext) {
+    return this.homePage.getHomePage(u.id)
+  }
 
   @Get('activity') @UseGuards(JwtAccessGuard) recentActivity(@CurrentUser() u: AuthenticatedUserContext) { return this.domain.getRecentActivity(u.id) }
+
+  @Get('profiles/by-url/:url/directory/:kind/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfileDirectoryPage(
+    @Param('url') url: string,
+    @Param('kind') kind: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profileDirectoryPage.getProfileDirectoryPage(url, kind, q, u?.id ?? null)
+  }
+
+  @Get('profiles/by-url/:url/messages/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfileMessagesPage(
+    @Param('url') url: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profileMessagesPage.getProfileMessagesPage(url, q, u?.id ?? null)
+  }
+
+  @Get('profiles/by-url/:url/edit/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfileEditPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profileEditPage.getProfileEditPage(url, u?.id ?? null)
+  }
+
+  @Get('profiles/by-url/:url/page') @UseGuards(OptionalJwtAccessGuard)
+  getProfilePage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.profilePage.getProfilePage(url, u?.id ?? null)
+  }
 
   @Get('profiles') listProfiles(@Query() q: PaginationDto) { return this.domain.listProfiles(q) }
   @Get('profiles/owned') @UseGuards(JwtAccessGuard) ownedProfiles(@CurrentUser() u: AuthenticatedUserContext, @Query() q: PaginationDto) { return this.domain.listOwnedProfiles(u.id, q) }
@@ -32,6 +105,47 @@ export class DomainController {
   @Get('profiles/ids') getProfiles(@Query('ids') ids: string | string[]) { return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : []) }
   @Post('profiles') @UseGuards(JwtAccessGuard) createProfile(@CurrentUser() u: AuthenticatedUserContext, @Body() body: CreateProfileDto) { return this.domain.createProfile(u.id, body) }
   @Put('profiles/:profileId') @UseGuards(JwtAccessGuard) updateProfile(@CurrentUser() u: AuthenticatedUserContext, @Param('profileId') id: string, @Body() body: UpdateProfileDto) { return this.domain.updateProfile(u.id, id, body) }
+
+  @Get('communities/by-url/:url/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityPage.getCommunityPage(url, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/forum/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityForumPage(
+    @Param('url') url: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityForumPage.getCommunityForumPage(url, q, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/forum/composer-page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityForumComposerPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityForumComposerPage.getCommunityForumComposerPage(url, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/edit/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityEditPage(
+    @Param('url') url: string,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityEditPage.getCommunityEditPage(url, u?.id ?? null)
+  }
+
+  @Get('communities/page') @UseGuards(JwtAccessGuard)
+  getCommunitiesPage(
+    @CurrentUser() u: AuthenticatedUserContext,
+    @Query() q: PaginationDto
+  ) {
+    return this.communitiesPage.getCommunitiesPage(u.id, q)
+  }
 
   @Get('communities') listCommunities(@Query() q: PaginationDto) { return this.domain.listCommunities(q) }
   @Get('communities/by-url/:url') @UseGuards(OptionalJwtAccessGuard)
@@ -49,6 +163,30 @@ export class DomainController {
 
   @Get('communities/:communityId/forum/topics') @UseGuards(OptionalJwtAccessGuard)
   forumTopics(@Param('communityId') id: string, @Query() q: PaginationDto, @CurrentUser() u: AuthenticatedUserContext | undefined) { return this.domain.listCommunityForumTopics(id, q, u?.id ?? null) }
+  @Get('communities/by-url/:url/members/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityMembersPage(
+    @Param('url') url: string,
+    @Query() q: CommunityMembersPageDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityMembersPage.getCommunityMembersPage(url, q, u?.id ?? null)
+  }
+
+  @Get('communities/by-url/:url/forum/topics/:topicId/page') @UseGuards(OptionalJwtAccessGuard)
+  getCommunityForumTopicPage(
+    @Param('url') url: string,
+    @Param('topicId') topicId: string,
+    @Query() q: PaginationDto,
+    @CurrentUser() u: AuthenticatedUserContext | undefined
+  ) {
+    return this.communityForumTopicPage.getCommunityForumTopicPage(
+      url,
+      topicId,
+      q,
+      u?.id ?? null
+    )
+  }
+
   @Get('communities/:communityId/forum/topics/:topicId') @UseGuards(OptionalJwtAccessGuard)
   forumTopic(@Param('communityId') id: string, @Param('topicId') topicId: string, @Query() q: PaginationDto, @CurrentUser() u: AuthenticatedUserContext | undefined) { return this.domain.getCommunityForumTopic(id, topicId, q, u?.id ?? null) }
   @Post('communities/:communityId/forum/topics') @UseGuards(JwtAccessGuard)

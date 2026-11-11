@@ -11,11 +11,71 @@ export class DomainAccessService {
   ) {}
 
   async readProfiles(): Promise<Profile[]> {
-    const profiles = await this.data.read<Profile>('profiles')
-    return profiles.map(profile => ({
-      ...profile,
-      about: sanitizeRichText(profile.about ?? '')
-    }))
+    return this.normalizeProfiles(await this.data.read<Profile>('profiles'))
+  }
+
+  async readProfilesByIds(ids: string[]): Promise<Profile[]> {
+    return this.normalizeProfiles(
+      await this.data.readByIds<Profile>('profiles', ids)
+    )
+  }
+
+  async readCommunitiesByIds(ids: string[]): Promise<Community[]> {
+    const uniqueIds = [...new Set(ids)]
+    if (uniqueIds.length === 0) return []
+
+    const selected = await this.data.readByIds<Community>('communities', uniqueIds)
+    if (selected.every(community => this.hasStoredCommunityType(community))) {
+      return this.normalizeCommunities(selected)
+    }
+
+    const requestedIds = new Set(uniqueIds)
+    return (await this.readCommunities()).filter(community => requestedIds.has(community.id))
+  }
+
+  normalizeProfiles(profiles: Profile[]): Profile[] {
+    return profiles.map(profile => {
+      const createdAt = Number.isFinite(profile.createdAt) ? profile.createdAt : 0
+      return {
+        ...profile,
+        about: sanitizeRichText(profile.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(profile.lastActivity)
+          ? profile.lastActivity
+          : createdAt
+      }
+    })
+  }
+
+  touchProfilesActivity(
+    profiles: readonly Profile[],
+    profileIds: readonly string[],
+    lastActivity: number
+  ): Profile[] {
+    const activeIds = new Set(profileIds)
+    return profiles.map(profile => activeIds.has(profile.id)
+      ? {
+          ...profile,
+          createdAt: Number.isFinite(profile.createdAt) ? profile.createdAt : 0,
+          lastActivity
+        }
+      : profile
+    )
+  }
+
+  touchCommunityActivity(
+    communities: readonly Community[],
+    communityId: string,
+    lastActivity: number
+  ): Community[] {
+    return communities.map(community => community.id === communityId
+      ? {
+          ...community,
+          createdAt: Number.isFinite(community.createdAt) ? community.createdAt : 0,
+          lastActivity
+        }
+      : community
+    )
   }
 
   normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
@@ -33,19 +93,11 @@ export class DomainAccessService {
         ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
       }
     }
-    const communities = stored.map(community => {
-      const ownerProfileId = ownerProfileByCommunityId.get(community.id)
-      const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
-        ? community.privacy
-        : 'public'
-      return {
-        ...community,
-        ...(inheritedType ? { type: inheritedType } : {}),
-        privacy,
-        about: sanitizeRichText(community.about ?? '')
-      }
-    })
+    const communities = this.normalizeCommunities(
+      stored,
+      profileTypes,
+      ownerProfileByCommunityId
+    )
     const hasNormalizationChanges = stored.some((community, index) =>
       communities[index].type !== community.type ||
       communities[index].privacy !== community.privacy
@@ -54,6 +106,37 @@ export class DomainAccessService {
       records: hasNormalizationChanges ? { ...collections, communities } : collections,
       communities
     }
+  }
+
+  private hasStoredCommunityType(community: Community): boolean {
+    return community.type === 'social' ||
+      community.type === 'rp' ||
+      community.type === 'business'
+  }
+
+  private normalizeCommunities(
+    stored: Community[],
+    profileTypes: ReadonlyMap<string, Profile['type']> = new Map(),
+    ownerProfileByCommunityId: ReadonlyMap<string, string> = new Map()
+  ): Community[] {
+    return stored.map(community => {
+      const ownerProfileId = ownerProfileByCommunityId.get(community.id)
+      const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
+      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
+        ? community.privacy
+        : 'public'
+      const createdAt = Number.isFinite(community.createdAt) ? community.createdAt : 0
+      return {
+        ...community,
+        ...(inheritedType ? { type: inheritedType } : {}),
+        privacy,
+        about: sanitizeRichText(community.about ?? ''),
+        createdAt,
+        lastActivity: Number.isFinite(community.lastActivity)
+          ? community.lastActivity
+          : createdAt
+      }
+    })
   }
 
   async readCommunities(): Promise<Community[]> {

@@ -8,10 +8,10 @@ import type { HomePageFriendsPreviewProps } from './HomePageFriendsPreview.types
 
 export function HomePageFriendsPreview({
   profileUrl,
-  friendsQuery,
-  friends
+  homeQuery
 }: HomePageFriendsPreviewProps) {
   const { t } = useTranslations()
+  const friends = homeQuery.data?.friends.items ?? []
 
   return (
     <section className="social-preview-panel">
@@ -19,7 +19,7 @@ export function HomePageFriendsPreview({
         <h2>
           {t('PROFILE_FRIENDS_TITLE')}
           <span className="social-preview-panel__count">
-            ({friendsQuery.data?.totalItems ?? '—'})
+            ({homeQuery.data?.friends.totalItems ?? '—'})
           </span>
         </h2>
         <Link
@@ -30,12 +30,12 @@ export function HomePageFriendsPreview({
         </Link>
       </header>
       <RequestState
-        isLoading={friendsQuery.isLoading}
-        isFetching={friendsQuery.isFetching}
-        isError={friendsQuery.isError}
-        isEmpty={friendsQuery.isSuccess && friends.length === 0}
+        isLoading={homeQuery.isLoading}
+        isFetching={homeQuery.isFetching}
+        isError={homeQuery.isError}
+        isEmpty={homeQuery.isSuccess && friends.length === 0}
         emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-        onRetry={() => void friendsQuery.refetch()}
+        onRetry={() => void homeQuery.refetch()}
       >
         <div className="home-page__preview-list">
           {friends.map((friend) => (

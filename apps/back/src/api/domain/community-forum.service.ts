@@ -26,13 +26,15 @@ import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import type { AccountRecord } from '../auth/auth.types'
+import { CommunityForumRealtimeService } from './community-forum-realtime.service'
 
 @Injectable()
 export class CommunityForumService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
     private readonly access: DomainAccessService,
-    @Optional() private readonly uploads?: UploadsService
+    @Optional() private readonly uploads?: UploadsService,
+    @Optional() private readonly realtime?: CommunityForumRealtimeService
   ) {}
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
@@ -100,6 +102,7 @@ export class CommunityForumService {
     const title = rawTitle.trim().replace(/\s+/g, ' ')
     const content = sanitizeRichText(rawContent)
     const plainText = getRichTextPlainText(content)
+    const hasImage = /<img\b/i.test(content)
     const now = Date.now()
     const topic: CommunityForumTopic = {
       id: randomUUID(), communityId, profileId, title, content,
@@ -118,7 +121,7 @@ export class CommunityForumService {
           collections.communities as Community[],
           collections.community_relationships as CommunityRelationship[]
         )
-        if (!title || title.length > 140 || !plainText || plainText.length > 8000 || content.length > 12000) {
+        if (!title || title.length > 140 || (!plainText && !hasImage) || content.length > 8000) {
           throw new BadRequestException('INVALID_FORUM_TOPIC')
         }
 
@@ -132,6 +135,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: [...topics, topic],
             media_files: nextMediaFiles
           },
@@ -139,12 +148,14 @@ export class CommunityForumService {
         }
       }
     )
+    await this.realtime?.publishTopicChanged(topic.id)
     return topic
   }
 
   async createCommunityForumReply(userId: string, communityId: string, topicId: string, profileId: string, rawContent: string): Promise<CommunityForumReply> {
     const content = sanitizeRichText(rawContent)
     const plainText = getRichTextPlainText(content)
+    const hasImage = /<img\b/i.test(content)
     const now = Date.now()
     const reply: CommunityForumReply = {
       id: randomUUID(), topicId, communityId, profileId, content, createdAt: now, updatedAt: now
@@ -169,7 +180,7 @@ export class CommunityForumService {
         )
         if (!latestTopic) throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
         if (latestTopic.isLocked) throw new ForbiddenException('FORUM_TOPIC_LOCKED')
-        if (!plainText || plainText.length > 8000 || content.length > 12000) {
+        if ((!plainText && !hasImage) || content.length > 8000) {
           throw new BadRequestException('INVALID_FORUM_REPLY')
         }
 
@@ -182,6 +193,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_replies: [...replies, reply],
             community_forum_topics: currentTopics.map(record =>
               record.id === topicId ? { ...record, updatedAt: now } : record
@@ -192,12 +209,13 @@ export class CommunityForumService {
         }
       }
     )
+    await this.realtime?.publishTopicChanged(topicId)
     return reply
   }
 
   async moderateCommunityForumTopic(userId: string, communityId: string, topicId: string, profileId: string, changes: ForumTopicModerationChanges): Promise<CommunityForumTopic> {
     const now = Date.now()
-    return this.data.transaction<CommunityForumTopic>(
+    const updated = await this.data.transaction<CommunityForumTopic>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics'],
       collections => {
         this.access.assertForumStaffInRecords(
@@ -221,15 +239,24 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [profileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: topics.map(record => record.id === topicId ? updated : record)
           },
           result: updated
         }
       }
     )
+    await this.realtime?.publishTopicChanged(topicId)
+    return updated
   }
 
   async deleteCommunityForumTopic(userId: string, communityId: string, topicId: string, actorProfileId: string): Promise<void> {
+    const now = Date.now()
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies', 'media_files'],
       collections => {
@@ -274,6 +301,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [actorProfileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_topics: currentTopics.filter(record => record.id !== topicId),
             community_forum_replies: currentReplies.filter(reply =>
               reply.topicId !== topicId || reply.communityId !== communityId
@@ -284,10 +317,12 @@ export class CommunityForumService {
         }
       }
     )
+    await this.realtime?.publishTopicChanged(topicId)
   }
 
   async deleteCommunityForumReply(userId: string, communityId: string, replyId: string, actorProfileId: string): Promise<void> {
     const now = Date.now()
+    let changedTopicId: string | null = null
     await this.data.transaction(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
       collections => {
@@ -307,6 +342,7 @@ export class CommunityForumService {
           record.id === replyId && record.communityId === communityId
         )
         if (!latestReply) throw new NotFoundException('FORUM_REPLY_NOT_FOUND')
+        changedTopicId = latestReply.topicId
         if (
           latestReply.profileId !== actorProfileId &&
           context.role !== 'owner' &&
@@ -325,6 +361,12 @@ export class CommunityForumService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(
+              collections.profiles as Profile[], [actorProfileId], now
+            ),
+            communities: this.access.touchCommunityActivity(
+              collections.communities as Community[], communityId, now
+            ),
             community_forum_replies: currentReplies.filter(record => record.id !== replyId),
             community_forum_topics: currentTopics.map(topic =>
               topic.id === latestReply.topicId ? { ...topic, updatedAt: now } : topic
@@ -335,6 +377,7 @@ export class CommunityForumService {
         }
       }
     )
+    if (changedTopicId) await this.realtime?.publishTopicChanged(changedTopicId)
   }
 
 }

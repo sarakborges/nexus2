@@ -1,7 +1,7 @@
 import type { Community, CommunityForumTopic } from '@nexus/common'
 
 export type UseCommunityForumTopicModerationOptions = {
-  community: Community | null | undefined
+  community: Community | undefined
   topic: CommunityForumTopic | undefined
   forumProfileId: string | null
   canInteract: boolean

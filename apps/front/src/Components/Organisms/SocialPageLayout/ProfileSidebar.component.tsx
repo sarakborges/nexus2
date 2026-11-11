@@ -9,7 +9,9 @@ import { useTranslations } from '@/Hooks/Language'
 export function ProfileSidebar({
   profile,
   active,
-  showRelationshipActions = true
+  showRelationshipActions = true,
+  portraitPicture = false,
+  relationship
 }: ProfileSidebarProps) {
   const { t } = useTranslations()
 
@@ -22,14 +24,14 @@ export function ProfileSidebar({
           aria-label={t('PROFILE_PICTURE_ALT', { name: profile.name })}
         >
           <IdentityAvatar
-            className="social-identity__picture social-identity__picture--profile"
+            className={['social-identity__picture', 'social-identity__picture--profile', portraitPicture ? 'social-identity__picture--profile-portrait' : ''].filter(Boolean).join(' ')}
             name={profile.name}
             picture={profile.picture}
           />
         </Link>
         <h1 className="social-identity__name">{profile.name}</h1>
         {showRelationshipActions && (
-          <RelationshipActions targetId={profile.id} />
+          <RelationshipActions targetId={profile.id} relationship={relationship} />
         )}
       </section>
       <nav className="social-side-menu" aria-label={t('PROFILE_TITLE')}>

@@ -5,6 +5,6 @@ export type RichTextEditorProps = {
   imageButtonLabel: string
   imageUploadErrorLabel: string
   onUploadImage: (file: File) => Promise<string>
-  maxTextLength?: number
+  maxHtmlLength?: number
   placeholder?: string
 }

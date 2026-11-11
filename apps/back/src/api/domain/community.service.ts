@@ -22,12 +22,12 @@ import { AuthService } from '../auth/auth.service'
 import type { AccountRecord } from '../auth/auth.types'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import { sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import { CommunityMembershipService } from './community-membership.service'
-import { getNewEditorImages, normalizeEntityUrl } from './domain.utils'
+import { getNewEditorImages, getRemovedEditorImages, normalizeEntityUrl } from './domain.utils'
 
 @Injectable()
 export class CommunityService {
@@ -68,8 +68,8 @@ export class CommunityService {
     )
   }
   async getCommunitiesByIds(ids: string[]): Promise<Community[]> {
-    const set = new Set(ids)
-    return (await this.access.readCommunities()).filter(community => set.has(community.id) && community.privacy === 'public')
+    return (await this.access.readCommunitiesByIds(ids))
+      .filter(community => community.privacy === 'public')
   }
   async listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
     return this.data.transaction<PaginatedResult<Community>>(
@@ -103,7 +103,6 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const privacy = input.privacy ?? 'public'
-    const aboutText = getRichTextPlainText(about)
     const createdAt = Date.now()
     const communityId = randomUUID()
     return this.data.transaction<Community>(
@@ -117,7 +116,7 @@ export class CommunityService {
         this.access.assertOwnsInRecords(userId, ownerProfileId, accounts, profiles)
         const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           !['public', 'private', 'unlisted'].includes(privacy) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
@@ -126,7 +125,15 @@ export class CommunityService {
         }
 
         const community: Community = {
-          id: communityId, name, url, picture, about, type: ownerProfile.type, privacy
+          id: communityId,
+          name,
+          url,
+          picture,
+          about,
+          type: ownerProfile.type,
+          privacy,
+          createdAt,
+          lastActivity: createdAt
         }
         const ownerRelationship: CommunityRelationship = {
           profiles: [ownerProfileId, community.id],
@@ -147,6 +154,7 @@ export class CommunityService {
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [ownerProfileId], createdAt),
             communities: [...communities, community],
             community_relationships: [...relationships, ownerRelationship],
             media_files: nextMediaFiles
@@ -162,7 +170,7 @@ export class CommunityService {
     const url = normalizeEntityUrl(input.url || name)
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
-    const aboutText = getRichTextPlainText(about)
+    const lastActivity = Date.now()
     const result = await this.data.transaction<{ community: Community; previousPicture: string | null }>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
       collections => {
@@ -181,7 +189,7 @@ export class CommunityService {
         if (!ownerProfile) throw new NotFoundException('PROFILE_NOT_FOUND')
         const latest = communities.find(community => community.id === communityId)
         if (!latest) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        if (!name || about.length > 12000 || aboutText.length > 500 ||
+        if (!name || about.length > 8000 ||
           !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
           (input.privacy != null && !['public', 'private', 'unlisted'].includes(input.privacy)) ||
           (picture && !/^https?:\/\//i.test(picture))) throw new ConflictException('INVALID_COMMUNITY')
@@ -196,6 +204,12 @@ export class CommunityService {
               nextMediaFiles, userId, picture, 'community-avatar', 'community', communityId
             )
           }
+          nextMediaFiles = this.uploads.detachEditorImagesFromRecords(
+            nextMediaFiles,
+            getRemovedEditorImages(latest.about, about),
+            'community',
+            communityId
+          )
           nextMediaFiles = this.uploads.attachEditorImagesToRecords(
             nextMediaFiles,
             userId,
@@ -212,7 +226,9 @@ export class CommunityService {
           picture,
           about,
           type: ownerProfile.type,
-          privacy: input.privacy ?? latest.privacy ?? 'public'
+          privacy: input.privacy ?? latest.privacy ?? 'public',
+          createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+          lastActivity
         }
         return {
           records: {

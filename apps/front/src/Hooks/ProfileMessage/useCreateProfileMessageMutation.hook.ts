@@ -21,9 +21,14 @@ export function useCreateProfileMessageMutation(): UseCreateProfileMessageMutati
     mutationFn: ({ fromProfileId, toProfileId, content }) =>
       createProfileMessage(fromProfileId, toProfileId, content),
     onSuccess: async (_message, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: ['profile-messages', variables.toProfileId]
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['profile-messages', variables.toProfileId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['profile-messages-page']
+        })
+      ])
     }
   })
 }

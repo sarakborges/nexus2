@@ -77,12 +77,13 @@ export class ProfileMessageService {
             )
           : mediaFiles
 
-        if ((!plainText && !hasImage) || plainText.length > 4000 || normalized.length > 12000) {
+        if ((!plainText && !hasImage) || normalized.length > 8000) {
           throw new ConflictException('INVALID_MESSAGE')
         }
         return {
           records: {
             ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [fromProfileId, toProfileId], message.createdAt),
             profile_messages: [...messages, message],
             media_files: nextMediaFiles
           },

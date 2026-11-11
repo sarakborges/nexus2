@@ -9,10 +9,11 @@ import { useTranslations } from '@/Hooks/Language'
 
 export function RelationshipActions({
   targetId,
-  targetKind = 'profile'
+  targetKind = 'profile',
+  relationship
 }: RelationshipActionsProps) {
   const { t } = useTranslations()
-  const actions = useRelationshipActions({ targetId, targetKind })
+  const actions = useRelationshipActions({ targetId, targetKind, relationship })
 
   if (!actions.isAuthenticated) {
     return (

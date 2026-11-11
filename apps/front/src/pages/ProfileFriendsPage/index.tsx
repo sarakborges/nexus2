@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -16,20 +17,26 @@ export function ProfileFriendsPage() {
   const { t } = useTranslations()
   const {
     normalized,
-    profileQuery,
+    isAuthInitialized,
+    profileDirectoryQuery,
     profile,
+    viewerRelationship,
+    friendRelationshipsByProfileId,
     typeCompatibility,
     canInteract,
     page,
     pageSize,
     setPage,
-    friendsQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
     friends,
     totalItems
   } = useProfileFriendsPage()
 
   if (!normalized) return <NotFoundPage />
-  if (profileQuery.isLoading)
+  if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -37,37 +44,43 @@ export function ProfileFriendsPage() {
         </section>
       </main>
     )
-  if (profileQuery.isError)
+  }
+  if (profileDirectoryQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void profileQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void profileDirectoryQuery.refetch()}
+          />
         </section>
       </main>
     )
+  }
   if (!profile) return <NotFoundPage />
 
   return (
     <SocialPageLayout
-      sidebar={<ProfileSidebar profile={profile} active="friends" />}
+      sidebar={<ProfileSidebar profile={profile} active="friends" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
         </header>
-        <RequestState isFetching={profileQuery.isFetching} />
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
           </p>
         )}
         <RequestState
-          isLoading={friendsQuery.isLoading}
-          isFetching={friendsQuery.isFetching}
-          isError={friendsQuery.isError}
-          isEmpty={friendsQuery.isSuccess && totalItems === 0}
+          isLoading={profileDirectoryQuery.isLoading}
+          isFetching={profileDirectoryQuery.isFetching}
+          isError={profileDirectoryQuery.isError}
+          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-          onRetry={() => void friendsQuery.refetch()}
+          onRetry={() => void profileDirectoryQuery.refetch()}
         >
           <div className="account-card__profile-list account-card__profile-list--grid">
             {friends.map((friend) => (
@@ -95,7 +108,7 @@ export function ProfileFriendsPage() {
                     </span>
                   </span>
                 </Link>
-                {canInteract && <RelationshipActions targetId={friend.id} />}
+                {canInteract && <RelationshipActions targetId={friend.id} relationship={friendRelationshipsByProfileId.get(friend.id) ?? null} />}
               </article>
             ))}
           </div>

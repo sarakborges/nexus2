@@ -4,6 +4,7 @@ import {
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
+import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from './HomePageActivityFeed.component'
 import { HomePageRightSidebar } from './HomePageRightSidebar.component'
@@ -12,29 +13,18 @@ import './HomePage.style.scss'
 
 export function HomePage() {
   const { t } = useTranslations()
-  const {
-    activityQuery,
-    profilesQuery,
-    friendsQuery,
-    communitiesQuery,
-    allCommunitiesQuery,
-    ownedCommunityIdsQuery,
-    currentProfile,
-    activities,
-    friends,
-    communities,
-    suggestions,
-    formatDate
-  } = useHomePage()
+  const { homeQuery } = useHomePage()
+  const home = homeQuery.data
+  const currentProfile = home?.currentProfile ?? null
 
   if (!currentProfile) {
     return (
       <main className="account-page">
         <section className="account-card">
           <RequestState
-            isLoading={profilesQuery.isLoading}
-            isError={profilesQuery.isError}
-            onRetry={() => void profilesQuery.refetch()}
+            isLoading={homeQuery.isLoading}
+            isError={homeQuery.isError}
+            onRetry={() => void homeQuery.refetch()}
           />
         </section>
       </main>
@@ -54,13 +44,7 @@ export function HomePage() {
       rightSidebar={
         <HomePageRightSidebar
           currentProfile={currentProfile}
-          friendsQuery={friendsQuery}
-          communitiesQuery={communitiesQuery}
-          allCommunitiesQuery={allCommunitiesQuery}
-          ownedCommunityIdsQuery={ownedCommunityIdsQuery}
-          friends={friends}
-          communities={communities}
-          suggestions={suggestions}
+          homeQuery={homeQuery}
         />
       }
     >
@@ -74,9 +58,9 @@ export function HomePage() {
           </div>
         </header>
         <HomePageActivityFeed
-          activityQuery={activityQuery}
-          activities={activities}
-          formatDate={formatDate}
+          homeQuery={homeQuery}
+          activities={home?.activities ?? []}
+          formatDate={formatHomeActivityDate}
         />
       </section>
     </SocialPageLayout>

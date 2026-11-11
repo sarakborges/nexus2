@@ -1,55 +1,90 @@
+import { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-
-import { useEffect } from 'react'
 import { useParams } from 'react-router'
 
-import { useProfileByUrl } from '@/Hooks/Profile'
-import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-
-
-import { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
+import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
+import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { getProfileFriends } from '@/Services/Relationship'
+import { useAuthStore } from '@/Stores/Auth.store'
 import type { UseProfileFriendsPageResult } from './useProfileFriendsPage.types'
 
 export function useProfileFriendsPage(): UseProfileFriendsPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const profileQuery = useProfileByUrl({ url: normalized })
-  const profile = profileQuery.data
-  const typeCompatibility = useProfileTypeCompatibility(
-    profile?.type ?? 'social'
-  )
-  const canInteract = typeCompatibility.canInteract
-  const { page, pageSize, setPage } = useUrlPagination()
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.relationships.friends(
-      profile?.id ?? '',
+  const session = useAuthStore((state) => state.session)
+  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const viewerUserId = session?.user.id ?? null
+  const currentProfileId = session?.user.currentProfile ?? null
+  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
+
+  const profileDirectoryQuery = useQuery({
+    queryKey: queryKeys.profileDirectoryPage(
+      normalized,
+      'friends',
       page,
-      pageSize
+      pageSize,
+      viewerUserId,
+      currentProfileId,
+      query,
+      sort
     ),
-    queryFn: () => getProfileFriends(profile!.id, { page, pageSize }),
-    enabled: Boolean(profile?.id)
+    queryFn: () =>
+      getProfileDirectoryPage(normalized, 'friends', { page, pageSize, query, sort }),
+    enabled: Boolean(normalized && isAuthInitialized),
+    staleTime: 30 * 1000
   })
-  const friends = friendsQuery.data?.items ?? []
-  const totalItems = friendsQuery.data?.totalItems ?? 0
+  const profile = profileDirectoryQuery.data?.profile
+  const viewerRelationship = profileDirectoryQuery.data?.viewerRelationship ?? null
+  const currentProfileType = profileDirectoryQuery.data?.currentProfileType ?? null
+  const isChecking = Boolean(currentProfileId && profileDirectoryQuery.isLoading)
+  const isCompatible = !currentProfileId || (profileDirectoryQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+  const typeCompatibility = {
+    isChecking,
+    isCompatible,
+    canInteract: !session || (isCompatible && !isChecking)
+  }
+  const friends =
+    profileDirectoryQuery.data?.kind === 'friends'
+      ? profileDirectoryQuery.data.friends.items
+      : []
+  const totalItems =
+    profileDirectoryQuery.data?.kind === 'friends'
+      ? profileDirectoryQuery.data.friends.totalItems
+      : 0
+  const friendRelationshipsByProfileId = useMemo(() => {
+    const relationships = profileDirectoryQuery.data?.kind === 'friends'
+      ? profileDirectoryQuery.data.friendRelationships
+      : []
+    return new Map(relationships.map((relationship) => {
+      const friendId = relationship.profiles.find((id) => id !== currentProfileId) ?? ''
+      return [friendId, relationship] as const
+    }))
+  }, [profileDirectoryQuery.data, currentProfileId])
 
   useEffect(() => {
-    if (friendsQuery.data && friendsQuery.data.page !== page)
-      setPage(friendsQuery.data.page)
-  }, [friendsQuery.data, page, setPage])
+    const result = profileDirectoryQuery.data
+    if (result?.kind === 'friends' && result.friends.page !== page) {
+      setPage(result.friends.page)
+    }
+  }, [profileDirectoryQuery.data, page, setPage])
 
   return {
     normalized,
-    profileQuery,
+    isAuthInitialized,
+    profileDirectoryQuery,
     profile,
+    viewerRelationship,
+    friendRelationshipsByProfileId,
     typeCompatibility,
-    canInteract,
+    canInteract: typeCompatibility.canInteract,
     page,
     pageSize,
     setPage,
-    friendsQuery,
+    query,
+    sort,
+    setQuery,
+    setSort,
     friends,
     totalItems
   }

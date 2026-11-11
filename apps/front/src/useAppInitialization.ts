@@ -1,9 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useLayoutEffect } from 'react'
-import { useLocation } from 'react-router'
 
-import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
 import { getCurrentAuthSession } from '@/Services/Auth'
@@ -13,18 +11,10 @@ import { useAuthStore } from '@/Stores/Auth.store'
 import { useSettingsStore } from '@/Stores/Settings.store'
 import type { UseAppInitializationResult } from './useAppInitialization.types'
 
-const PUBLIC_ENTRY_ROUTES = [
-  ROUTES.landing,
-  ROUTES.signIn,
-  ROUTES.signUp
-] as const
-
 export function useAppInitialization(): UseAppInitializationResult {
   const { language } = useTranslations()
-  const location = useLocation()
-  const shouldInitializeAuth = !PUBLIC_ENTRY_ROUTES.some(
-    (route) => route === location.pathname
-  )
+  // The session endpoint validates the HttpOnly auth cookies on every route.
+  const shouldInitializeAuth = true
   const setSession = useAuthStore((state) => state.setSession)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const userId = useAuthStore((state) => state.session?.user.id ?? null)

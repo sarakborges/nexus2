@@ -1,1 +1,5 @@
 export * from './community.service'
+export * from './communityPage.service'
+export * from './communitiesPage.service'
+export * from './communityForumComposerPage.service'
+export * from './communityEditPage.service'

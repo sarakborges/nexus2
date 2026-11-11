@@ -1,3 +1,22 @@
+.identity-avatar {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  line-height: 1;
+  text-align: center;
+}
+
+.identity-avatar__initial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  font-size: inherit;
+  line-height: 1;
+  text-align: center;
+}
+
 .identity-avatar__image {
   display: block;
   width: 100%;

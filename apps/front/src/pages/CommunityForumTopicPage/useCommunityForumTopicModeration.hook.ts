@@ -35,7 +35,7 @@ export function useCommunityForumTopicModeration({
   )
 
   const togglePinned = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
 
     moderationMutation.mutate(
       {
@@ -52,7 +52,7 @@ export function useCommunityForumTopicModeration({
   }
 
   const toggleLocked = () => {
-    if (!topic || !community || !forumProfileId) return
+    if (!canInteract || !topic || !community || !forumProfileId) return
 
     moderationMutation.mutate(
       {
@@ -69,7 +69,7 @@ export function useCommunityForumTopicModeration({
   }
 
   const deleteTopic = () => {
-    if (!community || !topic || !forumProfileId) return
+    if (!canInteract || !community || !topic || !forumProfileId) return
 
     deleteTopicMutation.mutate(
       {
@@ -90,7 +90,7 @@ export function useCommunityForumTopicModeration({
   }
 
   const deleteReply = (replyId: string) => {
-    if (!community || !forumProfileId) return
+    if (!canInteract || !community || !forumProfileId) return
 
     deleteReplyMutation.mutate(
       { communityId: community.id, replyId, profileId: forumProfileId },

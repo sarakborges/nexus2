@@ -1,4 +1,5 @@
 import { RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   CommunitySidebar,
   SocialPageLayout
@@ -16,25 +17,28 @@ export function CommunityMembersPage() {
   const { t } = useTranslations()
   const {
     normalized,
+    isAuthInitialized,
     activeTab,
     setActiveTab,
+    query,
+    sort,
+    setQuery,
+    setSort,
     page,
     pageSize,
     setPage,
     pendingPage,
     pendingPageSize,
     setPendingPage,
-    communityQuery,
+    communityMembersPageQuery,
     community,
     typeCompatibility,
-    relationshipsQuery,
+    viewerRelationship,
     relationships,
     actorProfileId,
     currentRole,
     isStaff,
     visibleTab,
-    membersQuery,
-    pendingQuery,
     members,
     totalMembers,
     pending,
@@ -52,7 +56,7 @@ export function CommunityMembersPage() {
   ]
 
   if (!normalized) return <NotFoundPage />
-  if (communityQuery.isLoading)
+  if (!isAuthInitialized || communityMembersPageQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -60,34 +64,20 @@ export function CommunityMembersPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
-        </section>
-      </main>
-    )
-  if (!community) return <NotFoundPage />
-  if (relationshipsQuery.isLoading)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-  if (relationshipsQuery.isError)
+  }
+  if (communityMembersPageQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
           <RequestState
             isError
-            onRetry={() => void relationshipsQuery.refetch()}
+            onRetry={() => void communityMembersPageQuery.refetch()}
           />
         </section>
       </main>
     )
+  }
+  if (!community) return <NotFoundPage />
 
   return (
     <SocialPageLayout
@@ -96,13 +86,16 @@ export function CommunityMembersPage() {
           community={community}
           active="members"
           canInteract={typeCompatibility.canInteract}
+          relationship={viewerRelationship}
         />
       }
     >
+      <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
+        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
         {isStaff && (
           <CommunityPendingMembersSection
-            pendingQuery={pendingQuery}
+            pageQuery={communityMembersPageQuery}
             pending={pending}
             totalPending={totalPending}
             page={pendingPage}
@@ -116,12 +109,12 @@ export function CommunityMembersPage() {
           />
         )}
         <CommunityMemberDirectory
+          pageQuery={communityMembersPageQuery}
           typeCompatibility={typeCompatibility}
           tabs={tabs}
           activeTab={activeTab}
           visibleTab={visibleTab}
           onSelectTab={setActiveTab}
-          membersQuery={membersQuery}
           members={members}
           totalMembers={totalMembers}
           page={page}

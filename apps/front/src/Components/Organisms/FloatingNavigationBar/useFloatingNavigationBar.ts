@@ -1,8 +1,4 @@
-import {
-  useIsFetching,
-  useIsMutating,
-  useQuery,
-} from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
@@ -28,9 +24,6 @@ export function useFloatingNavigationBar({
   const navigate = useNavigate()
   const location = useLocation()
   const navigationRef = useRef<HTMLDivElement>(null)
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
   const activePanel =
@@ -38,19 +31,39 @@ export function useFloatingNavigationBar({
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
+  const currentProfileId = session?.user.currentProfile ?? null
 
-  const profilesQuery = useQuery({
-    queryKey: queryKeys.profiles.byIds(profileIds),
-    queryFn: () => getProfilesByIds(profileIds),
-    enabled: profileIds.length > 0,
+  const currentProfileQuery = useQuery({
+    queryKey: queryKeys.profiles.byId(currentProfileId),
+    queryFn: async () => {
+      if (!currentProfileId) return null
+      const [profile] = await getProfilesByIds([currentProfileId])
+      return profile ?? null
+    },
+    enabled: Boolean(currentProfileId),
     staleTime: 5 * 60 * 1000
   })
 
-  const currentProfileId = session?.user.currentProfile ?? null
-  const profiles = profilesQuery.data ?? []
-  const currentProfile = profiles.find(
-    (profile) => profile.id === currentProfileId
+  const otherProfileIds = profileIds.filter(
+    (profileId) => profileId !== currentProfileId
   )
+  const profilesQuery = useQuery({
+    queryKey: queryKeys.profiles.byIds(otherProfileIds),
+    queryFn: () => getProfilesByIds(otherProfileIds),
+    enabled: otherProfileIds.length > 0 && isProfileSwitcherOpen,
+    staleTime: 5 * 60 * 1000
+  })
+
+  const otherProfilesById = new Map(
+    (profilesQuery.data ?? []).map((profile) => [profile.id, profile] as const)
+  )
+  const profiles = profileIds.flatMap((profileId) => {
+    const profile = profileId === currentProfileId
+      ? currentProfileQuery.data
+      : otherProfilesById.get(profileId)
+    return profile ? [profile] : []
+  })
+  const currentProfile = currentProfileQuery.data ?? undefined
   const profileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url
     : null
@@ -121,7 +134,6 @@ export function useFloatingNavigationBar({
   return {
     isAuthenticated: Boolean(session),
     navigationRef,
-    isRequestPending,
     activePanel,
     pathname: location.pathname,
     currentProfile,
@@ -135,15 +147,19 @@ export function useFloatingNavigationBar({
     toggleProfileSwitcher: () =>
       setIsProfileSwitcherOpen((open) => !open),
     profiles,
+    hasProfiles: profileIds.length > 0,
     currentProfileId,
     isProfileSwitcherOpen,
-    profilesLoading: profilesQuery.isLoading,
-    profilesError: profilesQuery.isError,
-    profilesSuccess: profilesQuery.isSuccess,
+    profilesLoading: profilesQuery.isLoading || currentProfileQuery.isLoading,
+    profilesError: profilesQuery.isError || currentProfileQuery.isError,
+    profilesSuccess: profilesQuery.isSuccess || currentProfileQuery.isSuccess,
     isSelectionPending: profileSelectionMutation.isPending,
     isSelectionError: profileSelectionMutation.isError,
     isSigningOut: signOutMutation.isPending,
-    retryProfiles: () => void profilesQuery.refetch(),
+    retryProfiles: () => {
+      void currentProfileQuery.refetch()
+      void profilesQuery.refetch()
+    },
     selectProfile: (profileId: string) =>
       profileSelectionMutation.mutate(profileId, {
         onSuccess: () => {

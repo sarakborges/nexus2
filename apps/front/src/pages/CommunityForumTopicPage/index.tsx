@@ -2,6 +2,7 @@ import { CommunityForumEntry } from './CommunityForumEntry.component'
 import { CommunityForumReplyComposer } from './CommunityForumReplyComposer.component'
 import { CommunityForumTopicModerationActions } from './CommunityForumTopicModerationActions.component'
 import { Pagination, RequestState } from '@/Components'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { Button } from '@/DesignSystem'
 import {
   CommunitySidebar,
@@ -24,19 +25,21 @@ export function CommunityForumTopicPage() {
     page,
     pageSize,
     setPage,
+    query,
+    sort,
+    setQuery,
+    setSort,
     replyContent,
     setReplyContent,
-    communityQuery,
+    topicPageQuery,
     community,
-    relationshipsQuery,
-    ownedProfilesQuery,
+    viewerRelationship,
+    typeCompatibility,
     isMember,
     isStaff,
     canInteract,
-    topicQuery,
     detail,
     topic,
-    authorsQuery,
     submitReply,
     uploadEditorImage,
     topicAuthor,
@@ -53,8 +56,9 @@ export function CommunityForumTopicPage() {
     deleteTopic,
     deleteReply
   } = useCommunityForumTopicPage()
+
   if (!normalized || !topicId) return <NotFoundPage />
-  if (communityQuery.isLoading || topicQuery.isLoading)
+  if (!isAuthInitialized || topicPageQuery.isLoading) {
     return (
       <main className="account-page">
         <section className="account-card">
@@ -62,30 +66,37 @@ export function CommunityForumTopicPage() {
         </section>
       </main>
     )
-  if (communityQuery.isError)
+  }
+  if (topicPageQuery.isError) {
     return (
       <main className="account-page">
         <section className="account-card">
-          <RequestState isError onRetry={() => void communityQuery.refetch()} />
+          <RequestState
+            isError
+            onRetry={() => void topicPageQuery.refetch()}
+          />
         </section>
       </main>
     )
-  if (topicQuery.isError)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isError onRetry={() => void topicQuery.refetch()} />
-        </section>
-      </main>
-    )
+  }
   if (!community || !detail || !topic) return <NotFoundPage />
 
   return (
     <SocialPageLayout
       sidebar={
-        <CommunitySidebar community={community} active="forum" canInteract />
+        <CommunitySidebar
+          community={community}
+          active="forum"
+          canInteract={typeCompatibility.canInteract}
+          relationship={viewerRelationship}
+        />
       }
     >
+      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
+        <p className="profile-type-notice" role="alert">
+          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+        </p>
+      )}
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">
           <div>
@@ -123,24 +134,12 @@ export function CommunityForumTopicPage() {
           <h2>
             {t('FORUM_REPLIES')} ({detail.replies.totalItems})
           </h2>
+          <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
           <RequestState
-            isLoading={
-              authorsQuery.isLoading ||
-              ownedProfilesQuery.isLoading ||
-              relationshipsQuery.isLoading ||
-              !isAuthInitialized
-            }
-            isFetching={topicQuery.isFetching || authorsQuery.isFetching}
-            isError={
-              authorsQuery.isError ||
-              ownedProfilesQuery.isError ||
-              relationshipsQuery.isError
-            }
-            onRetry={() => {
-              void authorsQuery.refetch()
-              void ownedProfilesQuery.refetch()
-              void relationshipsQuery.refetch()
-            }}
+            isLoading={!isAuthInitialized}
+            isFetching={topicPageQuery.isFetching}
+            isError={topicPageQuery.isError}
+            onRetry={() => void topicPageQuery.refetch()}
           >
             {replyItems.map(({ reply, author, canDelete }) => (
               <CommunityForumEntry
@@ -175,16 +174,9 @@ export function CommunityForumTopicPage() {
       </section>
 
       <CommunityForumReplyComposer
-        isLoading={
-          !isAuthInitialized ||
-          relationshipsQuery.isLoading ||
-          ownedProfilesQuery.isLoading
-        }
-        isError={relationshipsQuery.isError || ownedProfilesQuery.isError}
-        onRetry={() => {
-          void relationshipsQuery.refetch()
-          void ownedProfilesQuery.refetch()
-        }}
+        isLoading={!isAuthInitialized}
+        isError={topicPageQuery.isError}
+        onRetry={() => void topicPageQuery.refetch()}
         canReply={canInteract && isMember && !topic.isLocked}
         hasSession={Boolean(session)}
         isMember={isMember}

@@ -1,5 +1,3 @@
-import { useIsFetching, useIsMutating } from '@tanstack/react-query'
-
 import type {
   UseAvatarUploadController,
   UseAvatarUploadOptions
@@ -22,9 +20,6 @@ export function useAvatarUpload({
   const { t } = useTranslations()
   const showToast = useToastStore((state) => state.showToast)
   const avatarMutation = useAvatarMutation()
-  const isFetching = useIsFetching() > 0
-  const isMutating = useIsMutating() > 0
-  const isRequestPending = isFetching || isMutating
   const [isUploading, setIsUploading] = useState(false)
   const [isRemoving, setIsRemoving] = useState(false)
   const [error, setError] = useState('')
@@ -84,7 +79,7 @@ export function useAvatarUpload({
   }
 
   return {
-    busy: isUploading || isRemoving || isRequestPending,
+    busy: isUploading || isRemoving || avatarMutation.isPending,
     error,
     handleFileChange,
     handleInputChange,

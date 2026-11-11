@@ -5,31 +5,19 @@ import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
 
 export function HomePageRightSidebar({
   currentProfile,
-  friendsQuery,
-  communitiesQuery,
-  allCommunitiesQuery,
-  ownedCommunityIdsQuery,
-  friends,
-  communities,
-  suggestions
+  homeQuery
 }: HomePageRightSidebarProps) {
   return (
     <div className="home-page__previews">
       <HomePageFriendsPreview
         profileUrl={currentProfile.url}
-        friendsQuery={friendsQuery}
-        friends={friends}
+        homeQuery={homeQuery}
       />
       <HomePageCommunitiesPreview
         profileUrl={currentProfile.url}
-        communitiesQuery={communitiesQuery}
-        communities={communities}
+        homeQuery={homeQuery}
       />
-      <HomePageSuggestedCommunitiesPreview
-        allCommunitiesQuery={allCommunitiesQuery}
-        ownedCommunityIdsQuery={ownedCommunityIdsQuery}
-        suggestions={suggestions}
-      />
+      <HomePageSuggestedCommunitiesPreview homeQuery={homeQuery} />
     </div>
   )
 }

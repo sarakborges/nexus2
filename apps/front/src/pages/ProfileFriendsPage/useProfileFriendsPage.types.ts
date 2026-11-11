@@ -1,18 +1,28 @@
-import type { PaginatedResult, Profile } from '@nexus/common'
+import type { Profile, ProfileDirectoryPageData, Relationship } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
-import type { useProfileTypeCompatibility } from '@/Hooks/useProfileTypeCompatibility'
+
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 
 export type UseProfileFriendsPageResult = {
   normalized: string
-  profileQuery: UseQueryResult<Profile | null>
+  isAuthInitialized: boolean
+  profileDirectoryQuery: UseQueryResult<ProfileDirectoryPageData>
   profile: Profile | null | undefined
-  typeCompatibility: ReturnType<typeof useProfileTypeCompatibility>
+  viewerRelationship: Relationship | null
+  friendRelationshipsByProfileId: Map<string, Relationship>
+  typeCompatibility: {
+    isChecking: boolean
+    isCompatible: boolean
+    canInteract: boolean
+  }
   canInteract: boolean
   page: number
   pageSize: number
+  query: string
+  sort: ReturnType<typeof useUrlPagination>['sort']
+  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
+  setSort: ReturnType<typeof useUrlPagination>['setSort']
   setPage: ReturnType<typeof useUrlPagination>['setPage']
-  friendsQuery: UseQueryResult<PaginatedResult<Profile>>
   friends: Profile[]
   totalItems: number
 }

@@ -13,6 +13,22 @@ export const enUSTranslations = {
   THEME_LIGHT: 'Light',
   THEME_DARK: 'Dark',
   NAVIGATION_LABEL: 'Main navigation',
+  SEARCH_PLACEHOLDER: 'Search profiles and communities',
+  SEARCH_SCOPE_LABEL: 'Search in',
+  SEARCH_SCOPE_ALL: 'All',
+  SEARCH_SCOPE_PROFILES: 'Profiles',
+  SEARCH_SCOPE_COMMUNITIES: 'Communities',
+  SEARCH_SUBMIT: 'Search',
+  SEARCH_TITLE: 'Search',
+  SEARCH_QUERY_LABEL: 'Results for “{{query}}”',
+  SEARCH_EMPTY_QUERY: 'Enter a term in the search field in the top bar.',
+  SEARCH_LOADING: 'Searching...',
+  SEARCH_FAILED: 'The search could not be completed.',
+  SEARCH_RETRY: 'Try again',
+  SEARCH_NO_RESULTS: 'No results found.',
+  SEARCH_RESULTS_COUNT: '{{count}} results',
+  SEARCH_PROFILE: 'Profile',
+  SEARCH_COMMUNITY: 'Community',
   NAVIGATION_MENU: 'Open navigation menu',
   NAVIGATION_ACCOUNT_MENU: 'Open account menu',
   NAVIGATION_ACCOUNT: 'Account',
@@ -142,6 +158,8 @@ export const enUSTranslations = {
   PROFILE_PICTURE_LABEL: 'Profile image (optional)',
   PROFILE_ABOUT_LABEL: 'About',
   RICH_TEXT_PLACEHOLDER: 'Write here…',
+  RICH_TEXT_HTML_CHARACTER_COUNT: '{{count}} / {{max}} HTML characters',
+  RICH_TEXT_HTML_CHARACTER_LIMIT: 'MAIS DE OITO MIL!',
   RICH_TEXT_IMAGE_UPLOAD_FAILED:
     'The image could not be uploaded. Check the file type and size.',
   RICH_TEXT_INSERT_IMAGE: 'Upload image',
@@ -153,7 +171,7 @@ export const enUSTranslations = {
   UPLOAD_EMPTY: 'No image selected',
   PROFILE_ABOUT_EMPTY: 'This profile has not added an introduction yet.',
   PROFILE_ABOUT_MAX_LENGTH:
-    'Up to 500 text characters. Images and formatting are allowed.',
+    'Up to 8,000 HTML characters.',
   PROFILE_PICTURE_ALT: '{{name}} profile picture',
   PROFILE_ERROR_URL_TAKEN: 'This profile address is already in use.',
   PROFILE_ERROR_INVALID:
@@ -177,7 +195,6 @@ export const enUSTranslations = {
   REQUEST_LOADING: 'Loading information...',
   REQUEST_FAILED: 'These details could not be loaded.',
   REQUEST_RETRY: 'Try again',
-  REQUEST_UPDATING: 'Updating information...',
   NOT_FOUND_CODE: '404',
   NOT_FOUND_TITLE: 'Page not found',
   NOT_FOUND_DESCRIPTION:
@@ -224,7 +241,7 @@ export const enUSTranslations = {
   COMMUNITY_ABOUT_LABEL: 'About this community',
   COMMUNITY_ABOUT_EMPTY: 'This community has not added a description yet.',
   COMMUNITY_ABOUT_MAX_LENGTH:
-    'Up to 500 text characters. Images and formatting are allowed.',
+    'Up to 8,000 HTML characters.',
   COMMUNITY_MEMBER_COUNT: 'Members',
   COMMUNITY_ERROR_URL_TAKEN: 'This community address is already in use.',
   COMMUNITY_ERROR_INVALID:
@@ -295,9 +312,9 @@ export const enUSTranslations = {
     'You can only see messages you sent to this profile.',
   PROFILE_MESSAGES_COMPOSE_LABEL: 'Write a message',
   PROFILE_MESSAGES_MAX_LENGTH:
-    'Maximum 4,000 text characters. Formatting and images are allowed.',
+    'Maximum 8,000 HTML characters.',
   PROFILE_MESSAGES_SEND: 'Send message',
-  PROFILE_MESSAGES_ERROR_INVALID: 'Write a message of up to 4,000 characters.',
+  PROFILE_MESSAGES_ERROR_INVALID: 'Write a message of up to 8,000 HTML characters.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'The message could not be saved.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Select one of your profiles to send a message.',
@@ -355,6 +372,13 @@ export const enUSTranslations = {
   FORUM_UNKNOWN_AUTHOR: 'Unknown profile',
   FORUM_TOPIC_ERROR: 'The topic could not be saved.',
 
+  LIST_FILTER_PLACEHOLDER: 'Filter this list',
+  LIST_FILTER_SUBMIT: 'Filter',
+  LIST_SORT_LABEL: 'Sort by',
+  LIST_SORT_ACTIVITY_DESC: 'Most recent activity',
+  LIST_SORT_ACTIVITY_ASC: 'Oldest activity',
+  LIST_SORT_NAME_ASC: 'Name (A–Z)',
+  LIST_SORT_NAME_DESC: 'Name (Z–A)',
   COMMUNITY_PENDING_EMPTY: 'There are no pending requests.',
   PAGINATION_LABEL: 'List pages',
   PAGINATION_PREVIOUS: 'Previous',
