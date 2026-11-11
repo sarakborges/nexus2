@@ -4,7 +4,7 @@
   &__content { display:flex; align-items:center; gap:18px; box-sizing:border-box; width:100%; min-height:64px; padding:6px 12px; }
   &__icon-button,&__account-trigger { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:transparent; color:var(--text-color); cursor:pointer; transition:background-color 150ms ease; }
   &__icon-button { position:relative; width:40px; height:40px; flex:0 0 40px; font-size:18px; }
-  &__icon-button::after { content:""; position:absolute; top:50%; right:-10px; width:2px; height:26px; transform:translateY(-50%); background:var(--color-border); }
+  &__icon-button::after { content:none; }
   &__icon-button svg { display:block; width:18px; height:18px; flex:0 0 18px; }
   &__brand { display:inline-flex; align-items:center; gap:8px; margin-left:0; flex:0 0 auto; color:var(--text-color); font-size:18px; font-weight:var(--font-weight-bold); letter-spacing:.14em; text-decoration:none; white-space:nowrap; }
   &__brand img { display:block; width:28px; height:28px; flex:0 0 28px; object-fit:contain; }
