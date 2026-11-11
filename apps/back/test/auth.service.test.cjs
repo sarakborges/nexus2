@@ -9,6 +9,10 @@ function createAuthHarness({ failTransaction = false } = {}) {
   ])
   const repository = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
+    async readByIds(name, ids) {
+      const requested = new Set(ids)
+      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
+    },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
@@ -50,7 +54,8 @@ function createAuthHarness({ failTransaction = false } = {}) {
   }
   return {
     service: new AuthService(repository, jwt, config),
-    collections
+    collections,
+    repository
   }
 }
 
@@ -87,6 +92,32 @@ test('sign-in verifies the password and normalizes the email', async () => {
     service.signIn({ email: 'person@example.com', password: 'wrong-password' }),
     error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
   )
+})
+
+test('refresh reads only the account identified by the signed token', async () => {
+  const { service, repository } = createAuthHarness()
+  const initial = await service.signUp({ email: 'selective@example.com', password: 'a-secure-password' })
+
+  let fullCollectionReads = 0
+  const originalRead = repository.read
+  repository.read = async (...args) => {
+    fullCollectionReads += 1
+    return originalRead(...args)
+  }
+  const originalReadByIds = repository.readByIds
+  const byIdReads = []
+  repository.readByIds = async (collection, ids) => {
+    byIdReads.push({ collection, ids: [...ids] })
+    return originalReadByIds(collection, ids)
+  }
+
+  await service.refresh(initial.refreshToken)
+
+  assert.equal(fullCollectionReads, 0)
+  assert.deepEqual(byIdReads, [{
+    collection: 'accounts',
+    ids: [initial.user.id]
+  }])
 })
 
 test('refresh rotates tokens and rejects replay of the previous token', async () => {
