@@ -56,7 +56,7 @@ export function CommunitiesPage() {
       }
     >
       <div className="social-page__content-stack">
-        <header className="account-card__header">
+        <header className="account-card__header communities-page__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
           <ButtonLink
             className="account-card__action"
