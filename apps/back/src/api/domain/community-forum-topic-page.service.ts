@@ -47,6 +47,35 @@ export class CommunityForumTopicPageService {
   ): Promise<CommunityForumTopicPageData> {
     const normalizedUrl = normalizeEntityUrl(url)
 
+    if (this.data.getCommunityForumTopicPage) {
+      return this.data.getCommunityForumTopicPage(
+        normalizedUrl,
+        topicId,
+        userId,
+        query.page,
+        query.query,
+        query.sort ?? 'activity-asc'
+      ).then(page => ({
+        ...page,
+        authors: page.authors.map(profile => ({
+          ...profile,
+          about: sanitizeRichText(profile.about ?? '')
+        }))
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        if (message.includes('COMMUNITY_NOT_FOUND')) {
+          throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        }
+        if (message.includes('FORUM_TOPIC_NOT_FOUND')) {
+          throw new NotFoundException('FORUM_TOPIC_NOT_FOUND')
+        }
+        throw error
+      })
+    }
+
     return this.data.transaction<CommunityForumTopicPageData>(
       COMMUNITY_FORUM_TOPIC_PAGE_COLLECTIONS,
       (collections) => {

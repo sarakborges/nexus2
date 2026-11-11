@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
+import type { ActivityFeedCursor, Community, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileMessage, ProfilePost, ProfileSettings, RecentActivity, RelationshipType } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -174,6 +174,14 @@ export interface DataRepository {
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumPageData>
+  getCommunityForumTopicPage?(
+    url: string,
+    topicId: string,
+    userId: string | null,
+    page: number,
+    query: string | undefined,
+    sort: ListSort
+  ): Promise<CommunityForumTopicPageData>
   createCommunityForumTopic?(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
   createCommunityForumReply?(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
   moderateCommunityForumTopic?(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>

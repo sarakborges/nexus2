@@ -58,7 +58,13 @@ export class CommunityForumPageService {
           ...profile,
           about: sanitizeRichText(profile.about ?? '')
         }))
-      }))
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
     }
 
     return this.data.transaction<CommunityForumPageData>(

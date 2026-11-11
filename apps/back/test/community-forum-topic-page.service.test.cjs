@@ -198,3 +198,46 @@ test('forum topic page aggregate rejects a topic that belongs to another communi
   )
   assert.equal(repository.transactionCalls, 1)
 })
+
+
+test('community forum topic page uses a targeted read and sanitizes the page authors', async () => {
+  const calls = []
+  const result = {
+    community: { id: 'community-1' },
+    detail: {
+      topic: { id: 'topic-1', replyCount: 1 },
+      replies: { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 }
+    },
+    forumProfileId: 'profile-1',
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    isMember: true,
+    isStaff: false,
+    authors: [{
+      id: 'profile-1', name: 'Author', url: 'author', picture: '',
+      about: '<p>About</p><script>unsafe()</script>',
+      type: 'social', createdAt: 1, lastActivity: 2
+    }]
+  }
+  const repository = {
+    async getCommunityForumTopicPage(url, topicId, userId, page, query, sort) {
+      calls.push({ url, topicId, userId, page, query, sort })
+      return result
+    },
+    async transaction() {
+      throw new Error('Forum topic page reads must not load collection snapshots.')
+    }
+  }
+  const service = new CommunityForumTopicPageService(repository, {})
+
+  const page = await service.getCommunityForumTopicPage(
+    '@COMMUNITY', 'topic-1', { page: 3, query: 'text', sort: 'name-desc' }, 'account-1'
+  )
+
+  assert.deepEqual(calls, [{
+    url: 'community', topicId: 'topic-1', userId: 'account-1',
+    page: 3, query: 'text', sort: 'name-desc'
+  }])
+  assert.equal(page.authors[0].about.includes('<script>'), false)
+  assert.equal(page.detail.replies.pageSize, 20)
+})

@@ -888,3 +888,57 @@ test('loads the community forum page and current-page authors through one target
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads a community forum topic page with paginated replies through one targeted RPC', async t => {
+  let call
+  const expected = {
+    community: {
+      id: 'community-1', name: 'Community', url: 'community', picture: '',
+      about: '', type: 'social', privacy: 'public', createdAt: 1, lastActivity: 2
+    },
+    detail: {
+      topic: {
+        id: 'topic-1', communityId: 'community-1', profileId: 'profile-1',
+        title: 'Topic', content: '<p>Hello</p>', createdAt: 1, updatedAt: 2,
+        isPinned: false, isLocked: false, replyCount: 21
+      },
+      replies: {
+        items: [{
+          id: 'reply-1', topicId: 'topic-1', communityId: 'community-1',
+          profileId: 'profile-2', content: '<p>Reply</p>', createdAt: 2, updatedAt: 2
+        }],
+        page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+      }
+    },
+    forumProfileId: 'profile-1',
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    isMember: true,
+    isStaff: true,
+    authors: [{
+      id: 'profile-1', name: 'Author', url: 'author', picture: '',
+      about: '<p>Author</p>', type: 'social', createdAt: 1, lastActivity: 2
+    }]
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getCommunityForumTopicPage(
+    'community', 'topic-1', 'account-1', 2, 'reply', 'activity-asc'
+  )
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_community_forum_topic_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_url: 'community',
+    p_topic_id: 'topic-1',
+    p_user_id: 'account-1',
+    p_page: 2,
+    p_query: 'reply',
+    p_sort: 'activity-asc'
+  })
+  assert.deepEqual(page, expected)
+})

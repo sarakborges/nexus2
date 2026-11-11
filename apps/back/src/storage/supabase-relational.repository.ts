@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, ListSort, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
+import type { ActivityFeedCursor, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicPageData, ListSort, ProfileMessage, ProfilePost, ProfileSettings } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -543,6 +543,54 @@ export class SupabaseRelationalRepository implements DataRepository {
       (pageResult.currentProfileType !== null && typeof pageResult.currentProfileType !== 'string')
     ) {
       throw new Error('Supabase community forum page returned invalid data.')
+    }
+    return pageResult
+  }
+
+  async getCommunityForumTopicPage(
+    url: string,
+    topicId: string,
+    userId: string | null,
+    page: number,
+    query: string | undefined,
+    sort: ListSort
+  ): Promise<CommunityForumTopicPageData> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic_page', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_url: url,
+        p_topic_id: topicId,
+        p_user_id: userId,
+        p_page: page,
+        p_query: query ?? null,
+        p_sort: sort
+      })
+    })
+    await this.assertSuccess(response)
+
+    const result: unknown = await response.json()
+    if (
+      typeof result !== 'object' || result === null ||
+      !('community' in result) || typeof result.community !== 'object' || result.community === null ||
+      !('detail' in result) || typeof result.detail !== 'object' || result.detail === null ||
+      !('authors' in result) || !Array.isArray(result.authors) ||
+      !('isMember' in result) || typeof result.isMember !== 'boolean' ||
+      !('isStaff' in result) || typeof result.isStaff !== 'boolean' ||
+      !('forumProfileId' in result)
+    ) {
+      throw new Error('Supabase community forum topic page returned an invalid result.')
+    }
+    const pageResult = result as CommunityForumTopicPageData
+    if (
+      !pageResult.detail.topic ||
+      !pageResult.detail.replies ||
+      !Array.isArray(pageResult.detail.replies.items) ||
+      pageResult.detail.replies.pageSize !== 20 ||
+      !Number.isSafeInteger(pageResult.detail.replies.totalItems) ||
+      !Number.isSafeInteger(pageResult.detail.replies.totalPages)
+    ) {
+      throw new Error('Supabase community forum topic page returned invalid data.')
     }
     return pageResult
   }
