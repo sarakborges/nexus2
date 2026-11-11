@@ -107,6 +107,16 @@ export class ActivityService {
       const community = communitiesById.get(relationship.profiles[1])
       if (!profile || !community || profile.type !== community.type) continue
 
+      if (relationship.type === 'owner') {
+        activities.push({
+          id: 'community-created:' + community.id,
+          type: 'community_created',
+          updatedAt: community.createdAt,
+          profile,
+          community
+        })
+      }
+
       activities.push({
         id: 'community:' + profile.id + ':' + community.id,
         type: 'community_membership',
@@ -132,7 +142,7 @@ export class ActivityService {
 
     const result = activities
       .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-      .slice(0, 10)
+
 
     return { records, result }
   }
