@@ -26,7 +26,8 @@ import { UploadsAvatarService } from './uploads.avatar.service'
 import {
   attachEditorImages,
   detachEditorImages,
-  detachResourceAttachments
+  detachResourceAttachments,
+  getEditorImageIds as extractEditorImageIds
 } from './uploads.attachments'
 import type {
   CreateUploadInput,
@@ -241,6 +242,10 @@ export class UploadsService {
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
     return this.content.getEditorImage(userId, id)
+  }
+
+  getEditorImageIds(html: string): string[] {
+    return extractEditorImageIds(html)
   }
 
   attachAvatarUrlToRecords(

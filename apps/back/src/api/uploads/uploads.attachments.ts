@@ -15,7 +15,7 @@ export function attachEditorImages(
   resourceId: string,
   messageParticipants?: EditorMessageParticipants
 ): UploadedFileRecord[] {
-  const ids = extractEditorImageIds(html)
+  const ids = getEditorImageIds(html)
   if (!ids.length) return records
 
   const idSet = new Set(ids)
@@ -102,7 +102,7 @@ function getReadyEditorImage(
   return file
 }
 
-function extractEditorImageIds(html: string): string[] {
+export function getEditorImageIds(html: string): string[] {
   return [...html.matchAll(UPLOAD_REFERENCE)]
     .map(match => match[2])
     .filter((id, index, ids) => ids.indexOf(id) === index)

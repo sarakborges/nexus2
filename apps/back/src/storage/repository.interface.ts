@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, Profile, RecentActivity } from '@nexus/common'
+import type { ActivityFeedCursor, Community, Profile, ProfilePost, RecentActivity } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -28,6 +28,11 @@ export type ActivityFeedRow = {
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
+  createProfilePost?(
+    userId: string,
+    post: ProfilePost,
+    imageIds: readonly string[]
+  ): Promise<ProfilePost>
   getActivityFeedRows?(
     userId: string,
     limit: number,

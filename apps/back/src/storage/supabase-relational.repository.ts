@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor } from '@nexus/common'
+import type { ActivityFeedCursor, ProfilePost } from '@nexus/common'
 import type { CollectionRecordMap, DataRepository, ActivityFeedRow } from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
@@ -93,6 +93,49 @@ export class SupabaseRelationalRepository implements DataRepository {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
     const [account] = await this.readAccounts(rows)
     return (account as T | undefined) ?? null
+  }
+
+  async createProfilePost(
+    userId: string,
+    post: ProfilePost,
+    imageIds: readonly string[]
+  ): Promise<ProfilePost> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_profile_post', {
+      method: 'POST',
+      headers: {
+        ...this.headers(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_post_id: post.id,
+        p_profile_id: post.profileId,
+        p_content: post.content,
+        p_created_at_ms: post.createdAt,
+        p_image_ids: [...imageIds]
+      })
+    })
+    await this.assertSuccess(response)
+
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase relational profile post write returned an invalid result.')
+    }
+    const row = rows[0] as Record<string, unknown>
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.profile_id !== 'string' ||
+      typeof row.content !== 'string' ||
+      !Number.isFinite(Number(row.created_at_ms))
+    ) {
+      throw new Error('Supabase relational profile post write returned an invalid row.')
+    }
+    return {
+      id: row.id,
+      profileId: row.profile_id,
+      content: row.content,
+      createdAt: Number(row.created_at_ms)
+    }
   }
 
   async getActivityFeedRows(

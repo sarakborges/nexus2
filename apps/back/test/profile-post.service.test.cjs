@@ -51,3 +51,52 @@ test('profile post requires ownership of the publishing profile', async () => {
     error => error instanceof ForbiddenException
   )
 })
+
+
+test('creates relational profile posts without loading or rewriting collection snapshots', async () => {
+  let createArguments
+  const postRepository = {
+    async createProfilePost(userId, post, imageIds) {
+      createArguments = { userId, post, imageIds }
+      return post
+    },
+    async transaction() {
+      throw new Error('Relational profile post writes must not load collection snapshots.')
+    }
+  }
+  const uploads = {
+    getEditorImageIds(html) {
+      assert.match(html, /Hello/)
+      return ['image-1']
+    }
+  }
+  const service = new ProfilePostService(postRepository, {}, uploads)
+
+  const result = await service.createProfilePost('user-1', 'profile-1', '<p>Hello</p>')
+
+  assert.equal(result.profileId, 'profile-1')
+  assert.deepEqual(createArguments, {
+    userId: 'user-1',
+    post: result,
+    imageIds: ['image-1']
+  })
+})
+
+test('rejects empty posts before invoking the relational write', async () => {
+  let writeCalled = false
+  const postRepository = {
+    async createProfilePost() {
+      writeCalled = true
+      throw new Error('The relational write must not run for empty content.')
+    }
+  }
+  const service = new ProfilePostService(postRepository, {}, {
+    getEditorImageIds() { return [] }
+  })
+
+  await assert.rejects(
+    service.createProfilePost('user-1', 'profile-1', '<p><br></p>'),
+    error => error instanceof ConflictException && error.message === 'INVALID_POST'
+  )
+  assert.equal(writeCalled, false)
+})

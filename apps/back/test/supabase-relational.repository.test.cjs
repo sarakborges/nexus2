@@ -241,3 +241,48 @@ test('findAccountByEmail filters accounts in Postgres and maps only that account
   })
   assert.equal(calls.length, 3)
 })
+
+
+test('creates a profile post through the atomic relational RPC', async t => {
+  let call
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify([{
+      id: 'post-1',
+      profile_id: 'profile-1',
+      content: '<p>Hello</p>',
+      created_at_ms: '1700000000000'
+    }]), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const result = await repo.createProfilePost(
+    'account-1',
+    {
+      id: 'post-1',
+      profileId: 'profile-1',
+      content: '<p>Hello</p>',
+      createdAt: 1700000000000
+    },
+    ['image-1']
+  )
+
+  assert.deepEqual(result, {
+    id: 'post-1',
+    profileId: 'profile-1',
+    content: '<p>Hello</p>',
+    createdAt: 1700000000000
+  })
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_create_profile_post')
+  assert.equal(call.options.method, 'POST')
+  assert.equal(call.options.headers.apikey, key)
+  assert.equal(call.options.headers['x-nexus-api-secret'], secret)
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_user_id: 'account-1',
+    p_post_id: 'post-1',
+    p_profile_id: 'profile-1',
+    p_content: '<p>Hello</p>',
+    p_created_at_ms: 1700000000000,
+    p_image_ids: ['image-1']
+  })
+})
