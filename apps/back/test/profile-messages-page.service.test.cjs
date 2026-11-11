@@ -176,3 +176,58 @@ test('profile messages aggregate returns empty data when the profile does not ex
   assert.equal(result.messages.page, 1)
   assert.deepEqual(result.senders, [])
 })
+
+
+test('profile messages page uses a targeted read and sanitizes the visible messages and senders', async () => {
+  const calls = []
+  const result = {
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>Profile</p><script>unsafe()</script>', type: 'social',
+      createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    isProfileOwner: true,
+    messageTab: 'all',
+    messages: {
+      items: [{
+        id: 'message-1', fromProfileId: 'profile-2', toProfileId: 'profile-1',
+        content: '<p>Hello</p><script>unsafe()</script>', createdAt: 2, isFavorite: false
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    senders: [{
+      id: 'profile-2', name: 'Sender', url: 'sender', picture: '',
+      about: '<p>Sender</p><script>unsafe()</script>', type: 'social',
+      createdAt: 1, lastActivity: 2
+    }],
+    messagePermissions: {
+      'message-1': { canDelete: true, canFavorite: true, canReply: true }
+    }
+  }
+  const repository = {
+    async getProfileMessagesPage(url, userId, page, query, sort, messageTab) {
+      calls.push({ url, userId, page, query, sort, messageTab })
+      return result
+    },
+    async transaction() {
+      throw new Error('Profile messages page reads must not load collection snapshots.')
+    }
+  }
+  const service = new ProfileMessagesPageService(repository)
+
+  const page = await service.getProfileMessagesPage(
+    '@PROFILE',
+    { page: 2, query: 'hello', sort: 'name-desc', messageTab: 'favorites' },
+    'account-1'
+  )
+
+  assert.deepEqual(calls, [{
+    url: 'profile', userId: 'account-1', page: 2,
+    query: 'hello', sort: 'name-desc', messageTab: 'favorites'
+  }])
+  assert.equal(page.profile.about.includes('<script>'), false)
+  assert.equal(page.messages.items[0].content.includes('<script>'), false)
+  assert.equal(page.senders[0].about.includes('<script>'), false)
+})

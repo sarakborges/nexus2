@@ -983,3 +983,52 @@ test('loads a profile page, friends and public communities through a targeted RP
   })
   assert.deepEqual(page, expected)
 })
+
+
+test('reads a searchable, sortable profile messages page through one targeted RPC', async t => {
+  let call
+  const expected = {
+    profile: {
+      id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+      about: '<p>About</p>', type: 'social', createdAt: 1, lastActivity: 2
+    },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    isProfileOwner: true,
+    messageTab: 'favorites',
+    messages: {
+      items: [{
+        id: 'message-1', fromProfileId: 'profile-2', toProfileId: 'profile-1',
+        content: '<p>Hello</p>', createdAt: 2, isFavorite: true
+      }],
+      page: 2, pageSize: 20, totalItems: 21, totalPages: 2
+    },
+    senders: [{
+      id: 'profile-2', name: 'Sender', url: 'sender', picture: '',
+      about: '<p>About sender</p>', type: 'social', createdAt: 1, lastActivity: 2
+    }],
+    messagePermissions: {
+      'message-1': { canDelete: true, canFavorite: true, canReply: true }
+    }
+  }
+  withFetch(t, async (input, options) => {
+    call = { url: new URL(String(input)), options }
+    return new Response(JSON.stringify(expected), { status: 200 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const page = await repo.getProfileMessagesPage(
+    'profile', 'account-1', 2, 'hello', 'name-asc', 'favorites'
+  )
+
+  assert.equal(call.url.pathname, '/rest/v1/rpc/nexus_get_profile_messages_page')
+  assert.deepEqual(JSON.parse(call.options.body), {
+    p_url: 'profile',
+    p_user_id: 'account-1',
+    p_page: 2,
+    p_query: 'hello',
+    p_sort: 'name-asc',
+    p_message_tab: 'favorites'
+  })
+  assert.deepEqual(page, expected)
+})

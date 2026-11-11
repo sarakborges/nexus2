@@ -33,6 +33,41 @@ export class ProfileMessagesPageService {
   ): Promise<ProfileMessagesPageData> {
     const normalizedUrl = normalizeEntityUrl(profileUrl)
 
+    if (this.data.getProfileMessagesPage) {
+      return this.data.getProfileMessagesPage(
+        normalizedUrl,
+        userId,
+        query.page,
+        query.query,
+        query.sort,
+        query.messageTab
+      ).then(page => ({
+        ...page,
+        profile: page.profile ? {
+          ...page.profile,
+          about: sanitizeRichText(page.profile.about ?? '')
+        } : null,
+        messages: {
+          ...page.messages,
+          items: page.messages.items.map(message => ({
+            ...message,
+            content: sanitizeRichText(message.content ?? ''),
+            isFavorite: message.isFavorite === true
+          }))
+        },
+        senders: page.senders.map(sender => ({
+          ...sender,
+          about: sanitizeRichText(sender.about ?? '')
+        }))
+      })).catch(error => {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
+        throw error
+      })
+    }
+
     return this.data.transaction<ProfileMessagesPageData>(
       PROFILE_MESSAGES_PAGE_COLLECTIONS,
       (collections) => {
