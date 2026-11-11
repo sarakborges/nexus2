@@ -10,7 +10,7 @@ function community(id) {
   return { id, name: id, url: id, picture: '', about: '', type: 'social' }
 }
 
-function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, profilePosts = [], beforeTransaction }) {
+function createService({ ownedProfiles, profiles, communities, relationships, communityRelationships, profilePosts = [], profileSettings = [], beforeTransaction }) {
   const collections = new Map([
     ['accounts', [{
       id: 'user',
@@ -22,7 +22,8 @@ function createService({ ownedProfiles, profiles, communities, relationships, co
     ['communities', communities],
     ['relationships', relationships],
     ['community_relationships', communityRelationships],
-    ['profile_posts', profilePosts]
+    ['profile_posts', profilePosts],
+    ['profile_settings', profileSettings]
   ])
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
@@ -167,4 +168,39 @@ test('recent activity includes posts from owned profiles and connected friends',
   assert.deepEqual(posts.map(item => item.updatedAt), [600, 500])
   assert.equal(posts[0].content.includes('<script>'), false)
   assert.ok(!activity.some(item => item.id === 'post:stranger-post'))
+})
+
+
+test('recent activity applies publisher and viewer feed preferences independently', async () => {
+  const service = createService({
+    ownedProfiles: ['owned-a'],
+    profiles: ['owned-a', 'friend-a'].map(profile),
+    communities: [],
+    relationships: [
+      { profiles: ['owned-a', 'friend-a'], type: 'connection', updatedAt: 100 }
+    ],
+    communityRelationships: [],
+    profilePosts: [
+      { id: 'own-post', profileId: 'owned-a', content: '<p>Own</p>', createdAt: 300 },
+      { id: 'friend-post', profileId: 'friend-a', content: '<p>Friend</p>', createdAt: 200 }
+    ],
+    profileSettings: [
+      {
+        profileId: 'owned-a',
+        messageAudience: 'everyone',
+        publishActivityTypes: ['profile_post'],
+        showFriendActivityTypes: []
+      },
+      {
+        profileId: 'friend-a',
+        messageAudience: 'everyone',
+        publishActivityTypes: ['profile_post'],
+        showFriendActivityTypes: ['profile_post']
+      }
+    ]
+  })
+
+  const activities = await service.getRecentActivity('user')
+
+  assert.deepEqual(activities.map(item => item.id), ['post:own-post'])
 })

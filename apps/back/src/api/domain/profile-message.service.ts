@@ -1,6 +1,6 @@
 import { ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Optional, UnauthorizedException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
-import type { PaginatedResult, Profile, ProfileMessage } from '@nexus/common'
+import type { PaginatedResult, Profile, ProfileMessage, Relationship, ProfileSettings } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
@@ -56,13 +56,26 @@ export class ProfileMessageService {
     }
 
     return this.data.transaction<ProfileMessage>(
-      ['accounts', 'profiles', 'profile_messages', 'media_files'],
+      ['accounts', 'profiles', 'profile_messages', 'media_files', 'relationships', 'profile_settings'],
       collections => {
         const accounts = collections.accounts as AccountRecord[]
         const profiles = collections.profiles as Profile[]
         const messages = collections.profile_messages as ProfileMessage[]
         const mediaFiles = collections.media_files as UploadedFileRecord[]
         this.access.assertOwnsInRecords(userId, fromProfileId, accounts, profiles)
+        const recipientSettings = ((collections.profile_settings as Array<ProfileSettings & { profileId: string }> | undefined) ?? [])
+          .find(item => item.profileId === toProfileId)
+        const messageAudience = recipientSettings?.messageAudience ?? 'everyone'
+        if (messageAudience === 'friends') {
+          const senderAccount = accounts.find(item => item.id === userId)
+          const isSameOwner = senderAccount?.profiles.includes(toProfileId) ?? false
+          const isFriend = (collections.relationships as Relationship[]).some(relationship =>
+            relationship.type === 'connection' &&
+            relationship.profiles.includes(fromProfileId) &&
+            relationship.profiles.includes(toProfileId)
+          )
+          if (!isSameOwner && !isFriend) throw new ForbiddenException('PROFILE_MESSAGE_FRIENDS_ONLY')
+        }
         this.access.assertSameType(
           profiles.find(profile => profile.id === fromProfileId),
           profiles.find(profile => profile.id === toProfileId)

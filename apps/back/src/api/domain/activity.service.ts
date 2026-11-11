@@ -21,7 +21,8 @@ const COLLECTIONS = [
   'communities',
   'relationships',
   'community_relationships',
-  'profile_posts'
+  'profile_posts',
+  'profile_settings'
 ] as const
 
 @Injectable()
@@ -49,7 +50,7 @@ export class ActivityService {
     communities: Community[]
   ): CollectionTransaction<RecentActivity[]> {
     const account = (
-      records.accounts as Array<{ id: string; profiles: string[] }>
+      records.accounts as Array<{ id: string; profiles: string[]; currentProfile?: string | null }>
     ).find((item) => item.id === userId)
 
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
@@ -96,7 +97,7 @@ export class ActivityService {
     }
 
     for (const relationship of communityRelationships) {
-      if (!ownedProfileIds.has(relationship.profiles[0])) continue
+      if (!visibleProfileIds.has(relationship.profiles[0])) continue
       if (
         relationship.type !== 'owner' &&
         relationship.type !== 'moderator' &&
@@ -106,8 +107,10 @@ export class ActivityService {
       const profile = profilesById.get(relationship.profiles[0])
       const community = communitiesById.get(relationship.profiles[1])
       if (!profile || !community || profile.type !== community.type) continue
+      const isOwnedProfile = ownedProfileIds.has(relationship.profiles[0])
+      if (!isOwnedProfile && community.privacy !== 'public') continue
 
-      if (relationship.type === 'owner' && Number.isFinite(community.createdAt)) {
+      if (relationship.type === 'owner' && Number.isFinite(community.createdAt) && community.createdAt > 0) {
         activities.push({
           id: 'community-created:' + community.id,
           type: 'community_created',
@@ -140,9 +143,29 @@ export class ActivityService {
       })
     }
 
+    const settingsRecords = (records.profile_settings as Array<{
+      profileId: string
+      publishActivityTypes?: RecentActivity['type'][]
+      showFriendActivityTypes?: RecentActivity['type'][]
+    }> | undefined) ?? []
+    const settingsByProfileId = new Map(settingsRecords.map(item => [item.profileId, item] as const))
+    const activeProfileId = account.currentProfile && ownedProfileIds.has(account.currentProfile)
+      ? account.currentProfile
+      : account.profiles[0]
+    const viewerSettings = settingsByProfileId.get(activeProfileId)
+    const visibleActivityTypes = new Set(viewerSettings?.showFriendActivityTypes ?? [
+      'friend_connected', 'profile_post', 'community_created', 'community_membership'
+    ])
     const result = activities
+      .filter(activity => {
+        const publisherSettings = settingsByProfileId.get(activity.profile.id)
+        const publishedTypes = publisherSettings?.publishActivityTypes ?? [
+          'friend_connected', 'profile_post', 'community_created', 'community_membership'
+        ]
+        if (!publishedTypes.includes(activity.type)) return false
+        return ownedProfileIds.has(activity.profile.id) || visibleActivityTypes.has(activity.type)
+      })
       .sort((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id))
-
 
     return { records, result }
   }
