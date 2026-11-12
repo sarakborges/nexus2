@@ -1,5 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
+const { ForbiddenException, NotFoundException, UnauthorizedException } = require('@nestjs/common')
 const { UploadsService } = require('../dist/api/uploads/uploads.service.js')
 const { UploadsStorageService } = require('../dist/api/uploads/uploads.storage.service.js')
 const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.service.js')
@@ -10,6 +11,110 @@ const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
+
+
+async function resolveEditorImageRecord(data, { userId, id, now }) {
+  const initialRecords = await data.read('media_files')
+  const locator = initialRecords.find(item =>
+    item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
+  )
+  if (!locator || (locator.expiresAt !== null && locator.expiresAt <= now)) {
+    throw new NotFoundException('UPLOAD_NOT_FOUND')
+  }
+
+  const resourceType = locator.resourceType
+  const resourceId = locator.resourceId
+  const collections = ['media_files']
+  if (resourceType === 'profile') collections.push('profiles')
+  if (
+    resourceType === 'community' ||
+    resourceType === 'community-forum-topic' ||
+    resourceType === 'community-forum-reply'
+  ) {
+    collections.push('accounts', 'communities', 'community_relationships')
+    if (resourceType === 'community-forum-topic') collections.push('community_forum_topics')
+    if (resourceType === 'community-forum-reply') collections.push('community_forum_replies')
+  }
+  if (resourceType === 'profile-message') collections.push('accounts', 'profile_messages')
+
+  return data.transaction(collections, current => {
+    const latest = current.media_files.find(item => item.id === id)
+    if (
+      !latest ||
+      latest.purpose !== 'editor-image' ||
+      latest.status !== 'ready' ||
+      (latest.expiresAt !== null && latest.expiresAt <= now) ||
+      latest.resourceType !== resourceType ||
+      latest.resourceId !== resourceId
+    ) throw new NotFoundException('UPLOAD_NOT_FOUND')
+
+    if (!latest.resourceType) {
+      if (userId !== latest.ownerUserId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile') {
+      if (!current.profiles.some(profile => profile.id === latest.resourceId)) {
+        throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (
+      latest.resourceType === 'community' ||
+      latest.resourceType === 'community-forum-topic' ||
+      latest.resourceType === 'community-forum-reply'
+    ) {
+      let communityId = latest.resourceId
+      if (
+        latest.resourceType === 'community-forum-topic' ||
+        latest.resourceType === 'community-forum-reply'
+      ) {
+        const resourceCollection = latest.resourceType === 'community-forum-topic'
+          ? current.community_forum_topics
+          : current.community_forum_replies
+        const resource = resourceCollection.find(item => item.id === latest.resourceId)
+        if (!resource) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        communityId = resource.communityId
+      }
+
+      const community = current.communities.find(item => item.id === communityId)
+      if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      if (community.privacy === 'private') {
+        if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        const account = current.accounts.find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const ownedProfiles = new Set(account.profiles)
+        const canRead = current.community_relationships.some(relationship =>
+          relationship.profiles[1] === communityId &&
+          ownedProfiles.has(relationship.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(relationship.type)
+        )
+        if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile-message') {
+      if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      const account = current.accounts.find(item => item.id === userId)
+      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      const message = current.profile_messages.find(item => item.id === latest.resourceId)
+      if (
+        !message ||
+        message.fromProfileId !== latest.messageFromProfileId ||
+        message.toProfileId !== latest.messageToProfileId
+      ) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      const participants = [message.fromProfileId, message.toProfileId]
+      if (!account.profiles.some(profileId => participants.includes(profileId))) {
+        throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      }
+      return { records: current, result: latest }
+    }
+
+    throw new NotFoundException('UPLOAD_NOT_FOUND')
+  })
+}
 
 function createHarness(initial = {}, activeProfileId = null, beforeTransaction, beforeUpdate) {
   const defaultAccounts = [
@@ -47,6 +152,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
       return structuredClone(outcome.result)
     }
   }
+  data.getEditorImageRecord = request => resolveEditorImageRecord(data, request)
   const config = {
     get(name) {
       return {

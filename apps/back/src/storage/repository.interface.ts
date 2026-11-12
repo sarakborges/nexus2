@@ -295,7 +295,7 @@ export interface DataRepository {
   scheduleUploadDeletion?(change: MediaUploadDeletionSchedule): Promise<boolean>
   claimUploadDeletion?(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
   schedulePreviousAvatarDeletion?(change: PreviousAvatarDeletionSchedule): Promise<void>
-  getEditorImageRecord?(change: EditorImageReadRequest): Promise<MediaFileRecord>
+  getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord>
   getAvatarUploadPath?(
     userId: string,
     uploadId: string,
