@@ -1,6 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import type { Community, CommunityRelationship, CommunityRelationshipType, Profile } from '@nexus/common'
-import { DATA_REPOSITORY, type CollectionRecordMap, type DataRepository } from '../../storage/repository.interface'
+import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
 import { sanitizeRichText } from './rich-text-sanitizer'
 
@@ -9,10 +9,6 @@ export class DomainAccessService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository
   ) {}
-
-  async readProfiles(): Promise<Profile[]> {
-    return this.normalizeProfiles(await this.data.read<Profile>('profiles'))
-  }
 
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
     return this.normalizeProfiles(await this.data.getProfilesByIds(ids))
@@ -70,37 +66,6 @@ export class DomainAccessService {
     )
   }
 
-  normalizeCommunitiesInRecords(collections: CollectionRecordMap): {
-    records: CollectionRecordMap
-    communities: Community[]
-  } {
-    const stored = collections.communities as Community[]
-    const profiles = collections.profiles as Profile[]
-    const relationships = collections.community_relationships as CommunityRelationship[]
-    const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-    const ownerProfileByCommunityId = new Map<string, string>()
-    for (const relationship of relationships) {
-      const communityId = relationship.profiles[1]
-      if (relationship.type === 'owner' && !ownerProfileByCommunityId.has(communityId)) {
-        ownerProfileByCommunityId.set(communityId, relationship.profiles[0])
-      }
-    }
-    const communities = this.normalizeCommunities(
-      stored,
-      profileTypes,
-      ownerProfileByCommunityId
-    )
-    const hasNormalizationChanges = stored.some((community, index) =>
-      communities[index].type !== community.type ||
-      communities[index].privacy !== community.privacy
-    )
-    return {
-      records: hasNormalizationChanges ? { ...collections, communities } : collections,
-      communities
-    }
-  }
-
-
   private normalizeCommunities(
     stored: Community[],
     profileTypes: ReadonlyMap<string, Profile['type']> = new Map(),
@@ -124,16 +89,6 @@ export class DomainAccessService {
           : createdAt
       }
     })
-  }
-
-  async readCommunities(): Promise<Community[]> {
-    return this.data.transaction<Community[]>(
-      ['communities', 'profiles', 'community_relationships'],
-      collections => {
-        const normalized = this.normalizeCommunitiesInRecords(collections)
-        return { records: normalized.records, result: normalized.communities }
-      }
-    )
   }
 
   assertOwnsInRecords(
