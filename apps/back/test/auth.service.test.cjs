@@ -7,31 +7,79 @@ function createAuthHarness({ failTransaction = false } = {}) {
     ['accounts', []],
     ['refresh_tokens', []]
   ])
+  const accounts = collections.get('accounts')
+  const refreshTokens = collections.get('refresh_tokens')
   const repository = {
-    async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async readByIds(name, ids) {
-      const requested = new Set(ids)
-      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
+    async getAccountById(id) {
+      return structuredClone(accounts.find(account => account.id === id) ?? null)
     },
-    async update(name, updater) {
-      const next = updater(structuredClone(collections.get(name) ?? []))
-      collections.set(name, structuredClone(next))
-      return structuredClone(next)
+    async findAccountByEmail(email) {
+      return structuredClone(accounts.find(account => account.email === email) ?? null)
     },
-    async transaction(names, updater) {
-      const current = Object.fromEntries(names.map(name => [
-        name,
-        structuredClone(collections.get(name) ?? [])
-      ]))
-      const outcome = updater(current)
+    async createAccountWithRefreshToken(change) {
       if (failTransaction) throw new Error('TRANSACTION_FAILED')
-      for (const name of names) {
-        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
+      if (accounts.some(account => account.email === change.email)) {
+        throw new Error('EMAIL_ALREADY_EXISTS')
       }
-      for (const name of names) {
-        collections.set(name, structuredClone(outcome.records[name]))
+      accounts.push({
+        id: change.accountId,
+        email: change.email,
+        password: { hash: change.passwordHash, salt: change.passwordSalt },
+        profiles: [],
+        currentProfile: null
+      })
+      refreshTokens.push(structuredClone(change.refreshToken))
+    },
+    async issueRefreshToken(record, rotation, now) {
+      if (rotation) {
+        const previous = refreshTokens.find(item =>
+          item.id === rotation.id &&
+          item.userId === rotation.userId &&
+          item.tokenHash === rotation.tokenHash &&
+          item.expiresAt > now
+        )
+        if (!previous) throw new Error('REFRESH_TOKEN_REVOKED')
       }
-      return structuredClone(outcome.result)
+      const next = refreshTokens
+        .filter(item => item.expiresAt > now && (!rotation || item.id !== rotation.id))
+      next.push(structuredClone(record))
+      collections.set('refresh_tokens', next)
+    },
+    async deleteRefreshTokenByHash(hash) {
+      collections.set('refresh_tokens', refreshTokens.filter(item => item.tokenHash !== hash))
+    },
+    async changeAccountProfile(change) {
+      const account = accounts.find(item => item.id === change.accountId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      let profiles = [...account.profiles]
+      let currentProfile = account.currentProfile
+      if (change.action === 'add') {
+        if (!profiles.includes(change.profileId)) profiles.push(change.profileId)
+        if (change.makeCurrent || !currentProfile) currentProfile = change.profileId
+      } else if (change.action === 'select') {
+        if (!profiles.includes(change.profileId)) throw new Error('PROFILE_NOT_OWNED')
+        currentProfile = change.profileId
+      } else {
+        if (!profiles.includes(change.profileId)) return
+        profiles = profiles.filter(id => id !== change.profileId)
+        if (currentProfile === change.profileId) {
+          currentProfile = change.previousCurrentProfileId && profiles.includes(change.previousCurrentProfileId)
+            ? change.previousCurrentProfileId
+            : profiles[0] ?? null
+        }
+      }
+      Object.assign(account, { profiles, currentProfile })
+    },
+    async updateAccountPreferences(userId, preferences) {
+      const account = accounts.find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      account.preferences = {
+        language: 'system',
+        theme: 'system',
+        ...account.preferences,
+        ...preferences
+      }
+      return structuredClone(account.preferences)
     }
   }
   const signedTokens = new Map()
@@ -98,26 +146,16 @@ test('refresh reads only the account identified by the signed token', async () =
   const { service, repository } = createAuthHarness()
   const initial = await service.signUp({ email: 'selective@example.com', password: 'a-secure-password' })
 
-  let fullCollectionReads = 0
-  const originalRead = repository.read
-  repository.read = async (...args) => {
-    fullCollectionReads += 1
-    return originalRead(...args)
-  }
-  const originalReadByIds = repository.readByIds
-  const byIdReads = []
-  repository.readByIds = async (collection, ids) => {
-    byIdReads.push({ collection, ids: [...ids] })
-    return originalReadByIds(collection, ids)
+  const lookups = []
+  const originalLookup = repository.getAccountById
+  repository.getAccountById = async id => {
+    lookups.push(id)
+    return originalLookup(id)
   }
 
   await service.refresh(initial.refreshToken)
 
-  assert.equal(fullCollectionReads, 0)
-  assert.deepEqual(byIdReads, [{
-    collection: 'accounts',
-    ids: [initial.user.id]
-  }])
+  assert.deepEqual(lookups, [initial.user.id])
 })
 
 test('refresh rotates tokens and rejects replay of the previous token', async () => {
@@ -207,16 +245,11 @@ test('sign-in uses the targeted account lookup instead of loading the accounts c
   const { service, repository } = createAuthHarness()
   await service.signUp({ email: 'targeted@example.com', password: 'a-secure-password' })
 
-  let fullAccountReads = 0
-  const originalRead = repository.read
-  repository.read = async name => {
-    if (name === 'accounts') fullAccountReads += 1
-    return originalRead(name)
-  }
   const lookups = []
+  const originalLookup = repository.findAccountByEmail
   repository.findAccountByEmail = async email => {
     lookups.push(email)
-    return (await originalRead('accounts')).find(account => account.email === email) ?? null
+    return originalLookup(email)
   }
 
   const result = await service.signIn({
@@ -226,7 +259,6 @@ test('sign-in uses the targeted account lookup instead of loading the accounts c
 
   assert.equal(result.user.email, 'targeted@example.com')
   assert.deepEqual(lookups, ['targeted@example.com'])
-  assert.equal(fullAccountReads, 0)
 })
 
 
