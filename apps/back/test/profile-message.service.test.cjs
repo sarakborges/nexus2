@@ -212,15 +212,13 @@ test('private inbox reads use the paginated relational query instead of collecti
         totalItems: 21,
         totalPages: 2
       }
-    },
-    async transaction() {
-      throw new Error('Private inbox reads must not load collection snapshots.')
     }
   }
   const service = new ProfileMessageService(repository, {})
 
   const page = await service.getMessages('recipient-1', 'user-1', { page: 2 })
 
+  assert.equal('transaction' in repository, false)
   assert.deepEqual(calls, [{ profileId: 'recipient-1', userId: 'user-1', page: 2 }])
   assert.equal(page.page, 2)
   assert.equal(page.totalItems, 21)
