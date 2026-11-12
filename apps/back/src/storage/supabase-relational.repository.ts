@@ -2202,6 +2202,16 @@ export class SupabaseRelationalRepository implements DataRepository {
   }
 
 
+  private mediaResourceType(value: unknown): MediaFileRecord['resourceType'] {
+    if (value == null) return null
+    if (
+      value === 'profile' || value === 'community' ||
+      value === 'profile-message' || value === 'profile-post' ||
+      value === 'community-forum-topic' || value === 'community-forum-reply'
+    ) return value
+    throw new Error('Supabase returned an unsupported media resource type.')
+  }
+
   private mapMediaFile(row: DatabaseRow): MediaFileRecord {
     if (
       typeof row.id !== 'string' || typeof row.owner_user_id !== 'string' ||
@@ -2223,7 +2233,7 @@ export class SupabaseRelationalRepository implements DataRepository {
       createdAt: Number(row.created_at_ms),
       completedAt: row.completed_at_ms == null ? null : Number(row.completed_at_ms),
       expiresAt: row.expires_at_ms == null ? null : Number(row.expires_at_ms),
-      resourceType: typeof row.resource_type === 'string' ? row.resource_type : null,
+      resourceType: this.mediaResourceType(row.resource_type),
       resourceId: typeof row.resource_id === 'string' ? row.resource_id : null,
       messageFromProfileId: typeof row.message_from_profile_id === 'string' ? row.message_from_profile_id : null,
       messageToProfileId: typeof row.message_to_profile_id === 'string' ? row.message_to_profile_id : null
