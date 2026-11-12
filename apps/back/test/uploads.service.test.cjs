@@ -256,8 +256,12 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
         'community-forum-reply': 'community_forum_replies'
       }
       const isOrphanedEditorImage = item => {
-        if (item.purpose !== 'editor-image' || item.status !== 'ready' || !item.resourceType) {
-          return false
+        if (item.purpose !== 'editor-image' || !item.resourceType) return false
+        if (item.status !== 'ready') {
+          const claimExpired = item.status === 'deleting' &&
+            (item.deletingAt ?? 0) <= change.now - change.claimLeaseMs &&
+            (item.deleteAfter == null || item.deleteAfter <= change.now)
+          if (!claimExpired) return false
         }
         const table = resourceTable[item.resourceType]
         return !table || !(resourceCollections.get(table) ?? []).some(row => row.id === item.resourceId)
@@ -1947,7 +1951,10 @@ test('does not claim expired editor images while they are attached to a profile 
     messageFromProfileId: null,
     messageToProfileId: null
   }
-  const { service, collections } = createHarness({ media_files: [file] })
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-2', profileId: 'profile-1' }]
+  })
   withFetch(t, async () => {
     throw new Error('Attached images must not be deleted from Storage')
   })
