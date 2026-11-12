@@ -61,75 +61,25 @@ export class CommunityMembershipService {
 
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     const now = Date.now()
-    if (this.data.changeCommunityRelationship) {
-      try {
-        await this.changeRelationship({
-          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
-          action: type, updatedAt: now
-        })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      return {
-        profiles: [targetId, communityId],
-        type,
-        requestedBy: type === 'requested' ? actorId : null,
-        blockedBy: type === 'blocked' ? actorId : null,
+    try {
+      await this.changeRelationship({
+        userId,
+        communityId,
+        targetProfileId: targetId,
+        actorProfileId: actorId,
+        action: type,
         updatedAt: now
-      }
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    return this.data.transaction<CommunityRelationship>(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Profile[]
-        const communities = collections.communities as Community[]
-        const all = collections.community_relationships as CommunityRelationship[]
-        const { community, role: currentActorRole } = this.access.assertCommunityProfileInRecords(
-          userId, actorId, communityId, accounts, profiles, communities, all
-        )
-        const targetProfile = profiles.find(profile => profile.id === targetId)
-        this.access.assertSameType(targetProfile, community)
-
-        const communityRecords = all.filter(item => item.profiles[1] === communityId)
-        const currentTargetRole = this.access.role(targetId, communityRecords)
-        const self = actorId === targetId
-        let allowed = false
-        if (type === 'requested') allowed = self && currentTargetRole === null
-        if (type === 'connection') allowed =
-          (currentActorRole === 'owner' || currentActorRole === 'moderator') &&
-          currentTargetRole === 'requested'
-        if (type === 'moderator') allowed =
-          currentActorRole === 'owner' && currentTargetRole === 'connection'
-        if (type === 'blocked') allowed =
-          !self &&
-          (currentActorRole === 'owner' || currentActorRole === 'moderator') &&
-          currentTargetRole === 'connection'
-        if (!allowed) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
-
-        const next: CommunityRelationship = {
-          profiles: [targetId, communityId],
-          type,
-          requestedBy: type === 'requested' ? actorId : null,
-          blockedBy: type === 'blocked' ? actorId : null,
-          updatedAt: now
-        }
-        return {
-          records: {
-            ...collections,
-            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
-            communities: this.access.touchCommunityActivity(communities, communityId, now),
-            community_relationships: [
-              ...all.filter(record =>
-                record.profiles[0] !== targetId || record.profiles[1] !== communityId
-              ),
-              next
-            ]
-          },
-          result: next
-        }
-      }
-    )
+    return {
+      profiles: [targetId, communityId],
+      type,
+      requestedBy: type === 'requested' ? actorId : null,
+      blockedBy: type === 'blocked' ? actorId : null,
+      updatedAt: now
+    }
   }
 
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
