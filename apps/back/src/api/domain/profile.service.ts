@@ -41,7 +41,7 @@ export class ProfileService {
     @Optional() private readonly uploads?: UploadsService,
     @Optional() relationships?: ProfileRelationshipService
   ) {
-    this.relationships = relationships ?? new ProfileRelationshipService(data, access)
+    this.relationships = relationships ?? new ProfileRelationshipService(data)
   }
 
   async listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
