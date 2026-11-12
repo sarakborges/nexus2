@@ -141,6 +141,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
     accounts: defaultAccounts,
     ...initial
   }))
+  const resourceCollections = collections
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
@@ -246,6 +247,31 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
     ['media_files'],
     collections => {
       const currentRecords = collections.media_files
+      const resourceTable = {
+        profile: 'profiles',
+        community: 'communities',
+        'profile-message': 'profile_messages',
+        'profile-post': 'profile_posts',
+        'community-forum-topic': 'community_forum_topics',
+        'community-forum-reply': 'community_forum_replies'
+      }
+      const isOrphanedEditorImage = item => {
+        if (item.purpose !== 'editor-image' || item.status !== 'ready' || !item.resourceType) {
+          return false
+        }
+        const table = resourceTable[item.resourceType]
+        return !table || !(resourceCollections.get(table) ?? []).some(row => row.id === item.resourceId)
+      }
+      const isOrphanedAvatar = item => (
+        item.status === 'ready' &&
+        (
+          (item.purpose === 'profile-avatar' && item.resourceType === 'profile' &&
+            !(resourceCollections.get('profiles') ?? []).some(row => row.id === item.resourceId)) ||
+          (item.purpose === 'community-avatar' && item.resourceType === 'community' &&
+            !(resourceCollections.get('communities') ?? []).some(row => row.id === item.resourceId))
+        ) &&
+        (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now
+      )
       const candidates = currentRecords.filter(item =>
         (item.status === 'deleting' &&
           (item.purpose !== 'editor-image' || (!item.resourceType && !item.resourceId)) &&
@@ -257,7 +283,9 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
         (item.status === 'pending' && item.createdAt + change.safeAge <= change.now) ||
         (item.purpose !== 'editor-image' && item.status === 'ready' &&
           !item.resourceType &&
-          (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now)
+          (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now) ||
+        isOrphanedEditorImage(item) ||
+        isOrphanedAvatar(item)
       )
       if (!candidates.length) return { records: collections, result: [] }
       const candidateIds = new Set(candidates.map(item => item.id))
@@ -1823,6 +1851,82 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('cleanup removes editor images whose source content was deleted', async t => {
+  const now = Date.now()
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174111',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/orphaned-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'deleted-post',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: []
+  })
+  const deletedPaths = []
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletedPaths.push(...JSON.parse(init.body).prefixes)
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 1 })
+  assert.deepEqual(deletedPaths, [file.path])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('cleanup removes avatar records whose profile was deleted after safe retention', async t => {
+  const now = Date.now()
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174112',
+    ownerUserId: 'author-user',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/author-user/deleted-profile.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile',
+    resourceId: 'deleted-profile',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profiles: []
+  })
+  const deletedPaths = []
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletedPaths.push(...JSON.parse(init.body).prefixes)
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 1 })
+  assert.deepEqual(deletedPaths, [file.path])
+  assert.deepEqual(collections.get('media_files'), [])
+})
 
 test('does not claim expired editor images while they are attached to a profile post', async t => {
   const file = {
