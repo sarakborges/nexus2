@@ -290,11 +290,11 @@ export interface DataRepository {
   getUploadById(userId: string, id: string): Promise<MediaFileRecord | null>
   deletePendingUpload(userId: string, id: string): Promise<void>
   completeUpload(change: MediaUploadCompletion): Promise<MediaFileRecord>
-  claimExpiredUploads?(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]>
-  finishUploadDeletions?(claims: readonly MediaUploadDeletionClaim[]): Promise<number>
-  scheduleUploadDeletion?(change: MediaUploadDeletionSchedule): Promise<boolean>
-  claimUploadDeletion?(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
-  schedulePreviousAvatarDeletion?(change: PreviousAvatarDeletionSchedule): Promise<void>
+  claimExpiredUploads(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]>
+  finishUploadDeletions(claims: readonly MediaUploadDeletionClaim[]): Promise<number>
+  scheduleUploadDeletion(change: MediaUploadDeletionSchedule): Promise<boolean>
+  claimUploadDeletion(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
+  schedulePreviousAvatarDeletion(change: PreviousAvatarDeletionSchedule): Promise<void>
   getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord>
   getAvatarUploadPath(
     userId: string,

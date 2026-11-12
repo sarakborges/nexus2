@@ -231,6 +231,143 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
     if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
     return saved
   }
+  data.claimExpiredUploads = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const currentRecords = collections.media_files
+      const candidates = currentRecords.filter(item =>
+        (item.status === 'deleting' &&
+          (item.deletingAt ?? 0) <= change.now - change.claimLeaseMs &&
+          (item.deleteAfter == null || item.deleteAfter <= change.now)) ||
+        (item.purpose === 'editor-image' && item.status === 'ready' &&
+          item.expiresAt !== null && item.expiresAt <= change.now) ||
+        (item.status === 'pending' && item.createdAt + change.safeAge <= change.now) ||
+        (item.purpose !== 'editor-image' && item.status === 'ready' &&
+          !item.resourceType &&
+          (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now)
+      ).slice(0, change.limit)
+      if (!candidates.length) return { records: collections, result: [] }
+      const candidateIds = new Set(candidates.map(item => item.id))
+      const claimed = candidates.map(item => ({
+        ...item, status: 'deleting', deletingAt: change.now, deleteAfter: null
+      }))
+      const claimedById = new Map(claimed.map(item => [item.id, item]))
+      return {
+        records: {
+          ...collections,
+          media_files: currentRecords.map(item => candidateIds.has(item.id) ? claimedById.get(item.id) : item)
+        },
+        result: claimed
+      }
+    }
+  )
+  data.finishUploadDeletions = async claims => {
+    let deleted = 0
+    await data.update('media_files', records => {
+      const claimedById = new Map(claims.map(item => [item.id, item]))
+      const remaining = records.filter(item => {
+        const claim = claimedById.get(item.id)
+        const shouldDelete = Boolean(
+          claim && item.status === 'deleting' && item.deletingAt === claim.deletingAt
+        )
+        if (shouldDelete) deleted += 1
+        return !shouldDelete
+      })
+      return remaining
+    })
+    return deleted
+  }
+  data.schedulePreviousAvatarDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.bucket === 'nexus-avatars' && item.path === change.path)
+      const hasActiveClaim = Boolean(
+        latest?.status === 'deleting' &&
+        (latest.deletingAt ?? 0) > change.deletingAt - change.leaseMs
+      )
+      if (!latest || latest.id === change.keepId || hasActiveClaim) {
+        return { records: collections, result: null }
+      }
+      const safeFrom = latest.completedAt ?? latest.createdAt
+      const scheduled = {
+        ...latest,
+        status: 'deleting',
+        deletingAt: change.deletingAt,
+        deleteAfter: Math.max(
+          safeFrom + change.safeAge,
+          change.deletingAt + change.leaseMs
+        )
+      }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? scheduled : item)
+        },
+        result: scheduled
+      }
+    }
+  )
+  data.scheduleUploadDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.id === change.id)
+      if (!latest || latest.ownerUserId !== change.userId) {
+        return { records: collections, result: true }
+      }
+      if (latest.status === 'deleting' && latest.deleteAfter != null) {
+        return { records: collections, result: true }
+      }
+      if (latest.status !== 'pending' && !(change.allowReady && latest.status === 'ready')) {
+        return { records: collections, result: false }
+      }
+      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      const safeFrom = latest.status === 'ready'
+        ? (latest.completedAt ?? latest.createdAt)
+        : latest.createdAt
+      const scheduled = {
+        ...latest,
+        status: 'deleting',
+        deletingAt: change.scheduledAt,
+        deleteAfter: Math.max(
+          safeFrom + change.safeAge,
+          change.scheduledAt + change.leaseMs
+        )
+      }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? scheduled : item)
+        },
+        result: true
+      }
+    }
+  )
+  data.claimUploadDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.id === change.id && item.ownerUserId === change.userId)
+      const hasActiveClaim = Boolean(
+        latest?.status === 'deleting' &&
+        (latest.deletingAt ?? 0) > change.deletingAt - 5 * 60 * 1000
+      )
+      if (!latest || hasActiveClaim ||
+        (change.expectedStatus && latest.status !== change.expectedStatus)) {
+        return { records: collections, result: null }
+      }
+      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      const claimed = { ...latest, status: 'deleting', deletingAt: change.deletingAt }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? claimed : item)
+        },
+        result: claimed
+      }
+    }
+  )
   data.getAvatarUploadPath = async (userId, uploadId, purpose) => {
     const records = await data.read('media_files')
     return records.find(item =>
