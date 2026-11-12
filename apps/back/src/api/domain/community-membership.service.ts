@@ -135,7 +135,7 @@ export class CommunityMembershipService {
     action: 'owner' | 'moderator' | 'connection' | 'requested' | 'blocked' | 'remove' | 'demote' | 'transfer'
     updatedAt: number
   }): Promise<void> {
-    await this.data.changeCommunityRelationship!(change)
+    await this.data.changeCommunityRelationship(change)
   }
 
   private throwRelationalWriteError(error: unknown): never {
