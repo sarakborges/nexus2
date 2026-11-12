@@ -1,24 +1,3 @@
--- Migration 045 fixed retention for attached editor images, but an earlier
--- cleanup claim may already have moved an otherwise-live attachment to deleting.
--- Restore those objects; source-deleted attachments remain eligible after lease expiry.
-update public.media_files file
-set status='ready',
-    deleting_at_ms=null,
-    delete_after_ms=null,
-    expires_at_ms=null
-where file.purpose='editor-image'
-  and file.status='deleting'
-  and file.resource_type is not null
-  and case file.resource_type
-    when 'profile' then exists (select 1 from public.profiles resource where resource.id=file.resource_id)
-    when 'community' then exists (select 1 from public.communities resource where resource.id=file.resource_id)
-    when 'profile-message' then exists (select 1 from public.profile_messages resource where resource.id=file.resource_id)
-    when 'profile-post' then exists (select 1 from public.profile_posts resource where resource.id=file.resource_id)
-    when 'community-forum-topic' then exists (select 1 from public.community_forum_topics resource where resource.id=file.resource_id)
-    when 'community-forum-reply' then exists (select 1 from public.community_forum_replies resource where resource.id=file.resource_id)
-    else false
-  end;
-
 create or replace function public.nexus_claim_expired_uploads(
   p_now_ms bigint,p_claim_lease_ms bigint,p_safe_age_ms bigint,
   p_orphan_avatar_retention_ms bigint,p_limit integer default 1000

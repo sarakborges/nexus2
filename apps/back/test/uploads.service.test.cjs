@@ -16,7 +16,11 @@ const cronSecret = 'cron-secret-test'
 async function resolveEditorImageRecord(data, { userId, id, now }) {
   const initialRecords = await data.read('media_files')
   const locator = initialRecords.find(item =>
-    item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
+    item.id === id &&
+    item.purpose === 'editor-image' &&
+    (item.status === 'ready' || (
+      item.status === 'deleting' && item.resourceType && item.resourceId
+    ))
   )
   if (!locator || (
     !locator.resourceType && !locator.resourceId &&
@@ -46,7 +50,9 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
     if (
       !latest ||
       latest.purpose !== 'editor-image' ||
-      latest.status !== 'ready' ||
+      (latest.status !== 'ready' && !(
+        latest.status === 'deleting' && latest.resourceType && latest.resourceId
+      )) ||
       (!latest.resourceType && !latest.resourceId && latest.expiresAt !== null && latest.expiresAt <= now) ||
       latest.resourceType !== resourceType ||
       latest.resourceId !== resourceId
@@ -312,8 +318,24 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
       const claimedById = new Map(claims.map(item => [item.id, item]))
       const remaining = records.filter(item => {
         const claim = claimedById.get(item.id)
+        const resourceTable = {
+          profile: 'profiles',
+          community: 'communities',
+          'profile-message': 'profile_messages',
+          'profile-post': 'profile_posts',
+          'community-forum-topic': 'community_forum_topics',
+          'community-forum-reply': 'community_forum_replies'
+        }
+        const table = resourceTable[item.resourceType]
+        const sourceExists = Boolean(
+          item.purpose === 'editor-image' &&
+          item.resourceType &&
+          table &&
+          (resourceCollections.get(table) ?? []).some(row => row.id === item.resourceId)
+        )
         const shouldDelete = Boolean(
-          claim && item.status === 'deleting' && item.deletingAt === claim.deletingAt
+          claim && item.status === 'deleting' && item.deletingAt === claim.deletingAt &&
+          !sourceExists
         )
         if (shouldDelete) deleted += 1
         return !shouldDelete
@@ -487,7 +509,8 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
   )
   return {
     service: new UploadsService(data, storage, cleanup, content, avatars),
-    collections
+    collections,
+    data
   }
 }
 
@@ -1855,6 +1878,74 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('legacy deleting editor attachments remain readable and protected from cleanup while their source exists', async t => {
+  const now = Date.now()
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174111',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/legacy-deleting-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'deleting',
+    deletingAt: now - 10 * 60 * 1000,
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'post-legacy',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-legacy', profileId: 'profile-1' }]
+  })
+  withFetch(t, async (_url, init) => {
+    if (init.method === 'DELETE') throw new Error('Live attachments must not be removed')
+    return new Response(pngHeader, { status: 200 })
+  })
+
+  const cleanup = await service.cleanupExpired(cronSecret)
+  assert.deepEqual(cleanup, { deleted: 0 })
+  const image = await service.getEditorImage(null, file.id)
+  assert.deepEqual(image.body, pngHeader)
+  assert.deepEqual(collections.get('media_files'), [file])
+})
+
+test('finishUploadDeletions does not remove a claimed editor image while its source exists', async () => {
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174112',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/inflight-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'deleting',
+    deletingAt: 1234,
+    createdAt: 1,
+    completedAt: 1,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'post-inflight',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { data, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-inflight', profileId: 'profile-1' }]
+  })
+
+  const deleted = await data.finishUploadDeletions([{ id: file.id, deletingAt: file.deletingAt }])
+
+  assert.equal(deleted, 0)
+  assert.deepEqual(collections.get('media_files'), [file])
+})
 
 test('cleanup removes editor images whose source content was deleted', async t => {
   const now = Date.now()
