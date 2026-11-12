@@ -296,13 +296,13 @@ export interface DataRepository {
   claimUploadDeletion?(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
   schedulePreviousAvatarDeletion?(change: PreviousAvatarDeletionSchedule): Promise<void>
   getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord>
-  getAvatarUploadPath?(
+  getAvatarUploadPath(
     userId: string,
     uploadId: string,
     purpose: 'profile-avatar' | 'community-avatar'
   ): Promise<string | null>
-  setProfileAvatar?(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
-  setCommunityAvatar?(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
+  setProfileAvatar(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
+  setCommunityAvatar(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
   createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
   updateProfile?(
     change: ProfileUpdateWrite

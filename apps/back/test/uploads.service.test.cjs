@@ -231,6 +231,78 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
     if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
     return saved
   }
+  data.getAvatarUploadPath = async (userId, uploadId, purpose) => {
+    const records = await data.read('media_files')
+    return records.find(item =>
+      item.id === uploadId && item.ownerUserId === userId && item.purpose === purpose
+    )?.path ?? null
+  }
+  data.setProfileAvatar = async change => data.transaction(
+    ['accounts', 'profiles', 'media_files'],
+    collections => {
+      avatars.assertOwnsProfileInRecords(
+        change.userId, change.profileId, collections.accounts, collections.profiles
+      )
+      const profile = collections.profiles.find(item => item.id === change.profileId)
+      if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+      const nextRecords = change.uploadId
+        ? avatars.attachAvatarRecordToRecords(
+            collections.media_files, change.userId, change.uploadId,
+            'profile-avatar', 'profile', change.profileId
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: collections.profiles.map(item =>
+            item.id === change.profileId ? { ...item, picture: change.picture } : item
+          ),
+          media_files: nextRecords
+        },
+        result: { previousPicture: profile.picture }
+      }
+    }
+  )
+  data.setCommunityAvatar = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+    collections => {
+      avatars.assertOwnsProfileInRecords(
+        change.userId, change.actorProfileId, collections.accounts, collections.profiles
+      )
+      const actor = collections.profiles.find(item => item.id === change.actorProfileId)
+      const community = collections.communities.find(item => item.id === change.communityId)
+      const ownerProfileId = collections.community_relationships.find(item =>
+        item.profiles[1] === change.communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerProfileId
+        ? collections.profiles.find(item => item.id === ownerProfileId)
+        : undefined
+      if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+      if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+      const role = collections.community_relationships.find(item =>
+        item.profiles[0] === change.actorProfileId && item.profiles[1] === change.communityId
+      )?.type
+      if (role !== 'owner' && role !== 'moderator') {
+        throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+      }
+      const nextRecords = change.uploadId
+        ? avatars.attachAvatarRecordToRecords(
+            collections.media_files, change.userId, change.uploadId,
+            'community-avatar', 'community', change.communityId
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          communities: collections.communities.map(item =>
+            item.id === change.communityId ? { ...item, picture: change.picture } : item
+          ),
+          media_files: nextRecords
+        },
+        result: { previousPicture: community.picture }
+      }
+    }
+  )
   return {
     service: new UploadsService(data, storage, cleanup, content, avatars),
     collections
