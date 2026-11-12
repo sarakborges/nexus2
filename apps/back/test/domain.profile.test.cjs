@@ -17,6 +17,40 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
     ['media_files', []]
   ])
   const data = {
+    async getProfileRelationships(userId, profileId) {
+      beforeTransaction?.(['relationships'], collections)
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!account || !account.profiles.includes(profileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      return structuredClone((collections.get('relationships') ?? []).filter(record =>
+        record.profiles.includes(profileId)
+      ))
+    },
+    async getProfileFriends(profileId, page) {
+      beforeTransaction?.(['relationships'], collections)
+      const profiles = collections.get('profiles') ?? []
+      const profile = profiles.find(item => item.id === profileId)
+      if (!profile) throw new Error('PROFILE_NOT_FOUND')
+      const friendIds = new Set(
+        (collections.get('relationships') ?? [])
+          .filter(record => record.type === 'connection' && record.profiles.includes(profileId))
+          .map(record => record.profiles.find(id => id !== profileId))
+      )
+      const friends = profiles.filter(friend => friendIds.has(friend.id) && friend.type === profile.type)
+      const pageSize = 20
+      const totalItems = friends.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(friends.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async readByIds(name, ids) {
       const requested = new Set(ids)
