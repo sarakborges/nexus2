@@ -318,7 +318,7 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.mapMediaFile(rows[0] as DatabaseRow)
   }
 
-  async getAvatarUploadPath(  async getAvatarUploadPath(
+  async getAvatarUploadPath(
     userId: string,
     uploadId: string,
     purpose: 'profile-avatar' | 'community-avatar'
