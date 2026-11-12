@@ -36,14 +36,11 @@ function createService() {
       calls.push(['delete-reply', change])
       return 'topic-1'
     },
-    async transaction() {
-      throw new Error('Direct forum operations must not use collection snapshots.')
-    }
   }
   const uploads = { getEditorImageIds() { return ['image-1'] } }
   const realtime = { async publishTopicChanged(id) { notifications.push(id) } }
   return {
-    service: new CommunityForumService(repository, {}, uploads, realtime),
+    service: new CommunityForumService(repository, uploads, realtime),
     calls,
     notifications
   }
@@ -108,9 +105,8 @@ test('legacy forum list and topic reads use targeted relational queries without 
         replies: { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
       }
     },
-    async transaction() { throw new Error('Forum legacy reads must not load collection snapshots.') }
   }
-  const service = new CommunityForumService(repository, {})
+  const service = new CommunityForumService(repository)
   const topics = await service.listCommunityForumTopics('community-1',{page:2},'account-1')
   const topic = await service.getCommunityForumTopic('community-1','topic-1',{page:3},null)
   assert.equal(topics.page,2)
