@@ -109,8 +109,7 @@ export class AccountService {
   }
 
   private async readAccount(userId: string): Promise<AccountRecord | undefined> {
-    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [userId])
-    return account
+    return (await this.repository.getAccountById(userId)) ?? undefined
   }
 
   private toPublicUser(account: AccountRecord): AuthenticatedUser {
