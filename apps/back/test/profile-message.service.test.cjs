@@ -119,7 +119,7 @@ function createSendService({ audience = 'everyone', senderOwnsRecipient = false,
   }
   const access = {}
   const service = new ProfileMessageService(repository, access)
-  return { service, records, calls }
+  return service
 }
 
 test('message settings default to allowing everyone for existing profiles', async () => {
