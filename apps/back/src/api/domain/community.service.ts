@@ -11,6 +11,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import type {
   Community,
+  CommunityRelationship,
   CommunityRelationshipType,
   CreateCommunityInput,
   PaginatedResult,
