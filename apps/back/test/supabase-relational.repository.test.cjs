@@ -26,7 +26,7 @@ test('rejects collection snapshots and whole-table mutations', async () => {
   )
   await assert.rejects(
     () => repo.readByIds('relationships', ['profile-a']),
-    /Targeted ID reads are not implemented for relational collection/
+    /Generic ID reads are disabled for Supabase relational storage/
   )
   await assert.rejects(
     () => repo.update('profiles', records => records),
@@ -55,7 +55,7 @@ test('readByIds queries only the requested relational profiles', async t => {
   })
 
   const repo = new SupabaseRelationalRepository(url, key, secret)
-  const result = await repo.readByIds('profiles', ['profile-1'])
+  const result = await repo.getProfilesByIds(['profile-1'])
 
   assert.deepEqual(result, [{
     id: 'profile-1',
