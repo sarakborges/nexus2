@@ -40,6 +40,28 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
     ]]
   ])
   const data = {
+    async getCommunityRelationships(userId, communityId) {
+      beforeTransaction?.(['community_relationships'], collections)
+      const allCommunities = collections.get('communities') ?? []
+      const communityRecord = allCommunities.find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!userId) return []
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      const profiles = collections.get('profiles') ?? []
+      const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type]))
+      const ownerId = (collections.get('community_relationships') ?? []).find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerId ? profiles.find(profile => profile.id === ownerId) : undefined
+      const communityType = owner?.type ?? communityRecord.type
+      const owned = new Set(account.profiles)
+      return structuredClone((collections.get('community_relationships') ?? []).filter(item =>
+        item.profiles[1] === communityId &&
+        owned.has(item.profiles[0]) &&
+        profileTypes.get(item.profiles[0]) === communityType
+      ))
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
