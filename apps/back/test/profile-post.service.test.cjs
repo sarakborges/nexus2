@@ -1,7 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const { ConflictException, ForbiddenException } = require('@nestjs/common')
-const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 const { ProfilePostService } = require('../dist/api/domain/profile-post.service.js')
 
 function makeRepository() {
@@ -13,6 +12,16 @@ function makeRepository() {
   }
   return {
     records,
+    async createProfilePost(userId, post, imageIds) {
+      const account = records.accounts.find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (!account.profiles.includes(post.profileId)) throw new Error('PROFILE_NOT_OWNED')
+      const profile = records.profiles.find(item => item.id === post.profileId)
+      if (!profile) throw new Error('PROFILE_NOT_FOUND')
+      records.profile_posts.push(structuredClone(post))
+      profile.lastActivity = Math.max(profile.lastActivity, post.createdAt)
+      return structuredClone(post)
+    },
     async transaction(_collections, updater) {
       const outcome = updater(records)
       if (outcome.records) {
@@ -23,10 +32,10 @@ function makeRepository() {
   }
 }
 
-test('profile post stores sanitized content and updates activity in one transaction', async () => {
+test('profile post stores sanitized content and updates activity through one relational write', async () => {
   const repository = makeRepository()
   const access = new DomainAccessService(repository)
-  const service = new ProfilePostService(repository, access)
+  const service = new ProfilePostService(repository)
   const result = await service.createProfilePost('user-1', 'profile-1', '<p>Hello</p><script>alert(1)</script>')
   assert.equal(result.profileId, 'profile-1')
   assert.equal(result.content.includes('<script>'), false)
@@ -36,7 +45,7 @@ test('profile post stores sanitized content and updates activity in one transact
 
 test('profile post rejects empty rich text', async () => {
   const repository = makeRepository()
-  const service = new ProfilePostService(repository, new DomainAccessService(repository))
+  const service = new ProfilePostService(repository)
   await assert.rejects(
     service.createProfilePost('user-1', 'profile-1', '<p><br></p>'),
     error => error instanceof ConflictException
@@ -60,9 +69,6 @@ test('creates relational profile posts without loading or rewriting collection s
       createArguments = { userId, post, imageIds }
       return post
     },
-    async transaction() {
-      throw new Error('Relational profile post writes must not load collection snapshots.')
-    }
   }
   const uploads = {
     getEditorImageIds(html) {
@@ -75,6 +81,7 @@ test('creates relational profile posts without loading or rewriting collection s
   const result = await service.createProfilePost('user-1', 'profile-1', '<p>Hello</p>')
 
   assert.equal(result.profileId, 'profile-1')
+  assert.equal('transaction' in postRepository, false)
   assert.deepEqual(createArguments, {
     userId: 'user-1',
     post: result,
@@ -90,7 +97,7 @@ test('rejects empty posts before invoking the relational write', async () => {
       throw new Error('The relational write must not run for empty content.')
     }
   }
-  const service = new ProfilePostService(postRepository, {}, {
+  const service = new ProfilePostService(postRepository, {
     getEditorImageIds() { return [] }
   })
 
