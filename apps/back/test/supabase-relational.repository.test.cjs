@@ -1510,3 +1510,78 @@ test('avatar changes use targeted media lookup and atomic relational RPCs', asyn
   assert.equal(calls[1].body.p_upload_id,'upload-1')
   assert.equal(calls[2].body.p_actor_profile_id,'profile-1')
 })
+
+
+test('routes media upload lifecycle and authorized editor image reads through row-scoped RPCs', async t => {
+  const calls = []
+  const mediaRow = {
+    id: 'upload-1', owner_user_id: 'account-1', purpose: 'editor-image',
+    bucket: 'nexus-editor-images', path: 'editor/account-1/upload-1.png',
+    content_type: 'image/png', expected_size: 10, size: 10, status: 'ready',
+    deleting_at_ms: null, delete_after_ms: null, created_at_ms: 100,
+    completed_at_ms: 200, expires_at_ms: 900, resource_type: 'profile',
+    resource_id: 'profile-1', message_from_profile_id: null, message_to_profile_id: null
+  }
+  withFetch(t, async (input, options) => {
+    const parsed = new URL(String(input))
+    const body = options.body ? JSON.parse(options.body) : null
+    calls.push({ path: parsed.pathname, body })
+    if (parsed.pathname.endsWith('/media_files')) return new Response(JSON.stringify([mediaRow]), { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_create_upload')) return new Response(null, { status: 204 })
+    if (parsed.pathname.endsWith('/nexus_delete_pending_upload')) return new Response(null, { status: 204 })
+    if (parsed.pathname.endsWith('/nexus_complete_upload')) return new Response(JSON.stringify([mediaRow]), { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_claim_expired_uploads')) return new Response(JSON.stringify([mediaRow]), { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_finish_upload_deletions')) return new Response('1', { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_schedule_upload_deletion')) return new Response('true', { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_claim_upload_deletion')) return new Response(JSON.stringify([mediaRow]), { status: 200 })
+    if (parsed.pathname.endsWith('/nexus_schedule_previous_avatar_deletion')) return new Response(null, { status: 204 })
+    if (parsed.pathname.endsWith('/nexus_get_editor_image')) return new Response(JSON.stringify([mediaRow]), { status: 200 })
+    throw new Error('Unexpected request: ' + parsed.pathname)
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const record = {
+    id: 'upload-1', ownerUserId: 'account-1', purpose: 'editor-image',
+    bucket: 'nexus-editor-images', path: 'editor/account-1/upload-1.png',
+    contentType: 'image/png', expectedSize: 10, size: null, status: 'pending',
+    createdAt: 100, completedAt: null, expiresAt: null, resourceType: null,
+    resourceId: null, messageFromProfileId: null, messageToProfileId: null
+  }
+  await repo.createUpload({ record, targetId: null, actorProfileId: null })
+  assert.equal((await repo.getUploadById('account-1', 'upload-1')).id, 'upload-1')
+  await repo.deletePendingUpload('account-1', 'upload-1')
+  assert.equal((await repo.completeUpload({
+    userId: 'account-1', id: 'upload-1', size: 10,
+    completedAt: 200, expiresAt: 900, pendingMaxAge: 7200000
+  })).status, 'ready')
+  assert.equal((await repo.claimExpiredUploads({
+    now: 1000, claimLeaseMs: 300000, safeAge: 10800000,
+    orphanAvatarRetentionMs: 86400000, limit: 1000
+  })).length, 1)
+  assert.equal(await repo.finishUploadDeletions([{ id: 'upload-1', deletingAt: 1000 }]), 1)
+  assert.equal(await repo.scheduleUploadDeletion({
+    id: 'upload-1', userId: 'account-1', scheduledAt: 1000,
+    allowReady: true, safeAge: 10800000, leaseMs: 300000
+  }), true)
+  assert.equal((await repo.claimUploadDeletion({
+    id: 'upload-1', userId: 'account-1', deletingAt: 1100
+  })).id, 'upload-1')
+  await repo.schedulePreviousAvatarDeletion({
+    path: 'profiles/account-1/avatar.png', keepId: null,
+    deletingAt: 1200, safeAge: 10800000, leaseMs: 300000
+  })
+  assert.equal((await repo.getEditorImageRecord({
+    userId: null, id: 'upload-1', now: 300
+  })).resourceId, 'profile-1')
+  assert.deepEqual(calls.map(call => call.path), [
+    '/rest/v1/rpc/nexus_create_upload',
+    '/rest/v1/media_files',
+    '/rest/v1/rpc/nexus_delete_pending_upload',
+    '/rest/v1/rpc/nexus_complete_upload',
+    '/rest/v1/rpc/nexus_claim_expired_uploads',
+    '/rest/v1/rpc/nexus_finish_upload_deletions',
+    '/rest/v1/rpc/nexus_schedule_upload_deletion',
+    '/rest/v1/rpc/nexus_claim_upload_deletion',
+    '/rest/v1/rpc/nexus_schedule_previous_avatar_deletion',
+    '/rest/v1/rpc/nexus_get_editor_image'
+  ])
+})

@@ -180,7 +180,75 @@ export type CommunityUpdateWrite = {
   editorImageIds: readonly string[]
 }
 
-export type ActivityFeedRow = {
+
+export type MediaFileRecord = {
+  id: string
+  ownerUserId: string
+  purpose: 'profile-avatar' | 'community-avatar' | 'editor-image'
+  bucket: string
+  path: string
+  contentType: string
+  expectedSize: number
+  size: number | null
+  status: 'pending' | 'ready' | 'deleting'
+  deletingAt?: number | null
+  deleteAfter?: number | null
+  createdAt: number
+  completedAt: number | null
+  expiresAt: number | null
+  resourceType: string | null
+  resourceId: string | null
+  messageFromProfileId: string | null
+  messageToProfileId: string | null
+}
+
+export type MediaUploadCreateWrite = {
+  record: MediaFileRecord
+  targetId: string | null
+  actorProfileId: string | null
+}
+
+export type MediaUploadCompletion = {
+  userId: string
+  id: string
+  size: number
+  completedAt: number
+  expiresAt: number | null
+  pendingMaxAge: number
+}
+
+export type MediaUploadDeletionClaim = { id: string; deletingAt: number }
+export type MediaUploadDeletionSchedule = {
+  id: string
+  userId: string
+  scheduledAt: number
+  allowReady: boolean
+  safeAge: number
+  leaseMs: number
+}
+export type MediaUploadDeletionRequest = {
+  id: string
+  userId: string
+  deletingAt: number
+  expectedStatus?: 'pending'
+}
+export type MediaUploadCleanupRequest = {
+  now: number
+  claimLeaseMs: number
+  safeAge: number
+  orphanAvatarRetentionMs: number
+  limit: number
+}
+export type PreviousAvatarDeletionSchedule = {
+  path: string
+  keepId: string | null
+  deletingAt: number
+  safeAge: number
+  leaseMs: number
+}
+export type EditorImageReadRequest = { userId: string | null; id: string; now: number }
+
+export type ActivityFeedRow = {export type ActivityFeedRow = {
   id: string
   type: RecentActivity['type']
   updated_at_ms: number
@@ -199,6 +267,16 @@ export type ActivityFeedRow = {
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
+  createUpload?(change: MediaUploadCreateWrite): Promise<void>
+  getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
+  deletePendingUpload?(userId: string, id: string): Promise<void>
+  completeUpload?(change: MediaUploadCompletion): Promise<MediaFileRecord>
+  claimExpiredUploads?(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]>
+  finishUploadDeletions?(claims: readonly MediaUploadDeletionClaim[]): Promise<number>
+  scheduleUploadDeletion?(change: MediaUploadDeletionSchedule): Promise<boolean>
+  claimUploadDeletion?(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
+  schedulePreviousAvatarDeletion?(change: PreviousAvatarDeletionSchedule): Promise<void>
+  getEditorImageRecord?(change: EditorImageReadRequest): Promise<MediaFileRecord>
   getAvatarUploadPath?(
     userId: string,
     uploadId: string,

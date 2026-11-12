@@ -42,7 +42,15 @@ export class UploadsCleanupService {
     this.storage.assertConfigured()
 
     const now = Date.now()
-    const expired = await this.data.transaction<UploadedFileRecord[]>(
+    const expired = this.data.claimExpiredUploads
+      ? await this.data.claimExpiredUploads({
+          now,
+          claimLeaseMs: DELETE_CLAIM_LEASE_MS,
+          safeAge: UPLOAD_DELETE_SAFE_AGE_MS,
+          orphanAvatarRetentionMs: ORPHAN_AVATAR_RETENTION_MS,
+          limit: STORAGE_DELETE_BATCH_SIZE
+        })
+      : await this.data.transaction<UploadedFileRecord[]>(
       ['media_files'],
       collections => {
         const currentRecords = collections.media_files as UploadedFileRecord[]
@@ -103,24 +111,26 @@ export class UploadsCleanupService {
           const claimsById = new Map(
             batchClaims.map(item => [item.id, item] as const)
           )
-          const remaining = await this.data.update<UploadedFileRecord>(
-            'media_files',
-            currentRecords => currentRecords.filter(item => {
-              const claimed = claimsById.get(item.id)
-              return (
-                !claimed ||
-                item.status !== 'deleting' ||
-                item.deletingAt !== claimed.deletingAt
-              )
-            })
-          )
-          deleted += batchClaims.filter(claimed =>
-            !remaining.some(item =>
-              item.id === claimed.id &&
-              item.status === 'deleting' &&
-              item.deletingAt === claimed.deletingAt
+          if (this.data.finishUploadDeletions) {
+            deleted += await this.data.finishUploadDeletions(batchClaims.map(item => ({
+              id: item.id,
+              deletingAt: item.deletingAt ?? 0
+            })))
+          } else {
+            const remaining = await this.data.update<UploadedFileRecord>(
+              'media_files',
+              currentRecords => currentRecords.filter(item => {
+                const claimed = claimsById.get(item.id)
+                return !claimed || item.status !== 'deleting' || item.deletingAt !== claimed.deletingAt
+              })
             )
-          ).length
+            deleted += batchClaims.filter(claimed =>
+              !remaining.some(item =>
+                item.id === claimed.id && item.status === 'deleting' &&
+                item.deletingAt === claimed.deletingAt
+              )
+            ).length
+          }
         } catch {
           // Keep failed claims in "deleting". A later cleanup or delete retry
           // can reclaim them after the lease expires. Continue with later batches.
@@ -140,6 +150,13 @@ export class UploadsCleanupService {
     const path = this.storage.getAvatarPath(previousUrl)
     if (!path) return
     const deletingAt = Date.now()
+    if (this.data.schedulePreviousAvatarDeletion) {
+      await this.data.schedulePreviousAvatarDeletion({
+        path, keepId: keepId ?? null, deletingAt,
+        safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
+      })
+      return
+    }
     await this.data.transaction<UploadedFileRecord | null>(
       ['media_files'],
       collections => {
@@ -180,6 +197,18 @@ export class UploadsCleanupService {
     allowReady = false
   ): Promise<boolean> {
     const scheduledAt = Date.now()
+    if (this.data.scheduleUploadDeletion) {
+      try {
+        return await this.data.scheduleUploadDeletion({
+          id, userId, scheduledAt, allowReady,
+          safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('UPLOAD_ALREADY_ATTACHED')) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+        throw error
+      }
+    }
     return this.data.transaction<boolean>(
       ['media_files'],
       collections => {
@@ -230,7 +259,11 @@ export class UploadsCleanupService {
     expectedStatus?: 'pending'
   ): Promise<void> {
     const deletingAt = Date.now()
-    const deleting = await this.data.transaction<UploadedFileRecord | null>(
+    let deleting: UploadedFileRecord | null
+    try {
+      deleting = this.data.claimUploadDeletion
+        ? await this.data.claimUploadDeletion({ id, userId, deletingAt, expectedStatus })
+        : await this.data.transaction<UploadedFileRecord | null>(
       ['media_files'],
       collections => {
         const current = collections.media_files as UploadedFileRecord[]
@@ -254,16 +287,23 @@ export class UploadsCleanupService {
         }
       }
     )
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('UPLOAD_ALREADY_ATTACHED')) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      throw error
+    }
     if (!deleting) return
     await this.removeObjects(deleting.bucket, [deleting.path])
-    await this.data.update<UploadedFileRecord>('media_files', current =>
-      current.filter(item =>
-        item.id !== deleting.id ||
-        item.ownerUserId !== userId ||
-        item.status !== 'deleting' ||
-        item.deletingAt !== deleting.deletingAt
+    if (this.data.finishUploadDeletions) {
+      await this.data.finishUploadDeletions([{ id: deleting.id, deletingAt: deleting.deletingAt ?? 0 }])
+    } else {
+      await this.data.update<UploadedFileRecord>('media_files', current =>
+        current.filter(item =>
+          item.id !== deleting.id || item.ownerUserId !== userId ||
+          item.status !== 'deleting' || item.deletingAt !== deleting.deletingAt
+        )
       )
-    )
+    }
   }
 
   private async removeObjects(bucket: string, paths: string[]): Promise<void> {

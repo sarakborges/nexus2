@@ -22,7 +22,16 @@ import type {
   CommunityForumTopicRemoval,
   CommunityForumReplyRemoval,
   RefreshTokenRotation,
-  RefreshTokenWrite
+  RefreshTokenWrite,
+  MediaFileRecord,
+  MediaUploadCreateWrite,
+  MediaUploadCompletion,
+  MediaUploadCleanupRequest,
+  MediaUploadDeletionClaim,
+  MediaUploadDeletionSchedule,
+  MediaUploadDeletionRequest,
+  PreviousAvatarDeletionSchedule,
+  EditorImageReadRequest
 } from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
@@ -162,7 +171,154 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
   }
 
-  async getAvatarUploadPath(
+
+  async createUpload(change: MediaUploadCreateWrite): Promise<void> {
+    const record = change.record
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_upload', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_id: record.id, p_user_id: record.ownerUserId, p_purpose: record.purpose,
+        p_bucket: record.bucket, p_path: record.path, p_content_type: record.contentType,
+        p_expected_size: record.expectedSize, p_created_at_ms: record.createdAt,
+        p_target_id: change.targetId, p_actor_profile_id: change.actorProfileId
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async getUploadById(userId: string, id: string): Promise<MediaFileRecord | null> {
+    const url = new URL(this.baseUrl + '/rest/v1/media_files')
+    url.searchParams.set('select', '*')
+    url.searchParams.set('id', 'eq.' + id)
+    url.searchParams.set('owner_user_id', 'eq.' + userId)
+    url.searchParams.set('limit', '1')
+    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) throw new Error('Supabase upload lookup returned an invalid result.')
+    return rows.length ? this.mapMediaFile(rows[0] as DatabaseRow) : null
+  }
+
+  async deletePendingUpload(userId: string, id: string): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_pending_upload', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_id: id })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async completeUpload(change: MediaUploadCompletion): Promise<MediaFileRecord> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_complete_upload', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId, p_id: change.id, p_size: change.size,
+        p_completed_at_ms: change.completedAt, p_expires_at_ms: change.expiresAt,
+        p_pending_max_age_ms: change.pendingMaxAge
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase upload completion returned an invalid result.')
+    }
+    return this.mapMediaFile(rows[0] as DatabaseRow)
+  }
+
+  async claimExpiredUploads(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_claim_expired_uploads', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_now_ms: change.now, p_claim_lease_ms: change.claimLeaseMs,
+        p_safe_age_ms: change.safeAge, p_orphan_avatar_retention_ms: change.orphanAvatarRetentionMs,
+        p_limit: change.limit
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) throw new Error('Supabase upload cleanup claim returned an invalid result.')
+    return rows.map(row => this.mapMediaFile(row as DatabaseRow))
+  }
+
+  async finishUploadDeletions(claims: readonly MediaUploadDeletionClaim[]): Promise<number> {
+    if (!claims.length) return 0
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_finish_upload_deletions', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_claims: claims.map(claim => ({ id: claim.id, deleting_at_ms: claim.deletingAt }))
+      })
+    })
+    await this.assertSuccess(response)
+    const count = Number(await response.json())
+    if (!Number.isSafeInteger(count) || count < 0) {
+      throw new Error('Supabase upload deletion completion returned an invalid count.')
+    }
+    return count
+  }
+
+  async scheduleUploadDeletion(change: MediaUploadDeletionSchedule): Promise<boolean> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_upload_deletion', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_id: change.id, p_user_id: change.userId, p_scheduled_at_ms: change.scheduledAt,
+        p_allow_ready: change.allowReady, p_safe_age_ms: change.safeAge, p_lease_ms: change.leaseMs
+      })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (typeof result !== 'boolean') throw new Error('Supabase upload deletion schedule returned an invalid result.')
+    return result
+  }
+
+  async claimUploadDeletion(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_claim_upload_deletion', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_id: change.id, p_user_id: change.userId, p_deleting_at_ms: change.deletingAt,
+        p_expected_status: change.expectedStatus ?? null
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length > 1) {
+      throw new Error('Supabase upload deletion claim returned an invalid result.')
+    }
+    return rows.length ? this.mapMediaFile(rows[0] as DatabaseRow) : null
+  }
+
+  async schedulePreviousAvatarDeletion(change: PreviousAvatarDeletionSchedule): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_avatar_deletion', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_path: change.path, p_keep_id: change.keepId, p_deleting_at_ms: change.deletingAt,
+        p_safe_age_ms: change.safeAge, p_lease_ms: change.leaseMs
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_editor_image', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: change.userId, p_id: change.id, p_now_ms: change.now })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase editor image authorization returned an invalid result.')
+    }
+    return this.mapMediaFile(rows[0] as DatabaseRow)
+  }
+
+  async getAvatarUploadPath(  async getAvatarUploadPath(
     userId: string,
     uploadId: string,
     purpose: 'profile-avatar' | 'community-avatar'
@@ -1999,7 +2155,36 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
   }
 
-  private mapProfile(row: DatabaseRow): Profile {
+
+  private mapMediaFile(row: DatabaseRow): MediaFileRecord {
+    if (
+      typeof row.id !== 'string' || typeof row.owner_user_id !== 'string' ||
+      typeof row.purpose !== 'string' || typeof row.bucket !== 'string' ||
+      typeof row.path !== 'string' || typeof row.content_type !== 'string' ||
+      !Number.isFinite(Number(row.expected_size)) ||
+      !Number.isFinite(Number(row.created_at_ms)) ||
+      !['pending','ready','deleting'].includes(String(row.status))
+    ) throw new Error('Supabase returned an invalid media file row.')
+    return {
+      id: row.id, ownerUserId: row.owner_user_id,
+      purpose: row.purpose as MediaFileRecord['purpose'],
+      bucket: row.bucket, path: row.path, contentType: row.content_type,
+      expectedSize: Number(row.expected_size),
+      size: row.size == null ? null : Number(row.size),
+      status: row.status as MediaFileRecord['status'],
+      deletingAt: row.deleting_at_ms == null ? null : Number(row.deleting_at_ms),
+      deleteAfter: row.delete_after_ms == null ? null : Number(row.delete_after_ms),
+      createdAt: Number(row.created_at_ms),
+      completedAt: row.completed_at_ms == null ? null : Number(row.completed_at_ms),
+      expiresAt: row.expires_at_ms == null ? null : Number(row.expires_at_ms),
+      resourceType: typeof row.resource_type === 'string' ? row.resource_type : null,
+      resourceId: typeof row.resource_id === 'string' ? row.resource_id : null,
+      messageFromProfileId: typeof row.message_from_profile_id === 'string' ? row.message_from_profile_id : null,
+      messageToProfileId: typeof row.message_to_profile_id === 'string' ? row.message_to_profile_id : null
+    }
+  }
+
+  private mapProfile(row: DatabaseRow): Profile {  private mapProfile(row: DatabaseRow): Profile {
     if (
       typeof row.id !== 'string' || typeof row.name !== 'string' ||
       typeof row.url !== 'string' || typeof row.picture !== 'string' ||
