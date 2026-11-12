@@ -30,6 +30,18 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
     ['relationships', []]
   ])
   const data = {
+    async createProfileMessage(change) {
+      beforeTransaction?.(['profile_messages'], collections)
+      const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (!account.profiles.includes(change.message.fromProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const messages = collections.get('profile_messages') ?? []
+      messages.push(structuredClone(change.message))
+      collections.set('profile_messages', messages)
+      return structuredClone(change.message)
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
@@ -257,12 +269,17 @@ test('friend-request creation rechecks source-profile ownership in the relations
   assert.deepEqual(collections.get('relationships'), [])
 })
 
-test('sending a profile message rechecks sender ownership in the message transaction', async () => {
+test('sending a profile message rechecks sender ownership in the relational write', async () => {
   const { service, collections } = harness(
     { memberUser: ['member'] },
     null,
     (names, current) => {
-      if (names.includes('profile_messages')) current.set('accounts', [])
+      if (names.includes('profile_messages')) current.set('accounts', [{
+        id: 'memberUser',
+        email: 'memberUser@example.com',
+        profiles: [],
+        currentProfile: null
+      }])
     }
   )
 
