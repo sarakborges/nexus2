@@ -375,8 +375,8 @@ export interface DataRepository {
     actorProfileId: string,
     page: number
   ): Promise<PaginatedResult<CommunityMember>>
-  getProfileEditPage?(url: string, userId: string | null): Promise<ProfileEditPageData>
-  getCommunityEditPage?(url: string, userId: string | null): Promise<CommunityEditPageData>
+  getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData>
+  getCommunityEditPage(url: string, userId: string | null): Promise<CommunityEditPageData>
   getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
   getCommunitiesPage?(
     userId: string,
@@ -393,7 +393,7 @@ export interface DataRepository {
     query: string | undefined,
     sort: ListSort
   ): Promise<ProfileDirectoryPageData>
-  getCommunityPage?(url: string, userId: string | null): Promise<CommunityPageData>
+  getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData>
   getCommunityMembersPage?(
     url: string,
     userId: string | null,

@@ -1,108 +1,32 @@
+const test = require('node:test')
 const assert = require('node:assert/strict')
-const { test } = require('node:test')
 const { UnauthorizedException } = require('@nestjs/common')
-const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 const { CommunityEditPageService } = require('../dist/api/domain/community-edit-page.service.js')
 
-const records = {
-  accounts: [{
-    id: 'user-1', email: 'person@example.com',
-    profiles: ['profile-owner', 'profile-member', 'profile-rp'],
-    currentProfile: 'profile-owner', password: { hash: 'hash', salt: 'salt' }
-  }],
-  profiles: [
-    { id: 'profile-owner', name: 'Owner', url: 'owner', picture: '', about: '', type: 'social' },
-    { id: 'profile-member', name: 'Member', url: 'member', picture: '', about: '', type: 'social' },
-    { id: 'profile-rp', name: 'RP', url: 'rp', picture: '', about: '', type: 'rp' },
-    { id: 'profile-other', name: 'Other owner', url: 'other', picture: '', about: '', type: 'social' }
-  ],
-  communities: [
-    { id: 'community-1', name: 'Community', url: 'community', picture: 'https://image.test/picture.png', about: '<p>Description</p>', type: 'social', privacy: 'public' },
-    { id: 'community-private', name: 'Private', url: 'private', picture: 'https://image.test/private.png', about: '<p>Private info</p>', type: 'social', privacy: 'private' }
-  ],
-  community_relationships: [
-    { profiles: ['profile-owner', 'community-1'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 20 },
-    { profiles: ['profile-member', 'community-1'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 10 },
-    { profiles: ['profile-rp', 'community-1'], type: 'moderator', requestedBy: null, blockedBy: null, updatedAt: 5 },
-    { profiles: ['profile-other', 'community-private'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 1 }
-  ]
-}
-
-function createService(initialRecords = records) {
-  let transactionCalls = 0
-  const repository = {
-    get transactionCalls() { return transactionCalls },
-    async transaction(collections, updater) {
-      transactionCalls += 1
-      assert.deepEqual(collections, [
-        'accounts', 'profiles', 'communities', 'community_relationships'
-      ])
-      const outcome = updater(structuredClone(initialRecords))
-      return outcome.result
+test('community edit page uses the relational page query with a normalized URL', async () => {
+  const calls = []
+  const expected = {
+    community: { id: 'community-1', url: 'community' },
+    ownerProfileId: 'profile-1',
+    currentProfileType: 'social'
+  }
+  const service = new CommunityEditPageService({
+    async getCommunityEditPage(...args) {
+      calls.push(args)
+      return expected
     }
-  }
-  return {
-    service: new CommunityEditPageService(repository, new DomainAccessService(repository)),
-    repository
-  }
-}
-
-test('edit page returns community and authenticated owner profile from one transaction', async () => {
-  const { service, repository } = createService()
-  const result = await service.getCommunityEditPage('community', 'user-1')
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.community.id, 'community-1')
-  assert.equal(result.ownerProfileId, 'profile-owner')
-  assert.equal(result.currentProfileType, 'social')
+  })
+  assert.deepEqual(await service.getCommunityEditPage('@COMMUNITY', 'user-1'), expected)
+  assert.deepEqual(calls, [['community', 'user-1']])
 })
 
-test('edit page does not expose another account owner profile and redacts private community', async () => {
-  const { service } = createService()
-  const result = await service.getCommunityEditPage('private', 'user-1')
-  assert.equal(result.ownerProfileId, null)
-  assert.equal(result.community.picture, '')
-  assert.equal(result.community.about, '')
-  assert.equal(result.currentProfileType, 'social')
-})
-
-test('anonymous edit-page visitor receives no owner profile', async () => {
-  const { service } = createService()
-  const result = await service.getCommunityEditPage('community', null)
-  assert.equal(result.community.id, 'community-1')
-  assert.equal(result.ownerProfileId, null)
-  assert.equal(result.currentProfileType, null)
-})
-
-test('unknown community returns an empty aggregate and invalid account is rejected', async () => {
-  const { service, repository } = createService()
-  const missing = await service.getCommunityEditPage('missing', null)
-  assert.deepEqual(missing, {
-    community: null,
-    ownerProfileId: null,
-    currentProfileType: null
+test('community edit page maps a missing account from the relational query', async () => {
+  const service = new CommunityEditPageService({
+    async getCommunityEditPage() { throw new Error('ACCOUNT_NOT_FOUND') }
   })
   await assert.rejects(
     service.getCommunityEditPage('community', 'missing-user'),
-    (error) => error instanceof UnauthorizedException && error.message === 'ACCOUNT_NOT_FOUND'
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
   )
-  assert.equal(repository.transactionCalls, 2)
-})
-
-
-test('community edit page uses a targeted relational read', async () => {
-  const repository = {
-    async getCommunityEditPage(url, userId) {
-      assert.equal(url, 'community')
-      assert.equal(userId, 'user-1')
-      return {
-        community: { id: 'community-1', picture: '', about: '' },
-        ownerProfileId: 'profile-owner',
-        currentProfileType: 'social'
-      }
-    },
-    async transaction() { throw new Error('Community edit page must not load collection snapshots.') }
-  }
-  const service = new CommunityEditPageService(repository, {})
-  const result = await service.getCommunityEditPage('COMMUNITY', 'user-1')
-  assert.equal(result.ownerProfileId, 'profile-owner')
 })
