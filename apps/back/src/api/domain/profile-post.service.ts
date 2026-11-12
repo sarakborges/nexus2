@@ -26,19 +26,43 @@ export class ProfilePostService {
       throw new ConflictException('INVALID_POST')
     }
 
-    const imageIds = this.uploads?.getEditorImageIds(normalized) ?? []
-    try {
-      return await this.data.createProfilePost(userId, post, imageIds)
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      if (message.includes('PROFILE_NOT_OWNED')) {
-        throw new ForbiddenException('PROFILE_NOT_OWNED')
+    if (this.data.createProfilePost) {
+      const imageIds = this.uploads?.getEditorImageIds(normalized) ?? []
+      try {
+        return await this.data.createProfilePost(userId, post, imageIds)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('PROFILE_NOT_OWNED')) {
+          throw new ForbiddenException('PROFILE_NOT_OWNED')
+        }
+        if (message.includes('INVALID_EDITOR_IMAGE') || message.includes('EDITOR_IMAGE_ALREADY_ATTACHED')) {
+          throw new BadRequestException('INVALID_EDITOR_IMAGE')
+        }
+        throw error
       }
-      if (message.includes('INVALID_EDITOR_IMAGE') || message.includes('EDITOR_IMAGE_ALREADY_ATTACHED')) {
-        throw new BadRequestException('INVALID_EDITOR_IMAGE')
-      }
-      throw error
     }
 
+    return this.data.transaction<ProfilePost>(
+      ['accounts', 'profiles', 'profile_posts', 'media_files'],
+      collections => {
+        const accounts = collections.accounts as AccountRecord[]
+        const profiles = collections.profiles as Profile[]
+        const posts = collections.profile_posts as ProfilePost[]
+        const mediaFiles = collections.media_files as UploadedFileRecord[]
+        this.access.assertOwnsInRecords(userId, profileId, accounts, profiles)
+        const nextMediaFiles = this.uploads
+          ? this.uploads.attachEditorImagesToRecords(mediaFiles, userId, normalized, 'profile-post', post.id)
+          : mediaFiles
+        return {
+          records: {
+            ...collections,
+            profiles: this.access.touchProfilesActivity(profiles, [profileId], post.createdAt),
+            profile_posts: [...posts, post],
+            media_files: nextMediaFiles
+          },
+          result: post
+        }
+      }
+    )
   }
 }
