@@ -36,7 +36,7 @@ import type {
 } from './repository.interface'
 
 type DatabaseRow = Record<string, unknown>
-const PAGE_SIZE = 1000
+const MAX_FILTERED_ROWS = 1000
 
 export class SupabaseRelationalRepository implements DataRepository {
   private readonly baseUrl: string
@@ -1796,7 +1796,7 @@ export class SupabaseRelationalRepository implements DataRepository {
       column,
       'in.(' + values.map(value => '"' + value.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"').join(',') + ')'
     )
-    url.searchParams.set('limit', String(Math.max(values.length * 10, PAGE_SIZE)))
+    url.searchParams.set('limit', String(Math.max(values.length * 10, MAX_FILTERED_ROWS)))
     const response = await fetch(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows = await response.json() as DatabaseRow[]
@@ -1826,31 +1826,6 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
     return rows
   }
-
-  private async selectRows(table: string): Promise<DatabaseRow[]> {
-    const rows: DatabaseRow[] = []
-    for (let offset = 0; ; offset += PAGE_SIZE) {
-      const url = new URL(this.baseUrl + '/rest/v1/' + table)
-      url.searchParams.set('select', '*')
-      url.searchParams.set('limit', String(PAGE_SIZE))
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          ...this.headers(),
-          Range: offset + '-' + (offset + PAGE_SIZE - 1),
-          'Range-Unit': 'items'
-        }
-      })
-      await this.assertSuccess(response)
-      const page = await response.json() as DatabaseRow[]
-      if (!Array.isArray(page)) {
-        throw new Error('Supabase returned an invalid row set for "' + table + '".')
-      }
-      rows.push(...page)
-      if (page.length < PAGE_SIZE) return rows
-    }
-  }
-
 
   private mediaResourceType(value: unknown): MediaFileRecord['resourceType'] {
     if (value == null) return null
