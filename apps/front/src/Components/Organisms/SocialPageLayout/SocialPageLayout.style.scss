@@ -537,3 +537,14 @@
     padding: 18px;
   }
 }
+
+
+@media (min-width: 681px) and (max-width: 1100px) {
+  .social-page__layout.social-page__layout--no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .social-page__layout--no-sidebar .social-page__right-column {
+    grid-column: 1;
+  }
+}
