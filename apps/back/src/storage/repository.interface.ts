@@ -369,7 +369,7 @@ export interface DataRepository {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<CommunityMember>>
-  listPendingMembers?(
+  listPendingMembers(
     userId: string,
     communityId: string,
     actorProfileId: string,
