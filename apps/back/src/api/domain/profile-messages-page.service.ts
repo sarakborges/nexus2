@@ -33,122 +33,38 @@ export class ProfileMessagesPageService {
   ): Promise<ProfileMessagesPageData> {
     const normalizedUrl = normalizeEntityUrl(profileUrl)
 
-    if (this.data.getProfileMessagesPage) {
-      return this.data.getProfileMessagesPage(
-        normalizedUrl,
-        userId,
-        query.page,
-        query.query,
-        query.sort,
-        query.messageTab
-      ).then(page => ({
-        ...page,
-        profile: page.profile ? {
-          ...page.profile,
-          about: sanitizeRichText(page.profile.about ?? '')
-        } : null,
-        messages: {
-          ...page.messages,
-          items: page.messages.items.map(message => ({
-            ...message,
-            content: sanitizeRichText(message.content ?? ''),
-            isFavorite: message.isFavorite === true
-          }))
-        },
-        senders: page.senders.map(sender => ({
-          ...sender,
-          about: sanitizeRichText(sender.about ?? '')
+    return this.data.getProfileMessagesPage(
+      normalizedUrl,
+      userId,
+      query.page,
+      query.query,
+      query.sort,
+      query.messageTab
+    ).then(page => ({
+      ...page,
+      profile: page.profile ? {
+        ...page.profile,
+        about: sanitizeRichText(page.profile.about ?? '')
+      } : null,
+      messages: {
+        ...page.messages,
+        items: page.messages.items.map(message => ({
+          ...message,
+          content: sanitizeRichText(message.content ?? ''),
+          isFavorite: message.isFavorite === true
         }))
-      })).catch(error => {
-        const message = error instanceof Error ? error.message : String(error)
-        if (message.includes('ACCOUNT_NOT_FOUND')) {
-          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        }
-        throw error
-      })
-    }
-
-    return this.data.transaction<ProfileMessagesPageData>(
-      PROFILE_MESSAGES_PAGE_COLLECTIONS,
-      (collections) => {
-        const accounts = collections.accounts as AccountRecord[]
-        const account = userId
-          ? accounts.find((item) => item.id === userId)
-          : undefined
-        if (userId && !account) {
-          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        }
-
-        const profiles = collections.profiles as Profile[]
-        const profileRecord = profiles.find(
-          (profile) => profile.url === normalizedUrl
-        )
-        if (!profileRecord) {
-          return {
-            records: collections,
-            result: {
-              profile: null,
-              viewerRelationship: null,
-              currentProfileType: null,
-              isProfileOwner: false,
-              messageTab: 'all',
-              messages: paginate<ProfileMessage>([], query),
-              senders: [],
-              messagePermissions: {}
-            }
-          }
-        }
-
-        const profile = {
-          ...profileRecord,
-          about: sanitizeRichText(profileRecord.about ?? '')
-        }
-        const viewerProfileIds = new Set(account?.profiles ?? [])
-        const currentProfileId = account?.currentProfile && viewerProfileIds.has(account.currentProfile) ? account.currentProfile : null
-        const currentProfileType = currentProfileId ? profiles.find((item) => item.id === currentProfileId)?.type ?? null : null
-        const viewerRelationship = currentProfileId && currentProfileId !== profile.id
-          ? (collections.relationships as Relationship[]).find((relationship) => relationship.profiles.includes(currentProfileId) && relationship.profiles.includes(profile.id)) ?? null
-          : null
-        const isProfileOwner = viewerProfileIds.has(profile.id)
-        const profilesById = new Map(profiles.map(sender => [sender.id, sender] as const))
-        const messageTab: ProfileMessagesPageData['messageTab'] = isProfileOwner && query.messageTab === 'favorites' ? 'favorites' : 'all'
-        const visibleMessages = filterAndSortList(
-          (collections.profile_messages as ProfileMessage[])
-            .filter(message => message.toProfileId === profile.id && (isProfileOwner || viewerProfileIds.has(message.fromProfileId)) && (messageTab !== 'favorites' || message.isFavorite === true))
-            .map(message => ({ ...message, content: sanitizeRichText(message.content ?? ''), isFavorite: message.isFavorite === true })),
-          query.query, query.sort,
-          message => [message.content, profilesById.get(message.fromProfileId)?.name ?? '', profilesById.get(message.fromProfileId)?.url ?? ''].join(' '),
-          message => message.createdAt, message => profilesById.get(message.fromProfileId)?.name ?? '', message => message.id
-        )
-        const messages = paginate(visibleMessages, query)
-        const senderIds = new Set(
-          messages.items.map((message) => message.fromProfileId)
-        )
-        const senders = profiles
-          .filter((sender) => senderIds.has(sender.id))
-          .map((sender) => ({
-            ...sender,
-            about: sanitizeRichText(sender.about ?? '')
-          }))
-
-        return {
-          records: collections,
-          result: {
-            profile,
-            viewerRelationship,
-            currentProfileType,
-            isProfileOwner,
-            messageTab,
-            messages,
-            senders,
-            messagePermissions: Object.fromEntries(messages.items.map(message => [message.id, {
-              canDelete: isProfileOwner || viewerProfileIds.has(message.fromProfileId),
-              canFavorite: isProfileOwner,
-              canReply: isProfileOwner && Boolean(currentProfileId && currentProfileType === profile.type) && message.fromProfileId !== profile.id
-            }]))
-          }
-        }
+      },
+      senders: page.senders.map(sender => ({
+        ...sender,
+        about: sanitizeRichText(sender.about ?? '')
+      }))
+    })).catch(error => {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('ACCOUNT_NOT_FOUND')) {
+        throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
       }
-    )
+      throw error
+    })
+
   }
 }
