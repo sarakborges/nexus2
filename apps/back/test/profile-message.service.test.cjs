@@ -226,6 +226,34 @@ test('profile message mutations use targeted relational writes without collectio
   assert.equal(calls[2][1].isFavorite, true)
 })
 
+test('image-only profile messages pass attachment IDs to the relational write', async () => {
+  const imageId = '123e4567-e89b-42d3-a456-426614174000'
+  let write
+  const repository = {
+    async createProfileMessage(change) {
+      write = change
+      return change.message
+    }
+  }
+  const uploads = {
+    getEditorImageIds() {
+      return [imageId]
+    }
+  }
+  const service = new ProfileMessageService(repository, uploads)
+
+  const message = await service.sendMessage(
+    'account-1',
+    'sender',
+    'recipient',
+    '<img src="/api/uploads/' + imageId + '/content" alt="Attached image">'
+  )
+
+  assert.ok(message.content.includes('<img'))
+  assert.deepEqual(write.imageIds, [imageId])
+  assert.equal(write.message.id, message.id)
+})
+
 test('empty profile messages are rejected before the relational write', async () => {
   let writeCalled = false
   const repository = {
