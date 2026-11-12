@@ -15,16 +15,14 @@ export class DomainAccessService {
   }
 
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
-    return this.normalizeProfiles(
-      await this.data.readByIds<Profile>('profiles', ids)
-    )
+    return this.normalizeProfiles(await this.data.getProfilesByIds(ids))
   }
 
   async readCommunitiesByIds(ids: string[]): Promise<Community[]> {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []
 
-    const selected = await this.data.readByIds<Community>('communities', uniqueIds)
+    const selected = await this.data.getCommunitiesByIds(uniqueIds)
     if (selected.every(community => this.hasStoredCommunityType(community))) {
       return this.normalizeCommunities(selected)
     }

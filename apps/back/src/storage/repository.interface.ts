@@ -280,6 +280,8 @@ export type ActivityFeedRow = {
  */
 export interface DataRepository {
   getAccountById(id: string): Promise<AccountRepositoryRecord | null>
+  getProfilesByIds(ids: readonly string[]): Promise<Profile[]>
+  getCommunitiesByIds(ids: readonly string[]): Promise<Community[]>
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
   createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void>
@@ -434,7 +436,6 @@ export interface DataRepository {
     limit: number,
     cursor: ActivityFeedCursor | null
   ): Promise<ActivityFeedRow[]>
-  readByIds<T extends { id: string }>(collection: string, ids: readonly string[]): Promise<T[]>
   update<T>(collection: string, updater: (records: T[]) => T[]): Promise<T[]>
   transaction<T>(
     collections: readonly string[],
