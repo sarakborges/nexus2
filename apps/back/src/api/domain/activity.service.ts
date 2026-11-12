@@ -306,38 +306,16 @@ export class ActivityService {
     cursor: ActivityFeedCursor | null = null
   ): Promise<ActivityFeedPage> {
     const safeLimit = Math.min(Math.max(Math.trunc(limit) || 10, 1), 50)
-
-    if (this.data.getActivityFeedRows) {
-      const rows = await this.data.getActivityFeedRows(userId, safeLimit, cursor)
-      const hasMore = rows.length > safeLimit
-      const pageRows = hasMore ? rows.slice(0, safeLimit) : rows
-      const items = pageRows.map(row => this.toRecentActivity(row))
-      const lastItem = pageRows[pageRows.length - 1]
-
-      return {
-        items,
-        nextCursor: hasMore && lastItem
-          ? { updatedAt: lastItem.updated_at_ms, id: lastItem.id }
-          : null,
-        hasMore
-      }
-    }
-
-    const activities = await this.getRecentActivity(userId)
-    const remaining = cursor
-      ? activities.filter(activity =>
-          activity.updatedAt < cursor.updatedAt ||
-          (activity.updatedAt === cursor.updatedAt && activity.id > cursor.id)
-        )
-      : activities
-    const pageItems = remaining.slice(0, safeLimit)
-    const hasMore = remaining.length > safeLimit
-    const lastItem = pageItems[pageItems.length - 1]
+    const rows = await this.data.getActivityFeedRows(userId, safeLimit + 1, cursor)
+    const hasMore = rows.length > safeLimit
+    const pageRows = hasMore ? rows.slice(0, safeLimit) : rows
+    const items = pageRows.map(row => this.toRecentActivity(row))
+    const lastItem = pageRows[pageRows.length - 1]
 
     return {
-      items: pageItems,
+      items,
       nextCursor: hasMore && lastItem
-        ? { updatedAt: lastItem.updatedAt, id: lastItem.id }
+        ? { updatedAt: lastItem.updated_at_ms, id: lastItem.id }
         : null,
       hasMore
     }
@@ -393,31 +371,14 @@ export class ActivityService {
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
-    if (this.data.getActivityFeedRows) {
-      const limit = 50
-      const items: RecentActivity[] = []
-      let cursor: ActivityFeedCursor | null = null
-      for (;;) {
-        const rows = await this.data.getActivityFeedRows(userId, limit + 1, cursor)
-        const hasMore = rows.length > limit
-        const pageRows = hasMore ? rows.slice(0, limit) : rows
-        items.push(...pageRows.map(row => this.toRecentActivity(row)))
-        const last = pageRows[pageRows.length - 1]
-        if (!hasMore || !last) break
-        cursor = { updatedAt: last.updated_at_ms, id: last.id }
-      }
-      return items
-    }
+    const items: RecentActivity[] = []
+    let cursor: ActivityFeedCursor | null = null
 
-    return this.data.transaction<RecentActivity[]>(
-      COLLECTIONS,
-      collections => {
-        const normalized = this.access.normalizeCommunitiesInRecords(collections)
-        return {
-          records: normalized.records,
-          result: this.getRecentActivityFromFeedRecords(userId, normalized.records, normalized.communities)
-        }
-      }
-    )
+    for (;;) {
+      const page = await this.getRecentActivityPage(userId, 50, cursor)
+      items.push(...page.items)
+      if (!page.hasMore || !page.nextCursor) return items
+      cursor = page.nextCursor
+    }
   }
 }
