@@ -2,7 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
 
-function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTransaction) {
+function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTransaction, beforeCreateMessage) {
   if (!collections.has('accounts')) {
     collections.set('accounts', [{
       id: 'user',
@@ -12,6 +12,13 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
+    async createProfileMessage(change) {
+      beforeCreateMessage?.(structuredClone(change))
+      const messages = collections.get('profile_messages') ?? []
+      messages.push(structuredClone(change.message))
+      collections.set('profile_messages', messages)
+      return structuredClone(change.message)
+    },
     async getProfileMessages(profileId, userId, page) {
       const account = userId
         ? (collections.get('accounts') ?? []).find(item => item.id === userId)
@@ -122,14 +129,14 @@ test('sanitizes legacy profile, community, and message HTML on reads', async () 
   assert.doesNotMatch(messages.items[0].content, /iframe|unsafe/i)
 })
 
-test('validates and attaches uploaded image references in the message transaction', async () => {
+test('passes uploaded image IDs to the relational message write', async () => {
   const imageId = '123e4567-e89b-42d3-a456-426614174000'
   const imageReference = '/api/uploads/' + imageId + '/content'
   const calls = []
   const uploads = {
-    attachEditorImagesToRecords(records, userId, html, resourceType, resourceId, participants) {
-      calls.push({ method: 'attach', userId, html, resourceType, resourceId, participants })
-      return records
+    getEditorImageIds(html) {
+      calls.push({ method: 'getEditorImageIds', html })
+      return [imageId]
     }
   }
   const collections = new Map([
@@ -139,7 +146,9 @@ test('validates and attaches uploaded image references in the message transactio
     ]],
     ['profile_messages', []]
   ])
-  const service = makeService(collections, ['sender'], uploads)
+  const service = makeService(collections, ['sender'], uploads, undefined, change => {
+    calls.push({ method: 'createProfileMessage', imageIds: change.imageIds, message: change.message })
+  })
 
   const message = await service.sendMessage(
     'user',
@@ -148,12 +157,12 @@ test('validates and attaches uploaded image references in the message transactio
     '<p>Hello</p><img src="' + imageReference + '" alt="Uploaded">'
   )
 
-  assert.equal(calls.length, 1)
-  assert.equal(calls[0].method, 'attach')
+  assert.equal(calls.length, 2)
+  assert.equal(calls[0].method, 'getEditorImageIds')
   assert.ok(calls[0].html.includes(imageReference))
-  assert.equal(calls[0].resourceType, 'profile-message')
-  assert.equal(calls[0].resourceId, message.id)
-  assert.deepEqual(calls[0].participants, { fromProfileId: 'sender', toProfileId: 'recipient' })
+  assert.equal(calls[1].method, 'createProfileMessage')
+  assert.deepEqual(calls[1].imageIds, [imageId])
+  assert.equal(calls[1].message.id, message.id)
 })
 
 
