@@ -41,6 +41,78 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
   ])
   const data = {
     async getCommunityRelationships(userId, communityId) {
+    async listCommunityMembers(communityId, tab, page, userId, actorProfileId) {
+      beforeTransaction?.(
+        ['accounts', 'profiles', 'communities', 'community_relationships'],
+        collections
+      )
+      const communityRecord = (collections.get('communities') ?? []).find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!['all', 'staff', 'banned'].includes(tab)) throw new Error('INVALID_MEMBER_TAB')
+
+      const accounts = collections.get('accounts') ?? []
+      const profiles = collections.get('profiles') ?? []
+      const relationships = collections.get('community_relationships') ?? []
+      const account = userId ? accounts.find(item => item.id === userId) : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+
+      const ownerId = relationships.find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerId ? profiles.find(profile => profile.id === ownerId) : undefined
+      const communityType = owner?.type ?? communityRecord.type
+
+      if (
+        communityRecord.privacy === 'private' &&
+        !relationships.some(item =>
+          item.profiles[1] === communityId &&
+          owned.has(item.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(item.type)
+        )
+      ) {
+        throw new Error('COMMUNITY_NOT_FOUND')
+      }
+
+      if (tab !== 'all') {
+        if (!userId || !actorProfileId) throw new Error('COMMUNITY_STAFF_REQUIRED')
+        if (!owned.has(actorProfileId)) throw new Error('PROFILE_NOT_OWNED')
+        const actor = profiles.find(profile => profile.id === actorProfileId)
+        if (!actor) throw new Error('PROFILE_NOT_FOUND')
+        const actorRole = relationships.find(item =>
+          item.profiles[1] === communityId && item.profiles[0] === actorProfileId
+        )?.type
+        if (!['owner', 'moderator'].includes(actorRole ?? '')) {
+          throw new Error('COMMUNITY_STAFF_REQUIRED')
+        }
+      }
+
+      const allowedRoles = tab === 'staff'
+        ? ['owner', 'moderator']
+        : tab === 'banned'
+          ? ['blocked']
+          : ['owner', 'moderator', 'connection']
+      const roleByProfile = new Map(
+        relationships
+          .filter(item => item.profiles[1] === communityId && allowedRoles.includes(item.type))
+          .map(item => [item.profiles[0], item.type])
+      )
+      const members = profiles
+        .filter(profile => roleByProfile.has(profile.id) && profile.type === communityType)
+        .map(profile => ({ ...profile, role: roleByProfile.get(profile.id) }))
+      const pageSize = 20
+      const totalItems = members.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(members.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
       beforeTransaction?.(['community_relationships'], collections)
       const allCommunities = collections.get('communities') ?? []
       const communityRecord = allCommunities.find(item => item.id === communityId)
