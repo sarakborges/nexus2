@@ -7,24 +7,18 @@ import {
   UnauthorizedException
 } from '@nestjs/common'
 import type {
-  Community,
   CommunityRelationship,
   CommunityRelationshipType,
   PaginatedResult,
-  Profile
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { CommunityMemberProfile } from './domain.types'
-import type { AccountRecord } from '../auth/auth.types'
-import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { DomainAccessService } from './domain-access.service'
 
 @Injectable()
 export class CommunityMembershipService {
   constructor(
-    @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly access: DomainAccessService
+    @Inject(DATA_REPOSITORY) private readonly data: DataRepository
   ) {}
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
