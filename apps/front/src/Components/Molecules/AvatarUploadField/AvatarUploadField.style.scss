@@ -113,3 +113,16 @@
   height: auto;
   max-height: inherit;
 }
+
+
+@media (max-width: 560px) {
+  .avatar-upload-field__actions {
+    align-items: stretch;
+  }
+
+  .avatar-upload-field__button,
+  .avatar-upload-field__remove {
+    flex: 1 1 132px;
+    min-height: 40px;
+  }
+}
