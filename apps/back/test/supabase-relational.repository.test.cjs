@@ -92,6 +92,7 @@ test('getCommunitiesByIds resolves inherited owner types with targeted relationa
     }
     if (requestUrl.pathname.endsWith('/community_relationships')) {
       assert.equal(requestUrl.searchParams.get('community_id'), 'in.("community-business","community-social")')
+      assert.equal(requestUrl.searchParams.get('type'), 'eq.owner')
       return new Response(JSON.stringify([
         {
           community_id: 'community-business',

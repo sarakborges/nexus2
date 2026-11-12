@@ -117,7 +117,12 @@ export class SupabaseRelationalRepository implements DataRepository {
 
     const [communityRows, relationshipRows] = await Promise.all([
       this.selectRowsByValues('communities', 'id', uniqueIds),
-      this.selectRowsByValues('community_relationships', 'community_id', uniqueIds)
+      this.selectRowsByValues(
+        'community_relationships',
+        'community_id',
+        uniqueIds,
+        [['type', 'eq.owner']]
+      )
     ])
     const ownerRelationships = relationshipRows
       .filter(row => row.type === 'owner')
@@ -1833,7 +1838,8 @@ export class SupabaseRelationalRepository implements DataRepository {
   private async selectRowsByValues(
     table: string,
     column: string,
-    values: readonly string[]
+    values: readonly string[],
+    filters: readonly (readonly [string, string])[] = []
   ): Promise<DatabaseRow[]> {
     if (values.length === 0) return []
     const url = new URL(this.baseUrl + '/rest/v1/' + table)
@@ -1842,6 +1848,9 @@ export class SupabaseRelationalRepository implements DataRepository {
       column,
       'in.(' + values.map(value => '"' + value.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"').join(',') + ')'
     )
+    for (const [filterColumn, expression] of filters) {
+      url.searchParams.set(filterColumn, expression)
+    }
     url.searchParams.set('limit', String(Math.max(values.length * 10, MAX_FILTERED_ROWS)))
     const response = await fetch(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
