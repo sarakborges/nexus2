@@ -42,6 +42,47 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       collections.set('profile_messages', messages)
       return structuredClone(change.message)
     },
+    async upsertProfileRelationship(change) {
+      beforeTransaction?.(['relationships'], collections)
+      const accounts = collections.get('accounts') ?? []
+      const account = accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(change.sourceProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const allProfiles = collections.get('profiles') ?? []
+      const source = allProfiles.find(item => item.id === change.sourceProfileId)
+      const target = allProfiles.find(item => item.id === change.targetProfileId)
+      if (!source || !target) throw new Error('PROFILE_NOT_FOUND')
+      if (source.id === target.id) throw new Error('INVALID_RELATIONSHIP_PARTICIPANTS')
+      if (source.type !== target.type) throw new Error('PROFILE_TYPE_MISMATCH')
+      const active = allProfiles.find(item => item.id === account.currentProfile)
+      if (active && active.type !== source.type) throw new Error('PROFILE_TYPE_MISMATCH')
+
+      const pair = [change.sourceProfileId, change.targetProfileId].sort()
+      const relationships = collections.get('relationships') ?? []
+      const current = relationships.find(item =>
+        item.profiles[0] === pair[0] && item.profiles[1] === pair[1]
+      )
+      if (change.type === 'requested' && current) {
+        throw new Error('RELATIONSHIP_ALREADY_EXISTS')
+      }
+      if (change.type === 'connection' && (
+        current?.type !== 'requested' || current.requestedBy === change.sourceProfileId
+      )) {
+        throw new Error('ONLY_RECIPIENT_CAN_ACCEPT_REQUEST')
+      }
+      const next = {
+        profiles: pair,
+        type: change.type,
+        requestedBy: change.type === 'requested' ? change.sourceProfileId : null,
+        blockedBy: change.type === 'blocked' ? change.sourceProfileId : null,
+        updatedAt: change.updatedAt
+      }
+      collections.set('relationships', [
+        ...relationships.filter(item => item.profiles[0] !== pair[0] || item.profiles[1] !== pair[1]),
+        next
+      ])
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
