@@ -60,14 +60,14 @@ function makeRepository() {
 
 test('sender may delete their own message', async () => {
   const repository = makeRepository()
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
   await service.deleteMessage('user-1', 'recipient-1', 'message-1', 'sender-1')
   assert.equal(repository.records.profile_messages.length, 0)
 })
 
 test('recipient may delete a received message', async () => {
   const repository = makeRepository()
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
   await service.deleteMessage('user-1', 'recipient-1', 'message-1', 'recipient-1')
   assert.equal(repository.records.profile_messages.length, 0)
 })
@@ -75,7 +75,7 @@ test('recipient may delete a received message', async () => {
 test('unrelated owned profile cannot delete someone else’s message', async () => {
   const repository = makeRepository()
   repository.records.accounts[0].profiles.push('unrelated')
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
   await assert.rejects(
     service.deleteMessage('user-1', 'recipient-1', 'message-1', 'unrelated'),
     error => error instanceof ForbiddenException
@@ -84,7 +84,7 @@ test('unrelated owned profile cannot delete someone else’s message', async () 
 
 test('recipient can favorite without changing the message timestamp', async () => {
   const repository = makeRepository()
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
   const result = await service.setMessageFavorite('user-1', 'recipient-1', 'message-1', 'recipient-1', true)
   assert.equal(result.isFavorite, true)
   assert.equal(result.createdAt, 123)
@@ -92,7 +92,7 @@ test('recipient can favorite without changing the message timestamp', async () =
 
 test('sender cannot favorite a message received by another profile', async () => {
   const repository = makeRepository()
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
   await assert.rejects(
     service.setMessageFavorite('user-1', 'recipient-1', 'message-1', 'sender-1', true),
     error => error instanceof ForbiddenException
@@ -146,8 +146,7 @@ function createSendService({ audience = 'everyone', senderOwnsRecipient = false,
       return structuredClone(change.message)
     }
   }
-  const access = {}
-  const service = new ProfileMessageService(repository, access)
+  const service = new ProfileMessageService(repository)
   return service
 }
 
@@ -205,7 +204,7 @@ test('profile message mutations use targeted relational writes without collectio
     }
   }
   const uploads = { getEditorImageIds() { return ['image-1'] } }
-  const service = new ProfileMessageService(repository, {}, uploads)
+  const service = new ProfileMessageService(repository, uploads)
 
   const sent = await service.sendMessage('account-1', 'sender', 'recipient', '<p>Hello</p>')
   await service.deleteMessage('account-1', 'recipient', 'message-1', 'sender')
@@ -235,7 +234,7 @@ test('empty profile messages are rejected before the relational write', async ()
       throw new Error('Invalid messages must not reach the relational write.')
     }
   }
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
 
   await assert.rejects(
     service.sendMessage('account-1', 'sender', 'recipient', '<p><br></p>'),
@@ -266,7 +265,7 @@ test('private inbox reads use the paginated relational query instead of collecti
       }
     }
   }
-  const service = new ProfileMessageService(repository, {})
+  const service = new ProfileMessageService(repository)
 
   const page = await service.getMessages('recipient-1', 'user-1', { page: 2 })
 
