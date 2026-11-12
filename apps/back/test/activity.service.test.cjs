@@ -1,6 +1,5 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
-const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 const { ActivityService } = require('../dist/api/domain/activity.service.js')
 
 function profile(id) {
@@ -16,197 +15,100 @@ function profile(id) {
   }
 }
 
-function createService(records) {
-  let requestedCollections
+test('activity page reads typed feed rows with a stable keyset cursor', async () => {
+  let args
   const repository = {
-    async transaction(collections, updater) {
-      requestedCollections = [...collections]
-      return updater(structuredClone(records)).result
-    }
-  }
-  const access = new DomainAccessService(repository)
-  return {
-    service: new ActivityService(repository, access),
-    requestedCollections: () => requestedCollections
-  }
-}
-
-test('loads feed entries from the persisted feed_activities collection', async () => {
-  const records = {
-    accounts: [{
-      id: 'account-1',
-      profiles: ['profile-own'],
-      currentProfile: 'profile-own'
-    }],
-    profiles: [profile('profile-own'), profile('profile-friend')],
-    communities: [],
-    relationships: [{
-      profiles: ['profile-friend', 'profile-own'],
-      type: 'connection',
-      requestedBy: null,
-      blockedBy: null,
-      updatedAt: 100
-    }],
-    community_relationships: [],
-    profile_posts: [{
-      id: 'post-1',
-      profileId: 'profile-friend',
-      content: '<p>Friend post</p>',
-      createdAt: 200
-    }],
-    profile_settings: [
-      {
-        profileId: 'profile-own',
-        messageAudience: 'everyone',
-        publishActivityTypes: ['friend_connected', 'profile_post', 'community_created', 'community_membership'],
-        showFriendActivityTypes: ['profile_post']
-      },
-      {
-        profileId: 'profile-friend',
-        messageAudience: 'everyone',
-        publishActivityTypes: ['profile_post'],
-        showFriendActivityTypes: []
-      }
-    ],
-    feed_activities: [{
-      id: 'post:post-1',
-      type: 'profile_post',
-      profileId: 'profile-friend',
-      friendId: null,
-      communityId: null,
-      postId: 'post-1',
-      role: null,
-      updatedAt: 200
-    }]
-  }
-  const { service, requestedCollections } = createService(records)
-
-  const result = await service.getRecentActivity('account-1')
-
-  assert.deepEqual(result.map(item => item.id), ['post:post-1'])
-  assert.equal(result[0].profile.id, 'profile-friend')
-  assert.ok(requestedCollections().includes('feed_activities'))
-})
-
-test('applies the viewer feed preferences to stored friend activity', async () => {
-  const records = {
-    accounts: [{
-      id: 'account-1',
-      profiles: ['profile-own'],
-      currentProfile: 'profile-own'
-    }],
-    profiles: [profile('profile-own'), profile('profile-friend')],
-    communities: [],
-    relationships: [{
-      profiles: ['profile-own', 'profile-friend'],
-      type: 'connection',
-      requestedBy: null,
-      blockedBy: null,
-      updatedAt: 100
-    }],
-    community_relationships: [],
-    profile_posts: [{
-      id: 'post-1',
-      profileId: 'profile-friend',
-      content: '<p>Friend post</p>',
-      createdAt: 200
-    }],
-    profile_settings: [{
-      profileId: 'profile-own',
-      messageAudience: 'everyone',
-      publishActivityTypes: ['friend_connected', 'profile_post', 'community_created', 'community_membership'],
-      showFriendActivityTypes: []
-    }],
-    feed_activities: [{
-      id: 'post:post-1',
-      type: 'profile_post',
-      profileId: 'profile-friend',
-      friendId: null,
-      communityId: null,
-      postId: 'post-1',
-      role: null,
-      updatedAt: 200
-    }]
-  }
-  const { service } = createService(records)
-
-  assert.deepEqual(await service.getRecentActivity('account-1'), [])
-})
-
-
-test('reads relational activity pages with a stable cursor and maps typed rows', async () => {
-  let transactionCalled = false
-  let readArguments
-  const repository = {
-    async transaction() {
-      transactionCalled = true
-      throw new Error('The relational feed must not load collection snapshots.')
-    },
     async getActivityFeedRows(userId, limit, cursor) {
-      readArguments = { userId, limit, cursor }
+      args = { userId, limit, cursor }
       return [
         {
-          id: 'post:post-1',
-          type: 'profile_post',
-          updated_at_ms: 200,
-          profile: profile('profile-own'),
-          friend: null,
-          community: null,
-          content: '<p>First page</p>',
-          role: null
+          id: 'post:1', type: 'profile_post', updated_at_ms: 200,
+          profile: profile('profile-own'), friend: null, community: null,
+          content: '<p>First page</p><script>unsafe()</script>', role: null
         },
         {
-          id: 'post:post-2',
-          type: 'profile_post',
-          updated_at_ms: 100,
-          profile: profile('profile-own'),
-          friend: null,
-          community: null,
-          content: '<p>Next page</p>',
-          role: null
+          id: 'post:2', type: 'profile_post', updated_at_ms: 100,
+          profile: profile('profile-own'), friend: null, community: null,
+          content: '<p>Next page</p>', role: null
         }
       ]
     }
   }
-  const service = new ActivityService(repository, {})
-
+  const service = new ActivityService(repository)
   const page = await service.getRecentActivityPage(
-    'account-1',
-    1,
-    { updatedAt: 300, id: 'cursor-before-feed' }
+    'account-1', 1, { updatedAt: 300, id: 'cursor-before-feed' }
   )
-
-  assert.equal(transactionCalled, false)
-  assert.deepEqual(readArguments, {
+  assert.deepEqual(args, {
     userId: 'account-1',
     limit: 1,
     cursor: { updatedAt: 300, id: 'cursor-before-feed' }
   })
-  assert.deepEqual(page.items.map(item => item.id), ['post:post-1'])
-  assert.equal(page.items[0].type, 'profile_post')
+  assert.equal(page.items.length, 1)
   assert.equal(page.items[0].content, '<p>First page</p>')
-  assert.deepEqual(page.nextCursor, { updatedAt: 200, id: 'post:post-1' })
+  assert.deepEqual(page.nextCursor, { updatedAt: 200, id: 'post:1' })
   assert.equal(page.hasMore, true)
 })
 
-
-test('legacy recent activity retrieval pages through relational feed rows instead of snapshots', async () => {
-  const calls = []
-  const row = {
-    id: 'activity-1', type: 'profile_post', updated_at_ms: 100,
-    profile: { id: 'profile-1', name: 'Profile', type: 'social' },
-    friend: null, community: null, content: '<p>Post</p>', role: null
+test('activity page maps all typed feed variants', async () => {
+  const friend = profile('friend')
+  const community = { id: 'community-1', name: 'Community', url: 'community' }
+  const repository = {
+    async getActivityFeedRows() {
+      return [
+        {
+          id: 'friend:1', type: 'friend_connected', updated_at_ms: 400,
+          profile: profile('profile-1'), friend, community: null, content: null, role: null
+        },
+        {
+          id: 'post:1', type: 'profile_post', updated_at_ms: 300,
+          profile: profile('profile-1'), friend: null, community: null, content: '<p>Post</p>', role: null
+        },
+        {
+          id: 'community:1', type: 'community_created', updated_at_ms: 200,
+          profile: profile('profile-1'), friend: null, community, content: null, role: null
+        },
+        {
+          id: 'membership:1', type: 'community_membership', updated_at_ms: 100,
+          profile: profile('profile-1'), friend: null, community, content: null, role: 'moderator'
+        }
+      ]
+    }
   }
+  const service = new ActivityService(repository)
+  const page = await service.getRecentActivityPage('account-1', 10)
+  assert.deepEqual(page.items.map(item => item.type), [
+    'friend_connected', 'profile_post', 'community_created', 'community_membership'
+  ])
+  assert.equal(page.items[0].friend.id, 'friend')
+  assert.equal(page.items[2].community.id, 'community-1')
+  assert.equal(page.items[3].role, 'moderator')
+  assert.equal(page.hasMore, false)
+  assert.equal(page.nextCursor, null)
+})
+
+test('getRecentActivity pages through relational feed rows without collection snapshots', async () => {
+  const calls = []
+  const rows = Array.from({ length: 51 }, (_, index) => ({
+    id: 'post:' + index,
+    type: 'profile_post',
+    updated_at_ms: 1000 - index,
+    profile: profile('profile-1'),
+    friend: null,
+    community: null,
+    content: '<p>Post</p>',
+    role: null
+  }))
   const repository = {
     async getActivityFeedRows(userId, limit, cursor) {
       calls.push({ userId, limit, cursor })
-      return calls.length === 1 ? [row] : []
-    },
-    async transaction() { throw new Error('Legacy activity reads must not load collection snapshots.') }
+      return cursor ? rows.slice(50) : rows
+    }
   }
-  const service = new ActivityService(repository, {})
-  const result = await service.getRecentActivity('account-1')
-  assert.equal(result.length,1)
-  assert.equal(result[0].type,'profile_post')
-  assert.deepEqual(calls,[{userId:'account-1',limit:51,cursor:null}])
+  const service = new ActivityService(repository)
+  const items = await service.getRecentActivity('account-1')
+  assert.equal(items.length, 51)
+  assert.deepEqual(calls, [
+    { userId: 'account-1', limit: 51, cursor: null },
+    { userId: 'account-1', limit: 51, cursor: { updatedAt: 951, id: 'post:49' } }
+  ])
 })
