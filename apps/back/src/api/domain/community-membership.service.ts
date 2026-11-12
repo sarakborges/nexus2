@@ -42,54 +42,13 @@ export class CommunityMembershipService {
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<CommunityMemberProfile>> {
-    if (this.data.listCommunityMembers) {
-      try {
-        return await this.data.listCommunityMembers(
-          communityId, tab, q.page, userId, actorProfileId
-        )
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
+    try {
+      return await this.data.listCommunityMembers(
+        communityId, tab, q.page, userId, actorProfileId
+      )
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const normalized = this.access.normalizeCommunitiesInRecords(collections)
-        const records = normalized.records
-        const accounts = records.accounts as AccountRecord[]
-        const profiles = records.profiles as Profile[]
-        const relationships = records.community_relationships as CommunityRelationship[]
-        this.access.assertCommunityReadableInRecords(
-          communityId, userId, accounts, normalized.communities, relationships
-        )
-        if (!['all', 'staff', 'banned'].includes(tab)) throw new BadRequestException('INVALID_MEMBER_TAB')
-        if (tab !== 'all') {
-          if (!userId || !actorProfileId) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-          const context = this.access.assertCommunityProfileInRecords(
-            userId, actorProfileId, communityId, accounts, profiles, normalized.communities, relationships,
-            { allowDifferentActiveType: true }
-          )
-          if (!['owner', 'moderator'].includes(context.role ?? '')) {
-            throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-          }
-        }
-        const community = normalized.communities.find(item => item.id === communityId)!
-        const types = tab === 'staff' ? ['owner', 'moderator'] :
-          tab === 'banned' ? ['blocked'] : ['owner', 'moderator', 'connection']
-        const roleByProfile = new Map(
-          relationships
-            .filter(record => record.profiles[1] === communityId && types.includes(record.type))
-            .map(record => [record.profiles[0], record.type] as const)
-        )
-        const result = paginate(
-          profiles
-            .filter(profile => roleByProfile.has(profile.id) && profile.type === community.type)
-            .map(profile => ({ ...profile, role: roleByProfile.get(profile.id)! })),
-          q
-        )
-        return { records, result }
-      }
-    )
   }
 
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<CommunityMemberProfile>> {
