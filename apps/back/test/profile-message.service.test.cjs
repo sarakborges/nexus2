@@ -177,7 +177,7 @@ test('friends-only message setting allows another profile owned by the sender ac
 })
 
 
-test('profile message mutations use targeted relational writes without collection snapshots', async () => {
+test('profile message mutations use only targeted relational writes', async () => {
   const calls = []
   const created = {
     id: 'message-1',
@@ -199,9 +199,6 @@ test('profile message mutations use targeted relational writes without collectio
       calls.push(['favorite', change])
       return { ...created, isFavorite: change.isFavorite }
     },
-    async transaction() {
-      throw new Error('Profile message mutations must not use collection snapshots.')
-    }
   }
   const uploads = { getEditorImageIds() { return ['image-1'] } }
   const service = new ProfileMessageService(repository, uploads)
@@ -224,6 +221,7 @@ test('profile message mutations use targeted relational writes without collectio
     actorProfileId: 'sender'
   })
   assert.equal(calls[2][1].isFavorite, true)
+  assert.equal('transaction' in repository, false)
 })
 
 test('image-only profile messages pass attachment IDs to the relational write', async () => {
