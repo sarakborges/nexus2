@@ -279,13 +279,13 @@ export type ActivityFeedRow = {
  * after a concurrent commit.
  */
 export interface DataRepository {
-  getAccountById?(id: string): Promise<AccountRepositoryRecord | null>
+  getAccountById(id: string): Promise<AccountRepositoryRecord | null>
   getProfilesByIds?(ids: readonly string[]): Promise<Profile[]>
   getCommunitiesByIds?(ids: readonly string[]): Promise<Community[]>
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
   createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
-  updateAccountPreferences?(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
+  updateAccountPreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
   createUpload?(change: MediaUploadCreateWrite): Promise<void>
   getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
   deletePendingUpload?(userId: string, id: string): Promise<void>
@@ -322,7 +322,7 @@ export interface DataRepository {
     now: number
   ): Promise<void>
   deleteRefreshTokenByHash?(tokenHash: string): Promise<void>
-  changeAccountProfile?(change: AccountProfileChange): Promise<void>
+  changeAccountProfile(change: AccountProfileChange): Promise<void>
   upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
   changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
