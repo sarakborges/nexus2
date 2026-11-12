@@ -134,6 +134,56 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
         totalPages
       }
     },
+    async listPendingMembers(userId, communityId, actorProfileId, page) {
+      beforeTransaction?.(
+        ['accounts', 'profiles', 'communities', 'community_relationships'],
+        collections
+      )
+      const accounts = collections.get('accounts') ?? []
+      const account = accounts.find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      const communityRecord = (collections.get('communities') ?? []).find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!account.profiles.includes(actorProfileId)) throw new Error('PROFILE_NOT_OWNED')
+      const profiles = collections.get('profiles') ?? []
+      const actor = profiles.find(profile => profile.id === actorProfileId)
+      if (!actor) throw new Error('PROFILE_NOT_FOUND')
+
+      const relationships = collections.get('community_relationships') ?? []
+      const actorRole = relationships.find(item =>
+        item.profiles[1] === communityId && item.profiles[0] === actorProfileId
+      )?.type
+      if (!['owner', 'moderator'].includes(actorRole ?? '')) {
+        throw new Error('COMMUNITY_STAFF_REQUIRED')
+      }
+
+      const ownerId = relationships.find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerId ? profiles.find(profile => profile.id === ownerId) : undefined
+      const communityType = owner?.type ?? communityRecord.type
+      const pendingIds = new Set(
+        relationships
+          .filter(item => item.profiles[1] === communityId && item.type === 'requested')
+          .map(item => item.profiles[0])
+      )
+      const pending = profiles
+        .filter(profile => pendingIds.has(profile.id) && profile.type === communityType)
+        .map(profile => ({ ...profile, role: 'requested' }))
+      const pageSize = 20
+      const totalItems = pending.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(pending.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
+
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
