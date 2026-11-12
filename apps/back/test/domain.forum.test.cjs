@@ -1,6 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 
 const communityId = 'community-1'
 const profiles = [
@@ -180,6 +181,175 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       return structuredClone(outcome.result)
     }
   }
+  const access = new DomainAccessService(data)
+  data.createCommunityForumTopic = async ({ userId, topic }) => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'media_files'],
+    collections => {
+      access.assertForumMemberInRecords(
+        userId, topic.profileId, topic.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const mediaFiles = uploads
+        ? uploads.attachEditorImagesToRecords(
+            collections.media_files, userId, topic.content, 'community-forum-topic', topic.id
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [topic.profileId], topic.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, topic.communityId, topic.updatedAt),
+          community_forum_topics: [...collections.community_forum_topics, topic],
+          media_files: mediaFiles
+        },
+        result: topic
+      }
+    }
+  )
+  data.createCommunityForumReply = async ({ userId, reply }) => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
+    collections => {
+      access.assertForumMemberInRecords(
+        userId, reply.profileId, reply.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const topic = collections.community_forum_topics.find(item =>
+        item.id === reply.topicId && item.communityId === reply.communityId
+      )
+      if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      if (topic.isLocked) throw new Error('FORUM_TOPIC_LOCKED')
+      const mediaFiles = uploads
+        ? uploads.attachEditorImagesToRecords(
+            collections.media_files, userId, reply.content, 'community-forum-reply', reply.id
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [reply.profileId], reply.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, reply.communityId, reply.updatedAt),
+          community_forum_replies: [...collections.community_forum_replies, reply],
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === reply.topicId ? { ...item, updatedAt: reply.updatedAt } : item
+          ),
+          media_files: mediaFiles
+        },
+        result: reply
+      }
+    }
+  )
+  data.moderateCommunityForumTopic = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics'],
+    collections => {
+      access.assertForumStaffInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const current = collections.community_forum_topics.find(item =>
+        item.id === change.topicId && item.communityId === change.communityId
+      )
+      if (!current) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      const updated = {
+        ...current,
+        ...(typeof change.isPinned === 'boolean' ? { isPinned: change.isPinned } : {}),
+        ...(typeof change.isLocked === 'boolean' ? { isLocked: change.isLocked } : {}),
+        updatedAt: change.updatedAt
+      }
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === change.topicId ? updated : item
+          )
+        },
+        result: updated
+      }
+    }
+  )
+  data.deleteCommunityForumTopic = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies', 'media_files'],
+    collections => {
+      const context = access.assertCommunityProfileInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships, { allowDifferentActiveType: true }
+      )
+      const topic = collections.community_forum_topics.find(item =>
+        item.id === change.topicId && item.communityId === change.communityId
+      )
+      if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      if (
+        topic.profileId !== change.actorProfileId &&
+        context.role !== 'owner' &&
+        context.role !== 'moderator'
+      ) throw new Error('FORUM_DELETE_NOT_ALLOWED')
+      const replies = collections.community_forum_replies.filter(item =>
+        item.topicId === change.topicId && item.communityId === change.communityId
+      )
+      const resources = [
+        { resourceType: 'community-forum-topic', resourceId: change.topicId },
+        ...replies.map(reply => ({ resourceType: 'community-forum-reply', resourceId: reply.id }))
+      ]
+      const mediaFiles = uploads
+        ? uploads.detachResourceAttachmentsFromRecords(collections.media_files, null, resources)
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_topics: collections.community_forum_topics.filter(item => item.id !== change.topicId),
+          community_forum_replies: collections.community_forum_replies.filter(item =>
+            item.topicId !== change.topicId || item.communityId !== change.communityId
+          ),
+          media_files: mediaFiles
+        },
+        result: undefined
+      }
+    }
+  )
+  data.deleteCommunityForumReply = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
+    collections => {
+      const context = access.assertCommunityProfileInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships, { allowDifferentActiveType: true }
+      )
+      const reply = collections.community_forum_replies.find(item =>
+        item.id === change.replyId && item.communityId === change.communityId
+      )
+      if (!reply) throw new Error('FORUM_REPLY_NOT_FOUND')
+      if (
+        reply.profileId !== change.actorProfileId &&
+        context.role !== 'owner' &&
+        context.role !== 'moderator'
+      ) throw new Error('FORUM_DELETE_NOT_ALLOWED')
+      const mediaFiles = uploads
+        ? uploads.detachResourceAttachmentsFromRecords(collections.media_files, null, [{
+            resourceType: 'community-forum-reply', resourceId: change.replyId
+          }])
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_replies: collections.community_forum_replies.filter(item => item.id !== change.replyId),
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === reply.topicId ? { ...item, updatedAt: change.updatedAt } : item
+          ),
+          media_files: mediaFiles
+        },
+        result: reply.topicId
+      }
+    }
+  )
   const auth = {
     async getUser(id) { const ids = owned[id] ?? []; return { id, email: id + '@example.com', profiles: ids, currentProfile: ids[0] ?? null } },
     async ownsProfile(id, profileId) { return (owned[id] ?? []).includes(profileId) },
@@ -203,6 +373,9 @@ test('forum members can publish and read topics with paginated replies', async (
 test('forum content attaches editor images and detaches them when content is deleted', async () => {
   const calls = []
   const uploads = {
+    getEditorImageIds(html) {
+      return Array.from(html.matchAll(/\\/api\\/uploads\\/([^/]+)\\/content/g), match => match[1])
+    },
     attachEditorImagesToRecords(records, userId, html, resourceType, resourceId) {
       calls.push({ operation: 'attach', userId, html, resourceType, resourceId })
       return records
