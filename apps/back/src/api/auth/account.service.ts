@@ -23,53 +23,25 @@ export class AccountService {
   }
 
   async updateCurrentProfile(userId: string, profileId: string): Promise<AuthenticatedUser> {
-    if (this.repository.changeAccountProfile) {
-      await this.changeAccountProfile({
-        accountId: userId,
-        profileId,
-        action: 'select',
-        makeCurrent: true,
-        previousCurrentProfileId: null
-      })
-      return this.getUser(userId)
-    }
-
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account || !account.profiles.includes(profileId)) {
-        throw new UnauthorizedException('PROFILE_NOT_OWNED')
-      }
-      updated = { ...account, currentProfile: profileId }
-      return accounts.map(item => item.id === userId ? updated! : item)
+    await this.changeAccountProfile({
+      accountId: userId,
+      profileId,
+      action: 'select',
+      makeCurrent: true,
+      previousCurrentProfileId: null
     })
-    return this.toPublicUser(updated!)
+    return this.getUser(userId)
   }
 
   async addProfile(userId: string, profileId: string, makeCurrent = false): Promise<AuthenticatedUser> {
-    if (this.repository.changeAccountProfile) {
-      await this.changeAccountProfile({
-        accountId: userId,
-        profileId,
-        action: 'add',
-        makeCurrent,
-        previousCurrentProfileId: null
-      })
-      return this.getUser(userId)
-    }
-
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      updated = {
-        ...account,
-        profiles: account.profiles.includes(profileId) ? account.profiles : [...account.profiles, profileId],
-        currentProfile: makeCurrent ? profileId : account.currentProfile ?? profileId
-      }
-      return accounts.map(item => item.id === userId ? updated! : item)
+    await this.changeAccountProfile({
+      accountId: userId,
+      profileId,
+      action: 'add',
+      makeCurrent,
+      previousCurrentProfileId: null
     })
-    return this.toPublicUser(updated!)
+    return this.getUser(userId)
   }
 
   async removeProfile(
@@ -77,30 +49,12 @@ export class AccountService {
     profileId: string,
     previousCurrentProfileId: string | null = null
   ): Promise<void> {
-    if (this.repository.changeAccountProfile) {
-      await this.changeAccountProfile({
-        accountId: userId,
-        profileId,
-        action: 'remove',
-        makeCurrent: false,
-        previousCurrentProfileId
-      })
-      return
-    }
-
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account || !account.profiles.includes(profileId)) return accounts
-
-      const profiles = account.profiles.filter(id => id !== profileId)
-      const currentProfile = account.currentProfile === profileId
-        ? (previousCurrentProfileId && profiles.includes(previousCurrentProfileId)
-          ? previousCurrentProfileId
-          : profiles[0] ?? null)
-        : account.currentProfile
-
-      const updated = { ...account, profiles, currentProfile }
-      return accounts.map(item => item.id === userId ? updated : item)
+    await this.changeAccountProfile({
+      accountId: userId,
+      profileId,
+      action: 'remove',
+      makeCurrent: false,
+      previousCurrentProfileId
     })
   }
 
@@ -111,26 +65,13 @@ export class AccountService {
   }
 
   async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences> {
-    if (this.repository.updateAccountPreferences) {
-      try {
-        return await this.repository.updateAccountPreferences(userId, preferences)
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        throw error
-      }
+    try {
+      return await this.repository.updateAccountPreferences(userId, preferences)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      throw error
     }
-    let updated: AccountRecord | undefined
-    await this.repository.update<AccountRecord>('accounts', accounts => {
-      const account = accounts.find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      updated = {
-        ...account,
-        preferences: { language: 'system', theme: 'system', ...account.preferences, ...preferences }
-      }
-      return accounts.map(item => item.id === userId ? updated! : item)
-    })
-    return updated!.preferences!
   }
 
   async ownsProfile(userId: string, profileId: string): Promise<boolean> {
@@ -146,7 +87,7 @@ export class AccountService {
     previousCurrentProfileId: string | null
   }): Promise<void> {
     try {
-      await this.repository.changeAccountProfile!(change)
+      await this.repository.changeAccountProfile(change)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (message.includes('PROFILE_NOT_OWNED')) {
@@ -163,8 +104,7 @@ export class AccountService {
   }
 
   private async readAccount(userId: string): Promise<AccountRecord | undefined> {
-    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [userId])
-    return account
+    return (await this.repository.getAccountById(userId)) ?? undefined
   }
 
   private toPublicUser(account: AccountRecord): AuthenticatedUser {
