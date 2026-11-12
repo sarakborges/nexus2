@@ -5,14 +5,11 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
-import { DomainAccessService } from './domain-access.service'
-import type { AccountRecord } from '../auth/auth.types'
 
 @Injectable()
 export class ProfileMessageService {
   constructor(
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
-    private readonly access: DomainAccessService,
     @Optional() private readonly uploads?: UploadsService
   ) {}
 
