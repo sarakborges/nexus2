@@ -47,7 +47,9 @@ export class AuthService {
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
-    const account = await this.repository.findAccountByEmail(email)
+    const account = this.repository.findAccountByEmail
+      ? await this.repository.findAccountByEmail<AccountRecord>(email)
+      : (await this.repository.read<AccountRecord>('accounts')).find(item => item.email === email)
     if (!account || !(await this.verifyPassword(credentials.password, account))) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
@@ -70,7 +72,7 @@ export class AuthService {
       throw new UnauthorizedException('REFRESH_TOKEN_INVALID')
     }
 
-    const account = await this.repository.getAccountById(payload.sub)
+    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [payload.sub])
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
 
     return this.issueTokens(account, {
@@ -86,7 +88,13 @@ export class AuthService {
   async signOut(token?: string): Promise<void> {
     if (!token) return
     const hash = this.hashToken(token)
-    await this.repository.deleteRefreshTokenByHash(hash)
+    if (this.repository.deleteRefreshTokenByHash) {
+      await this.repository.deleteRefreshTokenByHash(hash)
+      return
+    }
+    await this.repository.update<RefreshTokenRecord>('refresh_tokens', records =>
+      records.filter(item => item.tokenHash !== hash)
+    )
   }
 
   getUser(userId: string): Promise<AuthenticatedUser> {
@@ -145,8 +153,26 @@ export class AuthService {
       expiresAt: now + this.refreshTtl * 1000
     }
     const rotation = context.kind === 'refresh' ? context.rotation : undefined
+    const rotateRecords = (records: RefreshTokenRecord[]): RefreshTokenRecord[] => {
+      if (rotation) {
+        const previous = records.find(item =>
+          item.id === rotation.id &&
+          item.userId === rotation.userId &&
+          item.tokenHash === rotation.tokenHash &&
+          item.expiresAt > now
+        )
+        if (!previous) throw new UnauthorizedException('REFRESH_TOKEN_REVOKED')
+      }
 
-    if (context.kind === 'sign-up') {
+      return [
+        ...records.filter(record =>
+          record.expiresAt > now && (!rotation || record.id !== rotation.id)
+        ),
+        nextRecord
+      ]
+    }
+
+    if (context.kind === 'sign-up' && this.repository.createAccountWithRefreshToken) {
       try {
         await this.repository.createAccountWithRefreshToken({
           accountId: account.id,
@@ -161,8 +187,29 @@ export class AuthService {
         if (message.includes('EMAIL_ALREADY_EXISTS')) throw new ConflictException('EMAIL_ALREADY_EXISTS')
         throw error
       }
-    } else {
+    } else if (context.kind === 'sign-up') {
+      await this.repository.transaction(
+        ['accounts', 'refresh_tokens'],
+        collections => {
+          const accounts = collections.accounts as AccountRecord[]
+          if (accounts.some(existing => existing.email === account.email)) {
+            throw new ConflictException('EMAIL_ALREADY_EXISTS')
+          }
+
+          return {
+            records: {
+              ...collections,
+              accounts: [...accounts, account],
+              refresh_tokens: rotateRecords(collections.refresh_tokens as RefreshTokenRecord[])
+            },
+            result: undefined
+          }
+        }
+      )
+    } else if (this.repository.issueRefreshToken) {
       await this.repository.issueRefreshToken(nextRecord, rotation ?? null, now)
+    } else {
+      await this.repository.update<RefreshTokenRecord>('refresh_tokens', rotateRecords)
     }
 
     return {
