@@ -12,7 +12,7 @@ export class DomainAccessService {
 
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
     return this.normalizeProfiles(
-      await this.data.readByIds<Profile>('profiles', ids)
+      await this.data.getProfilesByIds(ids)
     )
   }
 
@@ -20,7 +20,7 @@ export class DomainAccessService {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []
 
-    const selected = await this.data.readByIds<Community>('communities', uniqueIds)
+    const selected = await this.data.getCommunitiesByIds(uniqueIds)
     return this.normalizeCommunities(selected)
   }
 
