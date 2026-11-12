@@ -283,7 +283,7 @@ export interface DataRepository {
   getProfilesByIds?(ids: readonly string[]): Promise<Profile[]>
   getCommunitiesByIds?(ids: readonly string[]): Promise<Community[]>
   read<T>(collection: string): Promise<T[]>
-  findAccountByEmail?<T>(email: string): Promise<T | null>
+  findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
   createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
   updateAccountPreferences?(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
   createUpload?(change: MediaUploadCreateWrite): Promise<void>
