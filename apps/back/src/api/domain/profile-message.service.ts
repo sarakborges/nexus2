@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Inject, Injectable, NotFoundException, Optional, UnauthorizedException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
-import type { PaginatedResult, Profile, ProfileMessage, Relationship, ProfileSettings } from '@nexus/common'
+import type { PaginatedResult, ProfileMessage } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
@@ -35,7 +35,7 @@ export class ProfileMessageService {
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     const normalized = sanitizeRichText(content)
     const plainText = getRichTextPlainText(normalized)
-    const hasImage = /<img\b/i.test(normalized)
+    const hasImage = /<img\\b/i.test(normalized)
     const message: ProfileMessage = {
       id: randomUUID(),
       fromProfileId,
@@ -49,65 +49,12 @@ export class ProfileMessageService {
       throw new ConflictException('INVALID_MESSAGE')
     }
 
-    if (this.data.createProfileMessage) {
-      const imageIds = this.uploads?.getEditorImageIds(normalized) ?? []
-      try {
-        return await this.data.createProfileMessage({ userId, message, imageIds })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
+    const imageIds = this.uploads?.getEditorImageIds(normalized) ?? []
+    try {
+      return await this.data.createProfileMessage({ userId, message, imageIds })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-
-    return this.data.transaction<ProfileMessage>(
-      ['accounts', 'profiles', 'profile_messages', 'media_files', 'relationships', 'profile_settings'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Profile[]
-        const messages = collections.profile_messages as ProfileMessage[]
-        const mediaFiles = collections.media_files as UploadedFileRecord[]
-        this.access.assertOwnsInRecords(userId, fromProfileId, accounts, profiles)
-        const recipientSettings = ((collections.profile_settings as Array<ProfileSettings & { profileId: string }> | undefined) ?? [])
-          .find(item => item.profileId === toProfileId)
-        const messageAudience = recipientSettings?.messageAudience ?? 'everyone'
-        if (messageAudience === 'friends') {
-          const senderAccount = accounts.find(item => item.id === userId)
-          const isSameOwner = senderAccount?.profiles.includes(toProfileId) ?? false
-          const isFriend = (collections.relationships as Relationship[]).some(relationship =>
-            relationship.type === 'connection' &&
-            relationship.profiles.includes(fromProfileId) &&
-            relationship.profiles.includes(toProfileId)
-          )
-          if (!isSameOwner && !isFriend) throw new ForbiddenException('PROFILE_MESSAGE_FRIENDS_ONLY')
-        }
-        this.access.assertSameType(
-          profiles.find(profile => profile.id === fromProfileId),
-          profiles.find(profile => profile.id === toProfileId)
-        )
-        const nextMediaFiles = this.uploads
-          ? this.uploads.attachEditorImagesToRecords(
-              mediaFiles,
-              userId,
-              normalized,
-              'profile-message',
-              message.id,
-              { fromProfileId, toProfileId }
-            )
-          : mediaFiles
-
-        if ((!plainText && !hasImage) || normalized.length > 8000) {
-          throw new ConflictException('INVALID_MESSAGE')
-        }
-        return {
-          records: {
-            ...collections,
-            profiles: this.access.touchProfilesActivity(profiles, [fromProfileId, toProfileId], message.createdAt),
-            profile_messages: [...messages, message],
-            media_files: nextMediaFiles
-          },
-          result: message
-        }
-      }
-    )
   }
 
   async deleteMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
