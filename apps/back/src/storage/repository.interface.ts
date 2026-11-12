@@ -196,7 +196,7 @@ export type MediaFileRecord = {
   createdAt: number
   completedAt: number | null
   expiresAt: number | null
-  resourceType: string | null
+  resourceType: 'profile' | 'community' | 'profile-message' | 'profile-post' | 'community-forum-topic' | 'community-forum-reply' | null
   resourceId: string | null
   messageFromProfileId: string | null
   messageToProfileId: string | null
@@ -248,7 +248,7 @@ export type PreviousAvatarDeletionSchedule = {
 }
 export type EditorImageReadRequest = { userId: string | null; id: string; now: number }
 
-export type ActivityFeedRow = {export type ActivityFeedRow = {
+export type ActivityFeedRow = {
   id: string
   type: RecentActivity['type']
   updated_at_ms: number

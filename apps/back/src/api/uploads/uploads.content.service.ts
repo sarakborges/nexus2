@@ -35,7 +35,7 @@ export class UploadsContentService {
       return this.downloadEditorImage(record)
     }
 
-    const initialRecords = await this.data.read<UploadedFileRecord>('media_files')    const initialRecords = await this.data.read<UploadedFileRecord>('media_files')
+    const initialRecords = await this.data.read<UploadedFileRecord>('media_files')
     const locator = initialRecords.find(item =>
       item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
     )

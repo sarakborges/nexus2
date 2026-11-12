@@ -2184,7 +2184,7 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
   }
 
-  private mapProfile(row: DatabaseRow): Profile {  private mapProfile(row: DatabaseRow): Profile {
+  private mapProfile(row: DatabaseRow): Profile {
     if (
       typeof row.id !== 'string' || typeof row.name !== 'string' ||
       typeof row.url !== 'string' || typeof row.picture !== 'string' ||
