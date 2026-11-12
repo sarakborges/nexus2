@@ -47,8 +47,8 @@ test('community directory sanitizes community results and validates directory ki
   const page = await service.getProfileDirectoryPage('profile', 'communities', { page: 1 }, null)
   assert.equal(called, true)
   assert.equal(page.communities.items[0].about.includes('<script>'), false)
-  await assert.rejects(
-    service.getProfileDirectoryPage('profile', 'invalid', { page: 1 }, null),
+  assert.throws(
+    () => service.getProfileDirectoryPage('profile', 'invalid', { page: 1 }, null),
     error => error instanceof BadRequestException && error.message === 'INVALID_PROFILE_DIRECTORY'
   )
 })
