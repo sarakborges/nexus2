@@ -181,6 +181,53 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       return structuredClone(outcome.result)
     }
   }
+  data.getCommunityByUrl = async (url, userId) => {
+    beforeTransaction?.(['accounts', 'profiles', 'communities', 'community_relationships'], collections)
+    const current = (collections.get('communities') ?? []).find(item => item.url === url)
+    if (!current) throw new Error('COMMUNITY_NOT_FOUND')
+    const profiles = collections.get('profiles') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    const ownerId = relationships.find(item =>
+      item.profiles[1] === current.id && item.type === 'owner'
+    )?.profiles[0]
+    const owner = ownerId ? profiles.find(item => item.id === ownerId) : undefined
+    const result = { ...current, type: owner?.type ?? current.type }
+    if (current.privacy === 'private') {
+      const account = userId
+        ? (collections.get('accounts') ?? []).find(item => item.id === userId)
+        : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+      const canRead = relationships.some(item =>
+        item.profiles[1] === current.id &&
+        owned.has(item.profiles[0]) &&
+        ['owner', 'moderator', 'connection'].includes(item.type)
+      )
+      if (!canRead) {
+        result.picture = ''
+        result.about = ''
+      }
+    }
+    return structuredClone(result)
+  }
+  data.updateProfile = async change => {
+    beforeTransaction?.(['accounts', 'profiles', 'media_files'], collections)
+    const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+    if (!account || !account.profiles.includes(change.profileId)) throw new Error('PROFILE_NOT_OWNED')
+    const profiles = collections.get('profiles') ?? []
+    const current = profiles.find(item => item.id === change.profileId)
+    if (!current) throw new Error('PROFILE_NOT_FOUND')
+    const updated = {
+      ...current,
+      name: change.name,
+      url: change.url,
+      picture: change.picture,
+      about: change.about,
+      lastActivity: change.lastActivity
+    }
+    collections.set('profiles', profiles.map(item => item.id === change.profileId ? updated : item))
+    return { profile: structuredClone(updated), previousPicture: null }
+  }
   const access = new DomainAccessService(data)
   data.createCommunityForumTopic = async ({ userId, topic }) => data.transaction(
     ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'media_files'],
@@ -481,7 +528,7 @@ test('legacy community type is normalized to its owner profile type', async () =
   collections.set('communities', [{ ...community, type: 'social' }])
   const normalized = await service.getCommunity('forum')
   assert.equal(normalized.type, 'rp')
-  assert.equal(collections.get('communities')[0].type, 'rp')
+  assert.equal(collections.get('communities')[0].type, 'social')
 })
 
 test('a user cannot interact through an owned profile with a type different from the active profile', async () => {

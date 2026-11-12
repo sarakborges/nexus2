@@ -12,6 +12,16 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
+    async getProfileByUrl(url) {
+      const profile = (collections.get('profiles') ?? []).find(item => item.url === url)
+      if (!profile) throw new Error('PROFILE_NOT_FOUND')
+      return structuredClone(profile)
+    },
+    async getCommunityByUrl(url, userId) {
+      const community = (collections.get('communities') ?? []).find(item => item.url === url)
+      if (!community) throw new Error('COMMUNITY_NOT_FOUND')
+      return structuredClone(community)
+    },
     async createProfileMessage(change) {
       beforeCreateMessage?.(structuredClone(change))
       const messages = collections.get('profile_messages') ?? []
