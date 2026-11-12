@@ -113,49 +113,18 @@ export class CommunityMembershipService {
   }
 
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
-    const now = Date.now()
-    if (this.data.changeCommunityRelationship) {
-      try {
-        await this.changeRelationship({
-          userId, communityId, targetProfileId: newOwnerId, actorProfileId: actorId,
-          action: 'transfer', updatedAt: now
-        })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      return
+    try {
+      await this.changeRelationship({
+        userId,
+        communityId,
+        targetProfileId: newOwnerId,
+        actorProfileId: actorId,
+        action: 'transfer',
+        updatedAt: Date.now()
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    await this.data.transaction(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Profile[]
-        const communities = collections.communities as Community[]
-        const all = collections.community_relationships as CommunityRelationship[]
-        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
-          userId, actorId, communityId, accounts, profiles, communities, all
-        )
-        this.access.assertSameType(profiles.find(profile => profile.id === newOwnerId), community)
-        const communityRecords = all.filter(record => record.profiles[1] === communityId)
-        if (actorRole !== 'owner' || this.access.role(newOwnerId, communityRecords) !== 'moderator') {
-          throw new ForbiddenException('OWNERSHIP_TRANSFER_NOT_ALLOWED')
-        }
-        return {
-          records: {
-            ...collections,
-            profiles: this.access.touchProfilesActivity(profiles, [actorId, newOwnerId], now),
-            communities: this.access.touchCommunityActivity(communities, communityId, now),
-            community_relationships: all.map(record => {
-              if (record.profiles[1] !== communityId) return record
-              if (record.profiles[0] === actorId) return { ...record, type: 'moderator', updatedAt: now }
-              if (record.profiles[0] === newOwnerId) return { ...record, type: 'owner', updatedAt: now }
-              return record
-            })
-          },
-          result: undefined
-        }
-      }
-    )
   }
 
   private async changeRelationship(change: {
