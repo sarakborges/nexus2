@@ -334,7 +334,7 @@ export interface DataRepository {
   ): Promise<ProfileSettings>
   createProfileMessage(change: ProfileMessageWrite): Promise<ProfileMessage>
   deleteProfileMessage(change: ProfileMessageRemoval): Promise<void>
-  setProfileMessageFavorite?(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
+  setProfileMessageFavorite(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
   getProfileMessages(
     profileId: string,
     userId: string | null,
