@@ -75,28 +75,51 @@ function createSendService({ audience = 'everyone', senderOwnsRecipient = false,
   const sender = { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' }
   const recipient = { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
   const records = {
-    accounts: [{ id: 'user-1', profiles: senderOwnsRecipient ? ['sender', 'recipient'] : ['sender'] }],
+    accounts: [{
+      id: 'user-1',
+      profiles: senderOwnsRecipient ? ['sender', 'recipient'] : ['sender'],
+      currentProfile: 'sender'
+    }],
     profiles: [sender, recipient],
     profile_messages: [],
     media_files: [],
     relationships: isFriend ? [{ profiles: ['sender', 'recipient'], type: 'connection' }] : [],
     profile_settings: audience ? [{ profileId: 'recipient', messageAudience: audience }] : []
   }
+  const calls = []
   const repository = {
-    async transaction(_collections, updater) {
-      const outcome = updater(records)
-      if (outcome.records) Object.assign(records, outcome.records)
-      return outcome.result
+    async createProfileMessage(change) {
+      calls.push(structuredClone(change))
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (!account.profiles.includes(change.message.fromProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const from = records.profiles.find(item => item.id === change.message.fromProfileId)
+      const to = records.profiles.find(item => item.id === change.message.toProfileId)
+      if (!from || !to) throw new Error('PROFILE_NOT_FOUND')
+      if (from.type !== to.type) throw new Error('PROFILE_TYPE_MISMATCH')
+
+      const settings = records.profile_settings.find(item => item.profileId === to.id)
+      if (
+        settings?.messageAudience === 'friends' &&
+        !account.profiles.includes(to.id) &&
+        !records.relationships.some(item =>
+          item.type === 'connection' &&
+          item.profiles.includes(from.id) &&
+          item.profiles.includes(to.id)
+        )
+      ) {
+        throw new Error('PROFILE_MESSAGE_FRIENDS_ONLY')
+      }
+
+      records.profile_messages.push(structuredClone(change.message))
+      return structuredClone(change.message)
     }
   }
-  const access = {
-    assertOwnsInRecords(userId, profileId, accounts) {
-      if (userId !== 'user-1' || !accounts[0].profiles.includes(profileId)) throw new ForbiddenException()
-    },
-    assertSameType() {},
-    touchProfilesActivity(profiles) { return profiles }
-  }
-  return new ProfileMessageService(repository, access)
+  const access = {}
+  const service = new ProfileMessageService(repository, access)
+  return { service, records, calls }
 }
 
 test('message settings default to allowing everyone for existing profiles', async () => {
