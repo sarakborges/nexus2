@@ -378,14 +378,14 @@ export interface DataRepository {
   getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData>
   getCommunityEditPage(url: string, userId: string | null): Promise<CommunityEditPageData>
   getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
-  getCommunitiesPage?(
+  getCommunitiesPage(
     userId: string,
     page: number,
     query: string | undefined,
     sort: ListSort,
     communityTab: 'all' | 'managed'
   ): Promise<CommunitiesPageData>
-  getProfileDirectoryPage?(
+  getProfileDirectoryPage(
     url: string,
     kind: 'friends' | 'communities',
     userId: string | null,
@@ -394,7 +394,7 @@ export interface DataRepository {
     sort: ListSort
   ): Promise<ProfileDirectoryPageData>
   getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData>
-  getCommunityMembersPage?(
+  getCommunityMembersPage(
     url: string,
     userId: string | null,
     page: number,

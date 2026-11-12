@@ -1,286 +1,52 @@
+const test = require('node:test')
 const assert = require('node:assert/strict')
-const { test } = require('node:test')
-const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
+const { NotFoundException, UnauthorizedException } = require('@nestjs/common')
 const { CommunityMembersPageService } = require('../dist/api/domain/community-members-page.service.js')
 
-const records = {
-  accounts: [{
-    id: 'viewer-1',
-    email: 'viewer@example.com',
-    profiles: ['profile-owner', 'profile-moderator', 'profile-member'],
-    currentProfile: 'profile-member',
-    password: { hash: 'hash', salt: 'salt' }
-  }],
-  profiles: [
-    { id: 'profile-owner', name: 'Owner', url: 'owner', picture: '', about: '', type: 'social' },
-    { id: 'profile-moderator', name: 'Moderator', url: 'moderator', picture: '', about: '', type: 'social' },
-    { id: 'profile-member', name: 'Member', url: 'member', picture: '', about: '', type: 'social' },
-    { id: 'profile-other-member', name: 'Other member', url: 'other-member', picture: '', about: '', type: 'social' },
-    { id: 'profile-pending', name: 'Pending', url: 'pending', picture: '', about: '', type: 'social' },
-    { id: 'profile-blocked', name: 'Blocked', url: 'blocked', picture: '', about: '', type: 'social' },
-    { id: 'profile-other-type', name: 'Other type', url: 'other-type', picture: '', about: '', type: 'rp' }
-  ],
-  communities: [
-    { id: 'community-1', name: 'Community', url: 'community', picture: '/picture.png', about: '<p>About</p>', type: 'social', privacy: 'public' }
-  ],
-  community_relationships: [
-    { profiles: ['profile-owner', 'community-1'], type: 'owner', requestedBy: null, blockedBy: null, updatedAt: 600 },
-    { profiles: ['profile-moderator', 'community-1'], type: 'moderator', requestedBy: null, blockedBy: null, updatedAt: 500 },
-    { profiles: ['profile-member', 'community-1'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 400 },
-    { profiles: ['profile-other-member', 'community-1'], type: 'connection', requestedBy: null, blockedBy: null, updatedAt: 300 },
-    { profiles: ['profile-pending', 'community-1'], type: 'requested', requestedBy: 'profile-pending', blockedBy: null, updatedAt: 200 },
-    { profiles: ['profile-blocked', 'community-1'], type: 'blocked', requestedBy: null, blockedBy: 'profile-owner', updatedAt: 100 },
-    { profiles: ['profile-other-type', 'community-1'], type: 'blocked', requestedBy: null, blockedBy: 'profile-other-type', updatedAt: 50 }
-  ]
-}
-
-function createRepository(initialRecords = records) {
-  let transactionCalls = 0
-  return {
-    get transactionCalls() { return transactionCalls },
-    async transaction(collections, updater) {
-      transactionCalls += 1
-      assert.deepEqual(collections, [
-        'accounts',
-        'profiles',
-        'communities',
-        'community_relationships'
-      ])
-      const outcome = updater(structuredClone(initialRecords))
-      return outcome.result
-    }
-  }
-}
-
-function createService(repository) {
-  return new CommunityMembersPageService(
-    repository,
-    new DomainAccessService(repository)
-  )
-}
-
-function query(overrides = {}) {
-  return {
-    page: 1,
-    pageSize: 20,
-    pendingPage: 1,
-    tab: 'all',
-    ...overrides
-  }
-}
-
-test('community members page aggregate returns directory, pending requests and management access in one transaction', async () => {
-  const repository = createRepository()
-  const service = createService(repository)
-
-  const result = await service.getCommunityMembersPage(
-    'community',
-    query(),
-    'viewer-1'
-  )
-
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.community.id, 'community-1')
-  assert.equal(result.viewerRelationship.type, 'connection')
-  assert.equal(result.currentProfileType, 'social')
-  assert.deepEqual(
-    result.relationships.map(relationship => relationship.type),
-    ['owner', 'moderator', 'connection']
-  )
-  assert.equal(result.actorProfileId, 'profile-owner')
-  assert.equal(result.actorRole, 'owner')
-  assert.equal(result.isStaff, true)
-  assert.equal(result.visibleTab, 'all')
-  assert.deepEqual(
-    result.members.items.map(profile => profile.id),
-    ['profile-owner', 'profile-moderator', 'profile-member', 'profile-other-member']
-  )
-  assert.equal(result.members.totalItems, 4)
-  assert.deepEqual(result.pending.items.map(profile => profile.id), ['profile-pending'])
-  assert.equal(result.pending.totalItems, 1)
-  assert.equal(result.pending.items[0].role, 'requested')
-})
-
-test('staff and banned tabs return only their matching membership roles', async () => {
-  const repository = createRepository()
-  const service = createService(repository)
-
-  const staff = await service.getCommunityMembersPage(
-    'community',
-    query({ tab: 'staff' }),
-    'viewer-1'
-  )
-  const banned = await service.getCommunityMembersPage(
-    'community',
-    query({ tab: 'banned' }),
-    'viewer-1'
-  )
-
-  assert.equal(repository.transactionCalls, 2)
-  assert.equal(staff.visibleTab, 'staff')
-  assert.deepEqual(
-    staff.members.items.map(profile => profile.id),
-    ['profile-owner', 'profile-moderator']
-  )
-  assert.equal(banned.visibleTab, 'banned')
-  assert.deepEqual(
-    banned.members.items.map(profile => profile.id),
-    ['profile-blocked']
-  )
-})
-
-test('non-staff viewers are limited to the all-members tab and cannot see pending requests', async () => {
-  const memberRecords = structuredClone(records)
-  memberRecords.accounts[0].profiles = ['profile-member']
-  memberRecords.accounts[0].currentProfile = 'profile-member'
-  const repository = createRepository(memberRecords)
-  const service = createService(repository)
-
-  const result = await service.getCommunityMembersPage(
-    'community',
-    query({ tab: 'staff' }),
-    'viewer-1'
-  )
-
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.isStaff, false)
-  assert.equal(result.actorProfileId, null)
-  assert.equal(result.visibleTab, 'all')
-  assert.equal(result.members.totalItems, 4)
-  assert.deepEqual(result.pending.items, [])
-  assert.equal(result.pending.totalItems, 0)
-})
-
-
-test('active profile type mismatch disables staff access even when another owned profile is a moderator', async () => {
-  const mismatchRecords = structuredClone(records)
-  mismatchRecords.accounts[0].profiles.push('profile-other-type')
-  mismatchRecords.accounts[0].currentProfile = 'profile-other-type'
-  const repository = createRepository(mismatchRecords)
-  const service = createService(repository)
-
-  const result = await service.getCommunityMembersPage(
-    'community',
-    query({ tab: 'staff' }),
-    'viewer-1'
-  )
-
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.currentProfileType, 'rp')
-  assert.equal(result.viewerRelationship, null)
-  assert.equal(result.actorProfileId, null)
-  assert.equal(result.actorRole, null)
-  assert.equal(result.isStaff, false)
-  assert.equal(result.visibleTab, 'all')
-  assert.equal(result.members.totalItems, 4)
-  assert.deepEqual(result.pending.items, [])
-  assert.equal(result.pending.totalItems, 0)
-})
-
-test('public community members can be viewed anonymously without management controls', async () => {
-  const repository = createRepository()
-  const service = createService(repository)
-
-  const result = await service.getCommunityMembersPage(
-    'community',
-    query(),
-    null
-  )
-
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.isStaff, false)
-  assert.deepEqual(result.relationships, [])
-  assert.equal(result.viewerRelationship, null)
-  assert.equal(result.currentProfileType, null)
-  assert.equal(result.members.totalItems, 4)
-  assert.equal(result.pending.totalItems, 0)
-})
-
-test('private community member directory hides the resource from non-members', async () => {
-  const privateRecords = structuredClone(records)
-  privateRecords.communities[0].privacy = 'private'
-  privateRecords.accounts[0].profiles = []
-  privateRecords.accounts[0].currentProfile = null
-  const repository = createRepository(privateRecords)
-  const service = createService(repository)
-
-  await assert.rejects(
-    () => service.getCommunityMembersPage(
-      'community',
-      query(),
-      'viewer-1'
-    ),
-    error => error.getStatus() === 404 && error.message === 'COMMUNITY_NOT_FOUND'
-  )
-  assert.equal(repository.transactionCalls, 1)
-})
-
-test('unknown community returns empty paginated member and pending lists', async () => {
-  const repository = createRepository()
-  const service = createService(repository)
-
-  const result = await service.getCommunityMembersPage(
-    'missing',
-    query({ page: 4, pendingPage: 3 }),
-    'viewer-1'
-  )
-
-  assert.equal(repository.transactionCalls, 1)
-  assert.equal(result.community, null)
-  assert.equal(result.members.items.length, 0)
-  assert.equal(result.members.page, 1)
-  assert.equal(result.pending.items.length, 0)
-  assert.equal(result.pending.page, 1)
-})
-
-
-test('community members page uses a targeted read and sanitizes members and pending profiles', async () => {
+test('community members page uses the relational query for both paginated lists and sanitizes profiles', async () => {
   const calls = []
   const result = {
     community: { id: 'community-1' },
     relationships: [],
     viewerRelationship: null,
     currentProfileType: 'social',
-    actorProfileId: null,
-    actorRole: null,
-    isStaff: false,
-    visibleTab: 'all',
+    actorProfileId: 'profile-1',
+    actorRole: 'moderator',
+    isStaff: true,
+    visibleTab: 'staff',
     members: {
-      items: [{
-        id: 'profile-1', name: 'Member', url: 'member', picture: '',
-        about: '<p>Member</p><script>unsafe()</script>', type: 'social',
-        createdAt: 1, lastActivity: 2, role: 'connection'
-      }],
-      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+      items: [{ id: 'member-1', about: '<p>Member</p><script>unsafe()</script>' }],
+      page: 2, pageSize: 20, totalItems: 1, totalPages: 1
     },
     pending: {
-      items: [{
-        id: 'profile-2', name: 'Pending', url: 'pending', picture: '',
-        about: '<p>Pending</p><script>unsafe()</script>', type: 'social',
-        createdAt: 1, lastActivity: 2, role: 'requested'
-      }],
-      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+      items: [{ id: 'pending-1', about: '<p>Pending</p><script>unsafe()</script>' }],
+      page: 3, pageSize: 20, totalItems: 1, totalPages: 1
     }
   }
-  const repository = {
-    async getCommunityMembersPage(url, userId, page, pendingPage, query, sort, tab) {
-      calls.push({ url, userId, page, pendingPage, query, sort, tab })
-      return result
-    },
-    async transaction() {
-      throw new Error('Community members reads must not load collection snapshots.')
-    }
-  }
-  const service = new CommunityMembersPageService(repository, {})
-
-  const page = await service.getCommunityMembersPage(
-    'community', { page: 2, pendingPage: 3, query: 'member', sort: 'name-asc', tab: 'staff' }, 'account-1'
-  )
-
-  assert.deepEqual(calls, [{
-    url: 'community', userId: 'account-1', page: 2, pendingPage: 3,
-    query: 'member', sort: 'name-asc', tab: 'staff'
-  }])
+  const service = new CommunityMembersPageService({
+    async getCommunityMembersPage(...args) { calls.push(args); return result }
+  })
+  const page = await service.getCommunityMembersPage('community', {
+    page: 2, pendingPage: 3, query: 'abc', sort: 'name-desc', tab: 'staff'
+  }, 'user-1')
+  assert.deepEqual(calls, [[
+    'community', 'user-1', 2, 3, 'abc', 'name-desc', 'staff'
+  ]])
   assert.equal(page.members.items[0].about.includes('<script>'), false)
   assert.equal(page.pending.items[0].about.includes('<script>'), false)
+})
+
+test('community members page maps account and privacy errors from the relational query', async () => {
+  for (const [code, exception, status] of [
+    ['ACCOUNT_NOT_FOUND', UnauthorizedException, 401],
+    ['COMMUNITY_NOT_FOUND', NotFoundException, 404]
+  ]) {
+    const service = new CommunityMembersPageService({
+      async getCommunityMembersPage() { throw new Error(code) }
+    })
+    await assert.rejects(
+      service.getCommunityMembersPage('community', { page: 1, pendingPage: 1 }, 'user-1'),
+      error => error instanceof exception && error.getStatus() === status && error.message === code
+    )
+  }
 })
