@@ -22,13 +22,7 @@ export class DomainAccessService {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []
 
-    const selected = await this.data.getCommunitiesByIds(uniqueIds)
-    if (selected.every(community => this.hasStoredCommunityType(community))) {
-      return this.normalizeCommunities(selected)
-    }
-
-    const requestedIds = new Set(uniqueIds)
-    return (await this.readCommunities()).filter(community => requestedIds.has(community.id))
+    return this.normalizeCommunities(await this.data.getCommunitiesByIds(uniqueIds))
   }
 
   normalizeProfiles(profiles: Profile[]): Profile[] {
@@ -106,11 +100,6 @@ export class DomainAccessService {
     }
   }
 
-  private hasStoredCommunityType(community: Community): boolean {
-    return community.type === 'social' ||
-      community.type === 'rp' ||
-      community.type === 'business'
-  }
 
   private normalizeCommunities(
     stored: Community[],

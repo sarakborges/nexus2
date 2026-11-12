@@ -114,18 +114,56 @@ export class SupabaseRelationalRepository implements DataRepository {
   async getCommunitiesByIds(ids: readonly string[]): Promise<Community[]> {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []
-    return (await this.selectRowsByValues('communities', 'id', uniqueIds)).map(row => ({
-      id: this.string(row.id),
-      name: this.string(row.name),
-      url: this.string(row.url),
-      picture: this.string(row.picture),
-      about: this.string(row.about),
-      type: this.string(row.type) as Community['type'],
-      privacy: this.string(row.privacy) as Community['privacy'],
-      createdAt: this.number(row.created_at_ms),
-      lastActivity: this.number(row.last_activity_ms)
-    }))
+
+    const [communityRows, relationshipRows] = await Promise.all([
+      this.selectRowsByValues('communities', 'id', uniqueIds),
+      this.selectRowsByValues('community_relationships', 'community_id', uniqueIds)
+    ])
+    const ownerRelationships = relationshipRows
+      .filter(row => row.type === 'owner')
+      .sort((left, right) =>
+        Number(left.updated_at_ms ?? 0) - Number(right.updated_at_ms ?? 0) ||
+        this.string(left.profile_id).localeCompare(this.string(right.profile_id))
+      )
+    const ownerProfileByCommunityId = new Map<string, string>()
+    for (const relationship of ownerRelationships) {
+      const communityId = this.string(relationship.community_id)
+      if (!ownerProfileByCommunityId.has(communityId)) {
+        ownerProfileByCommunityId.set(communityId, this.string(relationship.profile_id))
+      }
+    }
+    const ownerProfileIds = [...new Set(ownerProfileByCommunityId.values())]
+    const ownerProfiles = ownerProfileIds.length > 0
+      ? await this.selectRowsByValues('profiles', 'id', ownerProfileIds)
+      : []
+    const profileTypes = new Map(ownerProfiles.map(row => [
+      this.string(row.id),
+      this.string(row.type)
+    ] as const))
+
+    return communityRows.map(row => {
+      const id = this.string(row.id)
+      const ownerProfileId = ownerProfileByCommunityId.get(id)
+      const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
+      const createdAt = Number.isFinite(Number(row.created_at_ms))
+        ? Number(row.created_at_ms)
+        : 0
+      const privacy = ['public', 'private', 'unlisted'].includes(String(row.privacy))
+        ? String(row.privacy)
+        : 'public'
+      const lastActivity = Number.isFinite(Number(row.last_activity_ms))
+        ? Number(row.last_activity_ms)
+        : createdAt
+      return this.mapCommunity({
+        ...row,
+        type: inheritedType ?? row.type,
+        privacy,
+        created_at_ms: createdAt,
+        last_activity_ms: lastActivity
+      })
+    })
   }
+
 
   async createProfilePost(
     userId: string,

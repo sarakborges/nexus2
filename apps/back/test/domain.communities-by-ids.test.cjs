@@ -6,8 +6,8 @@ const { CommunityService } = require('../dist/api/domain/community.service.js')
 test('community ID lookups read and normalize only the requested communities', async () => {
   const calls = []
   const repository = {
-    async readByIds(collection, ids) {
-      calls.push({ collection, ids })
+    async getCommunitiesByIds(ids) {
+      calls.push({ ids })
       return [
         {
           id: 'private-community',
@@ -41,10 +41,7 @@ test('community ID lookups read and normalize only the requested communities', a
     'public-community'
   ])
 
-  assert.deepEqual(calls, [{
-    collection: 'communities',
-    ids: ['private-community', 'public-community']
-  }])
+  assert.deepEqual(calls, [{ ids: ['private-community', 'public-community'] }])
   assert.deepEqual(result.map(community => community.id), ['public-community'])
   assert.equal(result[0].privacy, 'public')
   assert.equal(result[0].createdAt, 0)
@@ -52,56 +49,39 @@ test('community ID lookups read and normalize only the requested communities', a
   assert.equal(result[0].about, '<p>Public text</p>')
 })
 
-test('community ID lookups retain owner-type normalization for legacy records', async () => {
+test('community ID lookups receive inherited owner types from the typed relational query', async () => {
   const legacy = {
     id: 'legacy-community',
     name: 'Legacy',
     url: 'legacy',
     picture: '',
     about: '',
+    type: 'business',
     privacy: 'public',
-    createdAt: 10
+    createdAt: 10,
+    lastActivity: 10
   }
-  let transactionCalls = 0
+  let queryCount = 0
   const repository = {
-    async readByIds(collection, ids) {
-      assert.equal(collection, 'communities')
+    async getCommunitiesByIds(ids) {
+      queryCount += 1
       assert.deepEqual(ids, ['legacy-community'])
       return [legacy]
     },
-    async transaction(collections, updater) {
-      transactionCalls += 1
-      assert.deepEqual(collections, [
-        'communities',
-        'profiles',
-        'community_relationships'
-      ])
-      const snapshot = {
-        communities: [legacy],
-        profiles: [{
-          id: 'owner-profile',
-          type: 'business'
-        }],
-        community_relationships: [{
-          profiles: ['owner-profile', 'legacy-community'],
-          type: 'owner'
-        }]
-      }
-      return updater(snapshot).result
+    async transaction() {
+      throw new Error('Community ID lookup must not load collection snapshots.')
     }
   }
   const access = new DomainAccessService(repository)
-
   const result = await access.readCommunitiesByIds(['legacy-community'])
-
-  assert.equal(transactionCalls, 1)
+  assert.equal(queryCount, 1)
   assert.equal(result.length, 1)
   assert.equal(result[0].type, 'business')
 })
 
 test('empty community ID lookups do not read storage', async () => {
   const repository = {
-    async readByIds() {
+    async getCommunitiesByIds() {
       throw new Error('READ_SHOULD_NOT_RUN')
     },
     async transaction() {

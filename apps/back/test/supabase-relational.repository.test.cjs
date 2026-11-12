@@ -71,6 +71,64 @@ test('readByIds queries only the requested relational profiles', async t => {
   assert.equal(call.searchParams.get('id'), 'in.("profile-1")')
 })
 
+test('getCommunitiesByIds resolves inherited owner types with targeted relational queries', async t => {
+  const calls = []
+  withFetch(t, async input => {
+    const requestUrl = new URL(String(input))
+    calls.push(requestUrl)
+    if (requestUrl.pathname.endsWith('/communities')) {
+      return new Response(JSON.stringify([
+        {
+          id: 'community-business', name: 'Business', url: 'business',
+          picture: '', about: '', type: 'social', privacy: 'public',
+          created_at_ms: '100', last_activity_ms: '200'
+        },
+        {
+          id: 'community-social', name: 'Social', url: 'social',
+          picture: '', about: '', type: 'social', privacy: 'public',
+          created_at_ms: '300', last_activity_ms: '400'
+        }
+      ]), { status: 200 })
+    }
+    if (requestUrl.pathname.endsWith('/community_relationships')) {
+      assert.equal(requestUrl.searchParams.get('community_id'), 'in.("community-business","community-social")')
+      return new Response(JSON.stringify([
+        {
+          community_id: 'community-business',
+          profile_id: 'owner-business',
+          type: 'owner',
+          updated_at_ms: '1'
+        },
+        {
+          community_id: 'community-social',
+          profile_id: 'owner-social',
+          type: 'owner',
+          updated_at_ms: '1'
+        }
+      ]), { status: 200 })
+    }
+    if (requestUrl.pathname.endsWith('/profiles')) {
+      assert.equal(requestUrl.searchParams.get('id'), 'in.("owner-business","owner-social")')
+      return new Response(JSON.stringify([
+        { id: 'owner-business', type: 'business' },
+        { id: 'owner-social', type: 'social' }
+      ]), { status: 200 })
+    }
+    throw new Error('Unexpected relation query: ' + requestUrl.pathname)
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const result = await repo.getCommunitiesByIds(['community-business', 'community-social'])
+
+  assert.deepEqual(result.map(item => item.type), ['business', 'social'])
+  assert.equal(calls.length, 3)
+  assert.deepEqual(calls.map(call => call.pathname), [
+    '/rest/v1/communities',
+    '/rest/v1/community_relationships',
+    '/rest/v1/profiles'
+  ])
+})
+
 test('findAccountByEmail filters accounts in Postgres and maps only that account relation data', async t => {
   const calls = []
   withFetch(t, async input => {

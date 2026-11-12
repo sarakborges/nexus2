@@ -52,9 +52,9 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       }
     },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async readByIds(name, ids) {
+    async getProfilesByIds(ids) {
       const requested = new Set(ids)
-      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
+      return structuredClone((collections.get('profiles') ?? []).filter(record => requested.has(record.id)))
     },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
