@@ -55,6 +55,13 @@ export function FloatingNavigationBar({
     handleSignOut
   } = useFloatingNavigationBar({ onOpenSettings })
 
+  const closeNavigationAfterNavigate = () => {
+    closePanels()
+    if (window.matchMedia('(max-width: 680px)').matches) {
+      setIsSidebarCollapsed(true)
+    }
+  }
+
   useEffect(() => {
     const root = document.documentElement
     root.classList.add('has-global-navigation')
@@ -79,7 +86,7 @@ export function FloatingNavigationBar({
           <button
             className="floating-navigation__icon-button"
             type="button"
-            aria-label={t('NAVIGATION_MENU')}
+            aria-label={isSidebarCollapsed ? t('NAVIGATION_MENU') : t('SETTINGS_CLOSE')}
             aria-expanded={!isSidebarCollapsed}
             aria-controls="floating-navigation-sidebar"
             onClick={() => setIsSidebarCollapsed((value) => !value)}
@@ -130,13 +137,24 @@ export function FloatingNavigationBar({
           </button>
         </div>
       </header>
+      {!isSidebarCollapsed && (
+        <button
+          className="floating-navigation__sidebar-backdrop"
+          type="button"
+          aria-label={t('SETTINGS_CLOSE')}
+          onClick={() => {
+            closePanels()
+            setIsSidebarCollapsed(true)
+          }}
+        />
+      )}
       <aside
         className="floating-navigation__sidebar"
         id="floating-navigation-sidebar"
         aria-label={t('NAVIGATION_LABEL')}
       >
         {currentProfile && (
-          <Link className="floating-navigation__current-profile" to={`${ROUTES.profile}/${currentProfile.url}`} onClick={closePanels}>
+          <Link className="floating-navigation__current-profile" to={`${ROUTES.profile}/${currentProfile.url}`} onClick={closeNavigationAfterNavigate}>
             <IdentityAvatar className="floating-navigation__current-profile-avatar" name={currentProfile.name} picture={currentProfile.picture} />
             <span><strong>{currentProfile.name}</strong><small>@{currentProfile.url}</small></span>
           </Link>
@@ -147,7 +165,7 @@ export function FloatingNavigationBar({
           profileRoute={profileRoute}
           messagesRoute={messagesRoute}
           communitiesRoute={communitiesRoute}
-          onNavigate={closePanels}
+          onNavigate={closeNavigationAfterNavigate}
         />
       </aside>
       {activePanel === 'account' && (
