@@ -1,6 +1,8 @@
 import type { ActivityFeedCursor, AuthenticatedUser, Community, UserPreferences, PaginatedResult, Profile, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
 import type {
   DataRepository,
+  CollectionRecordMap,
+  CollectionTransaction,
   AccountRepositoryRecord,
   ActivityFeedRow,
   AccountProfileChange,
@@ -49,16 +51,49 @@ export class SupabaseRelationalRepository implements DataRepository {
     this.baseUrl = projectUrl.replace(/\/+$/, '')
   }
 
+  async read<T>(collection: string): Promise<T[]> {
+    throw new Error(
+      'Full-table reads are disabled for Supabase relational storage (requested "' + collection + '").'
+    )
+  }
+
+  async readByIds<T extends { id: string }>(
+    collection: string,
+    _ids: readonly string[]
+  ): Promise<T[]> {
+    throw new Error(
+      'Generic ID reads are disabled for Supabase relational storage (requested "' + collection + '"). Use a typed ID query.'
+    )
+  }
+
+  async update<T>(
+    collection: string,
+    _updater: (records: T[]) => T[]
+  ): Promise<T[]> {
+    throw new Error(
+      'Whole-collection updates are disabled for Supabase relational storage (requested "' + collection + '"). Use a targeted mutation RPC.'
+    )
+  }
+
+  async transaction<T>(
+    collections: readonly string[],
+    _updater: (records: CollectionRecordMap) => CollectionTransaction<T>
+  ): Promise<T> {
+    throw new Error(
+      'Generic collection transactions are disabled for Supabase relational storage (requested "' + collections.join(', ') + '"). Use targeted relational RPCs.'
+    )
+  }
+
   async getAccountById(id: string): Promise<AccountRepositoryRecord | null> {
     const rows = await this.selectRowsByValues('accounts', 'id', [id])
     const [account] = await this.readAccounts(rows)
     return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
-  async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
+  async findAccountByEmail<T = AccountRepositoryRecord>(email: string): Promise<T | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
     const [account] = await this.readAccounts(rows)
-    return (account as AccountRepositoryRecord | undefined) ?? null
+    return (account as T | undefined) ?? null
   }
 
   async getProfilesByIds(ids: readonly string[]): Promise<Profile[]> {
