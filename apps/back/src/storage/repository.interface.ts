@@ -362,7 +362,7 @@ export interface DataRepository {
   getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]>
   getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>>
   getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
-  listCommunityMembers?(
+  listCommunityMembers(
     communityId: string,
     tab: string,
     page: number,
