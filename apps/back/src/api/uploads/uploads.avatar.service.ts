@@ -53,40 +53,19 @@ export class UploadsAvatarService {
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
-    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['accounts', 'profiles', 'media_files'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; picture: string; type?: string }>
-        const records = collections.media_files as UploadedFileRecord[]
-        this.assertOwnsProfileInRecords(userId, profileId, accounts, profiles)
-
-        const profile = profiles.find(item => item.id === profileId)
-        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
-
-        const next = uploadId
-          ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
-          : null
-        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
-        const nextRecords = next
-          ? records.map(item => item.id === next.id
-            ? { ...item, resourceType: 'profile' as const, resourceId: profileId }
-            : item)
-          : records
-
-        return {
-          records: {
-            ...collections,
-            profiles: profiles.map(item => item.id === profileId ? { ...item, picture } : item),
-            media_files: nextRecords
-          },
-          result: { picture, previousPicture: profile.picture }
-        }
-      }
-    )
-
+    const path = uploadId
+      ? await this.data.getAvatarUploadPath(userId, uploadId, 'profile-avatar')
+      : null
+    if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    const picture = path ? this.storage.publicAvatarUrl(path) : ''
+    let result: { previousPicture: string }
+    try {
+      result = await this.data.setProfileAvatar({ userId, profileId, uploadId, picture })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
+    }
     await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-    return { picture: result.picture }
+    return { picture }
   }
 
   async setCommunityAvatar(
@@ -95,60 +74,21 @@ export class UploadsAvatarService {
     actorProfileId: string,
     uploadId: string | null
   ): Promise<{ picture: string }> {
-    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; type?: string }>
-        const communities = collections.communities as Array<{ id: string; picture: string; type?: string }>
-        const relationships = collections.community_relationships as Array<{
-          profiles: [string, string]; type: string
-        }>
-        const records = collections.media_files as UploadedFileRecord[]
-        this.assertOwnsProfileInRecords(userId, actorProfileId, accounts, profiles)
-
-        const actor = profiles.find(item => item.id === actorProfileId)
-        const community = communities.find(item => item.id === communityId)
-        const ownerProfileId = relationships.find(item =>
-          item.profiles[1] === communityId && item.type === 'owner'
-        )?.profiles[0]
-        const owner = ownerProfileId
-          ? profiles.find(item => item.id === ownerProfileId)
-          : undefined
-        if (!actor || !community || !owner) {
-          throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        }
-        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-        const role = relationships.find(item =>
-          item.profiles[0] === actorProfileId && item.profiles[1] === communityId
-        )?.type
-        if (role !== 'owner' && role !== 'moderator') {
-          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-
-        const next = uploadId
-          ? this.getReadyAvatar(records, userId, uploadId, 'community-avatar')
-          : null
-        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
-        const nextRecords = next
-          ? records.map(item => item.id === next.id
-            ? { ...item, resourceType: 'community' as const, resourceId: communityId }
-            : item)
-          : records
-
-        return {
-          records: {
-            ...collections,
-            communities: communities.map(item => item.id === communityId ? { ...item, picture } : item),
-            media_files: nextRecords
-          },
-          result: { picture, previousPicture: community.picture }
-        }
-      }
-    )
-
+    const path = uploadId
+      ? await this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
+      : null
+    if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    const picture = path ? this.storage.publicAvatarUrl(path) : ''
+    let result: { previousPicture: string }
+    try {
+      result = await this.data.setCommunityAvatar({
+        userId, communityId, actorProfileId, uploadId, picture
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
+    }
     await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-    return { picture: result.picture }
+    return { picture }
   }
 
   assertOwnsProfileInRecords(
@@ -190,4 +130,20 @@ export class UploadsAvatarService {
     if (!file) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     return file
   }
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('PROFILE_NOT_OWNED') || message.includes('PROFILE_TYPE_MISMATCH') ||
+        message.includes('COMMUNITY_STAFF_REQUIRED')) {
+      throw new ForbiddenException(
+        message.includes('PROFILE_TYPE_MISMATCH') ? 'PROFILE_TYPE_MISMATCH' :
+        message.includes('COMMUNITY_STAFF_REQUIRED') ? 'COMMUNITY_STAFF_REQUIRED' : 'PROFILE_NOT_OWNED'
+      )
+    }
+    if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+    if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (message.includes('INVALID_AVATAR_UPLOAD')) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    throw error
+  }
+
+
 }

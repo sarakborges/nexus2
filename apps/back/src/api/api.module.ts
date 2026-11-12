@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AuthController } from './auth/auth.controller'
 import { AuthService } from './auth/auth.service'
+import { AuthMeService } from './auth/auth-me.service'
 import { AccountService } from './auth/account.service'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from './auth/jwt-access.guard'
 import { DomainController } from './domain/domain.controller'
@@ -16,7 +17,6 @@ import { RealtimeController } from './realtime.controller'
 import { ProfileMessageService } from './domain/profile-message.service'
 import { ProfilePostService } from './domain/profile-post.service'
 import { ActivityService } from './domain/activity.service'
-import { HomePageService } from './domain/home-page.service'
 import { ProfilePageService } from './domain/profile-page.service'
 import { CommunityPageService } from './domain/community-page.service'
 import { CommunityForumPageService } from './domain/community-forum-page.service'
@@ -28,6 +28,7 @@ import { CommunitiesPageService } from './domain/communities-page.service'
 import { CommunityForumComposerPageService } from './domain/community-forum-composer-page.service'
 import { CommunityEditPageService } from './domain/community-edit-page.service'
 import { ProfileEditPageService } from './domain/profile-edit-page.service'
+import { ProfileSettingsService } from './domain/profile-settings.service'
 import { ProfileService } from './domain/profile.service'
 import { ProfileRelationshipService } from './domain/profile-relationship.service'
 import { CommunityService } from './domain/community.service'
@@ -54,6 +55,7 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
   providers: [
     AccountService,
     AuthService,
+    AuthMeService,
     DomainAccessService,
     ProfileService,
     ProfileRelationshipService,
@@ -63,7 +65,6 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
     ProfileMessageService,
     ProfilePostService,
     ActivityService,
-    HomePageService,
     ProfilePageService,
     CommunityPageService,
     CommunityForumPageService,
@@ -75,6 +76,7 @@ import { UploadsStorageService } from './uploads/uploads.storage.service'
     CommunityForumComposerPageService,
     CommunityEditPageService,
     ProfileEditPageService,
+    ProfileSettingsService,
     DomainService,
     CommunityMembershipService,
     UploadsService,

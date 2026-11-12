@@ -10,22 +10,29 @@ export function FloatingNavigationSearch() {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchText, setSearchText] = useState(() =>
-    location.pathname === ROUTES.search
-      ? new URLSearchParams(location.search).get('query') ?? ''
-      : ''
-  )
-  const [searchScope, setSearchScope] = useState<SearchScope>(() => {
-    if (location.pathname !== ROUTES.search) return 'all'
-    const scope = new URLSearchParams(location.search).get('scope')
-    return scope === 'profiles' || scope === 'communities' ? scope : 'all'
-  })
+  const routeKey = location.pathname + location.search
+  const routeParams = new URLSearchParams(location.search)
+  const routeQuery = location.pathname === ROUTES.search ? routeParams.get('query') ?? '' : ''
+  const requestedScope = routeParams.get('scope')
+  const routeScope: SearchScope =
+    location.pathname === ROUTES.search &&
+    (requestedScope === 'profiles' || requestedScope === 'communities')
+      ? requestedScope
+      : 'all'
+  const [searchDraft, setSearchDraft] = useState<{
+    routeKey: string
+    text: string
+    scope: SearchScope
+  } | null>(null)
+  const searchText = searchDraft?.routeKey === routeKey ? searchDraft.text : routeQuery
+  const searchScope = searchDraft?.routeKey === routeKey ? searchDraft.scope : routeScope
 
   const handleSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const query = searchText.trim()
-    if (!query) return
-    navigate(`${ROUTES.search}?${new URLSearchParams({ query, scope: searchScope }).toString()}`)
+    const params = new URLSearchParams({ scope: searchScope })
+    if (query) params.set('query', query)
+    navigate(`${ROUTES.search}?${params.toString()}`)
   }
 
   return (
@@ -40,12 +47,12 @@ export function FloatingNavigationSearch() {
         placeholder={t('SEARCH_PLACEHOLDER')}
         maxLength={120}
         value={searchText}
-        onChange={(event) => setSearchText(event.target.value)}
+        onChange={(event) => setSearchDraft({ routeKey, text: event.target.value, scope: searchScope })}
       />
       <select
         aria-label={t('SEARCH_SCOPE_LABEL')}
         value={searchScope}
-        onChange={(event) => setSearchScope(event.target.value as SearchScope)}
+        onChange={(event) => setSearchDraft({ routeKey, text: searchText, scope: event.target.value as SearchScope })}
       >
         <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
         <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
@@ -54,7 +61,6 @@ export function FloatingNavigationSearch() {
       <button
         type="submit"
         aria-label={t('SEARCH_SUBMIT')}
-        disabled={!searchText.trim()}
       >
         <FiSearch aria-hidden="true" />
       </button>

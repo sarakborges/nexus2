@@ -9,7 +9,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { createProfilePost } from '@/Services/Home'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
 
 type HomePagePostComposerProps = {
@@ -18,7 +17,6 @@ type HomePagePostComposerProps = {
 
 export function HomePagePostComposer({ currentProfile }: HomePagePostComposerProps) {
   const { t } = useTranslations()
-  const userId = useAuthStore(state => state.session?.user.id ?? null)
   const showToast = useToastStore(state => state.showToast)
   const queryClient = useQueryClient()
   const [content, setContent] = useState('')
@@ -27,7 +25,7 @@ export function HomePagePostComposer({ currentProfile }: HomePagePostComposerPro
     mutationFn: () => createProfilePost(currentProfile.id, content),
     onSuccess: async () => {
       setContent('')
-      await queryClient.invalidateQueries({ queryKey: queryKeys.home(userId ?? '') })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.session })
       showToast(t('HOME_POST_PUBLISHED'))
     },
     onError: () => showToast(t('HOME_POST_FAILED'), 'error')

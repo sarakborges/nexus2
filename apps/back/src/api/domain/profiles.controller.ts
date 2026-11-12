@@ -8,6 +8,8 @@ import { DomainService } from './domain.service'
 import { ProfilePageService } from './profile-page.service'
 import { ProfileDirectoryPageService } from './profile-directory-page.service'
 import { ProfileEditPageService } from './profile-edit-page.service'
+import { ProfileSettingsService } from './profile-settings.service'
+import { UpdateProfileSettingsDto } from './profile-settings.dto'
 
 @Controller()
 export class ProfilesController {
@@ -15,7 +17,8 @@ export class ProfilesController {
     private readonly domain: DomainService,
     private readonly profilePage: ProfilePageService,
     private readonly profileDirectoryPage: ProfileDirectoryPageService,
-    private readonly profileEditPage: ProfileEditPageService
+    private readonly profileEditPage: ProfileEditPageService,
+    private readonly profileSettings: ProfileSettingsService
   ) {}
 
   @Get('profiles/by-url/:url/directory/:kind/page')
@@ -45,6 +48,25 @@ export class ProfilesController {
     @CurrentUser() user: AuthenticatedUserContext | undefined
   ) {
     return this.profilePage.getProfilePage(url, user?.id ?? null)
+  }
+
+  @Get('profiles/:profileId/settings')
+  @UseGuards(JwtAccessGuard)
+  getProfileSettings(
+    @CurrentUser() user: AuthenticatedUserContext,
+    @Param('profileId') profileId: string
+  ) {
+    return this.profileSettings.getSettings(user.id, profileId)
+  }
+
+  @Put('profiles/:profileId/settings')
+  @UseGuards(JwtAccessGuard)
+  updateProfileSettings(
+    @CurrentUser() user: AuthenticatedUserContext,
+    @Param('profileId') profileId: string,
+    @Body() body: UpdateProfileSettingsDto
+  ) {
+    return this.profileSettings.updateSettings(user.id, profileId, body)
   }
 
   @Get('profiles')

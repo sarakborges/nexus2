@@ -3,7 +3,7 @@
   max-width: min(420px, calc(100vw - 32px));
   padding: 12px 16px;
 
-  border: 2px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
 
   background-color: var(--color-surface-raised);
   color: var(--text-color);

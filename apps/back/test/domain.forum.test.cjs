@@ -1,6 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 
 const communityId = 'community-1'
 const profiles = [
@@ -30,6 +31,136 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
     ['relationships', []]
   ])
   const data = {
+    async createProfileMessage(change) {
+      beforeTransaction?.(['profile_messages'], collections)
+      const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (!account.profiles.includes(change.message.fromProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const messages = collections.get('profile_messages') ?? []
+      messages.push(structuredClone(change.message))
+      collections.set('profile_messages', messages)
+      return structuredClone(change.message)
+    },
+    async listCommunityForumTopics(communityId, userId, page) {
+      beforeTransaction?.(
+        [
+          'accounts',
+          'profiles',
+          'communities',
+          'community_relationships',
+          'community_forum_topics',
+          'community_forum_replies'
+        ],
+        collections
+      )
+      const communityRecord = (collections.get('communities') ?? []).find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      const accounts = collections.get('accounts') ?? []
+      const account = userId ? accounts.find(item => item.id === userId) : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+      const relationships = collections.get('community_relationships') ?? []
+      if (
+        communityRecord.privacy === 'private' &&
+        !relationships.some(item =>
+          item.profiles[1] === communityId &&
+          owned.has(item.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(item.type)
+        )
+      ) {
+        throw new Error('COMMUNITY_NOT_FOUND')
+      }
+
+      const replies = collections.get('community_forum_replies') ?? []
+      const replyCounts = new Map()
+      for (const reply of replies) {
+        replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
+      }
+      const topics = (collections.get('community_forum_topics') ?? [])
+        .filter(topic => topic.communityId === communityId)
+        .map(topic => ({ ...topic, replyCount: replyCounts.get(topic.id) ?? 0 }))
+        .sort((a, b) =>
+          Number(b.isPinned) - Number(a.isPinned) ||
+          b.updatedAt - a.updatedAt ||
+          a.id.localeCompare(b.id)
+        )
+      const pageSize = 20
+      const totalItems = topics.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(topics.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
+    async getCommunityRelationships(userId, communityId) {
+      beforeTransaction?.(['community_relationships'], collections)
+      const communityRecord = (collections.get('communities') ?? []).find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!userId) return []
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      const allProfiles = collections.get('profiles') ?? []
+      const relationships = collections.get('community_relationships') ?? []
+      const ownerId = relationships.find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerId ? allProfiles.find(item => item.id === ownerId) : undefined
+      const communityType = owner?.type ?? communityRecord.type
+      const owned = new Set(account.profiles)
+      return structuredClone(relationships.filter(item =>
+        item.profiles[1] === communityId &&
+        owned.has(item.profiles[0]) &&
+        allProfiles.find(profile => profile.id === item.profiles[0])?.type === communityType
+      ))
+    },
+    async upsertProfileRelationship(change) {
+      beforeTransaction?.(['relationships'], collections)
+      const accounts = collections.get('accounts') ?? []
+      const account = accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(change.sourceProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const allProfiles = collections.get('profiles') ?? []
+      const source = allProfiles.find(item => item.id === change.sourceProfileId)
+      const target = allProfiles.find(item => item.id === change.targetProfileId)
+      if (!source || !target) throw new Error('PROFILE_NOT_FOUND')
+      if (source.id === target.id) throw new Error('INVALID_RELATIONSHIP_PARTICIPANTS')
+      if (source.type !== target.type) throw new Error('PROFILE_TYPE_MISMATCH')
+      const active = allProfiles.find(item => item.id === account.currentProfile)
+      if (active && active.type !== source.type) throw new Error('PROFILE_TYPE_MISMATCH')
+
+      const pair = [change.sourceProfileId, change.targetProfileId].sort()
+      const relationships = collections.get('relationships') ?? []
+      const current = relationships.find(item =>
+        item.profiles[0] === pair[0] && item.profiles[1] === pair[1]
+      )
+      if (change.type === 'requested' && current) {
+        throw new Error('RELATIONSHIP_ALREADY_EXISTS')
+      }
+      if (change.type === 'connection' && (
+        current?.type !== 'requested' || current.requestedBy === change.sourceProfileId
+      )) {
+        throw new Error('ONLY_RECIPIENT_CAN_ACCEPT_REQUEST')
+      }
+      const next = {
+        profiles: pair,
+        type: change.type,
+        requestedBy: change.type === 'requested' ? change.sourceProfileId : null,
+        blockedBy: change.type === 'blocked' ? change.sourceProfileId : null,
+        updatedAt: change.updatedAt
+      }
+      collections.set('relationships', [
+        ...relationships.filter(item => item.profiles[0] !== pair[0] || item.profiles[1] !== pair[1]),
+        next
+      ])
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
@@ -48,6 +179,290 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       }
       for (const name of names) collections.set(name, structuredClone(outcome.records[name]))
       return structuredClone(outcome.result)
+    }
+  }
+  data.getCommunityByUrl = async (url, userId) => {
+    beforeTransaction?.(['accounts', 'profiles', 'communities', 'community_relationships'], collections)
+    const current = (collections.get('communities') ?? []).find(item => item.url === url)
+    if (!current) throw new Error('COMMUNITY_NOT_FOUND')
+    const profiles = collections.get('profiles') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    const ownerId = relationships.find(item =>
+      item.profiles[1] === current.id && item.type === 'owner'
+    )?.profiles[0]
+    const owner = ownerId ? profiles.find(item => item.id === ownerId) : undefined
+    const result = { ...current, type: owner?.type ?? current.type }
+    if (current.privacy === 'private') {
+      const account = userId
+        ? (collections.get('accounts') ?? []).find(item => item.id === userId)
+        : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+      const canRead = relationships.some(item =>
+        item.profiles[1] === current.id &&
+        owned.has(item.profiles[0]) &&
+        ['owner', 'moderator', 'connection'].includes(item.type)
+      )
+      if (!canRead) {
+        result.picture = ''
+        result.about = ''
+      }
+    }
+    return structuredClone(result)
+  }
+  data.updateProfile = async change => {
+    beforeTransaction?.(['accounts', 'profiles', 'media_files'], collections)
+    const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+    if (!account || !account.profiles.includes(change.profileId)) throw new Error('PROFILE_NOT_OWNED')
+    const profiles = collections.get('profiles') ?? []
+    const current = profiles.find(item => item.id === change.profileId)
+    if (!current) throw new Error('PROFILE_NOT_FOUND')
+    const updated = {
+      ...current,
+      name: change.name,
+      url: change.url,
+      picture: change.picture,
+      about: change.about,
+      lastActivity: change.lastActivity
+    }
+    collections.set('profiles', profiles.map(item => item.id === change.profileId ? updated : item))
+    return { profile: structuredClone(updated), previousPicture: null }
+  }
+  data.createCommunity = async change => {
+    beforeTransaction?.(
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+      collections
+    )
+    const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+    if (!account || !account.profiles.includes(change.ownerProfileId)) {
+      throw new Error('PROFILE_NOT_OWNED')
+    }
+    const owner = (collections.get('profiles') ?? []).find(item => item.id === change.ownerProfileId)
+    if (!owner) throw new Error('PROFILE_NOT_FOUND')
+    const community = {
+      id: change.id,
+      name: change.name,
+      url: change.url,
+      picture: change.picture,
+      about: change.about,
+      type: owner.type,
+      privacy: change.privacy,
+      createdAt: change.createdAt,
+      lastActivity: change.createdAt
+    }
+    const membership = {
+      profiles: [change.ownerProfileId, community.id],
+      type: 'owner',
+      requestedBy: null,
+      blockedBy: null,
+      updatedAt: change.createdAt
+    }
+    collections.set('communities', [...(collections.get('communities') ?? []), community])
+    collections.set('community_relationships', [
+      ...(collections.get('community_relationships') ?? []), membership
+    ])
+    return structuredClone(community)
+  }
+  const access = new DomainAccessService(data)
+  data.createCommunityForumTopic = async ({ userId, topic }) => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'media_files'],
+    collections => {
+      access.assertForumMemberInRecords(
+        userId, topic.profileId, topic.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const mediaFiles = uploads
+        ? uploads.attachEditorImagesToRecords(
+            collections.media_files, userId, topic.content, 'community-forum-topic', topic.id
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [topic.profileId], topic.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, topic.communityId, topic.updatedAt),
+          community_forum_topics: [...collections.community_forum_topics, topic],
+          media_files: mediaFiles
+        },
+        result: topic
+      }
+    }
+  )
+  data.createCommunityForumReply = async ({ userId, reply }) => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
+    collections => {
+      access.assertForumMemberInRecords(
+        userId, reply.profileId, reply.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const topic = collections.community_forum_topics.find(item =>
+        item.id === reply.topicId && item.communityId === reply.communityId
+      )
+      if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      if (topic.isLocked) throw new Error('FORUM_TOPIC_LOCKED')
+      const mediaFiles = uploads
+        ? uploads.attachEditorImagesToRecords(
+            collections.media_files, userId, reply.content, 'community-forum-reply', reply.id
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [reply.profileId], reply.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, reply.communityId, reply.updatedAt),
+          community_forum_replies: [...collections.community_forum_replies, reply],
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === reply.topicId ? { ...item, updatedAt: reply.updatedAt } : item
+          ),
+          media_files: mediaFiles
+        },
+        result: reply
+      }
+    }
+  )
+  data.moderateCommunityForumTopic = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics'],
+    collections => {
+      access.assertForumStaffInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships
+      )
+      const current = collections.community_forum_topics.find(item =>
+        item.id === change.topicId && item.communityId === change.communityId
+      )
+      if (!current) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      const updated = {
+        ...current,
+        ...(typeof change.isPinned === 'boolean' ? { isPinned: change.isPinned } : {}),
+        ...(typeof change.isLocked === 'boolean' ? { isLocked: change.isLocked } : {}),
+        updatedAt: change.updatedAt
+      }
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === change.topicId ? updated : item
+          )
+        },
+        result: updated
+      }
+    }
+  )
+  data.deleteCommunityForumTopic = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'community_forum_replies', 'media_files'],
+    collections => {
+      const context = access.assertCommunityProfileInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships, { allowDifferentActiveType: true }
+      )
+      const topic = collections.community_forum_topics.find(item =>
+        item.id === change.topicId && item.communityId === change.communityId
+      )
+      if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+      if (
+        topic.profileId !== change.actorProfileId &&
+        context.role !== 'owner' &&
+        context.role !== 'moderator'
+      ) throw new Error('FORUM_DELETE_NOT_ALLOWED')
+      const replies = collections.community_forum_replies.filter(item =>
+        item.topicId === change.topicId && item.communityId === change.communityId
+      )
+      const resources = [
+        { resourceType: 'community-forum-topic', resourceId: change.topicId },
+        ...replies.map(reply => ({ resourceType: 'community-forum-reply', resourceId: reply.id }))
+      ]
+      const mediaFiles = uploads
+        ? uploads.detachResourceAttachmentsFromRecords(collections.media_files, null, resources)
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_topics: collections.community_forum_topics.filter(item => item.id !== change.topicId),
+          community_forum_replies: collections.community_forum_replies.filter(item =>
+            item.topicId !== change.topicId || item.communityId !== change.communityId
+          ),
+          media_files: mediaFiles
+        },
+        result: undefined
+      }
+    }
+  )
+  data.deleteCommunityForumReply = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_replies', 'community_forum_topics', 'media_files'],
+    collections => {
+      const context = access.assertCommunityProfileInRecords(
+        change.userId, change.actorProfileId, change.communityId,
+        collections.accounts, collections.profiles, collections.communities,
+        collections.community_relationships, { allowDifferentActiveType: true }
+      )
+      const reply = collections.community_forum_replies.find(item =>
+        item.id === change.replyId && item.communityId === change.communityId
+      )
+      if (!reply) throw new Error('FORUM_REPLY_NOT_FOUND')
+      if (
+        reply.profileId !== change.actorProfileId &&
+        context.role !== 'owner' &&
+        context.role !== 'moderator'
+      ) throw new Error('FORUM_DELETE_NOT_ALLOWED')
+      const mediaFiles = uploads
+        ? uploads.detachResourceAttachmentsFromRecords(collections.media_files, null, [{
+            resourceType: 'community-forum-reply', resourceId: change.replyId
+          }])
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: access.touchProfilesActivity(collections.profiles, [change.actorProfileId], change.updatedAt),
+          communities: access.touchCommunityActivity(collections.communities, change.communityId, change.updatedAt),
+          community_forum_replies: collections.community_forum_replies.filter(item => item.id !== change.replyId),
+          community_forum_topics: collections.community_forum_topics.map(item =>
+            item.id === reply.topicId ? { ...item, updatedAt: change.updatedAt } : item
+          ),
+          media_files: mediaFiles
+        },
+        result: reply.topicId
+      }
+    }
+  )
+  data.getCommunityForumTopic = async (communityId, topicId, userId, page) => {
+    const names = [
+      'accounts', 'profiles', 'communities', 'community_relationships',
+      'community_forum_topics', 'community_forum_replies'
+    ]
+    beforeTransaction?.(names, collections)
+    const accounts = collections.get('accounts') ?? []
+    const communities = collections.get('communities') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    access.assertCommunityReadableInRecords(communityId, userId, accounts, communities, relationships)
+    const topic = (collections.get('community_forum_topics') ?? []).find(item =>
+      item.id === topicId && item.communityId === communityId
+    )
+    if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+    const replies = (collections.get('community_forum_replies') ?? [])
+      .filter(item => item.topicId === topicId && item.communityId === communityId)
+      .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
+    const pageSize = 20
+    const totalItems = replies.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+    const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+    const offset = (safePage - 1) * pageSize
+    return {
+      topic: { ...structuredClone(topic), replyCount: totalItems },
+      replies: {
+        items: structuredClone(replies.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
     }
   }
   const auth = {
@@ -73,6 +488,9 @@ test('forum members can publish and read topics with paginated replies', async (
 test('forum content attaches editor images and detaches them when content is deleted', async () => {
   const calls = []
   const uploads = {
+    getEditorImageIds(html) {
+      return Array.from(html.matchAll(/\/api\/uploads\/([^/]+)\/content/g), match => match[1])
+    },
     attachEditorImagesToRecords(records, userId, html, resourceType, resourceId) {
       calls.push({ operation: 'attach', userId, html, resourceType, resourceId })
       return records
@@ -145,7 +563,7 @@ test('legacy community type is normalized to its owner profile type', async () =
   collections.set('communities', [{ ...community, type: 'social' }])
   const normalized = await service.getCommunity('forum')
   assert.equal(normalized.type, 'rp')
-  assert.equal(collections.get('communities')[0].type, 'rp')
+  assert.equal(collections.get('communities')[0].type, 'social')
 })
 
 test('a user cannot interact through an owned profile with a type different from the active profile', async () => {
@@ -257,12 +675,17 @@ test('friend-request creation rechecks source-profile ownership in the relations
   assert.deepEqual(collections.get('relationships'), [])
 })
 
-test('sending a profile message rechecks sender ownership in the message transaction', async () => {
+test('sending a profile message rechecks sender ownership in the relational write', async () => {
   const { service, collections } = harness(
     { memberUser: ['member'] },
     null,
     (names, current) => {
-      if (names.includes('profile_messages')) current.set('accounts', [])
+      if (names.includes('profile_messages')) current.set('accounts', [{
+        id: 'memberUser',
+        email: 'memberUser@example.com',
+        profiles: [],
+        currentProfile: null
+      }])
     }
   )
 

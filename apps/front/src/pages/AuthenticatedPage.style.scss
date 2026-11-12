@@ -458,7 +458,7 @@
   flex: 1 1 260px;
   min-width: min(100%, 220px);
   min-height: 40px;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-background);
 }
 .paginated-list-controls__search input {
@@ -478,7 +478,7 @@
   flex: 0 0 auto;
   padding: 0 12px;
   border: 0;
-  border-left: 1px solid var(--color-border);
+  border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--text-color);
   font: inherit;
@@ -497,7 +497,7 @@
   width: 100%;
   min-height: 40px;
   padding: 0 10px;
-  border: 1px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-background);
   color: var(--text-color);
   font: inherit;
@@ -581,3 +581,19 @@
 .profile-message__action--danger { color:var(--color-error-strong); }
 .profile-message-form__reply-context { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:8px 10px; border-left:var(--nexus-border-width,2px) solid var(--color-primary-strong); background:var(--color-surface); color:var(--color-neutral-strong); }
 .profile-message-form__reply-context .button { min-height:32px; padding:4px 8px; font-size:12px; }
+
+.profile-message__header { align-items:center; }
+.profile-message__header-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; margin-left:auto; }
+.profile-message__header-actions .profile-message__action { min-height:32px; padding:4px 8px; }
+
+
+.communities-page__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.communities-page__header .account-card__action {
+  justify-self: end;
+}

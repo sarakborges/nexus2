@@ -1,7 +1,16 @@
-import { api } from '../Http/api'
-import type { RecentActivity } from '@nexus/common'
+import type { ActivityFeedCursor, ActivityFeedPage } from '@nexus/common'
 
-export async function getRecentActivity(): Promise<RecentActivity[]> {
-  const { data } = await api.get<RecentActivity[]>('/activity')
+import { api } from '../Http/api'
+
+export async function getRecentActivity(
+  cursor: ActivityFeedCursor | null = null,
+  limit = 10
+): Promise<ActivityFeedPage> {
+  const params: Record<string, number | string> = { limit }
+  if (cursor) {
+    params.cursorUpdatedAt = cursor.updatedAt
+    params.cursorId = cursor.id
+  }
+  const { data } = await api.get<ActivityFeedPage>('/activity', { params })
   return data
 }

@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import type { AccountRecord } from '../auth/auth.types'
 import {
   AVATAR_BUCKET,
   AVATAR_MAX_SIZE,
@@ -26,7 +25,8 @@ import { UploadsAvatarService } from './uploads.avatar.service'
 import {
   attachEditorImages,
   detachEditorImages,
-  detachResourceAttachments
+  detachResourceAttachments,
+  getEditorImageIds as extractEditorImageIds
 } from './uploads.attachments'
 import type {
   CreateUploadInput,
@@ -83,52 +83,15 @@ export class UploadsService {
       messageToProfileId: null
     }
 
-    const collectionsToRead = ['media_files']
-    if (input.purpose === 'profile-avatar' && input.targetId) {
-      collectionsToRead.push('accounts', 'profiles')
+    try {
+      await this.data.createUpload({
+        record,
+        targetId: input.targetId ?? null,
+        actorProfileId: input.actorProfileId ?? null
+      })
+    } catch (error) {
+      this.throwUploadWriteError(error)
     }
-    if (input.purpose === 'community-avatar' && input.targetId) {
-      collectionsToRead.push('accounts', 'profiles', 'communities', 'community_relationships')
-    }
-    await this.data.transaction<void>(collectionsToRead, collections => {
-      const profiles = collections.profiles as Array<{ id: string; type?: string }> | undefined
-      const accounts = collections.accounts as AccountRecord[] | undefined
-      if (input.purpose === 'profile-avatar' && input.targetId) {
-        this.avatars.assertOwnsProfileInRecords(userId, input.targetId, accounts!, profiles!)
-      }
-      if (input.purpose === 'community-avatar' && input.targetId && input.actorProfileId) {
-        const currentProfiles = profiles as Array<{ id: string; type: string }>
-        const communities = collections.communities as Array<{ id: string }>
-        const relationships = collections.community_relationships as Array<{
-          profiles: [string, string]; type: string
-        }>
-        this.avatars.assertOwnsProfileInRecords(userId, input.actorProfileId, accounts!, currentProfiles)
-
-        const actor = currentProfiles.find(item => item.id === input.actorProfileId)
-        const community = communities.find(item => item.id === input.targetId)
-        const ownerProfileId = relationships.find(item =>
-          item.profiles[1] === input.targetId && item.type === 'owner'
-        )?.profiles[0]
-        const owner = ownerProfileId
-          ? currentProfiles.find(item => item.id === ownerProfileId)
-          : undefined
-        if (!actor || !community || !owner) {
-          throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        }
-        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-        const role = relationships.find(item =>
-          item.profiles[0] === input.actorProfileId && item.profiles[1] === input.targetId
-        )?.type
-        if (role !== 'owner' && role !== 'moderator') {
-          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-      }
-      const mediaFiles = collections.media_files as UploadedFileRecord[]
-      return {
-        records: { ...collections, media_files: [...mediaFiles, record] },
-        result: undefined
-      }
-    })
 
     let signedData: SignedUploadResponse
     try {
@@ -140,9 +103,7 @@ export class UploadsService {
       if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
     } catch (error) {
       try {
-        await this.data.update<UploadedFileRecord>('media_files', records =>
-          records.filter(item => item.id !== id || item.ownerUserId !== userId || item.status !== 'pending')
-        )
+        await this.data.deletePendingUpload(userId, id)
       } catch {
         // The pending record will be removed by the normal expiration cleanup.
       }
@@ -155,8 +116,7 @@ export class UploadsService {
 
   async completeUpload(userId: string, id: string): Promise<{ id: string; url: string }> {
     this.storage.assertConfigured()
-    const records = await this.data.read<UploadedFileRecord>('media_files')
-    const record = records.find(item => item.id === id && item.ownerUserId === userId)
+    const record = await this.data.getUploadById(userId, id)
     if (!record) throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.status === 'ready') {
       if (
@@ -205,25 +165,22 @@ export class UploadsService {
     }
 
     const completedAt = Date.now()
-    const savedRecords = await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-      const latest = currentRecords.find(item => item.id === id && item.ownerUserId === userId)
-      if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
-      if (latest.status === 'ready') return currentRecords
-      if (latest.status !== 'pending' || latest.createdAt + PENDING_MAX_AGE <= Date.now()) {
-        throw new NotFoundException('UPLOAD_EXPIRED')
-      }
-
-      const saved: UploadedFileRecord = {
-        ...latest,
+    let saved: UploadedFileRecord
+    try {
+      saved = await this.data.completeUpload({
+        userId,
+        id,
         size: totalSize,
-        status: 'ready',
-        deletingAt: null,
         completedAt,
-        expiresAt: latest.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null
-      }
-      return currentRecords.map(item => item.id === id ? saved : item)
-    })
-    const saved = savedRecords.find(item => item.id === id && item.ownerUserId === userId)
+        expiresAt: record.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null,
+        pendingMaxAge: PENDING_MAX_AGE
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('UPLOAD_EXPIRED')) throw new NotFoundException('UPLOAD_EXPIRED')
+      if (message.includes('UPLOAD_NOT_FOUND')) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      throw error
+    }
     if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (
       saved.purpose === 'editor-image' &&
@@ -241,6 +198,14 @@ export class UploadsService {
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
     return this.content.getEditorImage(userId, id)
+  }
+
+  getEditorImageIds(html: string): string[] {
+    return extractEditorImageIds(html)
+  }
+
+  getAvatarPath(url: string): string | null {
+    return this.storage.getAvatarPath(url)
   }
 
   attachAvatarUrlToRecords(
@@ -323,5 +288,16 @@ export class UploadsService {
       ? '/api/uploads/' + record.id + '/content'
       : this.storage.publicAvatarUrl(record.path)
   }
+
+  private throwUploadWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('PROFILE_NOT_OWNED')) throw new ForbiddenException('PROFILE_NOT_OWNED')
+    if (message.includes('PROFILE_TYPE_MISMATCH')) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+    if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (message.includes('COMMUNITY_STAFF_REQUIRED')) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new NotFoundException('ACCOUNT_NOT_FOUND')
+    throw error
+  }
+
 
 }

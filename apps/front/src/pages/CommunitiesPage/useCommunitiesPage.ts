@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -13,7 +14,8 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
-  const [requestedCommunityTab, setRequestedCommunityTab] = useState<'all' | 'managed'>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedCommunityTab = searchParams.get('tab') === 'managed' ? 'managed' : 'all'
 
   const communitiesPageQuery = useQuery({
     queryKey: queryKeys.communitiesPage(
@@ -35,7 +37,10 @@ export function useCommunitiesPage(): UseCommunitiesPageResult {
   const totalItems = pageData?.communities.totalItems ?? 0
   const communityTab = pageData?.communityTab ?? requestedCommunityTab
   const handleCommunityTabChange = (tab: string) => {
-    setRequestedCommunityTab(tab === 'managed' ? 'managed' : 'all')
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'managed') next.set('tab', 'managed')
+    else next.delete('tab')
+    setSearchParams(next)
     if (page !== 1) setPage(1)
   }
 

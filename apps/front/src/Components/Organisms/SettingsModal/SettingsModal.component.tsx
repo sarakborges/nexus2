@@ -23,7 +23,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title={t('SETTINGS_TITLE')}
+      title={t('DISPLAY_SETTINGS_TITLE')}
       closeLabel={t('SETTINGS_CLOSE')}
       className="settings-modal"
     >

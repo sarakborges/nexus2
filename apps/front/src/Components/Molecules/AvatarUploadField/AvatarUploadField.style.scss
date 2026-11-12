@@ -16,7 +16,7 @@
   width: 88px;
   height: 88px;
   overflow: hidden;
-  border: 2px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--avatar-background);
   color: var(--avatar-fallback-color);
   font-size: 11px;
@@ -50,7 +50,7 @@
 .avatar-upload-field__remove {
   min-height: 34px;
   padding: 6px 10px;
-  border: 2px solid var(--color-border);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface);
   color: var(--text-color);
   font: inherit;

@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
@@ -55,7 +56,7 @@ export function CommunitiesPage() {
       }
     >
       <div className="social-page__content-stack">
-        <header className="account-card__header">
+        <header className="account-card__header communities-page__header">
           <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
           <ButtonLink
             className="account-card__action"
@@ -74,11 +75,14 @@ export function CommunitiesPage() {
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}
           isError={communitiesPageQuery.isError}
-          isEmpty={communitiesPageQuery.isSuccess && totalItems === 0}
-          emptyMessage={t('COMMUNITIES_EMPTY')}
           onRetry={() => void communitiesPageQuery.refetch()}
         >
-          <EntityDirectoryGrid
+          {totalItems === 0 ? (
+            <div className="directory-empty-state">
+              <p>{t('COMMUNITIES_EMPTY')}</p>
+              <Link to={`${ROUTES.search}?scope=communities`}>{t('COMMUNITIES_EMPTY_SEARCH')}</Link>
+            </div>
+          ) : <EntityDirectoryGrid
             entries={communities.map((community) => ({
               id: community.id,
               name: community.name,
@@ -86,7 +90,7 @@ export function CommunitiesPage() {
               href: `${ROUTES.community}/${community.url}`,
               secondaryText: `/community/${community.url}`
             }))}
-          />
+          />}
         </RequestState>
         <Pagination
           page={page}

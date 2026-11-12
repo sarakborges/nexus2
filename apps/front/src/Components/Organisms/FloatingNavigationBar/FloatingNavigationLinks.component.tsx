@@ -11,6 +11,7 @@ export function FloatingNavigationLinks({pathname,hasCurrentProfile,profileRoute
       <Link className="floating-navigation__sidebar-link" to={ROUTES.home} aria-current={pathname===ROUTES.home?'page':undefined} onClick={onNavigate}><FiHome aria-hidden="true"/><span>{t('HOME_TITLE')}</span></Link>
       {profileRoute && <Link className="floating-navigation__sidebar-link" to={profileRoute} aria-current={pathname===profileRoute?'page':undefined} onClick={onNavigate}><FiUsers aria-hidden="true"/><span>{t('NAVIGATION_PROFILE')}</span></Link>}
       {messagesRoute && <Link className="floating-navigation__sidebar-link" to={messagesRoute} aria-current={pathname===messagesRoute?'page':undefined} onClick={onNavigate}><FiMessageCircle aria-hidden="true"/><span>{t('NAVIGATION_MESSAGES')}</span></Link>}
+      {profileRoute && <Link className="floating-navigation__sidebar-link" to={`${profileRoute}/friends`} aria-current={pathname===`${profileRoute}/friends`?'page':undefined} onClick={onNavigate}><FiUsers aria-hidden="true"/><span>{t('PROFILE_FRIENDS_LINK')}</span></Link>}
       {communitiesRoute && <Link className="floating-navigation__sidebar-link" to={communitiesRoute} aria-current={pathname===communitiesRoute?'page':undefined} onClick={onNavigate}><FiUsers aria-hidden="true"/><span>{t('COMMUNITIES_TITLE')}</span></Link>}
     </>}
   </nav>

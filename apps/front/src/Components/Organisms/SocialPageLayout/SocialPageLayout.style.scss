@@ -472,3 +472,19 @@
     aspect-ratio: auto;
   }
 }
+
+/* Stable dimensions: hover feedback must not move or resize interactive elements. */
+.social-preview-link:hover { transform:none; }
+.social-preview-link:hover .social-preview-avatar img { transform:none; }
+.social-identity__picture--fallback,
+.social-preview-avatar:not(:has(img)),
+.account-card__profile-entry-avatar:not(:has(img)) { aspect-ratio:1 / 1; max-height:none; }
+.social-preview-avatar { aspect-ratio:1 / 1; height:auto; max-height:none; }
+.social-preview-avatar img { height:100%; max-height:none; }
+.account-card__profile-entry-avatar { width:56px; height:56px; max-height:none; aspect-ratio:1 / 1; }
+.account-card__profile-entry-avatar img { width:100%; height:100%; max-height:none; object-fit:cover; }
+.directory-empty-state { display:grid; justify-items:start; gap:12px; padding:20px 0; color:var(--color-neutral); line-height:1.5; }
+.directory-empty-state a { color:var(--color-primary-weak); font-weight:var(--font-weight-bold); }
+
+.social-page__layout--no-sidebar { grid-template-columns:minmax(0,1fr); }
+.social-page__layout--no-sidebar .social-page__main-column { grid-column:1; }

@@ -58,6 +58,9 @@ const ProfileFriendsPage = lazy(() =>
 const ProfileMessagesPage = lazy(() =>
   import('@/pages/ProfileMessagesPage').then(module => ({ default: module.ProfileMessagesPage }))
 )
+const ProfileSettingsPage = lazy(() =>
+  import('@/pages/ProfileSettingsPage').then(module => ({ default: module.ProfileSettingsPage }))
+)
 const ProfilePage = lazy(() =>
   import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage }))
 )
@@ -87,6 +90,10 @@ export function AppRoutes() {
           <Route
             path={`${ROUTES.profile}/:url/edit`}
             element={<EditProfilePage />}
+          />
+          <Route
+            path={`${ROUTES.profile}/:url/settings`}
+            element={<ProfileSettingsPage />}
           />
           <Route
             path={`${ROUTES.community}/:url/edit`}

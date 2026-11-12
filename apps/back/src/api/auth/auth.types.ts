@@ -1,7 +1,8 @@
-import type { AuthenticatedUser, UserPreferences } from '@nexus/common'
+import type { AuthenticatedUser } from '@nexus/common'
+import type { AccountRepositoryRecord } from '../../storage/repository.interface'
 
 export type AuthenticatedUserContext = Pick<AuthenticatedUser, 'id'>
-export type AccountRecord = AuthenticatedUser & { password: { hash: string; salt: string }; preferences?: UserPreferences }
+export type AccountRecord = AccountRepositoryRecord
 export type RefreshTokenRecord = { id: string; userId: string; tokenHash: string; expiresAt: number }
 export type JwtPayload = { sub: string; email: string; type: 'access' | 'refresh'; jti?: string }
 

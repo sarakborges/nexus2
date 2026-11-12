@@ -28,15 +28,24 @@ export type ProfileMessage = { id: string; fromProfileId: string; toProfileId: s
 export type ProfilePost = { id: string; profileId: string; content: string; createdAt: number }
 export type AuthenticatedUser = { id: string; email: string; profiles: string[]; currentProfile: string | null }
 export type AuthTokenPair = { accessToken: string; refreshToken: string; expiresIn: number; user: AuthenticatedUser }
-export type AuthSession = { user: AuthenticatedUser; authenticatedAt: number }
+export type AuthMeResponse = {
+  user: AuthenticatedUser
+  currentProfile: Profile | null
+  activities: RecentActivity[]
+  activityCursor: ActivityFeedCursor | null
+  hasMoreActivities: boolean
+}
+export type AuthSession = AuthMeResponse & { authenticatedAt: number }
 export type SignInCredentials = { email: string; password: string }
 export type SignUpCredentials = SignInCredentials
 export type UserPreferences = { language: 'system' | 'pt-BR' | 'en-US'; theme: 'system' | 'light' | 'dark' }
+export type ProfileSettings = { messageAudience: 'friends' | 'everyone'; publishActivityTypes: RecentActivity['type'][]; showFriendActivityTypes: RecentActivity['type'][] }
 export type ApiErrorResponse = { statusCode: number; message: string | string[]; error?: string }
 
 export type RecentActivity =
   | { id: string; type: 'friend_connected'; updatedAt: number; profile: Profile; friend: Profile }
   | { id: string; type: 'profile_post'; updatedAt: number; profile: Profile; content: string }
+  | { id: string; type: 'community_created'; updatedAt: number; profile: Profile; community: Community }
   | {
       id: string
       type: 'community_membership'
@@ -47,9 +56,18 @@ export type RecentActivity =
     }
 
 
+export type ActivityFeedCursor = { updatedAt: number; id: string }
+export type ActivityFeedPage = {
+  items: RecentActivity[]
+  nextCursor: ActivityFeedCursor | null
+  hasMore: boolean
+}
+
 export type HomePageData = {
   currentProfile: Profile | null
   activities: RecentActivity[]
+  activityCursor: ActivityFeedCursor | null
+  hasMoreActivities: boolean
   friends: PaginatedResult<Profile>
   communities: PaginatedResult<Community>
   suggestions: Community[]

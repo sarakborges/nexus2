@@ -20,7 +20,6 @@ const controllers = [
 
 const expectedRoutes = [
   'GET search',
-  'GET home',
   'GET activity',
   'GET profiles/by-url/:url/directory/:kind/page',
   'GET profiles/by-url/:url/edit/page',
@@ -33,9 +32,11 @@ const expectedRoutes = [
   'PUT profiles/:profileId',
   'GET profiles/by-url/:url/messages/page',
   'GET profiles/:profileId/messages',
+  'GET profiles/:profileId/settings',
   'POST profiles/:profileId/messages',
   'DELETE profiles/:profileId/messages/:messageId',
   'PUT profiles/:profileId/messages/:messageId/favorite',
+  'PUT profiles/:profileId/settings',
   'POST profiles/:profileId/posts',
   'GET communities/by-url/:url/page',
   'GET communities/by-url/:url/forum/page',

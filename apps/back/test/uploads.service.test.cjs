@@ -1,5 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
+const { ForbiddenException, NotFoundException, UnauthorizedException } = require('@nestjs/common')
 const { UploadsService } = require('../dist/api/uploads/uploads.service.js')
 const { UploadsStorageService } = require('../dist/api/uploads/uploads.storage.service.js')
 const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.service.js')
@@ -10,6 +11,127 @@ const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
 const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
+
+
+async function resolveEditorImageRecord(data, { userId, id, now }) {
+  const initialRecords = await data.read('media_files')
+  const locator = initialRecords.find(item =>
+    item.id === id &&
+    item.purpose === 'editor-image' &&
+    (item.status === 'ready' || (
+      item.status === 'deleting' && item.resourceType && item.resourceId
+    ))
+  )
+  if (!locator || (
+    !locator.resourceType && !locator.resourceId &&
+    locator.expiresAt !== null && locator.expiresAt <= now
+  )) {
+    throw new NotFoundException('UPLOAD_NOT_FOUND')
+  }
+
+  const resourceType = locator.resourceType
+  const resourceId = locator.resourceId
+  const collections = ['media_files']
+  if (resourceType === 'profile') collections.push('profiles')
+  if (resourceType === 'profile-post') collections.push('profile_posts')
+  if (
+    resourceType === 'community' ||
+    resourceType === 'community-forum-topic' ||
+    resourceType === 'community-forum-reply'
+  ) {
+    collections.push('accounts', 'communities', 'community_relationships')
+    if (resourceType === 'community-forum-topic') collections.push('community_forum_topics')
+    if (resourceType === 'community-forum-reply') collections.push('community_forum_replies')
+  }
+  if (resourceType === 'profile-message') collections.push('accounts', 'profile_messages')
+
+  return data.transaction(collections, current => {
+    const latest = current.media_files.find(item => item.id === id)
+    if (
+      !latest ||
+      latest.purpose !== 'editor-image' ||
+      (latest.status !== 'ready' && !(
+        latest.status === 'deleting' && latest.resourceType && latest.resourceId
+      )) ||
+      (!latest.resourceType && !latest.resourceId && latest.expiresAt !== null && latest.expiresAt <= now) ||
+      latest.resourceType !== resourceType ||
+      latest.resourceId !== resourceId
+    ) throw new NotFoundException('UPLOAD_NOT_FOUND')
+
+    if (!latest.resourceType) {
+      if (userId !== latest.ownerUserId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile') {
+      if (!current.profiles.some(profile => profile.id === latest.resourceId)) {
+        throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile-post') {
+      if (!current.profile_posts.some(post => post.id === latest.resourceId)) {
+        throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (
+      latest.resourceType === 'community' ||
+      latest.resourceType === 'community-forum-topic' ||
+      latest.resourceType === 'community-forum-reply'
+    ) {
+      let communityId = latest.resourceId
+      if (
+        latest.resourceType === 'community-forum-topic' ||
+        latest.resourceType === 'community-forum-reply'
+      ) {
+        const resourceCollection = latest.resourceType === 'community-forum-topic'
+          ? current.community_forum_topics
+          : current.community_forum_replies
+        const resource = resourceCollection.find(item => item.id === latest.resourceId)
+        if (!resource) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        communityId = resource.communityId
+      }
+
+      const community = current.communities.find(item => item.id === communityId)
+      if (!community) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      if (community.privacy === 'private') {
+        if (!userId) throw new NotFoundException('UPLOAD_NOT_FOUND')
+        const account = current.accounts.find(item => item.id === userId)
+        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        const ownedProfiles = new Set(account.profiles)
+        const canRead = current.community_relationships.some(relationship =>
+          relationship.profiles[1] === communityId &&
+          ownedProfiles.has(relationship.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(relationship.type)
+        )
+        if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile-message') {
+      if (!userId) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      const account = current.accounts.find(item => item.id === userId)
+      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      const message = current.profile_messages.find(item => item.id === latest.resourceId)
+      if (
+        !message ||
+        message.fromProfileId !== latest.messageFromProfileId ||
+        message.toProfileId !== latest.messageToProfileId
+      ) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      const participants = [message.fromProfileId, message.toProfileId]
+      if (!account.profiles.some(profileId => participants.includes(profileId))) {
+        throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      }
+      return { records: current, result: latest }
+    }
+
+    throw new NotFoundException('UPLOAD_NOT_FOUND')
+  })
+}
 
 function createHarness(initial = {}, activeProfileId = null, beforeTransaction, beforeUpdate) {
   const defaultAccounts = [
@@ -25,6 +147,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
     accounts: defaultAccounts,
     ...initial
   }))
+  const resourceCollections = collections
   const data = {
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
@@ -47,6 +170,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
       return structuredClone(outcome.result)
     }
   }
+  data.getEditorImageRecord = request => resolveEditorImageRecord(data, request)
   const config = {
     get(name) {
       return {
@@ -60,9 +184,333 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
   const cleanup = new UploadsCleanupService(data, config, storage)
   const content = new UploadsContentService(data, storage)
   const avatars = new UploadsAvatarService(data, storage, cleanup)
+  data.createUpload = async change => {
+    const { record, targetId, actorProfileId } = change
+    const names = ['media_files']
+    if (record.purpose === 'profile-avatar' && targetId) names.push('accounts', 'profiles')
+    if (record.purpose === 'community-avatar' && targetId) {
+      names.push('accounts', 'profiles', 'communities', 'community_relationships')
+    }
+    await data.transaction(names, collections => {
+      const profiles = collections.profiles
+      const accounts = collections.accounts
+      if (record.purpose === 'profile-avatar' && targetId) {
+        avatars.assertOwnsProfileInRecords(record.ownerUserId, targetId, accounts, profiles)
+      }
+      if (record.purpose === 'community-avatar' && targetId && actorProfileId) {
+        avatars.assertOwnsProfileInRecords(record.ownerUserId, actorProfileId, accounts, profiles)
+        const actor = profiles.find(item => item.id === actorProfileId)
+        const community = collections.communities.find(item => item.id === targetId)
+        const ownerProfileId = collections.community_relationships.find(item =>
+          item.profiles[1] === targetId && item.type === 'owner'
+        )?.profiles[0]
+        const owner = ownerProfileId ? profiles.find(item => item.id === ownerProfileId) : undefined
+        if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+        const role = collections.community_relationships.find(item =>
+          item.profiles[0] === actorProfileId && item.profiles[1] === targetId
+        )?.type
+        if (role !== 'owner' && role !== 'moderator') throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+      }
+      return {
+        records: { ...collections, media_files: [...collections.media_files, record] },
+        result: undefined
+      }
+    })
+  }
+  data.getUploadById = async (userId, id) => {
+    const records = await data.read('media_files')
+    return records.find(item => item.id === id && item.ownerUserId === userId) ?? null
+  }
+  data.deletePendingUpload = async (userId, id) => {
+    await data.update('media_files', records => records.filter(item =>
+      item.id !== id || item.ownerUserId !== userId || item.status !== 'pending'
+    ))
+  }
+  data.completeUpload = async change => {
+    const savedRecords = await data.update('media_files', currentRecords => {
+      const latest = currentRecords.find(item => item.id === change.id && item.ownerUserId === change.userId)
+      if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      if (latest.status === 'ready') return currentRecords
+      if (latest.status !== 'pending' || latest.createdAt + change.pendingMaxAge <= Date.now()) {
+        throw new NotFoundException('UPLOAD_EXPIRED')
+      }
+      const saved = {
+        ...latest,
+        size: change.size,
+        status: 'ready',
+        deletingAt: null,
+        completedAt: change.completedAt,
+        expiresAt: change.expiresAt
+      }
+      return currentRecords.map(item => item.id === change.id ? saved : item)
+    })
+    const saved = savedRecords.find(item => item.id === change.id && item.ownerUserId === change.userId)
+    if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    return saved
+  }
+  data.claimExpiredUploads = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const currentRecords = collections.media_files
+      const resourceTable = {
+        profile: 'profiles',
+        community: 'communities',
+        'profile-message': 'profile_messages',
+        'profile-post': 'profile_posts',
+        'community-forum-topic': 'community_forum_topics',
+        'community-forum-reply': 'community_forum_replies'
+      }
+      const isOrphanedEditorImage = item => {
+        if (item.purpose !== 'editor-image' || !item.resourceType) return false
+        if (item.status !== 'ready') {
+          const claimExpired = item.status === 'deleting' &&
+            (item.deletingAt ?? 0) <= change.now - change.claimLeaseMs &&
+            (item.deleteAfter == null || item.deleteAfter <= change.now)
+          if (!claimExpired) return false
+        }
+        const table = resourceTable[item.resourceType]
+        return !table || !(resourceCollections.get(table) ?? []).some(row => row.id === item.resourceId)
+      }
+      const isOrphanedAvatar = item => (
+        item.status === 'ready' &&
+        (
+          (item.purpose === 'profile-avatar' && item.resourceType === 'profile' &&
+            !(resourceCollections.get('profiles') ?? []).some(row => row.id === item.resourceId)) ||
+          (item.purpose === 'community-avatar' && item.resourceType === 'community' &&
+            !(resourceCollections.get('communities') ?? []).some(row => row.id === item.resourceId))
+        ) &&
+        (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now
+      )
+      const candidates = currentRecords.filter(item =>
+        (item.status === 'deleting' &&
+          (item.purpose !== 'editor-image' || (!item.resourceType && !item.resourceId)) &&
+          (item.deletingAt ?? 0) <= change.now - change.claimLeaseMs &&
+          (item.deleteAfter == null || item.deleteAfter <= change.now)) ||
+        (item.purpose === 'editor-image' && item.status === 'ready' &&
+          !item.resourceType && !item.resourceId &&
+          item.expiresAt !== null && item.expiresAt <= change.now) ||
+        (item.status === 'pending' && item.createdAt + change.safeAge <= change.now) ||
+        (item.purpose !== 'editor-image' && item.status === 'ready' &&
+          !item.resourceType &&
+          (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now) ||
+        isOrphanedEditorImage(item) ||
+        isOrphanedAvatar(item)
+      )
+      if (!candidates.length) return { records: collections, result: [] }
+      const candidateIds = new Set(candidates.map(item => item.id))
+      const claimed = candidates.map(item => ({
+        ...item, status: 'deleting', deletingAt: change.now, deleteAfter: null
+      }))
+      const claimedById = new Map(claimed.map(item => [item.id, item]))
+      return {
+        records: {
+          ...collections,
+          media_files: currentRecords.map(item => candidateIds.has(item.id) ? claimedById.get(item.id) : item)
+        },
+        result: claimed
+      }
+    }
+  )
+  data.finishUploadDeletions = async claims => {
+    let deleted = 0
+    await data.update('media_files', records => {
+      const claimedById = new Map(claims.map(item => [item.id, item]))
+      const remaining = records.filter(item => {
+        const claim = claimedById.get(item.id)
+        const resourceTable = {
+          profile: 'profiles',
+          community: 'communities',
+          'profile-message': 'profile_messages',
+          'profile-post': 'profile_posts',
+          'community-forum-topic': 'community_forum_topics',
+          'community-forum-reply': 'community_forum_replies'
+        }
+        const table = resourceTable[item.resourceType]
+        const sourceExists = Boolean(
+          item.purpose === 'editor-image' &&
+          item.resourceType &&
+          table &&
+          (resourceCollections.get(table) ?? []).some(row => row.id === item.resourceId)
+        )
+        const shouldDelete = Boolean(
+          claim && item.status === 'deleting' && item.deletingAt === claim.deletingAt &&
+          !sourceExists
+        )
+        if (shouldDelete) deleted += 1
+        return !shouldDelete
+      })
+      return remaining
+    })
+    return deleted
+  }
+  data.schedulePreviousAvatarDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.bucket === 'nexus-avatars' && item.path === change.path)
+      const hasActiveClaim = Boolean(
+        latest?.status === 'deleting' &&
+        (latest.deletingAt ?? 0) > change.deletingAt - change.leaseMs
+      )
+      if (!latest || latest.id === change.keepId || hasActiveClaim) {
+        return { records: collections, result: null }
+      }
+      const safeFrom = latest.completedAt ?? latest.createdAt
+      const scheduled = {
+        ...latest,
+        status: 'deleting',
+        deletingAt: change.deletingAt,
+        deleteAfter: Math.max(
+          safeFrom + change.safeAge,
+          change.deletingAt + change.leaseMs
+        )
+      }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? scheduled : item)
+        },
+        result: scheduled
+      }
+    }
+  )
+  data.scheduleUploadDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.id === change.id)
+      if (!latest || latest.ownerUserId !== change.userId) {
+        return { records: collections, result: true }
+      }
+      if (latest.status === 'deleting' && latest.deleteAfter != null) {
+        return { records: collections, result: true }
+      }
+      if (latest.status !== 'pending' && !(change.allowReady && latest.status === 'ready')) {
+        return { records: collections, result: false }
+      }
+      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      const safeFrom = latest.status === 'ready'
+        ? (latest.completedAt ?? latest.createdAt)
+        : latest.createdAt
+      const scheduled = {
+        ...latest,
+        status: 'deleting',
+        deletingAt: change.scheduledAt,
+        deleteAfter: Math.max(
+          safeFrom + change.safeAge,
+          change.scheduledAt + change.leaseMs
+        )
+      }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? scheduled : item)
+        },
+        result: true
+      }
+    }
+  )
+  data.claimUploadDeletion = async change => data.transaction(
+    ['media_files'],
+    collections => {
+      const current = collections.media_files
+      const latest = current.find(item => item.id === change.id && item.ownerUserId === change.userId)
+      const hasActiveClaim = Boolean(
+        latest?.status === 'deleting' &&
+        (latest.deletingAt ?? 0) > change.deletingAt - 5 * 60 * 1000
+      )
+      if (!latest || hasActiveClaim ||
+        (change.expectedStatus && latest.status !== change.expectedStatus)) {
+        return { records: collections, result: null }
+      }
+      if (latest.resourceType) throw new ForbiddenException('UPLOAD_ALREADY_ATTACHED')
+      const claimed = { ...latest, status: 'deleting', deletingAt: change.deletingAt }
+      return {
+        records: {
+          ...collections,
+          media_files: current.map(item => item.id === latest.id ? claimed : item)
+        },
+        result: claimed
+      }
+    }
+  )
+  data.getAvatarUploadPath = async (userId, uploadId, purpose) => {
+    const records = await data.read('media_files')
+    return records.find(item =>
+      item.id === uploadId && item.ownerUserId === userId && item.purpose === purpose
+    )?.path ?? null
+  }
+  data.setProfileAvatar = async change => data.transaction(
+    ['accounts', 'profiles', 'media_files'],
+    collections => {
+      avatars.assertOwnsProfileInRecords(
+        change.userId, change.profileId, collections.accounts, collections.profiles
+      )
+      const profile = collections.profiles.find(item => item.id === change.profileId)
+      if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
+      const nextRecords = change.uploadId
+        ? avatars.attachAvatarRecordToRecords(
+            collections.media_files, change.userId, change.uploadId,
+            'profile-avatar', 'profile', change.profileId
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          profiles: collections.profiles.map(item =>
+            item.id === change.profileId ? { ...item, picture: change.picture } : item
+          ),
+          media_files: nextRecords
+        },
+        result: { previousPicture: profile.picture }
+      }
+    }
+  )
+  data.setCommunityAvatar = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+    collections => {
+      avatars.assertOwnsProfileInRecords(
+        change.userId, change.actorProfileId, collections.accounts, collections.profiles
+      )
+      const actor = collections.profiles.find(item => item.id === change.actorProfileId)
+      const community = collections.communities.find(item => item.id === change.communityId)
+      const ownerProfileId = collections.community_relationships.find(item =>
+        item.profiles[1] === change.communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerProfileId
+        ? collections.profiles.find(item => item.id === ownerProfileId)
+        : undefined
+      if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+      if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+      const role = collections.community_relationships.find(item =>
+        item.profiles[0] === change.actorProfileId && item.profiles[1] === change.communityId
+      )?.type
+      if (role !== 'owner' && role !== 'moderator') {
+        throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+      }
+      const nextRecords = change.uploadId
+        ? avatars.attachAvatarRecordToRecords(
+            collections.media_files, change.userId, change.uploadId,
+            'community-avatar', 'community', change.communityId
+          )
+        : collections.media_files
+      return {
+        records: {
+          ...collections,
+          communities: collections.communities.map(item =>
+            item.id === change.communityId ? { ...item, picture: change.picture } : item
+          ),
+          media_files: nextRecords
+        },
+        result: { previousPicture: community.picture }
+      }
+    }
+  )
   return {
     service: new UploadsService(data, storage, cleanup, content, avatars),
-    collections
+    collections,
+    data
   }
 }
 
@@ -187,6 +635,66 @@ test('ready editor completion does not return a URL after the 24-hour deadline',
   )
 })
 
+test('profile-post images remain public and readable after upload retention expires', async t => {
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/profile-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 48 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 24 * 60 * 60 * 1000,
+    resourceType: 'profile-post',
+    resourceId: 'post-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-1', profileId: 'profile-1' }]
+  })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  const image = await service.getEditorImage(null, file.id)
+  assert.equal(image.contentType, 'image/png')
+  assert.deepEqual(image.body, pngHeader)
+})
+
+test('profile-post images are not served after their source post is gone', async t => {
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174002',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/orphaned-profile-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() - 1,
+    resourceType: 'profile-post',
+    resourceId: 'deleted-post',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new Error('Orphaned profile-post images must not reach Storage')
+  })
+
+  await assert.rejects(
+    service.getEditorImage(null, file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
+  )
+})
+
 test('denies editor image access after the 24-hour deadline', async t => {
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174000',
@@ -201,8 +709,8 @@ test('denies editor image access after the 24-hour deadline', async t => {
     createdAt: Date.now() - 48 * 60 * 60 * 1000,
     completedAt: Date.now() - 48 * 60 * 60 * 1000,
     expiresAt: Date.now() - 1,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -212,7 +720,7 @@ test('denies editor image access after the 24-hour deadline', async t => {
   })
 
   await assert.rejects(
-    service.getEditorImage(null, file.id),
+    service.getEditorImage('user-1', file.id),
     error => error.getStatus() === 404
   )
 })
@@ -536,8 +1044,8 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -1038,8 +1546,8 @@ test('partial upload cleanup continues across buckets and retries failed deletio
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -1348,8 +1856,8 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }))
@@ -1370,6 +1878,183 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('legacy deleting editor attachments remain readable and protected from cleanup while their source exists', async t => {
+  const now = Date.now()
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174111',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/legacy-deleting-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'deleting',
+    deletingAt: now - 10 * 60 * 1000,
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'post-legacy',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-legacy', profileId: 'profile-1' }]
+  })
+  withFetch(t, async (_url, init) => {
+    if (init.method === 'DELETE') throw new Error('Live attachments must not be removed')
+    return new Response(pngHeader, { status: 200 })
+  })
+
+  const cleanup = await service.cleanupExpired(cronSecret)
+  assert.deepEqual(cleanup, { deleted: 0 })
+  const image = await service.getEditorImage(null, file.id)
+  assert.deepEqual(image.body, pngHeader)
+  assert.deepEqual(collections.get('media_files'), [file])
+})
+
+test('finishUploadDeletions does not remove a claimed editor image while its source exists', async () => {
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174112',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/inflight-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'deleting',
+    deletingAt: 1234,
+    createdAt: 1,
+    completedAt: 1,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'post-inflight',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { data, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-inflight', profileId: 'profile-1' }]
+  })
+
+  const deleted = await data.finishUploadDeletions([{ id: file.id, deletingAt: file.deletingAt }])
+
+  assert.equal(deleted, 0)
+  assert.deepEqual(collections.get('media_files'), [file])
+})
+
+test('cleanup removes editor images whose source content was deleted', async t => {
+  const now = Date.now()
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174111',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/orphaned-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile-post',
+    resourceId: 'deleted-post',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: []
+  })
+  const deletedPaths = []
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletedPaths.push(...JSON.parse(init.body).prefixes)
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 1 })
+  assert.deepEqual(deletedPaths, [file.path])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('cleanup removes avatar records whose profile was deleted after safe retention', async t => {
+  const now = Date.now()
+  const file = {
+    id: '323e4567-e89b-42d3-a456-426614174112',
+    ownerUserId: 'author-user',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/author-user/deleted-profile.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: now - 48 * 60 * 60 * 1000,
+    completedAt: now - 48 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile',
+    resourceId: 'deleted-profile',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profiles: []
+  })
+  const deletedPaths = []
+  withFetch(t, async (url, init) => {
+    assert.equal(init.method, 'DELETE')
+    deletedPaths.push(...JSON.parse(init.body).prefixes)
+    return new Response(null, { status: 200 })
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 1 })
+  assert.deepEqual(deletedPaths, [file.path])
+  assert.deepEqual(collections.get('media_files'), [])
+})
+
+test('does not claim expired editor images while they are attached to a profile post', async t => {
+  const file = {
+    id: '223e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/attached-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 48 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 24 * 60 * 60 * 1000,
+    resourceType: 'profile-post',
+    resourceId: 'post-2',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-2', profileId: 'profile-1' }]
+  })
+  withFetch(t, async () => {
+    throw new Error('Attached images must not be deleted from Storage')
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 0 })
+  assert.deepEqual(collections.get('media_files'), [file])
+})
 
 test('expired pending upload metadata is recovered when Storage signing rollback fails', async t => {
   const now = Date.now()

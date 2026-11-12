@@ -17,10 +17,44 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
     ['media_files', []]
   ])
   const data = {
+    async getProfileRelationships(userId, profileId) {
+      beforeTransaction?.(['relationships'], collections)
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!account || !account.profiles.includes(profileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      return structuredClone((collections.get('relationships') ?? []).filter(record =>
+        record.profiles.includes(profileId)
+      ))
+    },
+    async getProfileFriends(profileId, page) {
+      beforeTransaction?.(['relationships'], collections)
+      const profiles = collections.get('profiles') ?? []
+      const profile = profiles.find(item => item.id === profileId)
+      if (!profile) throw new Error('PROFILE_NOT_FOUND')
+      const friendIds = new Set(
+        (collections.get('relationships') ?? [])
+          .filter(record => record.type === 'connection' && record.profiles.includes(profileId))
+          .map(record => record.profiles.find(id => id !== profileId))
+      )
+      const friends = profiles.filter(friend => friendIds.has(friend.id) && friend.type === profile.type)
+      const pageSize = 20
+      const totalItems = friends.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(friends.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
     async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async readByIds(name, ids) {
+    async getProfilesByIds(ids) {
       const requested = new Set(ids)
-      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
+      return structuredClone((collections.get('profiles') ?? []).filter(record => requested.has(record.id)))
     },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
@@ -42,6 +76,281 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       return structuredClone(outcome.result)
     }
   }
+  const page = (items, requestedPage = 1) => {
+    const pageSize = 20
+    const totalItems = items.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+    const safePage = Math.min(Math.max(Math.trunc(requestedPage) || 1, 1), totalPages)
+    const offset = (safePage - 1) * pageSize
+    return {
+      items: structuredClone(items.slice(offset, offset + pageSize)),
+      page: safePage,
+      pageSize,
+      totalItems,
+      totalPages
+    }
+  }
+
+  data.getOwnedProfiles = async (userId, requestedPage) => {
+    beforeTransaction?.(['accounts', 'profiles'], collections)
+    const owner = (collections.get('accounts') ?? []).find(item => item.id === userId)
+    if (!owner) throw new Error('ACCOUNT_NOT_FOUND')
+    const owned = new Set(owner.profiles)
+    return page(
+      (collections.get('profiles') ?? []).filter(item => owned.has(item.id)),
+      requestedPage
+    )
+  }
+
+  data.getProfileCommunities = async (profileId, requestedPage) => {
+    beforeTransaction?.(['profiles', 'communities', 'community_relationships'], collections)
+    const source = (collections.get('profiles') ?? []).find(item => item.id === profileId)
+    if (!source) throw new Error('PROFILE_NOT_FOUND')
+    const memberships = collections.get('community_relationships') ?? []
+    const ids = new Set(memberships.filter(item =>
+      item.profiles[0] === profileId && ['owner', 'moderator', 'connection'].includes(item.type)
+    ).map(item => item.profiles[1]))
+    const visible = (collections.get('communities') ?? []).filter(item =>
+      ids.has(item.id) && item.type === source.type && item.privacy === 'public'
+    )
+    return page(visible, requestedPage)
+  }
+
+  data.createProfile = async change => data.transaction(
+    ['profiles', 'accounts', 'media_files'],
+    records => {
+      const profiles = records.profiles
+      const accounts = records.accounts
+      const account = accounts.find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (profiles.some(item => item.url === change.profile.url)) {
+        throw new Error('PROFILE_URL_ALREADY_IN_USE')
+      }
+      const updatedAccount = {
+        ...account,
+        profiles: [...account.profiles, change.profile.id],
+        currentProfile: change.profile.id
+      }
+      let mediaFiles = records.media_files
+      if (uploads) {
+        mediaFiles = uploads.attachAvatarUrlToRecords
+          ? uploads.attachAvatarUrlToRecords(
+              mediaFiles, change.userId, change.profile.picture,
+              'profile-avatar', 'profile', change.profile.id
+            )
+          : mediaFiles
+        mediaFiles = uploads.attachEditorImagesToRecords
+          ? uploads.attachEditorImagesToRecords(
+              mediaFiles, change.userId, change.profile.about, 'profile', change.profile.id
+            )
+          : mediaFiles
+      }
+      return {
+        records: {
+          ...records,
+          profiles: [...profiles, change.profile],
+          accounts: accounts.map(item => item.id === change.userId ? updatedAccount : item),
+          media_files: mediaFiles
+        },
+        result: {
+          id: updatedAccount.id,
+          email: updatedAccount.email,
+          profiles: [...updatedAccount.profiles],
+          currentProfile: updatedAccount.currentProfile
+        }
+      }
+    }
+  )
+
+  data.updateProfile = async change => data.transaction(
+    ['accounts', 'profiles', 'media_files'],
+    records => {
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(change.profileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const latest = records.profiles.find(item => item.id === change.profileId)
+      if (!latest) throw new Error('PROFILE_NOT_FOUND')
+      if (!change.name || change.about.length > 8000 ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
+        throw new Error('INVALID_PROFILE')
+      }
+      if (records.profiles.some(item => item.id !== change.profileId && item.url === change.url)) {
+        throw new Error('PROFILE_URL_ALREADY_IN_USE')
+      }
+      let mediaFiles = records.media_files
+      if (uploads) {
+        if (change.picture !== latest.picture && uploads.attachAvatarUrlToRecords) {
+          mediaFiles = uploads.attachAvatarUrlToRecords(
+            mediaFiles, change.userId, change.picture, 'profile-avatar', 'profile', change.profileId
+          )
+        }
+        if (uploads.detachEditorImagesFromRecords) {
+          mediaFiles = uploads.detachEditorImagesFromRecords(
+            mediaFiles, [], 'profile', change.profileId
+          )
+        }
+        if (uploads.attachEditorImagesToRecords) {
+          mediaFiles = uploads.attachEditorImagesToRecords(
+            mediaFiles, change.userId, change.about, 'profile', change.profileId
+          )
+        }
+      }
+      const updated = {
+        ...latest,
+        name: change.name,
+        url: change.url,
+        picture: change.picture,
+        about: change.about,
+        createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+        lastActivity: change.lastActivity
+      }
+      return {
+        records: {
+          ...records,
+          profiles: records.profiles.map(item => item.id === change.profileId ? updated : item),
+          media_files: mediaFiles
+        },
+        result: {
+          profile: updated,
+          previousPicture: change.picture !== latest.picture ? latest.picture : null
+        }
+      }
+    }
+  )
+
+  data.createCommunity = async change => data.transaction(
+    ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+    records => {
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(change.ownerProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const owner = records.profiles.find(item => item.id === change.ownerProfileId)
+      if (!owner) throw new Error('PROFILE_NOT_FOUND')
+      if (!change.name || change.about.length > 8000 ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
+        !['public', 'private', 'unlisted'].includes(change.privacy) ||
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
+        throw new Error('INVALID_COMMUNITY')
+      }
+      if (records.communities.some(item => item.url === change.url)) {
+        throw new Error('COMMUNITY_URL_ALREADY_IN_USE')
+      }
+      const community = {
+        id: change.id,
+        name: change.name,
+        url: change.url,
+        picture: change.picture,
+        about: change.about,
+        type: owner.type,
+        privacy: change.privacy,
+        createdAt: change.createdAt,
+        lastActivity: change.createdAt
+      }
+      const membership = {
+        profiles: [change.ownerProfileId, community.id],
+        type: 'owner',
+        requestedBy: null,
+        blockedBy: null,
+        updatedAt: change.createdAt
+      }
+      let mediaFiles = records.media_files
+      if (uploads) {
+        if (uploads.attachAvatarUrlToRecords) {
+          mediaFiles = uploads.attachAvatarUrlToRecords(
+            mediaFiles, change.userId, change.picture,
+            'community-avatar', 'community', community.id
+          )
+        }
+        if (uploads.attachEditorImagesToRecords) {
+          mediaFiles = uploads.attachEditorImagesToRecords(
+            mediaFiles, change.userId, change.about, 'community', community.id
+          )
+        }
+      }
+      return {
+        records: {
+          ...records,
+          communities: [...records.communities, community],
+          community_relationships: [...records.community_relationships, membership],
+          media_files: mediaFiles
+        },
+        result: community
+      }
+    }
+  )
+
+  data.updateCommunity = async change => data.transaction(
+    ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
+    records => {
+      const membership = records.community_relationships.find(item =>
+        item.profiles[1] === change.communityId && item.type === 'owner'
+      )
+      if (!membership) throw new Error('COMMUNITY_NOT_FOUND')
+      const ownerProfileId = membership.profiles[0]
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(ownerProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const owner = records.profiles.find(item => item.id === ownerProfileId)
+      if (!owner) throw new Error('PROFILE_NOT_FOUND')
+      const latest = records.communities.find(item => item.id === change.communityId)
+      if (!latest) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!change.name || change.about.length > 8000 ||
+        !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
+        (change.privacy !== null && !['public', 'private', 'unlisted'].includes(change.privacy)) ||
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
+        throw new Error('INVALID_COMMUNITY')
+      }
+      if (records.communities.some(item => item.id !== change.communityId && item.url === change.url)) {
+        throw new Error('COMMUNITY_URL_ALREADY_IN_USE')
+      }
+      let mediaFiles = records.media_files
+      if (uploads) {
+        if (change.picture !== latest.picture && uploads.attachAvatarUrlToRecords) {
+          mediaFiles = uploads.attachAvatarUrlToRecords(
+            mediaFiles, change.userId, change.picture,
+            'community-avatar', 'community', change.communityId
+          )
+        }
+        if (uploads.detachEditorImagesFromRecords) {
+          mediaFiles = uploads.detachEditorImagesFromRecords(
+            mediaFiles, [], 'community', change.communityId
+          )
+        }
+        if (uploads.attachEditorImagesToRecords) {
+          mediaFiles = uploads.attachEditorImagesToRecords(
+            mediaFiles, change.userId, change.about, 'community', change.communityId
+          )
+        }
+      }
+      const updated = {
+        ...latest,
+        name: change.name,
+        url: change.url,
+        picture: change.picture,
+        about: change.about,
+        type: owner.type,
+        privacy: change.privacy ?? latest.privacy ?? 'public',
+        createdAt: Number.isFinite(latest.createdAt) ? latest.createdAt : 0,
+        lastActivity: change.lastActivity
+      }
+      return {
+        records: {
+          ...records,
+          communities: records.communities.map(item => item.id === change.communityId ? updated : item),
+          media_files: mediaFiles
+        },
+        result: {
+          community: updated,
+          previousPicture: change.picture !== latest.picture ? latest.picture : null
+        }
+      }
+    }
+  )
+
   const auth = {
     async getUser(userId) {
       const saved = (collections.get('accounts') ?? []).find(item => item.id === userId)
@@ -613,3 +922,30 @@ test('profile community list reads membership and community privacy from the sam
   assert.deepEqual(result.items, [])
 })
 
+
+
+test('public profile lists and URL lookups use targeted repository queries without snapshots', async () => {
+  const profile = {
+    id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+    about: '<p>About</p><script>unsafe()</script>', type: 'social',
+    createdAt: 1, lastActivity: 2
+  }
+  const calls = []
+  const data = {
+    async getProfilesPage(page) {
+      calls.push(['list',page])
+      return { items: [profile], page, pageSize: 20, totalItems: 1, totalPages: 1 }
+    },
+    async getProfileByUrl(url) {
+      calls.push(['url',url])
+      return profile
+    },
+    async transaction() { throw new Error('Profile reads must not load collection snapshots.') }
+  }
+  const service = new DomainService(data, {})
+  const page = await service.listProfiles({ page: 1 })
+  const found = await service.getProfile('@PROFILE')
+  assert.deepEqual(calls,[['list',1],['url','profile']])
+  assert.equal(page.items[0].about.includes('<script>'),false)
+  assert.equal(found.about.includes('<script>'),false)
+})

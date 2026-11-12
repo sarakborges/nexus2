@@ -1,4 +1,5 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { Link } from 'react-router'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
@@ -77,11 +78,14 @@ export function ProfileFriendsPage() {
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}
           isError={profileDirectoryQuery.isError}
-          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
-          emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
           onRetry={() => void profileDirectoryQuery.refetch()}
         >
-          <EntityDirectoryGrid
+          {totalItems === 0 ? (
+            <div className="directory-empty-state">
+              <p>{t('RELATIONSHIP_FRIENDS_EMPTY')}</p>
+              <Link to={`${ROUTES.search}?scope=profiles`}>{t('RELATIONSHIP_FRIENDS_EMPTY_SEARCH')}</Link>
+            </div>
+          ) : <EntityDirectoryGrid
             entries={friends.map((friend) => ({
               id: friend.id,
               name: friend.name,
@@ -95,7 +99,7 @@ export function ProfileFriendsPage() {
                 />
               ) : undefined
             }))}
-          />
+          />}
         </RequestState>
         <Pagination
           page={page}

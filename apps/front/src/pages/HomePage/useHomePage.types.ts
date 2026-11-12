@@ -1,6 +1,6 @@
-import type { HomePageData } from '@nexus/common'
+import type { AuthSession } from '@nexus/common'
 import type { UseQueryResult } from '@tanstack/react-query'
 
 export type UseHomePageResult = {
-  homeQuery: UseQueryResult<HomePageData>
+  homeQuery: UseQueryResult<AuthSession | null>
 }

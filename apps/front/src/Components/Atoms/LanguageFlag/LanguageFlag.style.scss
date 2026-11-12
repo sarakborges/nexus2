@@ -6,7 +6,7 @@
   width: 20px;
   height: 20px;
 
-  border: 2px solid var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-neutral-weak);
 
   .portrait {
     width: 16px;
