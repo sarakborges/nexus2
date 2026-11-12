@@ -79,17 +79,16 @@ The TTL values must match on the BFF and backend because they control token vali
 
 ### Persistent storage
 
-Vercel container instances are ephemeral, so the backend does not use its JSON file adapter in production. It uses the Supabase REST API to read and upsert the Nexus collection table.
+Vercel container instances are ephemeral, so production uses `SupabaseRelationalRepository`; `JsonFileRepository` remains a local-development fallback. Account, profile, community, relationship, post, message, forum, upload and token data are persisted as normalized PostgreSQL rows.
 
-Apply the SQL files in order against the Supabase project:
+Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 006 is intentionally absent.
 
-1. `apps/back/sql/001_nexus_collections.sql` creates only Nexus-prefixed storage objects and the backend credential hash.
-2. `apps/back/sql/002_nexus_collection_private_rls.sql` removes the initial public RPC functions, adds a private header-validation helper, and enables narrowly scoped RLS policies.
-3. `apps/back/sql/003_nexus_storage_buckets.sql` creates the permanent public avatar bucket and temporary private editor-image bucket.
-4. `apps/back/sql/004_atomic_collection_transactions.sql` adds the authenticated, atomic multi-collection commit function used by profile and community creation.
-5. `apps/back/sql/005_selective_collection_reads.sql` adds an RLS-protected, security-invoker RPC that returns only records matching requested IDs.
+1. `001`–`005` establish the transitional Nexus storage, private backend access, upload buckets and initial collection RPCs.
+2. `007_relational_social_schema.sql` creates normalized account/social/media tables and transfers the existing records.
+3. `008`–`041` add relational indexes, feed projection and triggers, targeted transactional writes, SQL-side page queries, search, pagination and integrity guards.
+4. `042_retire_json_collection_storage.sql` removes the obsolete JSONB collection table and the two RPCs used only by the retired adapter.
 
-The migrations do not modify the existing tracker tables or migrations. The `public.nexus_collections` table has RLS enabled. The `anon` role can reach only the collection operations that pass the RLS helper check, which reads the backend-only `x-nexus-api-secret` HTTP header. The helper lives in the unexposed `private` schema; no public `SECURITY DEFINER` RPC is left for the application. The database stores only the SHA-256 hash of the API secret.
+The migrations leave the existing tracker tables and their migration history untouched. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
 
 Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_API_SECRET`, and `SUPABASE_STORAGE_SECRET_KEY` on the backend service in Vercel. Configure `CRON_SECRET` on both the BFF and backend. The publishable key identifies the Supabase project; both API secrets, the cron secret, and the JWT secrets must remain sensitive environment variables and must never be bundled into the frontend.
 
@@ -99,9 +98,9 @@ The Supabase Storage setup uses two buckets: `nexus-avatars` is public and store
 
 Editor image references are stored in sanitized HTML as Nexus upload routes. Access to message images is checked against the sender/recipient profiles; images attached to public profile/community About content are publicly readable through the backend. Access is denied at exactly 24 hours after upload. A daily Vercel Cron removes expired objects and abandoned avatar uploads. The scheduled cleanup runs at 04:00 UTC; physical deletion may happen after the access deadline, but expired images are already inaccessible.
 
-`SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter continues to protect only the private Nexus collection table. Never expose either secret in frontend environment variables or send it from the browser.
+`SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter authenticates internal relational database RPCs. Never expose either secret in frontend environment variables or send it from the browser.
 
-The production adapter stores each domain collection as one JSONB array. Mutations still read and write the full collection and remain a scaling limitation. ID-based lookups can use the selective-read RPC introduced by migration 005 to return only matching records, reducing response size and backend decoding. PostgreSQL still enumerates the JSONB array to find those records, so this does not remove the database-side scan; row-level domain storage and server-side pagination remain pending. Single-collection changes use optimistic compare-and-swap; multi-collection transactions use the PostgreSQL function introduced by migration 004, which checks every collection version and commits all changes in one database transaction. Profile creation (profile + account link) and community creation (community + owner membership) use this path. Database-level uniqueness constraints, row-level domain storage and server-side pagination are still pending; normalize the collections before substantial traffic.
+The production source of truth is relational: accounts and account-profile links, preferences, profiles, communities, profile/community relationships, posts, settings, messages, forum topics/replies, refresh tokens and media files are stored as separate rows. Page reads use SQL-side joins and filtering; the feed uses a typed `feed_activities` projection maintained by database triggers and keyset pagination. Writes use transactional database RPCs with ownership, visibility and integrity checks. The obsolete JSONB `nexus_collections` snapshot table and its legacy RPCs are removed by migration 042. The `nexus_collection_versions` table remains only to coordinate atomic writes. A compatibility transaction bridge is retained for the repository interface, so remaining generic transaction call sites should continue to be replaced with targeted relational repository methods rather than expanded.
 
 The local JSON adapter serializes transactions within the Node.js process and restores already-replaced files if a write fails. It is a development fallback, not a multi-process or crash-atomic production database.
 
