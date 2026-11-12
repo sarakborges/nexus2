@@ -28,27 +28,10 @@ export class ProfileSettingsService {
   ) {}
 
   getSettings(userId: string, profileId: string): Promise<ProfileSettings> {
-    if (this.data.getProfileSettings) {
-      return this.data.getProfileSettings(userId, profileId).catch(error => {
-        this.throwRelationalWriteError(error)
-      })
-    }
+    return this.data.getProfileSettings(userId, profileId).catch(error => {
+      this.throwRelationalWriteError(error)
+    })
 
-    return this.data.transaction<ProfileSettings>(
-      ['accounts', 'profiles', 'profile_settings'],
-      collections => {
-        this.assertOwnsProfile(
-          userId,
-          profileId,
-          collections.accounts as AccountRecord[],
-          collections.profiles as Array<{ id: string }>
-        )
-        const record = (collections.profile_settings as ProfileSettingsRecord[] | undefined)
-          ?.find(item => item.profileId === profileId)
-
-        return { records: collections, result: this.normalize(record) }
-      }
-    )
   }
 
   updateSettings(
@@ -56,38 +39,10 @@ export class ProfileSettingsService {
     profileId: string,
     patch: Partial<ProfileSettings>
   ): Promise<ProfileSettings> {
-    if (this.data.updateProfileSettings) {
-      return this.data.updateProfileSettings(userId, profileId, patch).catch(error => {
-        this.throwRelationalWriteError(error)
-      })
-    }
+    return this.data.updateProfileSettings(userId, profileId, patch).catch(error => {
+      this.throwRelationalWriteError(error)
+    })
 
-    return this.data.transaction<ProfileSettings>(
-      ['accounts', 'profiles', 'profile_settings'],
-      collections => {
-        this.assertOwnsProfile(
-          userId,
-          profileId,
-          collections.accounts as AccountRecord[],
-          collections.profiles as Array<{ id: string }>
-        )
-        const settings = (collections.profile_settings as ProfileSettingsRecord[] | undefined) ?? []
-        const current = this.normalize(settings.find(item => item.profileId === profileId))
-        const next = this.normalize({ profileId, ...current, ...patch })
-        const nextRecord: ProfileSettingsRecord = { profileId, ...next }
-
-        return {
-          records: {
-            ...collections,
-            profile_settings: [
-              ...settings.filter(item => item.profileId !== profileId),
-              nextRecord
-            ]
-          },
-          result: next
-        }
-      }
-    )
   }
 
   private assertOwnsProfile(
