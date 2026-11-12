@@ -76,6 +76,53 @@ export class DomainService {
     if (!normalizedQuery) return paginate([], q)
     return this.data.searchEntities(normalizedQuery, scope, q.page, q.sort)
   }
+  listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {
+    return this.profiles.listProfiles(q)
+  }
+
+  listOwnedProfiles(userId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
+    return this.profiles.listOwnedProfiles(userId, q)
+  }
+
+  getProfile(url: string): Promise<Profile> {
+    return this.profiles.getProfile(url)
+  }
+
+  getProfilesByIds(ids: string[]): Promise<Profile[]> {
+    return this.profiles.getProfilesByIds(ids)
+  }
+
+  createProfile(userId: string, input: CreateProfileInput): Promise<CreateProfileResult> {
+    return this.profiles.createProfile(userId, input)
+  }
+
+  updateProfile(userId: string, profileId: string, input: Omit<CreateProfileInput, 'type'>): Promise<Profile> {
+    return this.profiles.updateProfile(userId, profileId, input)
+  }
+
+  listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
+    return this.communities.listCommunities(q)
+  }
+
+  getCommunity(url: string, userId: string | null = null): Promise<Community> {
+    return this.communities.getCommunity(url, userId)
+  }
+
+  getCommunitiesByIds(ids: string[]): Promise<Community[]> {
+    return this.communities.getCommunitiesByIds(ids)
+  }
+
+  listProfileCommunities(profileId: string, q: PaginationDto): Promise<PaginatedResult<Community>> {
+    return this.communities.listProfileCommunities(profileId, q)
+  }
+
+  createCommunity(userId: string, ownerProfileId: string, input: CreateCommunityInput): Promise<Community> {
+    return this.communities.createCommunity(userId, ownerProfileId, input)
+  }
+
+  updateCommunity(userId: string, communityId: string, input: CreateCommunityInput): Promise<Community> {
+    return this.communities.updateCommunity(userId, communityId, input)
+  }
 
   getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
     return this.profiles.getProfileRelationships(userId, profileId)
