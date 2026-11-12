@@ -84,53 +84,14 @@ export class UploadsService {
       messageToProfileId: null
     }
 
-    const collectionsToRead = ['media_files']
-    if (input.purpose === 'profile-avatar' && input.targetId) {
-      collectionsToRead.push('accounts', 'profiles')
-    }
-    if (input.purpose === 'community-avatar' && input.targetId) {
-      collectionsToRead.push('accounts', 'profiles', 'communities', 'community_relationships')
-    }
-    if (this.data.createUpload) {
-      try {
-        await this.data.createUpload({
-          record,
-          targetId: input.targetId ?? null,
-          actorProfileId: input.actorProfileId ?? null
-        })
-      } catch (error) {
-        this.throwUploadWriteError(error)
-      }
-    } else {
-      await this.data.transaction<void>(collectionsToRead, collections => {
-        const profiles = collections.profiles as Array<{ id: string; type?: string }> | undefined
-        const accounts = collections.accounts as AccountRecord[] | undefined
-        if (input.purpose === 'profile-avatar' && input.targetId) {
-          this.avatars.assertOwnsProfileInRecords(userId, input.targetId, accounts!, profiles!)
-        }
-        if (input.purpose === 'community-avatar' && input.targetId && input.actorProfileId) {
-          const currentProfiles = profiles as Array<{ id: string; type: string }>
-          const communities = collections.communities as Array<{ id: string }>
-          const relationships = collections.community_relationships as Array<{
-            profiles: [string, string]; type: string
-          }>
-          this.avatars.assertOwnsProfileInRecords(userId, input.actorProfileId, accounts!, currentProfiles)
-          const actor = currentProfiles.find(item => item.id === input.actorProfileId)
-          const community = communities.find(item => item.id === input.targetId)
-          const ownerProfileId = relationships.find(item =>
-            item.profiles[1] === input.targetId && item.type === 'owner'
-          )?.profiles[0]
-          const owner = ownerProfileId ? currentProfiles.find(item => item.id === ownerProfileId) : undefined
-          if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-          if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
-          const role = relationships.find(item =>
-            item.profiles[0] === input.actorProfileId && item.profiles[1] === input.targetId
-          )?.type
-          if (role !== 'owner' && role !== 'moderator') throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-        const mediaFiles = collections.media_files as UploadedFileRecord[]
-        return { records: { ...collections, media_files: [...mediaFiles, record] }, result: undefined }
+    try {
+      await this.data.createUpload({
+        record,
+        targetId: input.targetId ?? null,
+        actorProfileId: input.actorProfileId ?? null
       })
+    } catch (error) {
+      this.throwUploadWriteError(error)
     }
 
     let signedData: SignedUploadResponse
@@ -143,13 +104,7 @@ export class UploadsService {
       if (!signedData.url) throw new ServiceUnavailableException('UPLOAD_SIGNING_FAILED')
     } catch (error) {
       try {
-        if (this.data.deletePendingUpload) {
-          await this.data.deletePendingUpload(userId, id)
-        } else {
-          await this.data.update<UploadedFileRecord>('media_files', records =>
-            records.filter(item => item.id !== id || item.ownerUserId !== userId || item.status !== 'pending')
-          )
-        }
+        await this.data.deletePendingUpload(userId, id)
       } catch {
         // The pending record will be removed by the normal expiration cleanup.
       }
@@ -162,11 +117,7 @@ export class UploadsService {
 
   async completeUpload(userId: string, id: string): Promise<{ id: string; url: string }> {
     this.storage.assertConfigured()
-    const record = this.data.getUploadById
-      ? await this.data.getUploadById(userId, id)
-      : (await this.data.read<UploadedFileRecord>('media_files')).find(item =>
-          item.id === id && item.ownerUserId === userId
-        ) ?? null
+    const record = await this.data.getUploadById(userId, id)
     if (!record) throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (record.status === 'ready') {
       if (
@@ -217,16 +168,14 @@ export class UploadsService {
     const completedAt = Date.now()
     let saved: UploadedFileRecord
     try {
-      saved = this.data.completeUpload
-        ? await this.data.completeUpload({
-            userId,
-            id,
-            size: totalSize,
-            completedAt,
-            expiresAt: record.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null,
-            pendingMaxAge: PENDING_MAX_AGE
-          })
-        : await this.completeUploadWithSnapshot(userId, id, totalSize, completedAt)
+      saved = await this.data.completeUpload({
+        userId,
+        id,
+        size: totalSize,
+        completedAt,
+        expiresAt: record.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null,
+        pendingMaxAge: PENDING_MAX_AGE
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (message.includes('UPLOAD_EXPIRED')) throw new NotFoundException('UPLOAD_EXPIRED')
@@ -339,31 +288,6 @@ export class UploadsService {
     return record.purpose === 'editor-image'
       ? '/api/uploads/' + record.id + '/content'
       : this.storage.publicAvatarUrl(record.path)
-  }
-
-  private async completeUploadWithSnapshot(
-    userId: string,
-    id: string,
-    totalSize: number,
-    completedAt: number
-  ): Promise<UploadedFileRecord> {
-    const savedRecords = await this.data.update<UploadedFileRecord>('media_files', currentRecords => {
-      const latest = currentRecords.find(item => item.id === id && item.ownerUserId === userId)
-      if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
-      if (latest.status === 'ready') return currentRecords
-      if (latest.status !== 'pending' || latest.createdAt + PENDING_MAX_AGE <= Date.now()) {
-        throw new NotFoundException('UPLOAD_EXPIRED')
-      }
-      const saved: UploadedFileRecord = {
-        ...latest, size: totalSize, status: 'ready', deletingAt: null,
-        completedAt,
-        expiresAt: latest.purpose === 'editor-image' ? completedAt + EDITOR_RETENTION_MS : null
-      }
-      return currentRecords.map(item => item.id === id ? saved : item)
-    })
-    const saved = savedRecords.find(item => item.id === id && item.ownerUserId === userId)
-    if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
-    return saved
   }
 
   private throwUploadWriteError(error: unknown): never {
