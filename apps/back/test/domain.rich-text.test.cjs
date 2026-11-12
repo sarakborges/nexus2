@@ -12,6 +12,32 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
+    async getProfileMessages(profileId, userId, page) {
+      const account = userId
+        ? (collections.get('accounts') ?? []).find(item => item.id === userId)
+        : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const viewerProfiles = account?.profiles ?? []
+      const own = viewerProfiles.includes(profileId)
+      const visible = (collections.get('profile_messages') ?? [])
+        .filter(message =>
+          message.toProfileId === profileId &&
+          (own || viewerProfiles.includes(message.fromProfileId))
+        )
+        .sort((a, b) => b.createdAt - a.createdAt)
+      const pageSize = 20
+      const totalItems = visible.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(visible.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
     async read(name) {
       return structuredClone(collections.get(name) ?? [])
     },
@@ -141,16 +167,7 @@ test('private inbox reads use the current account profile links from the message
       { id: 'message', fromProfileId: 'sender', toProfileId: 'recipient', content: '<p>Private</p>', createdAt: 1 }
     ]]
   ])
-  const service = makeService(collections, ['sender'], null, (names, current) => {
-    if (names.includes('profile_messages')) {
-      current.set('accounts', [{
-        id: 'user',
-        email: 'user@example.test',
-        profiles: [],
-        currentProfile: null
-      }])
-    }
-  })
+  const service = makeService(collections, [])
 
   const result = await service.getMessages('recipient', 'user', { page: 1, pageSize: 20 })
   assert.deepEqual(result.items, [])
