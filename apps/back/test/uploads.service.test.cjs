@@ -166,6 +166,71 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
   const cleanup = new UploadsCleanupService(data, config, storage)
   const content = new UploadsContentService(data, storage)
   const avatars = new UploadsAvatarService(data, storage, cleanup)
+  data.createUpload = async change => {
+    const { record, targetId, actorProfileId } = change
+    const names = ['media_files']
+    if (record.purpose === 'profile-avatar' && targetId) names.push('accounts', 'profiles')
+    if (record.purpose === 'community-avatar' && targetId) {
+      names.push('accounts', 'profiles', 'communities', 'community_relationships')
+    }
+    await data.transaction(names, collections => {
+      const profiles = collections.profiles
+      const accounts = collections.accounts
+      if (record.purpose === 'profile-avatar' && targetId) {
+        avatars.assertOwnsProfileInRecords(record.ownerUserId, targetId, accounts, profiles)
+      }
+      if (record.purpose === 'community-avatar' && targetId && actorProfileId) {
+        avatars.assertOwnsProfileInRecords(record.ownerUserId, actorProfileId, accounts, profiles)
+        const actor = profiles.find(item => item.id === actorProfileId)
+        const community = collections.communities.find(item => item.id === targetId)
+        const ownerProfileId = collections.community_relationships.find(item =>
+          item.profiles[1] === targetId && item.type === 'owner'
+        )?.profiles[0]
+        const owner = ownerProfileId ? profiles.find(item => item.id === ownerProfileId) : undefined
+        if (!actor || !community || !owner) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+        if (actor.type !== owner.type) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
+        const role = collections.community_relationships.find(item =>
+          item.profiles[0] === actorProfileId && item.profiles[1] === targetId
+        )?.type
+        if (role !== 'owner' && role !== 'moderator') throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
+      }
+      return {
+        records: { ...collections, media_files: [...collections.media_files, record] },
+        result: undefined
+      }
+    })
+  }
+  data.getUploadById = async (userId, id) => {
+    const records = await data.read('media_files')
+    return records.find(item => item.id === id && item.ownerUserId === userId) ?? null
+  }
+  data.deletePendingUpload = async (userId, id) => {
+    await data.update('media_files', records => records.filter(item =>
+      item.id !== id || item.ownerUserId !== userId || item.status !== 'pending'
+    ))
+  }
+  data.completeUpload = async change => {
+    const savedRecords = await data.update('media_files', currentRecords => {
+      const latest = currentRecords.find(item => item.id === change.id && item.ownerUserId === change.userId)
+      if (!latest) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      if (latest.status === 'ready') return currentRecords
+      if (latest.status !== 'pending' || latest.createdAt + change.pendingMaxAge <= Date.now()) {
+        throw new NotFoundException('UPLOAD_EXPIRED')
+      }
+      const saved = {
+        ...latest,
+        size: change.size,
+        status: 'ready',
+        deletingAt: null,
+        completedAt: change.completedAt,
+        expiresAt: change.expiresAt
+      }
+      return currentRecords.map(item => item.id === change.id ? saved : item)
+    })
+    const saved = savedRecords.find(item => item.id === change.id && item.ownerUserId === change.userId)
+    if (!saved) throw new NotFoundException('UPLOAD_NOT_FOUND')
+    return saved
+  }
   return {
     service: new UploadsService(data, storage, cleanup, content, avatars),
     collections
