@@ -41,7 +41,7 @@ export class CommunityService {
     @Optional() private readonly uploads?: UploadsService,
     @Optional() membership?: CommunityMembershipService
   ) {
-    this.membership = membership ?? new CommunityMembershipService(data, access)
+    this.membership = membership ?? new CommunityMembershipService(data)
   }
 
   async listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
