@@ -1,7 +1,7 @@
 import type { ActivityFeedCursor, AuthenticatedUser, Community, UserPreferences, PaginatedResult, Profile, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
 import type {
-  CollectionRecordMap,
   DataRepository,
+  AccountRepositoryRecord,
   ActivityFeedRow,
   AccountProfileChange,
   ProfileAvatarWrite,
@@ -49,56 +49,47 @@ export class SupabaseRelationalRepository implements DataRepository {
     this.baseUrl = projectUrl.replace(/\/+$/, '')
   }
 
-  async read<T>(collection: string): Promise<T[]> {
-    throw new Error(
-      'Full-table reads are disabled for Supabase relational storage (requested "' + collection + '"). Use a targeted repository query.'
-    )
+  async getAccountById(id: string): Promise<AccountRepositoryRecord | null> {
+    const rows = await this.selectRowsByValues('accounts', 'id', [id])
+    const [account] = await this.readAccounts(rows)
+    return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
-  async readByIds<T extends { id: string }>(
-    collection: string,
-    ids: readonly string[]
-  ): Promise<T[]> {
-    const requestedIds = [...new Set(ids)]
-    if (requestedIds.length === 0) return []
-
-    switch (collection) {
-      case 'accounts':
-        return await this.readAccounts(
-          await this.selectRowsByValues('accounts', 'id', requestedIds)
-        ) as T[]
-      case 'profiles':
-        return (await this.selectRowsByValues('profiles', 'id', requestedIds)).map(row => ({
-          id: this.string(row.id),
-          name: this.string(row.name),
-          url: this.string(row.url),
-          picture: this.string(row.picture),
-          about: this.string(row.about),
-          type: this.string(row.type),
-          createdAt: this.number(row.created_at_ms),
-          lastActivity: this.number(row.last_activity_ms)
-        })) as unknown as T[]
-      case 'communities':
-        return (await this.selectRowsByValues('communities', 'id', requestedIds)).map(row => ({
-          id: this.string(row.id),
-          name: this.string(row.name),
-          url: this.string(row.url),
-          picture: this.string(row.picture),
-          about: this.string(row.about),
-          type: this.string(row.type),
-          privacy: this.string(row.privacy),
-          createdAt: this.number(row.created_at_ms),
-          lastActivity: this.number(row.last_activity_ms)
-        })) as unknown as T[]
-      default:
-        throw new Error('Targeted ID reads are not implemented for relational collection "' + collection + '".')
-    }
-  }
-
-  async findAccountByEmail<T>(email: string): Promise<T | null> {
+  async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
     const [account] = await this.readAccounts(rows)
-    return (account as T | undefined) ?? null
+    return (account as AccountRepositoryRecord | undefined) ?? null
+  }
+
+  async getProfilesByIds(ids: readonly string[]): Promise<Profile[]> {
+    const uniqueIds = [...new Set(ids)]
+    if (uniqueIds.length === 0) return []
+    return (await this.selectRowsByValues('profiles', 'id', uniqueIds)).map(row => ({
+      id: this.string(row.id),
+      name: this.string(row.name),
+      url: this.string(row.url),
+      picture: this.string(row.picture),
+      about: this.string(row.about),
+      type: this.string(row.type) as Profile['type'],
+      createdAt: this.number(row.created_at_ms),
+      lastActivity: this.number(row.last_activity_ms)
+    }))
+  }
+
+  async getCommunitiesByIds(ids: readonly string[]): Promise<Community[]> {
+    const uniqueIds = [...new Set(ids)]
+    if (uniqueIds.length === 0) return []
+    return (await this.selectRowsByValues('communities', 'id', uniqueIds)).map(row => ({
+      id: this.string(row.id),
+      name: this.string(row.name),
+      url: this.string(row.url),
+      picture: this.string(row.picture),
+      about: this.string(row.about),
+      type: this.string(row.type) as Community['type'],
+      privacy: this.string(row.privacy) as Community['privacy'],
+      createdAt: this.number(row.created_at_ms),
+      lastActivity: this.number(row.last_activity_ms)
+    }))
   }
 
   async createProfilePost(
@@ -1732,24 +1723,6 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
 
     return rows as ActivityFeedRow[]
-  }
-
-  async update<T>(
-    collection: string,
-    _updater: (records: T[]) => T[]
-  ): Promise<T[]> {
-    throw new Error(
-      'Whole-collection updates are disabled for Supabase relational storage (requested "' + collection + '"). Use a targeted mutation RPC.'
-    )
-  }
-
-  async transaction<T>(
-    collections: readonly string[],
-    _updater: (records: CollectionRecordMap) => { records: CollectionRecordMap; result: T }
-  ): Promise<T> {
-    throw new Error(
-      'Generic collection transactions are disabled for Supabase relational storage (requested "' + collections.join(', ') + '"). Use targeted relational RPCs.'
-    )
   }
 
   private async readAccounts(rows: DatabaseRow[]): Promise<unknown[]> {
