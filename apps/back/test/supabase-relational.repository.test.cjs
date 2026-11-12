@@ -1585,3 +1585,40 @@ test('routes media upload lifecycle and authorized editor image reads through ro
     '/rest/v1/rpc/nexus_get_editor_image'
   ])
 })
+
+
+test('creates accounts with their first refresh token and updates preferences through targeted RPCs', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    const parsed = new URL(String(input))
+    calls.push({ path: parsed.pathname, body: JSON.parse(options.body) })
+    if (parsed.pathname.endsWith('/nexus_create_account_with_refresh_token')) {
+      return new Response(null, { status: 204 })
+    }
+    if (parsed.pathname.endsWith('/nexus_update_account_preferences')) {
+      return new Response(JSON.stringify([{ language: 'pt-BR', theme: 'dark' }]), { status: 200 })
+    }
+    throw new Error('Unexpected request: ' + parsed.pathname)
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.createAccountWithRefreshToken({
+    accountId: 'account-1',
+    email: 'person@example.test',
+    passwordHash: 'hash',
+    passwordSalt: 'salt',
+    refreshToken: {
+      id: 'refresh-1', userId: 'account-1', tokenHash: 'token-hash',
+      expiresAt: 1700000000000
+    },
+    now: 1699990000000
+  })
+  assert.deepEqual(await repo.updateAccountPreferences('account-1', {
+    language: 'pt-BR', theme: 'dark'
+  }), { language: 'pt-BR', theme: 'dark' })
+  assert.deepEqual(calls.map(call => call.path), [
+    '/rest/v1/rpc/nexus_create_account_with_refresh_token',
+    '/rest/v1/rpc/nexus_update_account_preferences'
+  ])
+  assert.equal(calls[0].body.p_refresh_token_id, 'refresh-1')
+  assert.equal(calls[1].body.p_language, 'pt-BR')
+})

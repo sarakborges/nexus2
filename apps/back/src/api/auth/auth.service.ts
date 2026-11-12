@@ -172,7 +172,22 @@ export class AuthService {
       ]
     }
 
-    if (context.kind === 'sign-up') {
+    if (context.kind === 'sign-up' && this.repository.createAccountWithRefreshToken) {
+      try {
+        await this.repository.createAccountWithRefreshToken({
+          accountId: account.id,
+          email: account.email,
+          passwordHash: account.password.hash,
+          passwordSalt: account.password.salt,
+          refreshToken: nextRecord,
+          now
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('EMAIL_ALREADY_EXISTS')) throw new ConflictException('EMAIL_ALREADY_EXISTS')
+        throw error
+      }
+    } else if (context.kind === 'sign-up') {
       await this.repository.transaction(
         ['accounts', 'refresh_tokens'],
         collections => {

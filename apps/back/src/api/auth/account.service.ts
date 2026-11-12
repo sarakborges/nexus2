@@ -111,6 +111,19 @@ export class AccountService {
   }
 
   async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences> {
+    if (this.repository.updateAccountPreferences) {
+      const current = await this.getPreferences(userId)
+      try {
+        return await this.repository.updateAccountPreferences(userId, {
+          language: preferences.language ?? current.language,
+          theme: preferences.theme ?? current.theme
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        throw error
+      }
+    }
     let updated: AccountRecord | undefined
     await this.repository.update<AccountRecord>('accounts', accounts => {
       const account = accounts.find(item => item.id === userId)

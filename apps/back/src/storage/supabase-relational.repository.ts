@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, AuthenticatedUser, Community, PaginatedResult, Profile, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ActivityFeedCursor, AuthenticatedUser, Community, UserPreferences, PaginatedResult, Profile, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
@@ -23,6 +23,7 @@ import type {
   CommunityForumReplyRemoval,
   RefreshTokenRotation,
   RefreshTokenWrite,
+  CreateAccountWithRefreshTokenWrite,
   MediaFileRecord,
   MediaUploadCreateWrite,
   MediaUploadCompletion,
@@ -172,7 +173,52 @@ export class SupabaseRelationalRepository implements DataRepository {
   }
 
 
-  async createUpload(change: MediaUploadCreateWrite): Promise<void> {
+
+  async createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_account_id: change.accountId,
+        p_email: change.email,
+        p_password_hash: change.passwordHash,
+        p_password_salt: change.passwordSalt,
+        p_refresh_token_id: change.refreshToken.id,
+        p_refresh_token_hash: change.refreshToken.tokenHash,
+        p_refresh_token_expires_at_ms: change.refreshToken.expiresAt,
+        p_now_ms: change.now
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async updateAccountPreferences(
+    userId: string,
+    preferences: UserPreferences
+  ): Promise<UserPreferences> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_language: preferences.language,
+        p_theme: preferences.theme
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (
+      !Array.isArray(rows) || rows.length !== 1 ||
+      !['system', 'pt-BR', 'en-US'].includes(String(rows[0]?.language)) ||
+      !['system', 'light', 'dark'].includes(String(rows[0]?.theme))
+    ) throw new Error('Supabase account preferences write returned an invalid result.')
+    return {
+      language: rows[0].language as UserPreferences['language'],
+      theme: rows[0].theme as UserPreferences['theme']
+    }
+  }
+
+  async createUpload(  async createUpload(change: MediaUploadCreateWrite): Promise<void> {
     const record = change.record
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_upload', {
       method: 'POST',

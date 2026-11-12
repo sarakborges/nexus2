@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, AuthenticatedUser, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ActivityFeedCursor, AuthenticatedUser, Community, UserPreferences, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType, SearchResultItem, SearchScope } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -9,6 +9,15 @@ export type RefreshTokenWrite = {
   userId: string
   tokenHash: string
   expiresAt: number
+}
+
+export type CreateAccountWithRefreshTokenWrite = {
+  accountId: string
+  email: string
+  passwordHash: string
+  passwordSalt: string
+  refreshToken: RefreshTokenWrite
+  now: number
 }
 
 export type RefreshTokenRotation = {
@@ -267,6 +276,8 @@ export type ActivityFeedRow = {
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
+  createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
+  updateAccountPreferences?(userId: string, preferences: UserPreferences): Promise<UserPreferences>
   createUpload?(change: MediaUploadCreateWrite): Promise<void>
   getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
   deletePendingUpload?(userId: string, id: string): Promise<void>
