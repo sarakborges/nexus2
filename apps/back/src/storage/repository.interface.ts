@@ -119,6 +119,21 @@ export type CollectionTransaction<T> = {
   result: T
 }
 
+export type ProfileAvatarWrite = {
+  userId: string
+  profileId: string
+  uploadId: string | null
+  picture: string
+}
+
+export type CommunityAvatarWrite = {
+  userId: string
+  communityId: string
+  actorProfileId: string
+  uploadId: string | null
+  picture: string
+}
+
 export type ProfileCreateWrite = {
   userId: string
   profile: Profile
@@ -184,7 +199,14 @@ export type ActivityFeedRow = {
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
-  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
+  getAvatarUploadPath?(
+    userId: string,
+    uploadId: string,
+    purpose: 'profile-avatar' | 'community-avatar'
+  ): Promise<string | null>
+  setProfileAvatar?(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
+  setCommunityAvatar?(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
+  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
   updateProfile?(
     change: ProfileUpdateWrite
   ): Promise<{ profile: Profile; previousPicture: string | null }>

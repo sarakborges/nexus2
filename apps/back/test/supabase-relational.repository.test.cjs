@@ -1473,3 +1473,40 @@ test('profile and community writes call targeted relational RPCs', async t => {
   assert.equal(calls[2].body.p_privacy, 'public')
   assert.equal(calls[3].body.p_privacy, null)
 })
+
+
+test('avatar changes use targeted media lookup and atomic relational RPCs', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    const parsed = new URL(String(input))
+    if (options.method === 'GET') {
+      calls.push({ path: parsed.pathname, method: 'GET', params: parsed.searchParams })
+      return new Response(JSON.stringify([{ path: 'profiles/account-1/avatar.png' }]), { status: 200 })
+    }
+    calls.push({ path: parsed.pathname, method: 'POST', body: JSON.parse(options.body) })
+    if (parsed.pathname.endsWith('/nexus_set_profile_avatar') ||
+        parsed.pathname.endsWith('/nexus_set_community_avatar')) {
+      return new Response(JSON.stringify([{ previous_picture: 'https://old/avatar.png' }]), { status: 200 })
+    }
+    throw new Error('Unexpected request: ' + parsed.pathname)
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.equal(
+    await repo.getAvatarUploadPath('account-1','upload-1','profile-avatar'),
+    'profiles/account-1/avatar.png'
+  )
+  const profileResult = await repo.setProfileAvatar({
+    userId:'account-1',profileId:'profile-1',uploadId:'upload-1',picture:'https://public/avatar.png'
+  })
+  const communityResult = await repo.setCommunityAvatar({
+    userId:'account-1',communityId:'community-1',actorProfileId:'profile-1',
+    uploadId:'upload-2',picture:'https://public/community.png'
+  })
+  assert.equal(profileResult.previousPicture,'https://old/avatar.png')
+  assert.equal(communityResult.previousPicture,'https://old/avatar.png')
+  assert.equal(calls[0].method,'GET')
+  assert.equal(calls[0].params.get('owner_user_id'),'eq.account-1')
+  assert.equal(calls[0].params.get('purpose'),'eq.profile-avatar')
+  assert.equal(calls[1].body.p_upload_id,'upload-1')
+  assert.equal(calls[2].body.p_actor_profile_id,'profile-1')
+})

@@ -53,6 +53,22 @@ export class UploadsAvatarService {
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
+    if (this.data.setProfileAvatar && this.data.getAvatarUploadPath) {
+      const path = uploadId
+        ? await this.data.getAvatarUploadPath(userId, uploadId, 'profile-avatar')
+        : null
+      if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+      const picture = path ? this.storage.publicAvatarUrl(path) : ''
+      let result: { previousPicture: string }
+      try {
+        result = await this.data.setProfileAvatar({ userId, profileId, uploadId, picture })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
+      return { picture }
+    }
+
     const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
       ['accounts', 'profiles', 'media_files'],
       collections => {
@@ -95,6 +111,24 @@ export class UploadsAvatarService {
     actorProfileId: string,
     uploadId: string | null
   ): Promise<{ picture: string }> {
+    if (this.data.setCommunityAvatar && this.data.getAvatarUploadPath) {
+      const path = uploadId
+        ? await this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
+        : null
+      if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+      const picture = path ? this.storage.publicAvatarUrl(path) : ''
+      let result: { previousPicture: string }
+      try {
+        result = await this.data.setCommunityAvatar({
+          userId, communityId, actorProfileId, uploadId, picture
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
+      return { picture }
+    }
+
     const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
       collections => {
@@ -190,4 +224,20 @@ export class UploadsAvatarService {
     if (!file) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
     return file
   }
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('PROFILE_NOT_OWNED') || message.includes('PROFILE_TYPE_MISMATCH') ||
+        message.includes('COMMUNITY_STAFF_REQUIRED')) {
+      throw new ForbiddenException(
+        message.includes('PROFILE_TYPE_MISMATCH') ? 'PROFILE_TYPE_MISMATCH' :
+        message.includes('COMMUNITY_STAFF_REQUIRED') ? 'COMMUNITY_STAFF_REQUIRED' : 'PROFILE_NOT_OWNED'
+      )
+    }
+    if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+    if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (message.includes('INVALID_AVATAR_UPLOAD')) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    throw error
+  }
+
+
 }

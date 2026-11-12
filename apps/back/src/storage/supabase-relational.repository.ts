@@ -4,6 +4,8 @@ import type {
   DataRepository,
   ActivityFeedRow,
   AccountProfileChange,
+  ProfileAvatarWrite,
+  CommunityAvatarWrite,
   ProfileCreateWrite,
   ProfileUpdateWrite,
   CommunityCreateWrite,
@@ -158,6 +160,63 @@ export class SupabaseRelationalRepository implements DataRepository {
       content: row.content,
       createdAt: Number(row.created_at_ms)
     }
+  }
+
+  async getAvatarUploadPath(
+    userId: string,
+    uploadId: string,
+    purpose: 'profile-avatar' | 'community-avatar'
+  ): Promise<string | null> {
+    const url = new URL(this.baseUrl + '/rest/v1/media_files')
+    url.searchParams.set('select','path')
+    url.searchParams.set('id','eq.' + uploadId)
+    url.searchParams.set('owner_user_id','eq.' + userId)
+    url.searchParams.set('purpose','eq.' + purpose)
+    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) throw new Error('Supabase avatar upload lookup returned an invalid result.')
+    const row = rows[0] as DatabaseRow | undefined
+    return typeof row?.path === 'string' ? row.path : null
+  }
+
+  async setProfileAvatar(change: ProfileAvatarWrite): Promise<{ previousPicture: string }> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_avatar', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_profile_id: change.profileId,
+        p_upload_id: change.uploadId,
+        p_picture: change.picture
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1 || typeof rows[0]?.previous_picture !== 'string') {
+      throw new Error('Supabase relational profile avatar write returned an invalid result.')
+    }
+    return { previousPicture: rows[0].previous_picture }
+  }
+
+  async setCommunityAvatar(change: CommunityAvatarWrite): Promise<{ previousPicture: string }> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_community_avatar', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_community_id: change.communityId,
+        p_actor_profile_id: change.actorProfileId,
+        p_upload_id: change.uploadId,
+        p_picture: change.picture
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1 || typeof rows[0]?.previous_picture !== 'string') {
+      throw new Error('Supabase relational community avatar write returned an invalid result.')
+    }
+    return { previousPicture: rows[0].previous_picture }
   }
 
   async createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser> {
