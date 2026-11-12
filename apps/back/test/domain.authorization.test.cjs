@@ -184,6 +184,109 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       }
     },
 
+    async changeCommunityRelationship(change) {
+      beforeTransaction?.(
+        ['accounts', 'profiles', 'communities', 'community_relationships'],
+        collections
+      )
+      const accounts = collections.get('accounts') ?? []
+      const account = accounts.find(item => item.id === change.userId)
+      if (!account || !account.profiles.includes(change.actorProfileId)) {
+        throw new Error('PROFILE_NOT_OWNED')
+      }
+      const communityRecord = (collections.get('communities') ?? []).find(item =>
+        item.id === change.communityId
+      )
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      const profiles = collections.get('profiles') ?? []
+      const actor = profiles.find(profile => profile.id === change.actorProfileId)
+      const target = profiles.find(profile => profile.id === change.targetProfileId)
+      if (!actor || !target) throw new Error('PROFILE_NOT_FOUND')
+      if (actor.type !== communityRecord.type || target.type !== communityRecord.type) {
+        throw new Error('PROFILE_TYPE_MISMATCH')
+      }
+
+      const relationships = collections.get('community_relationships') ?? []
+      const inCommunity = relationships.filter(item => item.profiles[1] === change.communityId)
+      const actorRole = inCommunity.find(item => item.profiles[0] === change.actorProfileId)?.type ?? null
+      const targetRole = inCommunity.find(item => item.profiles[0] === change.targetProfileId)?.type ?? null
+      const self = change.actorProfileId === change.targetProfileId
+      let allowed = false
+
+      if (change.action === 'requested') allowed = self && targetRole === null
+      if (change.action === 'connection') {
+        allowed = ['owner', 'moderator'].includes(actorRole ?? '') && targetRole === 'requested'
+      }
+      if (change.action === 'moderator') {
+        allowed = actorRole === 'owner' && targetRole === 'connection'
+      }
+      if (change.action === 'blocked') {
+        allowed = !self && ['owner', 'moderator'].includes(actorRole ?? '') && targetRole === 'connection'
+      }
+      if (change.action === 'owner') {
+        allowed = actorRole === 'owner' && targetRole === null
+      }
+      if (change.action === 'remove') {
+        allowed = self
+          ? ['connection', 'requested'].includes(targetRole ?? '')
+          : ['owner', 'moderator'].includes(actorRole ?? '') &&
+            ['connection', 'requested', 'blocked'].includes(targetRole ?? '')
+      }
+      if (change.action === 'demote') {
+        allowed = actorRole === 'owner' && targetRole === 'moderator'
+      }
+      if (change.action === 'transfer') {
+        allowed = actorRole === 'owner' && targetRole === 'moderator'
+      }
+      if (!allowed) {
+        throw new Error(
+          change.action === 'demote'
+            ? 'ONLY_OWNER_CAN_DEMOTE_MODERATOR'
+            : change.action === 'transfer'
+              ? 'OWNERSHIP_TRANSFER_NOT_ALLOWED'
+              : 'COMMUNITY_ACTION_NOT_ALLOWED'
+        )
+      }
+
+      if (change.action === 'remove') {
+        collections.set('community_relationships', relationships.filter(item =>
+          item.profiles[0] !== change.targetProfileId || item.profiles[1] !== change.communityId
+        ))
+        return
+      }
+
+      if (change.action === 'demote' || change.action === 'transfer') {
+        collections.set('community_relationships', relationships.map(item => {
+          if (item.profiles[1] !== change.communityId) return item
+          if (change.action === 'demote' && item.profiles[0] === change.targetProfileId) {
+            return { ...item, type: 'connection', updatedAt: change.updatedAt }
+          }
+          if (change.action === 'transfer' && item.profiles[0] === change.actorProfileId) {
+            return { ...item, type: 'moderator', updatedAt: change.updatedAt }
+          }
+          if (change.action === 'transfer' && item.profiles[0] === change.targetProfileId) {
+            return { ...item, type: 'owner', updatedAt: change.updatedAt }
+          }
+          return item
+        }))
+        return
+      }
+
+      const next = {
+        profiles: [change.targetProfileId, change.communityId],
+        type: change.action,
+        requestedBy: change.action === 'requested' ? change.actorProfileId : null,
+        blockedBy: change.action === 'blocked' ? change.actorProfileId : null,
+        updatedAt: change.updatedAt
+      }
+      collections.set('community_relationships', [
+        ...relationships.filter(item =>
+          item.profiles[0] !== change.targetProfileId || item.profiles[1] !== change.communityId
+        ),
+        next
+      ])
+    },
+
     async read(name) { return structuredClone(collections.get(name) ?? []) },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
