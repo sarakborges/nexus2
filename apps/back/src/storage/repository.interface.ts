@@ -273,113 +273,119 @@ export type ActivityFeedRow = {
   role: 'owner' | 'moderator' | 'connection' | null
 }
 
+/**
+ * Collection updaters and transaction callbacks must be synchronous and free
+ * of external side effects. Optimistic database transactions may rerun them
+ * after a concurrent commit.
+ */
 export interface DataRepository {
-  getAccountById(id: string): Promise<AccountRepositoryRecord | null>
-  getProfilesByIds(ids: readonly string[]): Promise<Profile[]>
-  getCommunitiesByIds(ids: readonly string[]): Promise<Community[]>
-  findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
-  createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void>
-  updateAccountPreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
-  createUpload(change: MediaUploadCreateWrite): Promise<void>
-  getUploadById(userId: string, id: string): Promise<MediaFileRecord | null>
-  deletePendingUpload(userId: string, id: string): Promise<void>
-  completeUpload(change: MediaUploadCompletion): Promise<MediaFileRecord>
-  claimExpiredUploads(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]>
-  finishUploadDeletions(claims: readonly MediaUploadDeletionClaim[]): Promise<number>
-  scheduleUploadDeletion(change: MediaUploadDeletionSchedule): Promise<boolean>
-  claimUploadDeletion(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
-  schedulePreviousAvatarDeletion(change: PreviousAvatarDeletionSchedule): Promise<void>
-  getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord>
-  getAvatarUploadPath(
+  getAccountById?(id: string): Promise<AccountRepositoryRecord | null>
+  getProfilesByIds?(ids: readonly string[]): Promise<Profile[]>
+  getCommunitiesByIds?(ids: readonly string[]): Promise<Community[]>
+  read<T>(collection: string): Promise<T[]>
+  findAccountByEmail?<T>(email: string): Promise<T | null>
+  createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
+  updateAccountPreferences?(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
+  createUpload?(change: MediaUploadCreateWrite): Promise<void>
+  getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
+  deletePendingUpload?(userId: string, id: string): Promise<void>
+  completeUpload?(change: MediaUploadCompletion): Promise<MediaFileRecord>
+  claimExpiredUploads?(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]>
+  finishUploadDeletions?(claims: readonly MediaUploadDeletionClaim[]): Promise<number>
+  scheduleUploadDeletion?(change: MediaUploadDeletionSchedule): Promise<boolean>
+  claimUploadDeletion?(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
+  schedulePreviousAvatarDeletion?(change: PreviousAvatarDeletionSchedule): Promise<void>
+  getEditorImageRecord?(change: EditorImageReadRequest): Promise<MediaFileRecord>
+  getAvatarUploadPath?(
     userId: string,
     uploadId: string,
     purpose: 'profile-avatar' | 'community-avatar'
   ): Promise<string | null>
-  setProfileAvatar(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
-  setCommunityAvatar(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
-  createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser>
-  updateProfile(
+  setProfileAvatar?(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
+  setCommunityAvatar?(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
+  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
+  updateProfile?(
     change: ProfileUpdateWrite
   ): Promise<{ profile: Profile; previousPicture: string | null }>
-  createCommunity(change: CommunityCreateWrite): Promise<Community>
-  updateCommunity(
+  createCommunity?(change: CommunityCreateWrite): Promise<Community>
+  updateCommunity?(
     change: CommunityUpdateWrite
   ): Promise<{ community: Community; previousPicture: string | null }>
-  createProfilePost(
+  createProfilePost?(
     userId: string,
     post: ProfilePost,
     imageIds: readonly string[]
   ): Promise<ProfilePost>
-  issueRefreshToken(
+  issueRefreshToken?(
     record: RefreshTokenWrite,
     rotation: RefreshTokenRotation | null,
     now: number
   ): Promise<void>
-  deleteRefreshTokenByHash(tokenHash: string): Promise<void>
-  changeAccountProfile(change: AccountProfileChange): Promise<void>
-  upsertProfileRelationship(change: ProfileRelationshipWrite): Promise<void>
-  removeProfileRelationship(change: ProfileRelationshipRemoval): Promise<void>
-  changeCommunityRelationship(change: CommunityRelationshipChange): Promise<void>
-  getProfileSettings(userId: string, profileId: string): Promise<ProfileSettings>
-  updateProfileSettings(
+  deleteRefreshTokenByHash?(tokenHash: string): Promise<void>
+  changeAccountProfile?(change: AccountProfileChange): Promise<void>
+  upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
+  removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
+  changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
+  getProfileSettings?(userId: string, profileId: string): Promise<ProfileSettings>
+  updateProfileSettings?(
     userId: string,
     profileId: string,
     patch: Partial<ProfileSettings>
   ): Promise<ProfileSettings>
-  createProfileMessage(change: ProfileMessageWrite): Promise<ProfileMessage>
-  deleteProfileMessage(change: ProfileMessageRemoval): Promise<void>
-  setProfileMessageFavorite(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
-  getProfileMessages(
+  createProfileMessage?(change: ProfileMessageWrite): Promise<ProfileMessage>
+  deleteProfileMessage?(change: ProfileMessageRemoval): Promise<void>
+  setProfileMessageFavorite?(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
+  getProfileMessages?(
     profileId: string,
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
-  getProfilePage(url: string, userId: string | null): Promise<ProfilePageData>
-  listCommunityForumTopics(
+  getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
+  listCommunityForumTopics?(
     communityId: string,
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<CommunityForumTopicSummary>>
-  getCommunityForumTopic(
+  getCommunityForumTopic?(
     communityId: string,
     topicId: string,
     userId: string | null,
     page: number
   ): Promise<CommunityForumTopicDetail>
-  getProfilesPage(page: number): Promise<PaginatedResult<Profile>>
-  getProfileByUrl(url: string): Promise<Profile>
-  getPublicCommunities(page: number): Promise<PaginatedResult<Community>>
-  getOwnedProfiles(userId: string, page: number): Promise<PaginatedResult<Profile>>
-  getCommunityByUrl(url: string, userId: string | null): Promise<Community>
-  getProfileCommunities(profileId: string, page: number): Promise<PaginatedResult<Community>>
-  searchEntities(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
-  getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]>
-  getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>>
-  getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
-  listCommunityMembers(
+  getProfilesPage?(page: number): Promise<PaginatedResult<Profile>>
+  getProfileByUrl?(url: string): Promise<Profile>
+  getPublicCommunities?(page: number): Promise<PaginatedResult<Community>>
+  getOwnedProfiles?(userId: string, page: number): Promise<PaginatedResult<Profile>>
+  getCommunityByUrl?(url: string, userId: string | null): Promise<Community>
+  getProfileCommunities?(profileId: string, page: number): Promise<PaginatedResult<Community>>
+  searchEntities?(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
+  getProfileRelationships?(userId: string, profileId: string): Promise<Relationship[]>
+  getProfileFriends?(profileId: string, page: number): Promise<PaginatedResult<Profile>>
+  getCommunityRelationships?(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
+  listCommunityMembers?(
     communityId: string,
     tab: string,
     page: number,
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<CommunityMember>>
-  listPendingMembers(
+  listPendingMembers?(
     userId: string,
     communityId: string,
     actorProfileId: string,
     page: number
   ): Promise<PaginatedResult<CommunityMember>>
-  getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData>
-  getCommunityEditPage(url: string, userId: string | null): Promise<CommunityEditPageData>
-  getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
-  getCommunitiesPage(
+  getProfileEditPage?(url: string, userId: string | null): Promise<ProfileEditPageData>
+  getCommunityEditPage?(url: string, userId: string | null): Promise<CommunityEditPageData>
+  getCommunityForumComposerPage?(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
+  getCommunitiesPage?(
     userId: string,
     page: number,
     query: string | undefined,
     sort: ListSort,
     communityTab: 'all' | 'managed'
   ): Promise<CommunitiesPageData>
-  getProfileDirectoryPage(
+  getProfileDirectoryPage?(
     url: string,
     kind: 'friends' | 'communities',
     userId: string | null,
@@ -387,8 +393,8 @@ export interface DataRepository {
     query: string | undefined,
     sort: ListSort
   ): Promise<ProfileDirectoryPageData>
-  getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData>
-  getCommunityMembersPage(
+  getCommunityPage?(url: string, userId: string | null): Promise<CommunityPageData>
+  getCommunityMembersPage?(
     url: string,
     userId: string | null,
     page: number,
@@ -397,7 +403,7 @@ export interface DataRepository {
     sort: ListSort,
     tab: string | undefined
   ): Promise<CommunityMembersPageData>
-  getProfileMessagesPage(
+  getProfileMessagesPage?(
     url: string,
     userId: string | null,
     page: number,
@@ -405,14 +411,14 @@ export interface DataRepository {
     sort: ListSort,
     messageTab: 'all' | 'favorites'
   ): Promise<ProfileMessagesPageData>
-  getCommunityForumPage(
+  getCommunityForumPage?(
     url: string,
     userId: string | null,
     page: number,
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumPageData>
-  getCommunityForumTopicPage(
+  getCommunityForumTopicPage?(
     url: string,
     topicId: string,
     userId: string | null,
@@ -420,14 +426,20 @@ export interface DataRepository {
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumTopicPageData>
-  createCommunityForumTopic(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
-  createCommunityForumReply(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
-  moderateCommunityForumTopic(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
-  deleteCommunityForumTopic(change: CommunityForumTopicRemoval): Promise<void>
-  deleteCommunityForumReply(change: CommunityForumReplyRemoval): Promise<string>
-  getActivityFeedRows(
+  createCommunityForumTopic?(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
+  createCommunityForumReply?(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
+  moderateCommunityForumTopic?(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
+  deleteCommunityForumTopic?(change: CommunityForumTopicRemoval): Promise<void>
+  deleteCommunityForumReply?(change: CommunityForumReplyRemoval): Promise<string>
+  getActivityFeedRows?(
     userId: string,
     limit: number,
     cursor: ActivityFeedCursor | null
   ): Promise<ActivityFeedRow[]>
+  readByIds<T extends { id: string }>(collection: string, ids: readonly string[]): Promise<T[]>
+  update<T>(collection: string, updater: (records: T[]) => T[]): Promise<T[]>
+  transaction<T>(
+    collections: readonly string[],
+    updater: (records: CollectionRecordMap) => CollectionTransaction<T>
+  ): Promise<T>
 }
