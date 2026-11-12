@@ -340,7 +340,7 @@ export interface DataRepository {
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
-  getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
+  getProfilePage(url: string, userId: string | null): Promise<ProfilePageData>
   listCommunityForumTopics(
     communityId: string,
     userId: string | null,
@@ -403,7 +403,7 @@ export interface DataRepository {
     sort: ListSort,
     tab: string | undefined
   ): Promise<CommunityMembersPageData>
-  getProfileMessagesPage?(
+  getProfileMessagesPage(
     url: string,
     userId: string | null,
     page: number,
