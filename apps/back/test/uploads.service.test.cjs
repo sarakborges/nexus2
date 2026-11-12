@@ -654,8 +654,8 @@ test('denies editor image access after the 24-hour deadline', async t => {
     createdAt: Date.now() - 48 * 60 * 60 * 1000,
     completedAt: Date.now() - 48 * 60 * 60 * 1000,
     expiresAt: Date.now() - 1,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -665,7 +665,7 @@ test('denies editor image access after the 24-hour deadline', async t => {
   })
 
   await assert.rejects(
-    service.getEditorImage(null, file.id),
+    service.getEditorImage('user-1', file.id),
     error => error.getStatus() === 404
   )
 })
@@ -989,8 +989,8 @@ test('daily cleanup removes expired editor objects and unattached avatar drafts'
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -1491,8 +1491,8 @@ test('partial upload cleanup continues across buckets and retries failed deletio
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }
@@ -1801,8 +1801,8 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
     createdAt: now - 48 * 60 * 60 * 1000,
     completedAt: now - 48 * 60 * 60 * 1000,
     expiresAt: now - 24 * 60 * 60 * 1000,
-    resourceType: 'profile',
-    resourceId: 'profile-1',
+    resourceType: null,
+    resourceId: null,
     messageFromProfileId: null,
     messageToProfileId: null
   }))
