@@ -88,7 +88,6 @@ test('community relationship and member list reads use targeted repository queri
       calls.push(['pending',userId,communityId,actorProfileId,page])
       return { items: [{ id: 'profile-2', role: 'requested' }], page, pageSize: 20, totalItems: 1, totalPages: 1 }
     },
-    async transaction() { throw new Error('Community membership reads must not load collection snapshots.') }
   }
   const service = new CommunityMembershipService(repository, {})
   const relationships = await service.getCommunityRelationships('account-1','community-1')
@@ -102,4 +101,5 @@ test('community relationship and member list reads use targeted repository queri
     ['members','community-1','staff',2,'account-1','profile-1'],
     ['pending','account-1','community-1','profile-1',3]
   ])
+  assert.equal('transaction' in repository, false)
 })
