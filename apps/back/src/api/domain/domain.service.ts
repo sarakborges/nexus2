@@ -62,7 +62,7 @@ export class DomainService {
     this.access = domainAccess
     this.profiles = profiles ?? new ProfileService(data, auth, domainAccess, uploads)
     this.communities = communities ?? new CommunityService(data, auth, domainAccess, uploads)
-    this.forum = forum ?? new CommunityForumService(data, domainAccess, uploads)
+    this.forum = forum ?? new CommunityForumService(data, uploads)
     this.messages = messages ?? new ProfileMessageService(data, uploads)
     this.activity = activity ?? new ActivityService(data, domainAccess)
   }
