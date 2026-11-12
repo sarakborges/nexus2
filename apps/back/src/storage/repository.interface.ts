@@ -7,8 +7,6 @@ export type AccountRepositoryRecord = AuthenticatedUser & {
   preferences?: UserPreferences
 }
 
-export type CollectionRecordMap = Record<string, unknown[]>
-
 export type RefreshTokenWrite = {
   id: string
   userId: string
@@ -126,11 +124,6 @@ export type CommunityForumReplyRemoval = {
   replyId: string
   actorProfileId: string
   updatedAt: number
-}
-
-export type CollectionTransaction<T> = {
-  records: CollectionRecordMap
-  result: T
 }
 
 export type ProfileAvatarWrite = {
@@ -273,11 +266,6 @@ export type ActivityFeedRow = {
   role: 'owner' | 'moderator' | 'connection' | null
 }
 
-/**
- * Collection updaters and transaction callbacks must be synchronous and free
- * of external side effects. Optimistic database transactions may rerun them
- * after a concurrent commit.
- */
 export interface DataRepository {
   getAccountById(id: string): Promise<AccountRepositoryRecord | null>
   getProfilesByIds(ids: readonly string[]): Promise<Profile[]>

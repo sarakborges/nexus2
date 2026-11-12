@@ -17,28 +17,15 @@ function rowsFor(call, table) {
   return parsed.pathname === '/rest/v1/' + table
 }
 
-test('rejects collection snapshots and whole-table mutations', async () => {
+test('does not expose generic collection snapshot or mutation methods', () => {
   const repo = new SupabaseRelationalRepository(url, key, secret)
 
-  await assert.rejects(
-    () => repo.read('accounts'),
-    /Full-table reads are disabled for Supabase relational storage/
-  )
-  await assert.rejects(
-    () => repo.readByIds('relationships', ['profile-a']),
-    /Generic ID reads are disabled for Supabase relational storage/
-  )
-  await assert.rejects(
-    () => repo.update('profiles', records => records),
-    /Whole-collection updates are disabled for Supabase relational storage/
-  )
-  await assert.rejects(
-    () => repo.transaction(['profiles'], records => ({ records, result: undefined })),
-    /Generic collection transactions are disabled for Supabase relational storage/
-  )
+  for (const method of ['read', 'readByIds', 'update', 'transaction']) {
+    assert.equal(repo[method], undefined, method + ' must not be part of the relational repository')
+  }
 })
 
-test('readByIds queries only the requested relational profiles', async t => {
+test('getProfilesByIds queries only the requested relational profiles', async t => {
   let call
   withFetch(t, async input => {
     call = new URL(String(input))
