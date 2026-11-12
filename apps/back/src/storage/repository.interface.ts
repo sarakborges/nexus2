@@ -284,7 +284,7 @@ export interface DataRepository {
   getCommunitiesByIds?(ids: readonly string[]): Promise<Community[]>
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
-  createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
+  createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void>
   updateAccountPreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
   createUpload?(change: MediaUploadCreateWrite): Promise<void>
   getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
@@ -316,12 +316,12 @@ export interface DataRepository {
     post: ProfilePost,
     imageIds: readonly string[]
   ): Promise<ProfilePost>
-  issueRefreshToken?(
+  issueRefreshToken(
     record: RefreshTokenWrite,
     rotation: RefreshTokenRotation | null,
     now: number
   ): Promise<void>
-  deleteRefreshTokenByHash?(tokenHash: string): Promise<void>
+  deleteRefreshTokenByHash(tokenHash: string): Promise<void>
   changeAccountProfile(change: AccountProfileChange): Promise<void>
   upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
