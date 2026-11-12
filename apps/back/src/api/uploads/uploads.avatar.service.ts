@@ -53,56 +53,20 @@ export class UploadsAvatarService {
   }
 
   async setProfileAvatar(userId: string, profileId: string, uploadId: string | null): Promise<{ picture: string }> {
-    if (this.data.setProfileAvatar && this.data.getAvatarUploadPath) {
-      const path = uploadId
-        ? await this.data.getAvatarUploadPath(userId, uploadId, 'profile-avatar')
-        : null
-      if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-      const picture = path ? this.storage.publicAvatarUrl(path) : ''
-      let result: { previousPicture: string }
-      try {
-        result = await this.data.setProfileAvatar({ userId, profileId, uploadId, picture })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-      return { picture }
+    const path = uploadId
+      ? await this.data.getAvatarUploadPath(userId, uploadId, 'profile-avatar')
+      : null
+    if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    const picture = path ? this.storage.publicAvatarUrl(path) : ''
+    let result: { previousPicture: string }
+    try {
+      result = await this.data.setProfileAvatar({ userId, profileId, uploadId, picture })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-
-    const result = await this.data.transaction<{ picture: string; previousPicture: string }>(
-      ['accounts', 'profiles', 'media_files'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Array<{ id: string; picture: string; type?: string }>
-        const records = collections.media_files as UploadedFileRecord[]
-        this.assertOwnsProfileInRecords(userId, profileId, accounts, profiles)
-
-        const profile = profiles.find(item => item.id === profileId)
-        if (!profile) throw new NotFoundException('PROFILE_NOT_FOUND')
-
-        const next = uploadId
-          ? this.getReadyAvatar(records, userId, uploadId, 'profile-avatar')
-          : null
-        const picture = next ? this.storage.publicAvatarUrl(next.path) : ''
-        const nextRecords = next
-          ? records.map(item => item.id === next.id
-            ? { ...item, resourceType: 'profile' as const, resourceId: profileId }
-            : item)
-          : records
-
-        return {
-          records: {
-            ...collections,
-            profiles: profiles.map(item => item.id === profileId ? { ...item, picture } : item),
-            media_files: nextRecords
-          },
-          result: { picture, previousPicture: profile.picture }
-        }
-      }
-    )
-
     await this.cleanup.deletePreviousAvatar(result.previousPicture, uploadId ?? undefined)
-    return { picture: result.picture }
+    return { picture }
+
   }
 
   async setCommunityAvatar(
