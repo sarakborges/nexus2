@@ -5,7 +5,6 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
-import type { UploadedFileRecord } from '../uploads/uploads.types'
 import { DomainAccessService } from './domain-access.service'
 import type { AccountRecord } from '../auth/auth.types'
 
@@ -58,41 +57,11 @@ export class ProfileMessageService {
   }
 
   async deleteMessage(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string): Promise<void> {
-    if (this.data.deleteProfileMessage) {
-      try {
-        await this.data.deleteProfileMessage({ userId, recipientProfileId, messageId, actorProfileId })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      return
+    try {
+      await this.data.deleteProfileMessage({ userId, recipientProfileId, messageId, actorProfileId })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-
-    await this.data.transaction(['accounts', 'profile_messages', 'media_files'], collections => {
-      const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      const messages = collections.profile_messages as ProfileMessage[]
-      const message = messages.find(item => item.id === messageId && item.toProfileId === recipientProfileId)
-      if (!message) throw new NotFoundException('PROFILE_MESSAGE_NOT_FOUND')
-      if (!account.profiles.includes(actorProfileId)) throw new ForbiddenException('PROFILE_NOT_OWNED')
-      if (actorProfileId !== message.fromProfileId && actorProfileId !== message.toProfileId) {
-        throw new ForbiddenException('PROFILE_MESSAGE_DELETE_NOT_ALLOWED')
-      }
-      const mediaFiles = collections.media_files as UploadedFileRecord[]
-      const nextMediaFiles = this.uploads
-        ? this.uploads.detachResourceAttachmentsFromRecords(mediaFiles, userId, [{
-            resourceType: 'profile-message',
-            resourceId: message.id
-          }])
-        : mediaFiles
-      return {
-        records: {
-          ...collections,
-          profile_messages: messages.filter(item => item.id !== message.id),
-          media_files: nextMediaFiles
-        },
-        result: undefined
-      }
-    })
   }
 
   async setMessageFavorite(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string, isFavorite: boolean): Promise<ProfileMessage> {
