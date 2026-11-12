@@ -11,11 +11,8 @@ test('community membership and role mutations use one targeted relational write'
   const calls = []
   const repository = {
     async changeCommunityRelationship(change) { calls.push(change) },
-    async transaction() {
-      throw new Error('Community membership writes must not load collection snapshots.')
-    }
   }
-  const service = new CommunityMembershipService(repository, {})
+  const service = new CommunityMembershipService(repository)
 
   const membership = await service.updateCommunityRelationship(
     'account-1',
@@ -37,6 +34,7 @@ test('community membership and role mutations use one targeted relational write'
   })
   assert.equal(calls.length, 4)
   assert.deepEqual(calls.map(call => call.action), ['connection', 'remove', 'demote', 'transfer'])
+  assert.equal('transaction' in repository, false)
   assert.ok(calls.every(call =>
     call.userId === 'account-1' &&
     call.communityId === 'community-1' &&
@@ -62,7 +60,7 @@ test('community relationship RPC errors preserve the existing authorization mess
         throw new Error('Supabase relational request failed (403): {"message":"' + message + '"}')
       }
     }
-    const service = new CommunityMembershipService(repository, {})
+    const service = new CommunityMembershipService(repository)
     await assert.rejects(
       service.updateCommunityRelationship(
         'account-1', 'community-1', 'profile-2', 'profile-1', 'connection'
@@ -89,7 +87,7 @@ test('community relationship and member list reads use targeted repository queri
       return { items: [{ id: 'profile-2', role: 'requested' }], page, pageSize: 20, totalItems: 1, totalPages: 1 }
     },
   }
-  const service = new CommunityMembershipService(repository, {})
+  const service = new CommunityMembershipService(repository)
   const relationships = await service.getCommunityRelationships('account-1','community-1')
   const members = await service.listCommunityMembers('community-1','staff',{ page: 2 },'account-1','profile-1')
   const pending = await service.listPendingMembers('account-1','community-1','profile-1',{ page: 3 })
