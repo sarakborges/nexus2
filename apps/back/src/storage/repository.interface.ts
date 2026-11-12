@@ -346,7 +346,7 @@ export interface DataRepository {
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<CommunityForumTopicSummary>>
-  getCommunityForumTopic?(
+  getCommunityForumTopic(
     communityId: string,
     topicId: string,
     userId: string | null,
@@ -426,11 +426,11 @@ export interface DataRepository {
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumTopicPageData>
-  createCommunityForumTopic?(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
-  createCommunityForumReply?(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
-  moderateCommunityForumTopic?(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
-  deleteCommunityForumTopic?(change: CommunityForumTopicRemoval): Promise<void>
-  deleteCommunityForumReply?(change: CommunityForumReplyRemoval): Promise<string>
+  createCommunityForumTopic(change: CommunityForumTopicWrite): Promise<CommunityForumTopic>
+  createCommunityForumReply(change: CommunityForumReplyWrite): Promise<CommunityForumReply>
+  moderateCommunityForumTopic(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic>
+  deleteCommunityForumTopic(change: CommunityForumTopicRemoval): Promise<void>
+  deleteCommunityForumReply(change: CommunityForumReplyRemoval): Promise<string>
   getActivityFeedRows?(
     userId: string,
     limit: number,
