@@ -35,12 +35,25 @@ function makeRepository() {
       }
       records.profile_messages = records.profile_messages.filter(item => item.id !== message.id)
     },
-    async transaction(_collections, updater) {
-      const outcome = updater(records)
-      if (outcome.records) {
-        for (const [key, value] of Object.entries(outcome.records)) records[key] = value
+    async setProfileMessageFavorite(change) {
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      if (
+        change.actorProfileId !== change.recipientProfileId ||
+        !account.profiles.includes(change.recipientProfileId)
+      ) {
+        throw new Error('PROFILE_MESSAGE_FAVORITE_NOT_ALLOWED')
       }
-      return outcome.result
+      const index = records.profile_messages.findIndex(item =>
+        item.id === change.messageId && item.toProfileId === change.recipientProfileId
+      )
+      if (index < 0) throw new Error('PROFILE_MESSAGE_NOT_FOUND')
+      const updated = {
+        ...records.profile_messages[index],
+        isFavorite: change.isFavorite
+      }
+      records.profile_messages[index] = updated
+      return structuredClone(updated)
     }
   }
 }
