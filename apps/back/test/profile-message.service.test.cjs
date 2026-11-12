@@ -19,6 +19,22 @@ function makeRepository() {
 
   return {
     records,
+    async deleteProfileMessage(change) {
+      const account = records.accounts.find(item => item.id === change.userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      const message = records.profile_messages.find(item =>
+        item.id === change.messageId && item.toProfileId === change.recipientProfileId
+      )
+      if (!message) throw new Error('PROFILE_MESSAGE_NOT_FOUND')
+      if (!account.profiles.includes(change.actorProfileId)) throw new Error('PROFILE_NOT_OWNED')
+      if (
+        change.actorProfileId !== message.fromProfileId &&
+        change.actorProfileId !== message.toProfileId
+      ) {
+        throw new Error('PROFILE_MESSAGE_DELETE_NOT_ALLOWED')
+      }
+      records.profile_messages = records.profile_messages.filter(item => item.id !== message.id)
+    },
     async transaction(_collections, updater) {
       const outcome = updater(records)
       if (outcome.records) {
