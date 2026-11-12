@@ -245,7 +245,7 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
         (item.purpose !== 'editor-image' && item.status === 'ready' &&
           !item.resourceType &&
           (item.completedAt ?? item.createdAt) + change.orphanAvatarRetentionMs <= change.now)
-      ).slice(0, change.limit)
+      )
       if (!candidates.length) return { records: collections, result: [] }
       const candidateIds = new Set(candidates.map(item => item.id))
       const claimed = candidates.map(item => ({
