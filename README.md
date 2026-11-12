@@ -79,7 +79,7 @@ The TTL values must match on the BFF and backend because they control token vali
 
 ### Persistent storage
 
-Vercel container instances are ephemeral, so production uses `SupabaseRelationalRepository`; `JsonFileRepository` remains a local-development fallback. Account, profile, community, relationship, post, message, forum, upload and token data are persisted as normalized PostgreSQL rows.
+All environments use `SupabaseRelationalRepository`. Account, profile, community, relationship, post, message, forum, upload and token data are persisted as normalized PostgreSQL rows.
 
 Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 006 is intentionally absent.
 
@@ -101,13 +101,11 @@ Editor image references are stored in sanitized HTML as Nexus upload routes. Acc
 
 `SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter authenticates internal relational database RPCs. Never expose either secret in frontend environment variables or send it from the browser.
 
-The production source of truth is relational: accounts and account-profile links, preferences, profiles, communities, profile/community relationships, posts, settings, messages, forum topics/replies, refresh tokens and media files are stored as separate rows. Page reads use SQL-side joins and filtering; the feed uses a typed `feed_activities` projection maintained by database triggers and keyset pagination. Writes use targeted transactional database RPCs with ownership, visibility and integrity checks. The obsolete JSONB `nexus_collections` snapshot table and its legacy RPCs are removed by migration 042; migration 043 removes the generic snapshot-commit RPC. The `nexus_collection_versions` table remains only as concurrency metadata for targeted relational writes. The production adapter rejects full-table `read`, whole-collection `update`, and generic snapshot `transaction` calls. Those collection APIs remain available only in the local JSON development adapter; production call sites must use targeted repository methods.
-
-The local JSON adapter serializes transactions within the Node.js process and restores already-replaced files if a write fails. It is a development fallback, not a multi-process or crash-atomic production database.
+The only application database is Supabase PostgreSQL. Accounts and account-profile links, preferences, profiles, communities, profile/community relationships, posts, settings, messages, forum topics/replies, refresh tokens and media files are stored as normalized rows. Page reads use SQL-side joins and filtering; the feed uses a typed `feed_activities` projection maintained by database triggers and keyset pagination. Writes use targeted transactional database RPCs with ownership, visibility and integrity checks. The obsolete JSONB `nexus_collections` snapshot table and its legacy RPCs are removed by migration 042; migration 043 removes the generic snapshot-commit RPC. The `nexus_collection_versions` table remains only as concurrency metadata for targeted relational writes. The repository contract exposes only targeted relational operations; full-table reads, whole-collection updates and generic snapshot transactions are not supported.
 
 ## Optional Docker Compose deployment
 
-For local testing or a Docker host, `compose.yaml` still runs the frontend, BFF and backend together. It exposes only the frontend and persists JSON files in the `nexus-data` volume. This is an alternative deployment target; it is not used by the Vercel Services deployment.
+For local testing or a Docker host, `compose.yaml` runs the frontend, BFF and backend together and connects the backend to the same required Supabase relational database. It exposes only the frontend; PostgreSQL data remains in Supabase rather than a local JSON volume. This is an alternative deployment target; it is not used by the Vercel Services deployment.
 
 ```bash
 cp .env.compose.example .env
@@ -115,7 +113,7 @@ cp .env.compose.example .env
 docker compose up --build -d
 ```
 
-Open http://localhost:8080 by default. Do not use `docker compose down -v` unless you intend to delete the persisted data.
+Open http://localhost:8080 by default.
 
 ## Authentication
 
