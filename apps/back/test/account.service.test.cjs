@@ -8,12 +8,9 @@ function createAccountService(accounts) {
     async read() {
       throw new Error('FULL_ACCOUNT_COLLECTION_READ_NOT_EXPECTED')
     },
-    async readByIds(collection, ids) {
-      calls.push({ collection, ids: [...ids] })
-      const requested = new Set(ids)
-      return structuredClone(accounts.filter(account =>
-        collection === 'accounts' && requested.has(account.id)
-      ))
+    async getAccountById(id) {
+      calls.push({ collection: 'accounts', ids: [id] })
+      return structuredClone(accounts.find(account => account.id === id) ?? null)
     }
   }
 
