@@ -98,50 +98,18 @@ export class CommunityMembershipService {
   }
 
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
-    const now = Date.now()
-    if (this.data.changeCommunityRelationship) {
-      try {
-        await this.changeRelationship({
-          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
-          action: 'demote', updatedAt: now
-        })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      return
+    try {
+      await this.changeRelationship({
+        userId,
+        communityId,
+        targetProfileId: targetId,
+        actorProfileId: actorId,
+        action: 'demote',
+        updatedAt: Date.now()
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    await this.data.transaction(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Profile[]
-        const communities = collections.communities as Community[]
-        const all = collections.community_relationships as CommunityRelationship[]
-        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
-          userId, actorId, communityId, accounts, profiles, communities, all
-        )
-        this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
-        const targetRole = this.access.role(
-          targetId, all.filter(record => record.profiles[1] === communityId)
-        )
-        if (actorRole !== 'owner' || targetRole !== 'moderator') {
-          throw new ForbiddenException('ONLY_OWNER_CAN_DEMOTE_MODERATOR')
-        }
-        return {
-          records: {
-            ...collections,
-            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
-            communities: this.access.touchCommunityActivity(communities, communityId, now),
-            community_relationships: all.map(record =>
-              record.profiles[0] === targetId && record.profiles[1] === communityId
-                ? { ...record, type: 'connection', updatedAt: now }
-                : record
-            )
-          },
-          result: undefined
-        }
-      }
-    )
   }
 
   async transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
