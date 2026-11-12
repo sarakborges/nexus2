@@ -332,7 +332,7 @@ export interface DataRepository {
     profileId: string,
     patch: Partial<ProfileSettings>
   ): Promise<ProfileSettings>
-  createProfileMessage?(change: ProfileMessageWrite): Promise<ProfileMessage>
+  createProfileMessage(change: ProfileMessageWrite): Promise<ProfileMessage>
   deleteProfileMessage?(change: ProfileMessageRemoval): Promise<void>
   setProfileMessageFavorite?(change: ProfileMessageFavoriteChange): Promise<ProfileMessage>
   getProfileMessages(
