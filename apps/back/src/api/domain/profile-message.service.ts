@@ -65,34 +65,13 @@ export class ProfileMessageService {
   }
 
   async setMessageFavorite(userId: string, recipientProfileId: string, messageId: string, actorProfileId: string, isFavorite: boolean): Promise<ProfileMessage> {
-    if (this.data.setProfileMessageFavorite) {
-      try {
-        return await this.data.setProfileMessageFavorite({
-          userId, recipientProfileId, messageId, actorProfileId, isFavorite
-        })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
+    try {
+      return await this.data.setProfileMessageFavorite({
+        userId, recipientProfileId, messageId, actorProfileId, isFavorite
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-
-    return this.data.transaction<ProfileMessage>(['accounts', 'profile_messages'], collections => {
-      const account = (collections.accounts as AccountRecord[]).find(item => item.id === userId)
-      if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-      if (!account.profiles.includes(recipientProfileId) || actorProfileId !== recipientProfileId) {
-        throw new ForbiddenException('PROFILE_MESSAGE_FAVORITE_NOT_ALLOWED')
-      }
-      const messages = collections.profile_messages as ProfileMessage[]
-      const message = messages.find(item => item.id === messageId && item.toProfileId === recipientProfileId)
-      if (!message) throw new NotFoundException('PROFILE_MESSAGE_NOT_FOUND')
-      const updated = { ...message, isFavorite }
-      return {
-        records: {
-          ...collections,
-          profile_messages: messages.map(item => item.id === message.id ? updated : item)
-        },
-        result: updated
-      }
-    })
   }
 
   private throwRelationalWriteError(error: unknown): never {
