@@ -72,7 +72,7 @@ begin
   end if;
   update public.media_files set resource_type='profile',resource_id=p_profile_id,
     message_from_profile_id=null,message_to_profile_id=null
-  where id=any(v_image_ids);
+  where public.media_files.id=any(v_image_ids);
 
   select coalesce(array_agg(membership.profile_id order by membership.position),array[]::uuid[])
   into v_profiles from public.account_profiles membership
@@ -160,9 +160,9 @@ begin
 
   update public.media_files set resource_type=null,resource_id=null,
     message_from_profile_id=null,message_to_profile_id=null
-  where resource_type='profile' and resource_id=p_profile_id and not(id=any(v_image_ids));
+  where resource_type='profile' and resource_id=p_profile_id and not(public.media_files.id=any(v_image_ids));
   update public.profiles set name=btrim(p_name),url=p_url,picture=p_picture,about=p_about,
-    last_activity_ms=greatest(last_activity_ms,p_last_activity_ms)
+    last_activity_ms=greatest(public.profiles.last_activity_ms,p_last_activity_ms)
   where public.profiles.id=p_profile_id
   returning public.profiles.* into v_profile;
   if v_picture_changed and p_avatar_path is not null then
@@ -171,7 +171,7 @@ begin
       and bucket='nexus-avatars' and path=p_avatar_path;
   end if;
   update public.media_files set resource_type='profile',resource_id=p_profile_id,
-    message_from_profile_id=null,message_to_profile_id=null where id=any(v_image_ids);
+    message_from_profile_id=null,message_to_profile_id=null where public.media_files.id=any(v_image_ids);
   perform private.nexus_bump_collection_versions(array['profiles','media_files']::text[]);
   return query select v_profile.id,v_profile.name,v_profile.url,v_profile.picture,
     v_profile.about,v_profile.type,v_profile.created_at_ms,v_profile.last_activity_ms,
@@ -250,15 +250,15 @@ begin
   returning * into v_community;
   insert into public.community_relationships(profile_id,community_id,type,requested_by,blocked_by,updated_at_ms)
   values(p_owner_profile_id,p_community_id,'owner',null,null,p_created_at_ms);
-  update public.profiles set last_activity_ms=greatest(last_activity_ms,p_created_at_ms)
-  where id=p_owner_profile_id;
+  update public.profiles set last_activity_ms=greatest(public.profiles.last_activity_ms,p_created_at_ms)
+  where public.profiles.id=p_owner_profile_id;
   if p_avatar_path is not null then
     update public.media_files set resource_type='community',resource_id=p_community_id
     where owner_user_id=p_user_id and purpose='community-avatar'
       and bucket='nexus-avatars' and path=p_avatar_path;
   end if;
   update public.media_files set resource_type='community',resource_id=p_community_id,
-    message_from_profile_id=null,message_to_profile_id=null where id=any(v_image_ids);
+    message_from_profile_id=null,message_to_profile_id=null where public.media_files.id=any(v_image_ids);
   perform private.nexus_bump_collection_versions(array['profiles','communities','community_relationships','media_files']::text[]);
   return query select v_community.id,v_community.name,v_community.url,v_community.picture,
     v_community.about,v_community.type,v_community.privacy,v_community.created_at_ms,v_community.last_activity_ms;
@@ -349,10 +349,10 @@ begin
   update public.media_files set resource_type=null,resource_id=null,
     message_from_profile_id=null,message_to_profile_id=null
   where resource_type='community' and resource_id=p_community_id
-    and not(id=any(v_image_ids));
+    and not(public.media_files.id=any(v_image_ids));
   update public.communities set name=btrim(p_name),url=p_url,picture=p_picture,about=p_about,
     type=v_profile_type,privacy=coalesce(p_privacy,v_community.privacy),
-    last_activity_ms=greatest(last_activity_ms,p_last_activity_ms)
+    last_activity_ms=greatest(public.communities.last_activity_ms,p_last_activity_ms)
   where public.communities.id=p_community_id
   returning public.communities.* into v_community;
   if v_picture_changed and p_avatar_path is not null then
@@ -361,7 +361,7 @@ begin
       and bucket='nexus-avatars' and path=p_avatar_path;
   end if;
   update public.media_files set resource_type='community',resource_id=p_community_id,
-    message_from_profile_id=null,message_to_profile_id=null where id=any(v_image_ids);
+    message_from_profile_id=null,message_to_profile_id=null where public.media_files.id=any(v_image_ids);
   perform private.nexus_bump_collection_versions(array['communities','media_files']::text[]);
   return query select v_community.id,v_community.name,v_community.url,v_community.picture,
     v_community.about,v_community.type,v_community.privacy,v_community.created_at_ms,
