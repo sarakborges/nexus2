@@ -83,58 +83,18 @@ export class CommunityMembershipService {
   }
 
   async removeCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
-    const now = Date.now()
-    if (this.data.changeCommunityRelationship) {
-      try {
-        await this.changeRelationship({
-          userId, communityId, targetProfileId: targetId, actorProfileId: actorId,
-          action: 'remove', updatedAt: now
-        })
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
-      return
+    try {
+      await this.changeRelationship({
+        userId,
+        communityId,
+        targetProfileId: targetId,
+        actorProfileId: actorId,
+        action: 'remove',
+        updatedAt: Date.now()
+      })
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    await this.data.transaction(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const accounts = collections.accounts as AccountRecord[]
-        const profiles = collections.profiles as Profile[]
-        const communities = collections.communities as Community[]
-        const all = collections.community_relationships as CommunityRelationship[]
-        const { community, role: actorRole } = this.access.assertCommunityProfileInRecords(
-          userId, actorId, communityId, accounts, profiles, communities, all
-        )
-        this.access.assertSameType(profiles.find(profile => profile.id === targetId), community)
-
-        const target = all.find(record =>
-          record.profiles[0] === targetId && record.profiles[1] === communityId
-        )
-        if (!target) return { records: collections, result: undefined }
-
-        const self = actorId === targetId
-        const canSelf = self && (
-          ['connection', 'requested'].includes(target.type) ||
-          (target.type === 'blocked' && (target.blockedBy === actorId || target.blockedBy === null))
-        )
-        const canStaff = ['owner', 'moderator'].includes(actorRole ?? '') &&
-          ['connection', 'requested', 'blocked'].includes(target.type) &&
-          !(actorRole === 'moderator' && target.type === 'moderator')
-        if (!canSelf && !canStaff) throw new ForbiddenException('COMMUNITY_ACTION_NOT_ALLOWED')
-
-        return {
-          records: {
-            ...collections,
-            profiles: this.access.touchProfilesActivity(profiles, [actorId, targetId], now),
-            communities: this.access.touchCommunityActivity(communities, communityId, now),
-            community_relationships: all.filter(record =>
-              record.profiles[0] !== targetId || record.profiles[1] !== communityId
-            )
-          },
-          result: undefined
-        }
-      }
-    )
   }
 
   async demoteModerator(userId: string, communityId: string, targetId: string, actorId: string): Promise<void> {
