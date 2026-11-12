@@ -15,7 +15,7 @@ export class ProfilePostService {
   async createProfilePost(userId: string, profileId: string, content: string): Promise<ProfilePost> {
     const normalized = sanitizeRichText(content)
     const plainText = getRichTextPlainText(normalized)
-    const hasImage = /<img\\b/i.test(normalized)
+    const hasImage = /<img\b/i.test(normalized)
     const post: ProfilePost = {
       id: randomUUID(),
       profileId,
