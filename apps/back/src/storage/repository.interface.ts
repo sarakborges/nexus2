@@ -325,7 +325,7 @@ export interface DataRepository {
   changeAccountProfile(change: AccountProfileChange): Promise<void>
   upsertProfileRelationship(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship(change: ProfileRelationshipRemoval): Promise<void>
-  changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
+  changeCommunityRelationship(change: CommunityRelationshipChange): Promise<void>
   getProfileSettings(userId: string, profileId: string): Promise<ProfileSettings>
   updateProfileSettings(
     userId: string,
