@@ -52,43 +52,13 @@ export class CommunityMembershipService {
   }
 
   async listPendingMembers(userId: string, communityId: string, actorProfileId: string, q: PaginationDto): Promise<PaginatedResult<CommunityMemberProfile>> {
-    if (this.data.listPendingMembers) {
-      try {
-        return await this.data.listPendingMembers(userId, communityId, actorProfileId, q.page)
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
+    try {
+      return await this.data.listPendingMembers(userId, communityId, actorProfileId, q.page)
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    return this.data.transaction<PaginatedResult<CommunityMemberProfile>>(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const normalized = this.access.normalizeCommunitiesInRecords(collections)
-        const records = normalized.records
-        const accounts = records.accounts as AccountRecord[]
-        const profiles = records.profiles as Profile[]
-        const relationships = records.community_relationships as CommunityRelationship[]
-        const context = this.access.assertCommunityProfileInRecords(
-          userId, actorProfileId, communityId, accounts, profiles, normalized.communities, relationships,
-          { allowDifferentActiveType: true }
-        )
-        if (!['owner', 'moderator'].includes(context.role ?? '')) {
-          throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-        }
-        const pendingIds = new Set(
-          relationships
-            .filter(record => record.profiles[1] === communityId && record.type === 'requested')
-            .map(record => record.profiles[0])
-        )
-        const result = paginate(
-          profiles
-            .filter(profile => pendingIds.has(profile.id) && profile.type === context.community.type)
-            .map(profile => ({ ...profile, role: 'requested' })),
-          q
-        )
-        return { records, result }
-      }
-    )
   }
+
   async updateCommunityRelationship(userId: string, communityId: string, targetId: string, actorId: string, type: CommunityRelationshipType): Promise<CommunityRelationship> {
     const now = Date.now()
     if (this.data.changeCommunityRelationship) {
