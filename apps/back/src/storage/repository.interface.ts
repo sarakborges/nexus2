@@ -341,7 +341,7 @@ export interface DataRepository {
     page: number
   ): Promise<PaginatedResult<ProfileMessage>>
   getProfilePage?(url: string, userId: string | null): Promise<ProfilePageData>
-  listCommunityForumTopics?(
+  listCommunityForumTopics(
     communityId: string,
     userId: string | null,
     page: number
