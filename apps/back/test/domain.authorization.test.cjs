@@ -62,6 +62,63 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
         profileTypes.get(item.profiles[0]) === communityType
       ))
     },
+    async listCommunityForumTopics(communityId, userId, page) {
+      beforeTransaction?.(
+        [
+          'accounts',
+          'profiles',
+          'communities',
+          'community_relationships',
+          'community_forum_topics',
+          'community_forum_replies'
+        ],
+        collections
+      )
+      const communities = collections.get('communities') ?? []
+      const communityRecord = communities.find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      const accounts = collections.get('accounts') ?? []
+      const account = userId ? accounts.find(item => item.id === userId) : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+      const relationships = collections.get('community_relationships') ?? []
+      if (
+        communityRecord.privacy === 'private' &&
+        !relationships.some(item =>
+          item.profiles[1] === communityId &&
+          owned.has(item.profiles[0]) &&
+          ['owner', 'moderator', 'connection'].includes(item.type)
+        )
+      ) {
+        throw new Error('COMMUNITY_NOT_FOUND')
+      }
+
+      const replies = collections.get('community_forum_replies') ?? []
+      const replyCounts = new Map()
+      for (const reply of replies) {
+        replyCounts.set(reply.topicId, (replyCounts.get(reply.topicId) ?? 0) + 1)
+      }
+      const topics = (collections.get('community_forum_topics') ?? [])
+        .filter(topic => topic.communityId === communityId)
+        .map(topic => ({ ...topic, replyCount: replyCounts.get(topic.id) ?? 0 }))
+        .sort((a, b) =>
+          Number(b.isPinned) - Number(a.isPinned) ||
+          b.updatedAt - a.updatedAt ||
+          a.id.localeCompare(b.id)
+        )
+      const pageSize = 20
+      const totalItems = topics.length
+      const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+      const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+      const offset = (safePage - 1) * pageSize
+      return {
+        items: structuredClone(topics.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    },
     async listCommunityMembers(communityId, tab, page, userId, actorProfileId) {
       beforeTransaction?.(
         ['accounts', 'profiles', 'communities', 'community_relationships'],
