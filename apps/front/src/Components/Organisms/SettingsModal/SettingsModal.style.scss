@@ -10,3 +10,10 @@
     gap: 20px;
   }
 }
+
+
+@media (max-width: 560px) {
+  .settings-modal__preferences {
+    gap: 14px;
+  }
+}
