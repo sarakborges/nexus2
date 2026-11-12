@@ -377,7 +377,7 @@ export interface DataRepository {
   ): Promise<PaginatedResult<CommunityMember>>
   getProfileEditPage?(url: string, userId: string | null): Promise<ProfileEditPageData>
   getCommunityEditPage?(url: string, userId: string | null): Promise<CommunityEditPageData>
-  getCommunityForumComposerPage?(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
+  getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData>
   getCommunitiesPage?(
     userId: string,
     page: number,
@@ -411,14 +411,14 @@ export interface DataRepository {
     sort: ListSort,
     messageTab: 'all' | 'favorites'
   ): Promise<ProfileMessagesPageData>
-  getCommunityForumPage?(
+  getCommunityForumPage(
     url: string,
     userId: string | null,
     page: number,
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumPageData>
-  getCommunityForumTopicPage?(
+  getCommunityForumTopicPage(
     url: string,
     topicId: string,
     userId: string | null,
