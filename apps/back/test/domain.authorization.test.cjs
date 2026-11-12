@@ -686,7 +686,7 @@ test('community details and members normalize and authorize in one transaction e
   assert.equal(transactionCount, 2)
 })
 
-test('private forum reads normalize communities and authorize from one transaction snapshot', async () => {
+test('private forum topic listing uses the targeted relational query and checks membership', async () => {
   let transactionCount = 0
   const { service, collections } = createDomainHarness({
     privacy: 'private',
@@ -709,7 +709,7 @@ test('private forum reads normalize communities and authorize from one transacti
 
   assert.deepEqual(result.items.map(topic => topic.id), ['topic-1'])
   assert.equal(transactionCount, 1)
-  assert.equal(collections.get('communities')[0].type, 'business')
+  assert.equal(collections.get('communities')[0].type, 'social')
 })
 
 test('private community member details are not returned after membership is revoked before the read snapshot', async () => {
