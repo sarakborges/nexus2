@@ -361,7 +361,7 @@ export interface DataRepository {
   searchEntities?(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
   getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]>
   getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>>
-  getCommunityRelationships?(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
+  getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
   listCommunityMembers?(
     communityId: string,
     tab: string,
