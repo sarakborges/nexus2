@@ -8,13 +8,49 @@ function createAuthHarness({ failTransaction = false } = {}) {
     ['refresh_tokens', []]
   ])
   const repository = {
-    async read(name) { return structuredClone(collections.get(name) ?? []) },
-    async readByIds(name, ids) {
-      const requested = new Set(ids)
-      return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
-    },
     async getAccountById(id) {
-      return structuredClone((collections.get('accounts') ?? []).find(account => account.id === id) ?? null)
+      return structuredClone(collections.get('accounts').find(account => account.id === id) ?? null)
+    },
+    async findAccountByEmail(email) {
+      return structuredClone(collections.get('accounts').find(account => account.email === email) ?? null)
+    },
+    async createAccountWithRefreshToken(change) {
+      if (failTransaction) throw new Error('TRANSACTION_FAILED')
+      const accounts = collections.get('accounts')
+      if (accounts.some(account => account.email === change.email)) {
+        throw new Error('EMAIL_ALREADY_EXISTS')
+      }
+      accounts.push({
+        id: change.accountId,
+        email: change.email,
+        password: { hash: change.passwordHash, salt: change.passwordSalt },
+        profiles: [],
+        currentProfile: null
+      })
+      collections.get('refresh_tokens').push(structuredClone(change.refreshToken))
+    },
+    async issueRefreshToken(record, rotation, now) {
+      const tokens = collections.get('refresh_tokens')
+      if (rotation) {
+        const previous = tokens.find(item =>
+          item.id === rotation.id &&
+          item.userId === rotation.userId &&
+          item.tokenHash === rotation.tokenHash &&
+          item.expiresAt > now
+        )
+        if (!previous) throw new Error('REFRESH_TOKEN_REVOKED')
+      }
+      const next = tokens.filter(item =>
+        item.expiresAt > now && (!rotation || item.id !== rotation.id)
+      )
+      next.push(structuredClone(record))
+      collections.set('refresh_tokens', next)
+    },
+    async deleteRefreshTokenByHash(hash) {
+      collections.set(
+        'refresh_tokens',
+        collections.get('refresh_tokens').filter(item => item.tokenHash !== hash)
+      )
     },
     async changeAccountProfile(change) {
       const accounts = collections.get('accounts')
@@ -42,26 +78,6 @@ function createAuthHarness({ failTransaction = false } = {}) {
 
       accounts[index] = { ...account, profiles, currentProfile }
       collections.set('accounts', accounts)
-    },
-    async update(name, updater) {
-      const next = updater(structuredClone(collections.get(name) ?? []))
-      collections.set(name, structuredClone(next))
-      return structuredClone(next)
-    },
-    async transaction(names, updater) {
-      const current = Object.fromEntries(names.map(name => [
-        name,
-        structuredClone(collections.get(name) ?? [])
-      ]))
-      const outcome = updater(current)
-      if (failTransaction) throw new Error('TRANSACTION_FAILED')
-      for (const name of names) {
-        if (!Array.isArray(outcome.records[name])) throw new Error('INVALID_TRANSACTION_RECORDS')
-      }
-      for (const name of names) {
-        collections.set(name, structuredClone(outcome.records[name]))
-      }
-      return structuredClone(outcome.result)
     }
   }
   const signedTokens = new Map()
@@ -128,26 +144,16 @@ test('refresh reads only the account identified by the signed token', async () =
   const { service, repository } = createAuthHarness()
   const initial = await service.signUp({ email: 'selective@example.com', password: 'a-secure-password' })
 
-  let fullCollectionReads = 0
-  const originalRead = repository.read
-  repository.read = async (...args) => {
-    fullCollectionReads += 1
-    return originalRead(...args)
-  }
-  const originalReadByIds = repository.readByIds
-  const byIdReads = []
-  repository.readByIds = async (collection, ids) => {
-    byIdReads.push({ collection, ids: [...ids] })
-    return originalReadByIds(collection, ids)
+  const accountIds = []
+  const originalLookup = repository.getAccountById
+  repository.getAccountById = async id => {
+    accountIds.push(id)
+    return originalLookup(id)
   }
 
   await service.refresh(initial.refreshToken)
 
-  assert.equal(fullCollectionReads, 0)
-  assert.deepEqual(byIdReads, [{
-    collection: 'accounts',
-    ids: [initial.user.id]
-  }])
+  assert.deepEqual(accountIds, [initial.user.id])
 })
 
 test('refresh rotates tokens and rejects replay of the previous token', async () => {
@@ -237,16 +243,11 @@ test('sign-in uses the targeted account lookup instead of loading the accounts c
   const { service, repository } = createAuthHarness()
   await service.signUp({ email: 'targeted@example.com', password: 'a-secure-password' })
 
-  let fullAccountReads = 0
-  const originalRead = repository.read
-  repository.read = async name => {
-    if (name === 'accounts') fullAccountReads += 1
-    return originalRead(name)
-  }
   const lookups = []
+  const originalLookup = repository.findAccountByEmail
   repository.findAccountByEmail = async email => {
     lookups.push(email)
-    return (await originalRead('accounts')).find(account => account.email === email) ?? null
+    return originalLookup(email)
   }
 
   const result = await service.signIn({
@@ -256,7 +257,6 @@ test('sign-in uses the targeted account lookup instead of loading the accounts c
 
   assert.equal(result.user.email, 'targeted@example.com')
   assert.deepEqual(lookups, ['targeted@example.com'])
-  assert.equal(fullAccountReads, 0)
 })
 
 
@@ -267,10 +267,6 @@ test('refresh rotation uses the relational atomic token writer instead of a coll
   repository.issueRefreshToken = async (record, rotation, now) => {
     rotations.push({ record, rotation, now })
   }
-  repository.update = async () => {
-    throw new Error('Relational refresh rotation must not read or rewrite a collection snapshot.')
-  }
-
   const result = await service.refresh(initial.refreshToken)
 
   assert.notEqual(result.refreshToken, initial.refreshToken)
@@ -290,10 +286,6 @@ test('sign-out revokes a refresh token by its stored hash without collection upd
   const initial = await service.signUp({ email: 'relational-signout@example.com', password: 'a-secure-password' })
   let revokedHash
   repository.deleteRefreshTokenByHash = async hash => { revokedHash = hash }
-  repository.update = async () => {
-    throw new Error('Relational sign-out must not read or rewrite a collection snapshot.')
-  }
-
   await service.signOut(initial.refreshToken)
 
   assert.equal(typeof revokedHash, 'string')
@@ -335,10 +327,6 @@ test('account profile changes use targeted relational writes instead of account 
     accounts[index] = { ...account, profiles, currentProfile }
     collections.set('accounts', accounts)
   }
-  repository.update = async () => {
-    throw new Error('Relational account-profile changes must not update full collection snapshots.')
-  }
-
   await service.addProfile(user.id, 'profile-1', true)
   await service.addProfile(user.id, 'profile-2')
   const selected = await service.updateCurrentProfile(user.id, 'profile-2')
