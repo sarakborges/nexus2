@@ -15,7 +15,7 @@ test('profile messages page delegates filtering and pagination to the relational
       items: [{
         id: 'message-1',
         content: '<p>Message</p><script>unsafe()</script>',
-        isFavorite: 1
+        isFavorite: true
       }],
       page: 2, pageSize: 20, totalItems: 1, totalPages: 1
     },
