@@ -64,7 +64,7 @@ export class DomainService {
     this.communities = communities ?? new CommunityService(data, auth, domainAccess, uploads)
     this.forum = forum ?? new CommunityForumService(data, uploads)
     this.messages = messages ?? new ProfileMessageService(data, uploads)
-    this.activity = activity ?? new ActivityService(data, domainAccess)
+    this.activity = activity ?? new ActivityService(data)
   }
 
   async searchEntities(
