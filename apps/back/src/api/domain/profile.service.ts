@@ -94,7 +94,7 @@ export class ProfileService {
     if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
-      (picture && !/^https?:\\/\\//i.test(picture))) {
+      (picture && !/^https?:\/\//i.test(picture))) {
       throw new ConflictException('INVALID_PROFILE')
     }
 

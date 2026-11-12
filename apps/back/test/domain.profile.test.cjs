@@ -173,7 +173,7 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       if (!latest) throw new Error('PROFILE_NOT_FOUND')
       if (!change.name || change.about.length > 8000 ||
         !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
-        (change.picture && !/^https?:\\/\\//i.test(change.picture))) {
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
         throw new Error('INVALID_PROFILE')
       }
       if (records.profiles.some(item => item.id !== change.profileId && item.url === change.url)) {
@@ -232,7 +232,7 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       if (!change.name || change.about.length > 8000 ||
         !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
         !['public', 'private', 'unlisted'].includes(change.privacy) ||
-        (change.picture && !/^https?:\\/\\//i.test(change.picture))) {
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
         throw new Error('INVALID_COMMUNITY')
       }
       if (records.communities.some(item => item.url === change.url)) {
@@ -301,7 +301,7 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       if (!change.name || change.about.length > 8000 ||
         !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(change.url) ||
         (change.privacy !== null && !['public', 'private', 'unlisted'].includes(change.privacy)) ||
-        (change.picture && !/^https?:\\/\\//i.test(change.picture))) {
+        (change.picture && !/^https?:\/\//i.test(change.picture))) {
         throw new Error('INVALID_COMMUNITY')
       }
       if (records.communities.some(item => item.id !== change.communityId && item.url === change.url)) {
