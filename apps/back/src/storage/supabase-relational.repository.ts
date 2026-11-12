@@ -1,9 +1,13 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ActivityFeedCursor, AuthenticatedUser, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, ListSort, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, Relationship, SearchResultItem, SearchScope } from '@nexus/common'
 import type {
   CollectionRecordMap,
   DataRepository,
   ActivityFeedRow,
   AccountProfileChange,
+  ProfileCreateWrite,
+  ProfileUpdateWrite,
+  CommunityCreateWrite,
+  CommunityUpdateWrite,
   ProfileRelationshipRemoval,
   ProfileRelationshipWrite,
   CommunityRelationshipChange,
@@ -153,6 +157,129 @@ export class SupabaseRelationalRepository implements DataRepository {
       profileId: row.profile_id,
       content: row.content,
       createdAt: Number(row.created_at_ms)
+    }
+  }
+
+  async createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_profile', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_profile_id: change.profile.id,
+        p_name: change.profile.name,
+        p_url: change.profile.url,
+        p_picture: change.profile.picture,
+        p_about: change.profile.about,
+        p_type: change.profile.type,
+        p_created_at_ms: change.profile.createdAt,
+        p_avatar_path: change.avatarPath,
+        p_editor_image_ids: [...change.editorImageIds]
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase relational profile creation returned an invalid result.')
+    }
+    const row = rows[0] as DatabaseRow
+    if (
+      typeof row.account_id !== 'string' ||
+      typeof row.email !== 'string' ||
+      !Array.isArray(row.profiles) ||
+      !row.profiles.every(profileId => typeof profileId === 'string') ||
+      (row.current_profile_id !== null && typeof row.current_profile_id !== 'string')
+    ) {
+      throw new Error('Supabase relational profile creation returned an invalid account row.')
+    }
+    return {
+      id: row.account_id,
+      email: row.email,
+      profiles: row.profiles as string[],
+      currentProfile: row.current_profile_id as string | null
+    }
+  }
+
+  async updateProfile(change: ProfileUpdateWrite): Promise<{ profile: Profile; previousPicture: string | null }> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_profile', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_profile_id: change.profileId,
+        p_name: change.name,
+        p_url: change.url,
+        p_picture: change.picture,
+        p_about: change.about,
+        p_last_activity_ms: change.lastActivity,
+        p_avatar_path: change.avatarPath,
+        p_editor_image_ids: [...change.editorImageIds]
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase relational profile update returned an invalid result.')
+    }
+    const row = rows[0] as DatabaseRow
+    return {
+      profile: this.mapProfile(row),
+      previousPicture: typeof row.previous_picture === 'string' ? row.previous_picture : null
+    }
+  }
+
+  async createCommunity(change: CommunityCreateWrite): Promise<Community> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_community', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_owner_profile_id: change.ownerProfileId,
+        p_community_id: change.id,
+        p_name: change.name,
+        p_url: change.url,
+        p_picture: change.picture,
+        p_about: change.about,
+        p_privacy: change.privacy,
+        p_created_at_ms: change.createdAt,
+        p_avatar_path: change.avatarPath,
+        p_editor_image_ids: [...change.editorImageIds]
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase relational community creation returned an invalid result.')
+    }
+    return this.mapCommunity(rows[0] as DatabaseRow)
+  }
+
+  async updateCommunity(change: CommunityUpdateWrite): Promise<{ community: Community; previousPicture: string | null }> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_community', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: change.userId,
+        p_community_id: change.communityId,
+        p_name: change.name,
+        p_url: change.url,
+        p_picture: change.picture,
+        p_about: change.about,
+        p_privacy: change.privacy,
+        p_last_activity_ms: change.lastActivity,
+        p_avatar_path: change.avatarPath,
+        p_editor_image_ids: [...change.editorImageIds]
+      })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase relational community update returned an invalid result.')
+    }
+    const row = rows[0] as DatabaseRow
+    return {
+      community: this.mapCommunity(row),
+      previousPicture: typeof row.previous_picture === 'string' ? row.previous_picture : null
     }
   }
 
@@ -1810,6 +1937,38 @@ export class SupabaseRelationalRepository implements DataRepository {
       }
       rows.push(...page)
       if (page.length < PAGE_SIZE) return rows
+    }
+  }
+
+  private mapProfile(row: DatabaseRow): Profile {
+    if (
+      typeof row.id !== 'string' || typeof row.name !== 'string' ||
+      typeof row.url !== 'string' || typeof row.picture !== 'string' ||
+      typeof row.about !== 'string' || typeof row.type !== 'string' ||
+      !Number.isFinite(Number(row.created_at_ms)) ||
+      !Number.isFinite(Number(row.last_activity_ms))
+    ) throw new Error('Supabase relational profile write returned an invalid profile row.')
+    return {
+      id: row.id, name: row.name, url: row.url, picture: row.picture,
+      about: row.about, type: row.type as Profile['type'],
+      createdAt: Number(row.created_at_ms), lastActivity: Number(row.last_activity_ms)
+    }
+  }
+
+  private mapCommunity(row: DatabaseRow): Community {
+    if (
+      typeof row.id !== 'string' || typeof row.name !== 'string' ||
+      typeof row.url !== 'string' || typeof row.picture !== 'string' ||
+      typeof row.about !== 'string' || typeof row.type !== 'string' ||
+      !['public','private','unlisted'].includes(String(row.privacy)) ||
+      !Number.isFinite(Number(row.created_at_ms)) ||
+      !Number.isFinite(Number(row.last_activity_ms))
+    ) throw new Error('Supabase relational community write returned an invalid community row.')
+    return {
+      id: row.id, name: row.name, url: row.url, picture: row.picture,
+      about: row.about, type: row.type as Community['type'],
+      privacy: row.privacy as Community['privacy'],
+      createdAt: Number(row.created_at_ms), lastActivity: Number(row.last_activity_ms)
     }
   }
 

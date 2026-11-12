@@ -6,6 +6,7 @@ import {
   Injectable,
   NotFoundException,
   Optional,
+  UnauthorizedException
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -134,6 +135,26 @@ export class CommunityService {
     const privacy = input.privacy ?? 'public'
     const createdAt = Date.now()
     const communityId = randomUUID()
+    if (this.data.createCommunity) {
+      try {
+        return await this.data.createCommunity({
+          userId,
+          ownerProfileId,
+          id: communityId,
+          name,
+          url,
+          picture,
+          about,
+          privacy,
+          createdAt,
+          avatarPath: this.uploads?.getAvatarPath(picture) ?? null,
+          editorImageIds: this.uploads?.getEditorImageIds(about) ?? []
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
+
     return this.data.transaction<Community>(
       ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
       collections => {
@@ -200,6 +221,28 @@ export class CommunityService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const lastActivity = Date.now()
+    if (this.data.updateCommunity) {
+      let result: { community: Community; previousPicture: string | null }
+      try {
+        result = await this.data.updateCommunity({
+          userId,
+          communityId,
+          name,
+          url,
+          picture,
+          about,
+          privacy: input.privacy ?? null,
+          lastActivity,
+          avatarPath: this.uploads?.getAvatarPath(picture) ?? null,
+          editorImageIds: this.uploads?.getEditorImageIds(about) ?? []
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      if (result.previousPicture) await this.uploads?.deletePreviousAvatar(result.previousPicture)
+      return result.community
+    }
+
     const result = await this.data.transaction<{ community: Community; previousPicture: string | null }>(
       ['accounts', 'profiles', 'community_relationships', 'communities', 'media_files'],
       collections => {
@@ -325,5 +368,23 @@ export class CommunityService {
   transferOwnership(userId: string, communityId: string, newOwnerId: string, actorId: string): Promise<void> {
     return this.membership.transferOwnership(userId, communityId, newOwnerId, actorId)
   }
+
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    if (message.includes('PROFILE_NOT_OWNED') || message.includes('PROFILE_TYPE_MISMATCH')) {
+      throw new ForbiddenException(message.includes('PROFILE_TYPE_MISMATCH')
+        ? 'PROFILE_TYPE_MISMATCH'
+        : 'PROFILE_NOT_OWNED')
+    }
+    if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+    if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    if (message.includes('COMMUNITY_URL_ALREADY_IN_USE')) throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
+    if (message.includes('INVALID_AVATAR_UPLOAD')) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    if (message.includes('INVALID_EDITOR_IMAGE')) throw new BadRequestException('INVALID_EDITOR_IMAGE')
+    if (message.includes('INVALID_COMMUNITY')) throw new BadRequestException('INVALID_COMMUNITY')
+    throw error
+  }
+
 
 }

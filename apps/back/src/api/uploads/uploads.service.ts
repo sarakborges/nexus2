@@ -248,6 +248,10 @@ export class UploadsService {
     return extractEditorImageIds(html)
   }
 
+  getAvatarPath(url: string): string | null {
+    return this.storage.getAvatarPath(url)
+  }
+
   attachAvatarUrlToRecords(
     records: UploadedFileRecord[],
     userId: string,

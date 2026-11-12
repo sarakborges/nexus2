@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -113,6 +115,20 @@ export class ProfileService {
       createdAt, lastActivity: createdAt
     }
 
+    if (this.data.createProfile) {
+      try {
+        const user = await this.data.createProfile({
+          userId,
+          profile,
+          avatarPath: this.uploads?.getAvatarPath(picture) ?? null,
+          editorImageIds: this.uploads?.getEditorImageIds(about) ?? []
+        })
+        return { profile, user }
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
+
     const user = await this.data.transaction<AuthenticatedUser>(
       ['profiles', 'accounts', 'media_files'],
       collections => {
@@ -165,6 +181,27 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const lastActivity = Date.now()
+    if (this.data.updateProfile) {
+      let result: { profile: Profile; previousPicture: string | null }
+      try {
+        result = await this.data.updateProfile({
+          userId,
+          profileId,
+          name,
+          url,
+          picture,
+          about,
+          lastActivity,
+          avatarPath: this.uploads?.getAvatarPath(picture) ?? null,
+          editorImageIds: this.uploads?.getEditorImageIds(about) ?? []
+        })
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+      if (result.previousPicture) await this.uploads?.deletePreviousAvatar(result.previousPicture)
+      return result.profile
+    }
+
     const result = await this.data.transaction<{ profile: Profile; previousPicture: string | null }>(
       ['accounts', 'profiles', 'media_files'],
       collections => {
@@ -250,5 +287,22 @@ export class ProfileService {
   removeProfileRelationship(userId: string, source: string, target: string): Promise<void> {
     return this.relationships.removeProfileRelationship(userId, source, target)
   }
+
+  private throwRelationalWriteError(error: unknown): never {
+    const message = error instanceof Error ? error.message : String(error)
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    if (message.includes('PROFILE_NOT_OWNED')) throw new ForbiddenException('PROFILE_NOT_OWNED')
+    if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
+    if (message.includes('PROFILE_URL_ALREADY_IN_USE') || message.includes('PROFILE_ID_ALREADY_EXISTS')) {
+      throw new ConflictException(message.includes('PROFILE_URL_ALREADY_IN_USE')
+        ? 'PROFILE_URL_ALREADY_IN_USE'
+        : 'PROFILE_ID_ALREADY_EXISTS')
+    }
+    if (message.includes('INVALID_PROFILE')) throw new BadRequestException('INVALID_PROFILE')
+    if (message.includes('INVALID_EDITOR_IMAGE')) throw new BadRequestException('INVALID_EDITOR_IMAGE')
+    if (message.includes('INVALID_AVATAR_UPLOAD')) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
+    throw error
+  }
+
 
 }

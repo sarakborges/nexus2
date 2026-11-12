@@ -1397,3 +1397,79 @@ test('reads public profile lists, profile URL lookups and public community lists
     { path: '/rest/v1/rpc/nexus_list_public_communities', body: { p_page: 1 } }
   ])
 })
+
+
+test('profile and community writes call targeted relational RPCs', async t => {
+  const calls = []
+  const profileRow = {
+    id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+    about: '<p>About</p>', type: 'social', created_at_ms: 100, last_activity_ms: 100
+  }
+  const communityRow = {
+    id: 'community-1', name: 'Community', url: 'community', picture: '',
+    about: '<p>About</p>', type: 'social', privacy: 'public',
+    created_at_ms: 200, last_activity_ms: 200
+  }
+  withFetch(t, async (input, options) => {
+    const parsed = new URL(String(input))
+    calls.push({ path: parsed.pathname, body: JSON.parse(options.body) })
+    if (parsed.pathname.endsWith('/nexus_create_profile')) {
+      return new Response(JSON.stringify([{
+        account_id: 'account-1', email: 'person@example.test',
+        profiles: ['profile-1'], current_profile_id: 'profile-1'
+      }]), { status: 200 })
+    }
+    if (parsed.pathname.endsWith('/nexus_update_profile')) {
+      return new Response(JSON.stringify([{ ...profileRow, previous_picture: 'https://old/avatar.png' }]), { status: 200 })
+    }
+    if (parsed.pathname.endsWith('/nexus_create_community')) {
+      return new Response(JSON.stringify([communityRow]), { status: 200 })
+    }
+    if (parsed.pathname.endsWith('/nexus_update_community')) {
+      return new Response(JSON.stringify([{ ...communityRow, previous_picture: null }]), { status: 200 })
+    }
+    throw new Error('Unexpected request: ' + parsed.pathname)
+  })
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  const profile = {
+    id: 'profile-1', name: 'Profile', url: 'profile', picture: '',
+    about: '<p>About</p>', type: 'social', createdAt: 100, lastActivity: 100
+  }
+  const user = await repo.createProfile({
+    userId: 'account-1', profile, avatarPath: null, editorImageIds: ['image-1']
+  })
+  assert.deepEqual(user, {
+    id: 'account-1', email: 'person@example.test',
+    profiles: ['profile-1'], currentProfile: 'profile-1'
+  })
+  const updatedProfile = await repo.updateProfile({
+    userId: 'account-1', profileId: 'profile-1', name: 'Profile', url: 'profile',
+    picture: '', about: '<p>About</p>', lastActivity: 101, avatarPath: null,
+    editorImageIds: ['image-1']
+  })
+  assert.equal(updatedProfile.profile.id, 'profile-1')
+  assert.equal(updatedProfile.previousPicture, 'https://old/avatar.png')
+  const createdCommunity = await repo.createCommunity({
+    userId: 'account-1', ownerProfileId: 'profile-1', id: 'community-1',
+    name: 'Community', url: 'community', picture: '', about: '<p>About</p>',
+    privacy: 'public', createdAt: 200, avatarPath: null, editorImageIds: []
+  })
+  assert.equal(createdCommunity.id, 'community-1')
+  const updatedCommunity = await repo.updateCommunity({
+    userId: 'account-1', communityId: 'community-1', name: 'Community',
+    url: 'community', picture: '', about: '<p>About</p>', privacy: null,
+    lastActivity: 201, avatarPath: null, editorImageIds: []
+  })
+  assert.equal(updatedCommunity.community.id, 'community-1')
+  assert.equal(updatedCommunity.previousPicture, null)
+  assert.deepEqual(calls.map(call => call.path), [
+    '/rest/v1/rpc/nexus_create_profile',
+    '/rest/v1/rpc/nexus_update_profile',
+    '/rest/v1/rpc/nexus_create_community',
+    '/rest/v1/rpc/nexus_update_community'
+  ])
+  assert.equal(calls[0].body.p_editor_image_ids[0], 'image-1')
+  assert.equal(calls[1].body.p_last_activity_ms, 101)
+  assert.equal(calls[2].body.p_privacy, 'public')
+  assert.equal(calls[3].body.p_privacy, null)
+})

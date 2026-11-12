@@ -1,4 +1,4 @@
-import type { ActivityFeedCursor, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType, SearchResultItem, SearchScope } from '@nexus/common'
+import type { ActivityFeedCursor, AuthenticatedUser, Community, CommunitiesPageData, CommunityEditPageData, CommunityForumComposerPageData, CommunityForumPageData, CommunityForumReply, CommunityForumTopic, CommunityForumTopicDetail, CommunityForumTopicSummary, CommunityForumTopicPageData, CommunityMember, CommunityMembersPageData, CommunityPageData, CommunityRelationship, CommunityRelationshipType, ListSort, PaginatedResult, Profile, ProfileDirectoryPageData, ProfileEditPageData, ProfileMessage, ProfileMessagesPageData, ProfilePageData, ProfilePost, ProfileSettings, RecentActivity, Relationship, RelationshipType, SearchResultItem, SearchScope } from '@nexus/common'
 
 export const DATA_REPOSITORY = Symbol('DATA_REPOSITORY')
 
@@ -119,6 +119,52 @@ export type CollectionTransaction<T> = {
   result: T
 }
 
+export type ProfileCreateWrite = {
+  userId: string
+  profile: Profile
+  avatarPath: string | null
+  editorImageIds: readonly string[]
+}
+
+export type ProfileUpdateWrite = {
+  userId: string
+  profileId: string
+  name: string
+  url: string
+  picture: string
+  about: string
+  lastActivity: number
+  avatarPath: string | null
+  editorImageIds: readonly string[]
+}
+
+export type CommunityCreateWrite = {
+  userId: string
+  ownerProfileId: string
+  id: string
+  name: string
+  url: string
+  picture: string
+  about: string
+  privacy: Community['privacy']
+  createdAt: number
+  avatarPath: string | null
+  editorImageIds: readonly string[]
+}
+
+export type CommunityUpdateWrite = {
+  userId: string
+  communityId: string
+  name: string
+  url: string
+  picture: string
+  about: string
+  privacy: Community['privacy'] | null
+  lastActivity: number
+  avatarPath: string | null
+  editorImageIds: readonly string[]
+}
+
 export type ActivityFeedRow = {
   id: string
   type: RecentActivity['type']
@@ -138,6 +184,14 @@ export type ActivityFeedRow = {
 export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
+  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
+  updateProfile?(
+    change: ProfileUpdateWrite
+  ): Promise<{ profile: Profile; previousPicture: string | null }>
+  createCommunity?(change: CommunityCreateWrite): Promise<Community>
+  updateCommunity?(
+    change: CommunityUpdateWrite
+  ): Promise<{ community: Community; previousPicture: string | null }>
   createProfilePost?(
     userId: string,
     post: ProfilePost,
