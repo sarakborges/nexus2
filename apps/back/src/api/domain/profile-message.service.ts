@@ -31,7 +31,7 @@ export class ProfileMessageService {
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     const normalized = sanitizeRichText(content)
     const plainText = getRichTextPlainText(normalized)
-    const hasImage = /<img\\b/i.test(normalized)
+    const hasImage = /<img\b/i.test(normalized)
     const message: ProfileMessage = {
       id: randomUUID(),
       fromProfileId,
