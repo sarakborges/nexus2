@@ -228,6 +228,41 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
     collections.set('profiles', profiles.map(item => item.id === change.profileId ? updated : item))
     return { profile: structuredClone(updated), previousPicture: null }
   }
+  data.createCommunity = async change => {
+    beforeTransaction?.(
+      ['accounts', 'profiles', 'communities', 'community_relationships', 'media_files'],
+      collections
+    )
+    const account = (collections.get('accounts') ?? []).find(item => item.id === change.userId)
+    if (!account || !account.profiles.includes(change.ownerProfileId)) {
+      throw new Error('PROFILE_NOT_OWNED')
+    }
+    const owner = (collections.get('profiles') ?? []).find(item => item.id === change.ownerProfileId)
+    if (!owner) throw new Error('PROFILE_NOT_FOUND')
+    const community = {
+      id: change.id,
+      name: change.name,
+      url: change.url,
+      picture: change.picture,
+      about: change.about,
+      type: owner.type,
+      privacy: change.privacy,
+      createdAt: change.createdAt,
+      lastActivity: change.createdAt
+    }
+    const membership = {
+      profiles: [change.ownerProfileId, community.id],
+      type: 'owner',
+      requestedBy: null,
+      blockedBy: null,
+      updatedAt: change.createdAt
+    }
+    collections.set('communities', [...(collections.get('communities') ?? []), community])
+    collections.set('community_relationships', [
+      ...(collections.get('community_relationships') ?? []), membership
+    ])
+    return structuredClone(community)
+  }
   const access = new DomainAccessService(data)
   data.createCommunityForumTopic = async ({ userId, topic }) => data.transaction(
     ['accounts', 'profiles', 'communities', 'community_relationships', 'community_forum_topics', 'media_files'],

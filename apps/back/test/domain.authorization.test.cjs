@@ -363,6 +363,77 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       return structuredClone(outcome.result)
     }
   }
+  data.getPublicCommunities = async requestedPage => {
+    beforeTransaction?.(['communities', 'community_relationships', 'profiles'], collections)
+    const profiles = collections.get('profiles') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    const ownerTypes = new Map()
+    for (const relation of relationships.filter(item => item.type === 'owner')) {
+      if (!ownerTypes.has(relation.profiles[1])) {
+        ownerTypes.set(
+          relation.profiles[1],
+          profiles.find(profile => profile.id === relation.profiles[0])?.type
+        )
+      }
+    }
+    const visible = (collections.get('communities') ?? [])
+      .filter(item => (['public', 'private', 'unlisted'].includes(item.privacy) ? item.privacy : 'public') === 'public')
+      .map(item => ({
+        ...item,
+        type: ownerTypes.get(item.id) ?? item.type,
+        privacy: ['public', 'private', 'unlisted'].includes(item.privacy) ? item.privacy : 'public'
+      }))
+    const pageSize = 20
+    const totalItems = visible.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+    const safePage = Math.min(Math.max(Math.trunc(requestedPage) || 1, 1), totalPages)
+    const offset = (safePage - 1) * pageSize
+    return {
+      items: structuredClone(visible.slice(offset, offset + pageSize)),
+      page: safePage,
+      pageSize,
+      totalItems,
+      totalPages
+    }
+  }
+  data.getCommunityByUrl = async (url, userId) => {
+    beforeTransaction?.(['accounts', 'profiles', 'communities', 'community_relationships'], collections)
+    const current = (collections.get('communities') ?? []).find(item => item.url === url)
+    if (!current) throw new Error('COMMUNITY_NOT_FOUND')
+    const profiles = collections.get('profiles') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    const ownerRelation = relationships.find(item =>
+      item.profiles[1] === current.id && item.type === 'owner'
+    )
+    const owner = ownerRelation
+      ? profiles.find(profile => profile.id === ownerRelation.profiles[0])
+      : undefined
+    const privacy = ['public', 'private', 'unlisted'].includes(current.privacy)
+      ? current.privacy
+      : 'public'
+    const result = {
+      ...current,
+      type: owner?.type ?? current.type,
+      privacy
+    }
+    if (privacy === 'private') {
+      const account = userId
+        ? (collections.get('accounts') ?? []).find(item => item.id === userId)
+        : undefined
+      if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
+      const owned = new Set(account?.profiles ?? [])
+      const canRead = relationships.some(item =>
+        item.profiles[1] === current.id &&
+        owned.has(item.profiles[0]) &&
+        ['owner', 'moderator', 'connection'].includes(item.type)
+      )
+      if (!canRead) {
+        result.picture = ''
+        result.about = ''
+      }
+    }
+    return structuredClone(result)
+  }
   const auth = {
     async getUser(userId) {
       const profiles = userProfiles[userId] ?? []
@@ -534,7 +605,7 @@ test('a non-staff member cannot access pending join requests', async () => {
   )
 })
 
-test('community type inherits the owner profile type and persists the normalized value', async () => {
+test('community lookup inherits the owner profile type without rewriting the community row', async () => {
   const { service, collections } = createDomainHarness({
     relationships: [relationship('owner-1', 'owner')]
   })
@@ -545,10 +616,10 @@ test('community type inherits the owner profile type and persists the normalized
   const visible = await service.getCommunity('test-community')
 
   assert.equal(visible.type, 'business')
-  assert.equal(collections.get('communities')[0].type, 'business')
+  assert.equal(collections.get('communities')[0].type, 'social')
 })
 
-test('community normalization reads owner type and privacy from one transaction snapshot', async () => {
+test('public community query normalizes owner type and legacy privacy in its result', async () => {
   const { service, collections } = createDomainHarness({
     relationships: [relationship('owner-1', 'owner')],
     beforeTransaction(names, current) {
@@ -566,8 +637,8 @@ test('community normalization reads owner type and privacy from one transaction 
 
   assert.equal(visible.items[0].type, 'business')
   assert.equal(visible.items[0].privacy, 'public')
-  assert.equal(collections.get('communities')[0].type, 'business')
-  assert.equal(collections.get('communities')[0].privacy, 'public')
+  assert.equal(collections.get('communities')[0].type, 'social')
+  assert.equal(collections.get('communities')[0].privacy, 'invalid')
 })
 
 
@@ -658,7 +729,7 @@ test('transferring community ownership rechecks the current owner role transacti
   assert.deepEqual(collections.get('community_relationships'), afterTransfer)
 })
 
-test('community details and members normalize and authorize in one transaction each', async () => {
+test('community details and member lists use independent targeted relational reads', async () => {
   let transactionCount = 0
   const { service, collections } = createDomainHarness({
     privacy: 'private',
@@ -679,7 +750,7 @@ test('community details and members normalize and authorize in one transaction e
   assert.equal(details.type, 'business')
   assert.equal(details.about, 'Community details')
   assert.equal(transactionCount, 1)
-  assert.equal(collections.get('communities')[0].type, 'business')
+  assert.equal(collections.get('communities')[0].type, 'social')
 
   const members = await service.listCommunityMembers(communityId, 'all', page, 'memberUser')
   assert.deepEqual(members.items.map(member => member.id).sort(), ['member-1', 'owner-1'])
