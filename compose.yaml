@@ -7,16 +7,15 @@ services:
       NODE_ENV: production
       BACK_PORT: "3002"
       BFF_ORIGIN: http://bff:3001
-      DATA_DIRECTORY: /var/lib/nexus
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in .env}
       JWT_ACCESS_TTL_SECONDS: ${JWT_ACCESS_TTL_SECONDS:-900}
       JWT_REFRESH_TTL_SECONDS: ${JWT_REFRESH_TTL_SECONDS:-2592000}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_STORAGE_SECRET_KEY: ${SUPABASE_STORAGE_SECRET_KEY:-}
+      SUPABASE_URL: ${SUPABASE_URL:?Set SUPABASE_URL in .env}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:?Set SUPABASE_PUBLISHABLE_KEY in .env}
+      SUPABASE_API_SECRET: ${SUPABASE_API_SECRET:?Set SUPABASE_API_SECRET in .env}
+      SUPABASE_STORAGE_SECRET_KEY: ${SUPABASE_STORAGE_SECRET_KEY:?Set SUPABASE_STORAGE_SECRET_KEY in .env}
       CRON_SECRET: ${CRON_SECRET:-}
-    volumes:
-      - nexus-data:/var/lib/nexus
     expose:
       - "3002"
     restart: unless-stopped
@@ -50,6 +49,3 @@ services:
     ports:
       - "${HTTP_PORT:-8080}:80"
     restart: unless-stopped
-
-volumes:
-  nexus-data:
