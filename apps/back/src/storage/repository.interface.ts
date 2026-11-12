@@ -326,8 +326,8 @@ export interface DataRepository {
   upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
   removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
   changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
-  getProfileSettings?(userId: string, profileId: string): Promise<ProfileSettings>
-  updateProfileSettings?(
+  getProfileSettings(userId: string, profileId: string): Promise<ProfileSettings>
+  updateProfileSettings(
     userId: string,
     profileId: string,
     patch: Partial<ProfileSettings>
