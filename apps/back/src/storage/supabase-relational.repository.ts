@@ -218,7 +218,7 @@ export class SupabaseRelationalRepository implements DataRepository {
     }
   }
 
-  async createUpload(  async createUpload(change: MediaUploadCreateWrite): Promise<void> {
+  async createUpload(change: MediaUploadCreateWrite): Promise<void> {
     const record = change.record
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_upload', {
       method: 'POST',
