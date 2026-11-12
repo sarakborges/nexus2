@@ -47,7 +47,7 @@ export class AuthService {
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
-    const account = await this.repository.findAccountByEmail<AccountRecord>(email)
+    const account = await this.repository.findAccountByEmail(email)
     if (!account || !(await this.verifyPassword(credentials.password, account))) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
@@ -70,7 +70,7 @@ export class AuthService {
       throw new UnauthorizedException('REFRESH_TOKEN_INVALID')
     }
 
-    const [account] = await this.repository.readByIds<AccountRecord>('accounts', [payload.sub])
+    const [account] = await this.repository.getAccountById(payload.sub)
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
 
     return this.issueTokens(account, {
