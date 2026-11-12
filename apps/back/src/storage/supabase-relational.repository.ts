@@ -194,15 +194,15 @@ export class SupabaseRelationalRepository implements DataRepository {
 
   async updateAccountPreferences(
     userId: string,
-    preferences: UserPreferences
+    preferences: Partial<UserPreferences>
   ): Promise<UserPreferences> {
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         p_user_id: userId,
-        p_language: preferences.language,
-        p_theme: preferences.theme
+        p_language: preferences.language ?? null,
+        p_theme: preferences.theme ?? null
       })
     })
     await this.assertSuccess(response)

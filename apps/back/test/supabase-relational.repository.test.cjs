@@ -1613,12 +1613,13 @@ test('creates accounts with their first refresh token and updates preferences th
     now: 1699990000000
   })
   assert.deepEqual(await repo.updateAccountPreferences('account-1', {
-    language: 'pt-BR', theme: 'dark'
+    theme: 'dark'
   }), { language: 'pt-BR', theme: 'dark' })
   assert.deepEqual(calls.map(call => call.path), [
     '/rest/v1/rpc/nexus_create_account_with_refresh_token',
     '/rest/v1/rpc/nexus_update_account_preferences'
   ])
   assert.equal(calls[0].body.p_refresh_token_id, 'refresh-1')
-  assert.equal(calls[1].body.p_language, 'pt-BR')
+  assert.equal(calls[1].body.p_language, null)
+  assert.equal(calls[1].body.p_theme, 'dark')
 })

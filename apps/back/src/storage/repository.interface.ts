@@ -277,7 +277,7 @@ export interface DataRepository {
   read<T>(collection: string): Promise<T[]>
   findAccountByEmail?<T>(email: string): Promise<T | null>
   createAccountWithRefreshToken?(change: CreateAccountWithRefreshTokenWrite): Promise<void>
-  updateAccountPreferences?(userId: string, preferences: UserPreferences): Promise<UserPreferences>
+  updateAccountPreferences?(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
   createUpload?(change: MediaUploadCreateWrite): Promise<void>
   getUploadById?(userId: string, id: string): Promise<MediaFileRecord | null>
   deletePendingUpload?(userId: string, id: string): Promise<void>
