@@ -597,3 +597,81 @@
 .communities-page__header .account-card__action {
   justify-self: end;
 }
+
+
+@media (max-width: 900px) {
+  .account-card__profile-entry--card {
+    align-items: flex-start;
+  }
+
+  .account-card__profile-entry-identity {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .communities-page__header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .communities-page__header .account-card__action {
+    justify-self: stretch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .account-card__header {
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .account-card__header-actions {
+    width: 100%;
+  }
+
+  .account-card__header-actions > *,
+  .account-card__relationship-actions > *,
+  .account-card__actions > * {
+    flex: 1 1 140px;
+    max-width: 100%;
+  }
+
+  .account-card__profile-entry--card {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .profile-message__header {
+    align-items: flex-start;
+  }
+
+  .profile-message__header-actions {
+    justify-content: flex-start;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .profile-message__action {
+    min-height: 40px;
+  }
+
+  .pagination {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  .account-card {
+    padding: 16px;
+  }
+
+  .profile-message-form,
+  .profile-message {
+    padding: 12px;
+  }
+
+  .account-card__profile-entry--card {
+    padding: 10px;
+  }
+}
