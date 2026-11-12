@@ -27,6 +27,13 @@ export class ProfileRelationshipService {
   ) {}
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
+    if (this.data.getProfileRelationships) {
+      try {
+        return await this.data.getProfileRelationships(userId, profileId)
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<Relationship[]>(
       ['accounts', 'profiles', 'relationships'],
       collections => {
@@ -42,6 +49,20 @@ export class ProfileRelationshipService {
     )
   }
   async getProfileFriends(profileId: string, q: PaginationDto): Promise<PaginatedResult<Profile>> {
+    if (this.data.getProfileFriends) {
+      try {
+        const result = await this.data.getProfileFriends(profileId, q.page)
+        return {
+          ...result,
+          items: result.items.map(friend => ({
+            ...friend,
+            about: sanitizeRichText(friend.about ?? '')
+          }))
+        }
+      } catch (error) {
+        this.throwRelationalWriteError(error)
+      }
+    }
     return this.data.transaction<PaginatedResult<Profile>>(
       ['profiles', 'relationships'],
       collections => {
