@@ -8,11 +8,8 @@ test('profile relationship writes use targeted relational operations and return 
   const repository = {
     async upsertProfileRelationship(change) { calls.push(['upsert', change]) },
     async removeProfileRelationship(change) { calls.push(['remove', change]) },
-    async transaction() {
-      throw new Error('Profile relationship writes must not use collection snapshots.')
-    }
   }
-  const service = new ProfileRelationshipService(repository, {})
+  const service = new ProfileRelationshipService(repository)
 
   const result = await service.updateProfileRelationship(
     'account-1',
@@ -38,6 +35,7 @@ test('profile relationship writes use targeted relational operations and return 
   assert.equal(calls[0][1].type, 'requested')
   assert.equal(calls[1][0], 'remove')
   assert.equal(calls[1][1].sourceProfileId, 'ffffffff-ffff-4fff-8fff-ffffffffffff')
+  assert.equal('transaction' in repository, false)
 })
 
 test('profile relationship RPC errors preserve domain error codes', async () => {
@@ -60,7 +58,7 @@ test('profile relationship RPC errors preserve domain error codes', async () => 
         throw new Error('Supabase relational request failed (403): {"message":"' + message + '"}')
       }
     }
-    const service = new ProfileRelationshipService(repository, {})
+    const service = new ProfileRelationshipService(repository)
     await assert.rejects(
       service.updateProfileRelationship('account-1', 'profile-1', 'profile-2', 'requested'),
       error => error instanceof ErrorType && error.message === message
@@ -88,11 +86,11 @@ test('profile relationship reads use targeted repository queries without snapsho
         page: 2, pageSize: 20, totalItems: 21, totalPages: 2
       }
     },
-    async transaction() { throw new Error('Relationship reads must not load collection snapshots.') }
   }
-  const service = new ProfileRelationshipService(repository, {})
+  const service = new ProfileRelationshipService(repository)
   const relationships = await service.getProfileRelationships('account-1','profile-1')
   const friends = await service.getProfileFriends('profile-1',{ page: 2 })
   assert.equal(relationships.length, 1)
   assert.equal(friends.items[0].about.includes('<script>'), false)
+  assert.equal('transaction' in repository, false)
 })
