@@ -4,6 +4,76 @@ import type { DataRepository } from './repository.interface'
 import { DATA_REPOSITORY } from './repository.interface'
 import { SupabaseRelationalRepository } from './supabase-relational.repository'
 
+const REQUIRED_RELATIONAL_METHODS = [
+  'getAccountById',
+  'findAccountByEmail',
+  'getProfilesByIds',
+  'getCommunitiesByIds',
+  'createAccountWithRefreshToken',
+  'updateAccountPreferences',
+  'createUpload',
+  'getUploadById',
+  'deletePendingUpload',
+  'completeUpload',
+  'claimExpiredUploads',
+  'finishUploadDeletions',
+  'scheduleUploadDeletion',
+  'claimUploadDeletion',
+  'schedulePreviousAvatarDeletion',
+  'getEditorImageRecord',
+  'getAvatarUploadPath',
+  'setProfileAvatar',
+  'setCommunityAvatar',
+  'createProfile',
+  'updateProfile',
+  'createCommunity',
+  'updateCommunity',
+  'createProfilePost',
+  'issueRefreshToken',
+  'deleteRefreshTokenByHash',
+  'changeAccountProfile',
+  'upsertProfileRelationship',
+  'removeProfileRelationship',
+  'changeCommunityRelationship',
+  'getProfileSettings',
+  'updateProfileSettings',
+  'createProfileMessage',
+  'deleteProfileMessage',
+  'setProfileMessageFavorite',
+  'getProfileMessages',
+  'getProfilePage',
+  'listCommunityForumTopics',
+  'getCommunityForumTopic',
+  'getProfilesPage',
+  'getProfileByUrl',
+  'getPublicCommunities',
+  'getOwnedProfiles',
+  'getCommunityByUrl',
+  'getProfileCommunities',
+  'searchEntities',
+  'getProfileRelationships',
+  'getProfileFriends',
+  'getCommunityRelationships',
+  'listCommunityMembers',
+  'listPendingMembers',
+  'getProfileEditPage',
+  'getCommunityEditPage',
+  'getCommunityForumComposerPage',
+  'getCommunitiesPage',
+  'getProfileDirectoryPage',
+  'getCommunityPage',
+  'getCommunityMembersPage',
+  'getProfileMessagesPage',
+  'getCommunityForumPage',
+  'getCommunityForumTopicPage',
+  'createCommunityForumTopic',
+  'createCommunityForumReply',
+  'moderateCommunityForumTopic',
+  'deleteCommunityForumTopic',
+  'deleteCommunityForumReply',
+  'getActivityFeedRows'
+] as const
+
 @Global()
 @Module({
   providers: [
@@ -21,7 +91,17 @@ import { SupabaseRelationalRepository } from './supabase-relational.repository'
           )
         }
 
-        return new SupabaseRelationalRepository(projectUrl, publishableKey, apiSecret)
+        const repository = new SupabaseRelationalRepository(projectUrl, publishableKey, apiSecret)
+        const capabilities = repository as unknown as Record<string, unknown>
+        const missing = REQUIRED_RELATIONAL_METHODS.filter(method =>
+          typeof capabilities[method] !== 'function'
+        )
+        if (missing.length > 0) {
+          throw new Error(
+            'Supabase relational repository is incomplete. Missing operations: ' + missing.join(', ')
+          )
+        }
+        return repository
       }
     }
   ],
