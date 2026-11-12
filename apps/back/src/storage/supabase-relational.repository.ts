@@ -90,10 +90,10 @@ export class SupabaseRelationalRepository implements DataRepository {
     return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
-  async findAccountByEmail<T = AccountRepositoryRecord>(email: string): Promise<T | null> {
+  async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
     const [account] = await this.readAccounts(rows)
-    return (account as T | undefined) ?? null
+    return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
   async getProfilesByIds(ids: readonly string[]): Promise<Profile[]> {
