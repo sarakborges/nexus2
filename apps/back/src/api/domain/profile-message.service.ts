@@ -2,7 +2,6 @@ import { BadRequestException, ConflictException, ForbiddenException, Inject, Inj
 import { randomUUID } from 'node:crypto'
 import type { PaginatedResult, Profile, ProfileMessage, Relationship, ProfileSettings } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
-import { paginate } from '../pagination/pagination.helper'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
@@ -19,44 +18,20 @@ export class ProfileMessageService {
   ) {}
 
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
-    if (this.data.getProfileMessages) {
-      try {
-        const page = await this.data.getProfileMessages(profileId, userId, q.page)
-        return {
-          ...page,
-          items: page.items.map(message => ({
-            ...message,
-            content: sanitizeRichText(message.content ?? '')
-          }))
-        }
-      } catch (error) {
-        this.throwRelationalWriteError(error)
+    try {
+      const page = await this.data.getProfileMessages(profileId, userId, q.page)
+      return {
+        ...page,
+        items: page.items.map(message => ({
+          ...message,
+          content: sanitizeRichText(message.content ?? '')
+        }))
       }
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-
-    return this.data.transaction<PaginatedResult<ProfileMessage>>(
-      ['accounts', 'profile_messages'],
-      collections => {
-        const account = userId
-          ? (collections.accounts as AccountRecord[]).find(item => item.id === userId)
-          : undefined
-        if (userId && !account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        const viewerProfiles = account?.profiles ?? []
-        const own = viewerProfiles.includes(profileId)
-        const visible = (collections.profile_messages as ProfileMessage[])
-          .filter(message =>
-            message.toProfileId === profileId &&
-            (own || viewerProfiles.includes(message.fromProfileId))
-          )
-          .map(message => ({
-            ...message,
-            content: sanitizeRichText(message.content ?? '')
-          }))
-          .sort((a, b) => b.createdAt - a.createdAt)
-        return { records: collections, result: paginate(visible, q) }
-      }
-    )
   }
+
   async sendMessage(userId: string, fromProfileId: string, toProfileId: string, content: string): Promise<ProfileMessage> {
     const normalized = sanitizeRichText(content)
     const plainText = getRichTextPlainText(normalized)
