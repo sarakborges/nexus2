@@ -13,6 +13,36 @@ function createAuthHarness({ failTransaction = false } = {}) {
       const requested = new Set(ids)
       return structuredClone((collections.get(name) ?? []).filter(record => requested.has(record.id)))
     },
+    async getAccountById(id) {
+      return structuredClone((collections.get('accounts') ?? []).find(account => account.id === id) ?? null)
+    },
+    async changeAccountProfile(change) {
+      const accounts = collections.get('accounts')
+      const index = accounts.findIndex(account => account.id === change.accountId)
+      if (index < 0) throw new Error('ACCOUNT_NOT_FOUND')
+      const account = accounts[index]
+      let profiles = [...account.profiles]
+      let currentProfile = account.currentProfile
+
+      if (change.action === 'add') {
+        if (!profiles.includes(change.profileId)) profiles.push(change.profileId)
+        if (change.makeCurrent || !currentProfile) currentProfile = change.profileId
+      } else if (change.action === 'select') {
+        if (!profiles.includes(change.profileId)) throw new Error('PROFILE_NOT_OWNED')
+        currentProfile = change.profileId
+      } else {
+        if (!profiles.includes(change.profileId)) return
+        profiles = profiles.filter(id => id !== change.profileId)
+        if (currentProfile === change.profileId) {
+          currentProfile = change.previousCurrentProfileId && profiles.includes(change.previousCurrentProfileId)
+            ? change.previousCurrentProfileId
+            : profiles[0] ?? null
+        }
+      }
+
+      accounts[index] = { ...account, profiles, currentProfile }
+      collections.set('accounts', accounts)
+    },
     async update(name, updater) {
       const next = updater(structuredClone(collections.get(name) ?? []))
       collections.set(name, structuredClone(next))
