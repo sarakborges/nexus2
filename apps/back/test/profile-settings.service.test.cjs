@@ -4,20 +4,54 @@ const { ForbiddenException } = require('@nestjs/common')
 const { ProfileSettingsService, DEFAULT_PROFILE_SETTINGS } = require('../dist/api/domain/profile-settings.service.js')
 
 function createService({ ownerProfiles = ['profile-1'], settings = [] } = {}) {
+  const calls = []
   const records = {
     accounts: [{ id: 'user-1', profiles: [...ownerProfiles] }],
     profiles: [{ id: 'profile-1' }, { id: 'profile-2' }],
     profile_settings: structuredClone(settings)
   }
+
+  const assertOwnsProfile = (userId, profileId) => {
+    const account = records.accounts.find(item => item.id === userId)
+    if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+    if (!records.profiles.some(profile => profile.id === profileId)) {
+      throw new Error('PROFILE_NOT_FOUND')
+    }
+    if (!account.profiles.includes(profileId)) throw new Error('PROFILE_NOT_OWNED')
+  }
+
   const repository = {
-    async transaction(names, updater) {
-      const snapshot = Object.fromEntries(names.map(name => [name, structuredClone(records[name] ?? [])]))
-      const outcome = updater(snapshot)
-      Object.assign(records, structuredClone(outcome.records))
-      return structuredClone(outcome.result)
+    async getProfileSettings(userId, profileId) {
+      calls.push(['get', userId, profileId])
+      assertOwnsProfile(userId, profileId)
+      const stored = records.profile_settings.find(item => item.profileId === profileId)
+      return {
+        ...structuredClone(DEFAULT_PROFILE_SETTINGS),
+        ...(stored ?? {})
+      }
+    },
+    async updateProfileSettings(userId, profileId, patch) {
+      calls.push(['update', userId, profileId, structuredClone(patch)])
+      assertOwnsProfile(userId, profileId)
+      const current = records.profile_settings.find(item => item.profileId === profileId)
+      const next = {
+        ...structuredClone(DEFAULT_PROFILE_SETTINGS),
+        ...(current ?? {}),
+        ...patch
+      }
+      records.profile_settings = [
+        ...records.profile_settings.filter(item => item.profileId !== profileId),
+        { profileId, ...structuredClone(next) }
+      ]
+      return structuredClone(next)
     }
   }
-  return { service: new ProfileSettingsService(repository), records }
+
+  return {
+    service: new ProfileSettingsService(repository),
+    records,
+    calls
+  }
 }
 
 test('profile settings return defaults for profiles without saved preferences', async () => {
@@ -47,7 +81,6 @@ test('profile settings cannot be read or changed for profiles not owned by the a
   await assert.rejects(service.updateSettings('user-1', 'profile-2', { messageAudience: 'friends' }), error => error instanceof ForbiddenException)
 })
 
-
 test('profile settings use targeted relational reads and writes without collection snapshots', async () => {
   const calls = []
   const settings = {
@@ -63,9 +96,6 @@ test('profile settings use targeted relational reads and writes without collecti
     async updateProfileSettings(userId, profileId, patch) {
       calls.push(['update', userId, profileId, patch])
       return { ...settings, ...patch }
-    },
-    async transaction() {
-      throw new Error('Targeted profile settings must not load collection snapshots.')
     }
   }
   const service = new ProfileSettingsService(repository)
@@ -76,4 +106,5 @@ test('profile settings use targeted relational reads and writes without collecti
     { ...settings, messageAudience: 'everyone' }
   )
   assert.deepEqual(calls.map(call => call[0]), ['get', 'update'])
+  assert.equal('transaction' in repository, false)
 })
