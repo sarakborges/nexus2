@@ -303,12 +303,12 @@ export interface DataRepository {
   ): Promise<string | null>
   setProfileAvatar(change: ProfileAvatarWrite): Promise<{ previousPicture: string }>
   setCommunityAvatar(change: CommunityAvatarWrite): Promise<{ previousPicture: string }>
-  createProfile?(change: ProfileCreateWrite): Promise<AuthenticatedUser>
-  updateProfile?(
+  createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser>
+  updateProfile(
     change: ProfileUpdateWrite
   ): Promise<{ profile: Profile; previousPicture: string | null }>
-  createCommunity?(change: CommunityCreateWrite): Promise<Community>
-  updateCommunity?(
+  createCommunity(change: CommunityCreateWrite): Promise<Community>
+  updateCommunity(
     change: CommunityUpdateWrite
   ): Promise<{ community: Community; previousPicture: string | null }>
   createProfilePost(
@@ -352,13 +352,13 @@ export interface DataRepository {
     userId: string | null,
     page: number
   ): Promise<CommunityForumTopicDetail>
-  getProfilesPage?(page: number): Promise<PaginatedResult<Profile>>
-  getProfileByUrl?(url: string): Promise<Profile>
-  getPublicCommunities?(page: number): Promise<PaginatedResult<Community>>
-  getOwnedProfiles?(userId: string, page: number): Promise<PaginatedResult<Profile>>
-  getCommunityByUrl?(url: string, userId: string | null): Promise<Community>
-  getProfileCommunities?(profileId: string, page: number): Promise<PaginatedResult<Community>>
-  searchEntities?(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
+  getProfilesPage(page: number): Promise<PaginatedResult<Profile>>
+  getProfileByUrl(url: string): Promise<Profile>
+  getPublicCommunities(page: number): Promise<PaginatedResult<Community>>
+  getOwnedProfiles(userId: string, page: number): Promise<PaginatedResult<Profile>>
+  getCommunityByUrl(url: string, userId: string | null): Promise<Community>
+  getProfileCommunities(profileId: string, page: number): Promise<PaginatedResult<Community>>
+  searchEntities(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
   getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]>
   getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>>
   getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
