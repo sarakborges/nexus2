@@ -18,7 +18,10 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
   const locator = initialRecords.find(item =>
     item.id === id && item.purpose === 'editor-image' && item.status === 'ready'
   )
-  if (!locator || (locator.expiresAt !== null && locator.expiresAt <= now)) {
+  if (!locator || (
+    !locator.resourceType && !locator.resourceId &&
+    locator.expiresAt !== null && locator.expiresAt <= now
+  )) {
     throw new NotFoundException('UPLOAD_NOT_FOUND')
   }
 
@@ -26,6 +29,7 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
   const resourceId = locator.resourceId
   const collections = ['media_files']
   if (resourceType === 'profile') collections.push('profiles')
+  if (resourceType === 'profile-post') collections.push('profile_posts')
   if (
     resourceType === 'community' ||
     resourceType === 'community-forum-topic' ||
@@ -43,7 +47,7 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
       !latest ||
       latest.purpose !== 'editor-image' ||
       latest.status !== 'ready' ||
-      (latest.expiresAt !== null && latest.expiresAt <= now) ||
+      (!latest.resourceType && !latest.resourceId && latest.expiresAt !== null && latest.expiresAt <= now) ||
       latest.resourceType !== resourceType ||
       latest.resourceId !== resourceId
     ) throw new NotFoundException('UPLOAD_NOT_FOUND')
@@ -55,6 +59,13 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
 
     if (latest.resourceType === 'profile') {
       if (!current.profiles.some(profile => profile.id === latest.resourceId)) {
+        throw new NotFoundException('UPLOAD_NOT_FOUND')
+      }
+      return { records: current, result: latest }
+    }
+
+    if (latest.resourceType === 'profile-post') {
+      if (!current.profile_posts.some(post => post.id === latest.resourceId)) {
         throw new NotFoundException('UPLOAD_NOT_FOUND')
       }
       return { records: current, result: latest }
@@ -237,9 +248,11 @@ function createHarness(initial = {}, activeProfileId = null, beforeTransaction, 
       const currentRecords = collections.media_files
       const candidates = currentRecords.filter(item =>
         (item.status === 'deleting' &&
+          (item.purpose !== 'editor-image' || (!item.resourceType && !item.resourceId)) &&
           (item.deletingAt ?? 0) <= change.now - change.claimLeaseMs &&
           (item.deleteAfter == null || item.deleteAfter <= change.now)) ||
         (item.purpose === 'editor-image' && item.status === 'ready' &&
+          !item.resourceType && !item.resourceId &&
           item.expiresAt !== null && item.expiresAt <= change.now) ||
         (item.status === 'pending' && item.createdAt + change.safeAge <= change.now) ||
         (item.purpose !== 'editor-image' && item.status === 'ready' &&
@@ -564,6 +577,66 @@ test('ready editor completion does not return a URL after the 24-hour deadline',
   await assert.rejects(
     service.completeUpload('user-1', file.id),
     error => error.getStatus() === 404 && error.message === 'UPLOAD_EXPIRED'
+  )
+})
+
+test('profile-post images remain public and readable after upload retention expires', async t => {
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/profile-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 48 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 24 * 60 * 60 * 1000,
+    resourceType: 'profile-post',
+    resourceId: 'post-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    profile_posts: [{ id: 'post-1', profileId: 'profile-1' }]
+  })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  const image = await service.getEditorImage(null, file.id)
+  assert.equal(image.contentType, 'image/png')
+  assert.deepEqual(image.body, pngHeader)
+})
+
+test('profile-post images are not served after their source post is gone', async t => {
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174002',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/orphaned-profile-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() - 1,
+    resourceType: 'profile-post',
+    resourceId: 'deleted-post',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new Error('Orphaned profile-post images must not reach Storage')
+  })
+
+  await assert.rejects(
+    service.getEditorImage(null, file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
   )
 })
 
@@ -1750,6 +1823,36 @@ test('expired upload cleanup splits Storage deletion requests at the 1000-object
   assert.deepEqual(collections.get('media_files'), [])
 })
 
+
+test('does not claim expired editor images while they are attached to a profile post', async t => {
+  const file = {
+    id: '223e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/attached-post.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 48 * 60 * 60 * 1000,
+    completedAt: Date.now() - 48 * 60 * 60 * 1000,
+    expiresAt: Date.now() - 24 * 60 * 60 * 1000,
+    resourceType: 'profile-post',
+    resourceId: 'post-2',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => {
+    throw new Error('Attached images must not be deleted from Storage')
+  })
+
+  const result = await service.cleanupExpired(cronSecret)
+
+  assert.deepEqual(result, { deleted: 0 })
+  assert.deepEqual(collections.get('media_files'), [file])
+})
 
 test('expired pending upload metadata is recovered when Storage signing rollback fails', async t => {
   const now = Date.now()
