@@ -323,8 +323,8 @@ export interface DataRepository {
   ): Promise<void>
   deleteRefreshTokenByHash(tokenHash: string): Promise<void>
   changeAccountProfile(change: AccountProfileChange): Promise<void>
-  upsertProfileRelationship?(change: ProfileRelationshipWrite): Promise<void>
-  removeProfileRelationship?(change: ProfileRelationshipRemoval): Promise<void>
+  upsertProfileRelationship(change: ProfileRelationshipWrite): Promise<void>
+  removeProfileRelationship(change: ProfileRelationshipRemoval): Promise<void>
   changeCommunityRelationship?(change: CommunityRelationshipChange): Promise<void>
   getProfileSettings(userId: string, profileId: string): Promise<ProfileSettings>
   updateProfileSettings(
@@ -359,8 +359,8 @@ export interface DataRepository {
   getCommunityByUrl?(url: string, userId: string | null): Promise<Community>
   getProfileCommunities?(profileId: string, page: number): Promise<PaginatedResult<Community>>
   searchEntities?(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>>
-  getProfileRelationships?(userId: string, profileId: string): Promise<Relationship[]>
-  getProfileFriends?(profileId: string, page: number): Promise<PaginatedResult<Profile>>
+  getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]>
+  getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>>
   getCommunityRelationships?(userId: string | null, communityId: string): Promise<CommunityRelationship[]>
   listCommunityMembers?(
     communityId: string,
