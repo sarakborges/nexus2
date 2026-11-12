@@ -374,7 +374,7 @@ test('forum content attaches editor images and detaches them when content is del
   const calls = []
   const uploads = {
     getEditorImageIds(html) {
-      return Array.from(html.matchAll(/\\/api\\/uploads\\/([^/]+)\\/content/g), match => match[1])
+      return Array.from(html.matchAll(/\/api\/uploads\/([^/]+)\/content/g), match => match[1])
     },
     attachEditorImagesToRecords(records, userId, html, resourceType, resourceId) {
       calls.push({ operation: 'attach', userId, html, resourceType, resourceId })
