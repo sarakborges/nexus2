@@ -22,19 +22,11 @@ function makeRepository() {
       profile.lastActivity = Math.max(profile.lastActivity, post.createdAt)
       return structuredClone(post)
     },
-    async transaction(_collections, updater) {
-      const outcome = updater(records)
-      if (outcome.records) {
-        for (const [key, value] of Object.entries(outcome.records)) records[key] = value
-      }
-      return outcome.result
-    }
   }
 }
 
 test('profile post stores sanitized content and updates activity through one relational write', async () => {
   const repository = makeRepository()
-  const access = new DomainAccessService(repository)
   const service = new ProfilePostService(repository)
   const result = await service.createProfilePost('user-1', 'profile-1', '<p>Hello</p><script>alert(1)</script>')
   assert.equal(result.profileId, 'profile-1')
@@ -54,7 +46,7 @@ test('profile post rejects empty rich text', async () => {
 
 test('profile post requires ownership of the publishing profile', async () => {
   const repository = makeRepository()
-  const service = new ProfilePostService(repository, new DomainAccessService(repository))
+  const service = new ProfilePostService(repository)
   await assert.rejects(
     service.createProfilePost('user-1', 'other-profile', '<p>Hello</p>'),
     error => error instanceof ForbiddenException
@@ -76,7 +68,7 @@ test('creates relational profile posts without loading or rewriting collection s
       return ['image-1']
     }
   }
-  const service = new ProfilePostService(postRepository, {}, uploads)
+  const service = new ProfilePostService(postRepository, uploads)
 
   const result = await service.createProfilePost('user-1', 'profile-1', '<p>Hello</p>')
 
