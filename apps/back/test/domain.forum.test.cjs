@@ -42,6 +42,27 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       collections.set('profile_messages', messages)
       return structuredClone(change.message)
     },
+    async getCommunityRelationships(userId, communityId) {
+      beforeTransaction?.(['community_relationships'], collections)
+      const communityRecord = (collections.get('communities') ?? []).find(item => item.id === communityId)
+      if (!communityRecord) throw new Error('COMMUNITY_NOT_FOUND')
+      if (!userId) return []
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      if (!account) throw new Error('ACCOUNT_NOT_FOUND')
+      const allProfiles = collections.get('profiles') ?? []
+      const relationships = collections.get('community_relationships') ?? []
+      const ownerId = relationships.find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const owner = ownerId ? allProfiles.find(item => item.id === ownerId) : undefined
+      const communityType = owner?.type ?? communityRecord.type
+      const owned = new Set(account.profiles)
+      return structuredClone(relationships.filter(item =>
+        item.profiles[1] === communityId &&
+        owned.has(item.profiles[0]) &&
+        allProfiles.find(profile => profile.id === item.profiles[0])?.type === communityType
+      ))
+    },
     async upsertProfileRelationship(change) {
       beforeTransaction?.(['relationships'], collections)
       const accounts = collections.get('accounts') ?? []
