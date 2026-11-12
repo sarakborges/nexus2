@@ -350,6 +350,39 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
       }
     }
   )
+  data.getCommunityForumTopic = async (communityId, topicId, userId, page) => {
+    const names = [
+      'accounts', 'profiles', 'communities', 'community_relationships',
+      'community_forum_topics', 'community_forum_replies'
+    ]
+    beforeTransaction?.(names, collections)
+    const accounts = collections.get('accounts') ?? []
+    const communities = collections.get('communities') ?? []
+    const relationships = collections.get('community_relationships') ?? []
+    access.assertCommunityReadableInRecords(communityId, userId, accounts, communities, relationships)
+    const topic = (collections.get('community_forum_topics') ?? []).find(item =>
+      item.id === topicId && item.communityId === communityId
+    )
+    if (!topic) throw new Error('FORUM_TOPIC_NOT_FOUND')
+    const replies = (collections.get('community_forum_replies') ?? [])
+      .filter(item => item.topicId === topicId && item.communityId === communityId)
+      .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id))
+    const pageSize = 20
+    const totalItems = replies.length
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+    const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), totalPages)
+    const offset = (safePage - 1) * pageSize
+    return {
+      topic: { ...structuredClone(topic), replyCount: totalItems },
+      replies: {
+        items: structuredClone(replies.slice(offset, offset + pageSize)),
+        page: safePage,
+        pageSize,
+        totalItems,
+        totalPages
+      }
+    }
+  }
   const auth = {
     async getUser(id) { const ids = owned[id] ?? []; return { id, email: id + '@example.com', profiles: ids, currentProfile: ids[0] ?? null } },
     async ownsProfile(id, profileId) { return (owned[id] ?? []).includes(profileId) },
