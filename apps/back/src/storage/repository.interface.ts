@@ -311,7 +311,7 @@ export interface DataRepository {
   updateCommunity?(
     change: CommunityUpdateWrite
   ): Promise<{ community: Community; previousPicture: string | null }>
-  createProfilePost?(
+  createProfilePost(
     userId: string,
     post: ProfilePost,
     imageIds: readonly string[]
