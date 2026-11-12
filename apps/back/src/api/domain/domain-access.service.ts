@@ -10,9 +10,13 @@ export class DomainAccessService {
     @Inject(DATA_REPOSITORY) private readonly data: DataRepository
   ) {}
 
+  async readProfiles(): Promise<Profile[]> {
+    return this.normalizeProfiles(await this.data.read<Profile>('profiles'))
+  }
+
   async readProfilesByIds(ids: string[]): Promise<Profile[]> {
     return this.normalizeProfiles(
-      await this.data.getProfilesByIds(ids)
+      await this.data.readByIds<Profile>('profiles', ids)
     )
   }
 
@@ -20,8 +24,13 @@ export class DomainAccessService {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []
 
-    const selected = await this.data.getCommunitiesByIds(uniqueIds)
-    return this.normalizeCommunities(selected)
+    const selected = await this.data.readByIds<Community>('communities', uniqueIds)
+    if (selected.every(community => this.hasStoredCommunityType(community))) {
+      return this.normalizeCommunities(selected)
+    }
+
+    const requestedIds = new Set(uniqueIds)
+    return (await this.readCommunities()).filter(community => requestedIds.has(community.id))
   }
 
   normalizeProfiles(profiles: Profile[]): Profile[] {
@@ -99,6 +108,12 @@ export class DomainAccessService {
     }
   }
 
+  private hasStoredCommunityType(community: Community): boolean {
+    return community.type === 'social' ||
+      community.type === 'rp' ||
+      community.type === 'business'
+  }
+
   private normalizeCommunities(
     stored: Community[],
     profileTypes: ReadonlyMap<string, Profile['type']> = new Map(),
@@ -122,6 +137,16 @@ export class DomainAccessService {
           : createdAt
       }
     })
+  }
+
+  async readCommunities(): Promise<Community[]> {
+    return this.data.transaction<Community[]>(
+      ['communities', 'profiles', 'community_relationships'],
+      collections => {
+        const normalized = this.normalizeCommunitiesInRecords(collections)
+        return { records: normalized.records, result: normalized.communities }
+      }
+    )
   }
 
   assertOwnsInRecords(
