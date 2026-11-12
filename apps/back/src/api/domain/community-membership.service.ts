@@ -28,36 +28,13 @@ export class CommunityMembershipService {
   ) {}
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
-    if (this.data.getCommunityRelationships) {
-      try {
-        return await this.data.getCommunityRelationships(userId, communityId)
-      } catch (error) {
-        this.throwRelationalWriteError(error)
-      }
+    try {
+      return await this.data.getCommunityRelationships(userId, communityId)
+    } catch (error) {
+      this.throwRelationalWriteError(error)
     }
-    return this.data.transaction<CommunityRelationship[]>(
-      ['accounts', 'profiles', 'communities', 'community_relationships'],
-      collections => {
-        const normalized = this.access.normalizeCommunitiesInRecords(collections)
-        const records = normalized.records
-        const community = normalized.communities.find(item => item.id === communityId)
-        if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-        if (!userId) return { records, result: [] }
-        const account = (records.accounts as AccountRecord[]).find(item => item.id === userId)
-        if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
-        const profiles = records.profiles as Profile[]
-        const relationships = records.community_relationships as CommunityRelationship[]
-        const profileTypes = new Map(profiles.map(profile => [profile.id, profile.type] as const))
-        const ownedProfileIds = new Set(account.profiles)
-        const visible = relationships.filter(record =>
-          record.profiles[1] === communityId &&
-          ownedProfileIds.has(record.profiles[0]) &&
-          profileTypes.get(record.profiles[0]) === community.type
-        )
-        return { records, result: visible }
-      }
-    )
   }
+
   async listCommunityMembers(
     communityId: string,
     tab: string,
