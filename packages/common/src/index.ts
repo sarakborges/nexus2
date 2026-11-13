@@ -31,6 +31,7 @@ export type AuthTokenPair = { accessToken: string; refreshToken: string; expires
 export type AuthMeResponse = {
   user: AuthenticatedUser
   currentProfile: Profile | null
+  currentProfileSettings: ProfileSettings | null
   activities: RecentActivity[]
   activityCursor: ActivityFeedCursor | null
   hasMoreActivities: boolean
