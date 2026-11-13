@@ -62,9 +62,12 @@ const sanitizerOptions: sanitizeHtml.IOptions = {
       if (safeFamily) styles.push(`font-family:${safeFamily}`)
       if (size) styles.push(`font-size:${size}`)
 
+      const attribs: Record<string, string> = {}
+      if (styles.length) attribs.style = styles.join(';')
+
       return {
         tagName: 'span',
-        attribs: styles.length ? { style: styles.join(';') } : {}
+        attribs
       }
     }
   },
