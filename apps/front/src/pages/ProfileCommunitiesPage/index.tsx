@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
@@ -79,6 +80,11 @@ export function ProfileCommunitiesPage() {
           isError={profileDirectoryQuery.isError}
           isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
           emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
+          emptyAction={
+            <Link to={`${ROUTES.search}?scope=communities`}>
+              {t('PROFILE_COMMUNITIES_DISCOVER')}
+            </Link>
+          }
           onRetry={() => void profileDirectoryQuery.refetch()}
         >
           <EntityDirectoryGrid

@@ -351,6 +351,7 @@ COMMON_VIEW_ALL: 'View all',
     'Select one of your profiles before creating a community.',
   PROFILE_COMMUNITIES_LINK: 'Communities',
   PROFILE_COMMUNITIES_TITLE: 'Communities',
+  PROFILE_COMMUNITIES_DISCOVER: 'Find communities',
   PROFILE_COMMUNITIES_EMPTY:
     'This profile is not connected to any communities yet.',
   COMMUNITY_ACCEPT_REQUEST: 'Accept request',
