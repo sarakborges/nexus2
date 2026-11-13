@@ -2,6 +2,8 @@
   display: grid;
   gap: 28px;
   min-width: 0;
+  font-size: 14px;
+  line-height: 1.5;
 
   &__header,
   &__section {
@@ -12,6 +14,12 @@
   &__header h1,
   &__section h2 {
     margin: 0;
+  }
+
+  &__section h2 {
+    font-size: 18px;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.3;
   }
 
   &__header p,
