@@ -6,6 +6,7 @@ export type RequestStateProps = {
   isError?: boolean
   isEmpty?: boolean
   emptyMessage?: string
+  emptyAction?: ReactNode
   errorMessage?: string
   onRetry?: () => void
   children?: ReactNode

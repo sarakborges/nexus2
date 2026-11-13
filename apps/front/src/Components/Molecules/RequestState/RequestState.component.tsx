@@ -10,6 +10,7 @@ export function RequestState({
   isError = false,
   isEmpty = false,
   emptyMessage,
+  emptyAction,
   errorMessage,
   onRetry,
   children
@@ -44,6 +45,9 @@ export function RequestState({
     return (
       <>
         <p className="account-card__description">{emptyMessage}</p>
+        {emptyAction && (
+          <div className="request-state__empty-action">{emptyAction}</div>
+        )}
       </>
     )
   }
