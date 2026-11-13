@@ -2,7 +2,7 @@ import { All, Controller, HttpStatus, Logger, Req, Res } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import type { AxiosRequestConfig, Method } from 'axios'
 import type { Request, Response } from 'express'
-import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
+import { ACCESS_COOKIE, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
@@ -11,6 +11,7 @@ type AuthTokenPair = { accessToken: string; refreshToken: string }
 export class ApiProxyController {
   private readonly logger = new Logger(ApiProxyController.name)
   private readonly backUrl = getBackendUrl()
+  private readonly refreshInFlight = new Map<string, Promise<AuthTokenPair | null>>()
   constructor(private readonly http: HttpService) {}
 
   @All('{*path}')
@@ -22,7 +23,6 @@ export class ApiProxyController {
       if (!accessToken && refreshToken) {
         const refreshed = await this.refreshTokens(refreshToken, res)
         accessToken = refreshed?.accessToken ?? null
-        if (!refreshed) clearAuthCookies(res)
       }
 
       const headers: Record<string, string> = {}
@@ -60,8 +60,6 @@ export class ApiProxyController {
             ...config,
             headers: { ...headers, Authorization: `Bearer ${refreshed.accessToken}` }
           })
-        } else {
-          clearAuthCookies(res)
         }
       }
       if (isBinaryImage) {
@@ -78,10 +76,24 @@ export class ApiProxyController {
   }
 
   private async refreshTokens(token: string, res: Response): Promise<AuthTokenPair | null> {
-    try {
-      const { data } = await this.http.axiosRef.post<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
-      writeAuthCookies(res, data.accessToken, data.refreshToken)
-      return data
-    } catch { return null }
+    let refresh = this.refreshInFlight.get(token)
+
+    if (!refresh) {
+      refresh = this.http.axiosRef
+        .post<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
+        .then(response => response.data)
+        .catch(() => null)
+
+      this.refreshInFlight.set(token, refresh)
+      void refresh.then(() => {
+        if (this.refreshInFlight.get(token) === refresh) {
+          this.refreshInFlight.delete(token)
+        }
+      })
+    }
+
+    const tokens = await refresh
+    if (tokens) writeAuthCookies(res, tokens.accessToken, tokens.refreshToken)
+    return tokens
   }
 }
