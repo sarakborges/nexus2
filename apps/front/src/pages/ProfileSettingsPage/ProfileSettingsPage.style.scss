@@ -45,14 +45,6 @@
     border-top: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
-  &__radio-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-top: 8px;
-  }
-
-  &__radio-group label,
   &__row label {
     display: flex;
     align-items: center;
@@ -62,8 +54,7 @@
     cursor: pointer;
   }
 
-  input[type='checkbox'],
-  input[type='radio'] {
+  input[type='checkbox'] {
     width: 18px;
     height: 18px;
     flex: 0 0 18px;
@@ -123,7 +114,6 @@
     flex-wrap: wrap;
     gap: 12px;
     padding-top: 18px;
-    border-top: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
   &__save {

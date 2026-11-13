@@ -30,7 +30,7 @@ export function ProfileSettingsPage({
     <>
       <header className="profile-settings-page__header">
         {presentation === 'page' && <h1>{t('PROFILE_SETTINGS_TITLE')}</h1>}
-        <p>{profileName ? profileName + ' · ' : ''}{t('PROFILE_SETTINGS_DESCRIPTION')}</p>
+        <p>{presentation === 'page' && profileName ? profileName + ' · ' : ''}{t('PROFILE_SETTINGS_DESCRIPTION')}</p>
       </header>
 
       {isLoading && <p role="status">{t('PROFILE_SETTINGS_LOADING')}</p>}
