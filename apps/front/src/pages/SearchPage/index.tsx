@@ -65,7 +65,7 @@ export function SearchPage() {
   const searchQuery = useQuery({
     queryKey: queryKeys.search(query, scope, sort, page, pageSize),
     queryFn: () => searchEntities({ query, scope, page, pageSize, sort }),
-    enabled: Boolean(query)
+    enabled: true
   })
   const results = searchQuery.data?.items ?? []
   const totalItems = searchQuery.data?.totalItems ?? 0
@@ -86,10 +86,6 @@ export function SearchPage() {
         </header>
 
         <PaginatedListControls query={query} sort={sort} onQueryChange={() => undefined} onSortChange={setSort} showQuery={false} />
-
-        {!query && (
-          <p className="search-page__state">{t('SEARCH_EMPTY_QUERY')}</p>
-        )}
 
         {searchQuery.isLoading && (
           <p className="search-page__state" role="status">
@@ -146,14 +142,12 @@ export function SearchPage() {
           </div>
         )}
 
-        {query && (
-          <Pagination
-            page={searchQuery.data?.page ?? page}
-            pageSize={searchQuery.data?.pageSize ?? pageSize}
-            totalItems={totalItems}
-            onPageChange={setPage}
-          />
-        )}
+        <Pagination
+          page={searchQuery.data?.page ?? page}
+          pageSize={searchQuery.data?.pageSize ?? pageSize}
+          totalItems={totalItems}
+          onPageChange={setPage}
+        />
       </section>
     </main>
   )
