@@ -34,20 +34,53 @@ test('search delegates normalized query, scope, pagination and sort to the relat
   assert.deepEqual(result, expected)
 })
 
-test('empty search queries return an empty page without querying the repository', async () => {
-  let calls = 0
+test('empty and whitespace-only queries reach relational search as an empty listing request', async () => {
+  const calls = []
+  const expected = {
+    items: [],
+    page: 2,
+    pageSize: 20,
+    totalItems: 35,
+    totalPages: 2
+  }
   const service = new DomainService({
-    async searchEntities() {
-      calls += 1
-      throw new Error('EMPTY_QUERY_MUST_NOT_REACH_DATABASE')
+    async searchEntities(query, scope, page, sort) {
+      calls.push({ query, scope, page, sort })
+      return expected
     }
   }, {})
 
-  const result = await service.searchEntities('   ', 'all', { page: 3 })
+  const result = await service.searchEntities('   ', 'all', {
+    page: 2,
+    sort: 'name-desc'
+  })
 
-  assert.equal(result.totalItems, 0)
-  assert.equal(result.page, 1)
-  assert.equal(calls, 0)
+  assert.deepEqual(calls, [{
+    query: '',
+    scope: 'all',
+    page: 2,
+    sort: 'name-desc'
+  }])
+  assert.deepEqual(result, expected)
+})
+
+test('empty search preserves the requested scope and pagination', async () => {
+  const calls = []
+  const service = new DomainService({
+    async searchEntities(query, scope, page, sort) {
+      calls.push({ query, scope, page, sort })
+      return { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
+    }
+  }, {})
+
+  await service.searchEntities('', 'communities', { page: 3, sort: 'activity-asc' })
+
+  assert.deepEqual(calls, [{
+    query: '',
+    scope: 'communities',
+    page: 3,
+    sort: 'activity-asc'
+  }])
 })
 
 test('search propagates relational repository errors', async () => {

@@ -13,6 +13,7 @@ const {
   CommunitiesPageDto,
   ProfileMessageFavoriteDto,
   ProfilePostDto,
+  SearchDto,
   CreateForumTopicDto,
   CreateForumReplyDto
 } = require('../dist/api/domain/domain.dto.js')
@@ -94,4 +95,11 @@ test('message favorite requires a boolean state', () => {
 test('profile posts accept 8000 characters and reject 8001', () => {
   assert.equal(hasLengthError(ProfilePostDto, { content: 'x'.repeat(8000) }, 'content'), false)
   assert.equal(hasLengthError(ProfilePostDto, { content: 'x'.repeat(8001) }, 'content'), true)
+})
+
+test('search DTO accepts empty and omitted queries for listing mode', () => {
+  assert.equal(validateSync(new SearchDto()).length, 0)
+  assert.equal(validateSync(Object.assign(new SearchDto(), { query: '' })).length, 0)
+  assert.equal(validateSync(Object.assign(new SearchDto(), { query: '   ' })).length, 0)
+  assert.ok(validateSync(Object.assign(new SearchDto(), { query: 'x'.repeat(121) })).length > 0)
 })

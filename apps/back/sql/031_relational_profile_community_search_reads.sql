@@ -185,7 +185,7 @@ security invoker
 set search_path = ''
 as $function$
 declare
-  search_text text := private.nexus_forum_search_text(p_query);
+  search_text text := coalesce(private.nexus_forum_search_text(p_query),'');
   scope text := case when p_scope in ('profiles','communities') then p_scope else 'all' end;
   sort_order text := coalesce(p_sort,'activity-desc');
   total bigint := 0;
@@ -195,12 +195,6 @@ declare
 begin
   if sort_order not in ('activity-desc','activity-asc','name-asc','name-desc') then
     sort_order := 'activity-desc';
-  end if;
-
-  if search_text = '' then
-    return jsonb_build_object(
-      'items','[]'::jsonb,'page',1,'pageSize',20,'totalItems',0,'totalPages',1
-    );
   end if;
 
   with matches as (
@@ -219,7 +213,7 @@ begin
       ) as payload
     from public.profiles p
     where scope in ('all','profiles')
-      and strpos(private.nexus_forum_search_text(p.name || ' ' || p.about || ' ' || p.url),search_text) > 0
+      and (search_text = '' or strpos(private.nexus_forum_search_text(p.name || ' ' || p.about || ' ' || p.url),search_text) > 0)
 
     union all
 
@@ -248,7 +242,7 @@ begin
     ) owner on true
     where scope in ('all','communities')
       and c.privacy = 'public'
-      and strpos(private.nexus_forum_search_text(c.name || ' ' || c.about || ' ' || c.url),search_text) > 0
+      and (search_text = '' or strpos(private.nexus_forum_search_text(c.name || ' ' || c.about || ' ' || c.url),search_text) > 0)
   )
   select count(*)::bigint into total from matches;
 
@@ -270,7 +264,7 @@ begin
       ) as payload
     from public.profiles p
     where scope in ('all','profiles')
-      and strpos(private.nexus_forum_search_text(p.name || ' ' || p.about || ' ' || p.url),search_text) > 0
+      and (search_text = '' or strpos(private.nexus_forum_search_text(p.name || ' ' || p.about || ' ' || p.url),search_text) > 0)
 
     union all
 
@@ -298,7 +292,7 @@ begin
     ) owner on true
     where scope in ('all','communities')
       and c.privacy = 'public'
-      and strpos(private.nexus_forum_search_text(c.name || ' ' || c.about || ' ' || c.url),search_text) > 0
+      and (search_text = '' or strpos(private.nexus_forum_search_text(c.name || ' ' || c.about || ' ' || c.url),search_text) > 0)
   )
   select coalesce(jsonb_agg(q.payload order by
     case when sort_order = 'activity-asc' then q.activity_value end asc,
