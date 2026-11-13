@@ -88,14 +88,22 @@ export function ProfileSettingsPage({
               {ACTIVITY_TYPES.map(activity => (
                 <div className="profile-settings-page__row" role="row" key={activity.type}>
                   <span role="cell">{t(activity.label)}</span>
-                  <label role="cell" aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_YOUR_POSTS')}>
+                  <label
+                      role="cell"
+                      data-label={t('PROFILE_SETTINGS_YOUR_POSTS')}
+                      aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_YOUR_POSTS')}
+                    >
                     <input
                       type="checkbox"
                       checked={settings.publishActivityTypes.includes(activity.type)}
                       onChange={() => toggleActivityType('publishActivityTypes', activity.type)}
                     />
                   </label>
-                  <label role="cell" aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_FRIENDS_POSTS')}>
+                  <label
+                      role="cell"
+                      data-label={t('PROFILE_SETTINGS_FRIENDS_POSTS')}
+                      aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_FRIENDS_POSTS')}
+                    >
                     <input
                       type="checkbox"
                       checked={settings.showFriendActivityTypes.includes(activity.type)}
