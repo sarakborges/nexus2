@@ -36,7 +36,6 @@ export function FloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
-    accountName,
     closePanels,
     togglePanel,
     toggleProfileSwitcher,
@@ -120,9 +119,6 @@ export function FloatingNavigationBar({
             ) : (
               <FiUser className="floating-navigation__account-icon" aria-hidden="true" />
             )}
-            <span className="floating-navigation__account-label">
-              <span>{accountName}</span>
-            </span>
             <FiChevronDown
               className="floating-navigation__account-chevron"
               aria-hidden="true"
