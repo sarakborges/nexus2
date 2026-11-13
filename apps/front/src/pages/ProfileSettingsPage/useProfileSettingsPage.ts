@@ -25,8 +25,9 @@ const DEFAULT_SETTINGS: ProfileSettings = {
   ]
 }
 
-export function useProfileSettingsPage(): UseProfileSettingsPageResult {
-  const { url = '' } = useParams()
+export function useProfileSettingsPage(profileUrl?: string): UseProfileSettingsPageResult {
+  const routeParams = useParams()
+  const url = profileUrl ?? routeParams.url ?? ''
   const userId = useAuthStore(state => state.session?.user.id ?? null)
   const queryClient = useQueryClient()
   const queryKey = queryKeys.profileSettings(url, userId ?? '')

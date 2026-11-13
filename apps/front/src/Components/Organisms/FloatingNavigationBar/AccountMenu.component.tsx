@@ -32,6 +32,7 @@ export function AccountMenu({
   onRetryProfiles,
   onSelectProfile,
   onOpenSettings,
+  onOpenProfileSettings,
   onSignOut,
   onClose
 }: AccountMenuProps) {
@@ -76,15 +77,18 @@ export function AccountMenu({
       )}
       {currentProfile && (
         <>
-          <Link
+          <button
             className="floating-navigation__menu-item"
-            to={ROUTES.profile + '/' + currentProfile.url + '/settings'}
+            type="button"
             role="menuitem"
-            onClick={onClose}
+            onClick={() => {
+              onClose()
+              onOpenProfileSettings(currentProfile.url)
+            }}
           >
             <FiSliders aria-hidden="true" />
             <span>{t('PROFILE_SETTINGS_TITLE')}</span>
-          </Link>
+          </button>
           <Link
             className="floating-navigation__menu-item"
             to={ROUTES.createProfile}

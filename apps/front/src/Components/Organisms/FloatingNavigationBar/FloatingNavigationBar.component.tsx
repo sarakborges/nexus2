@@ -16,7 +16,8 @@ import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 import './FloatingNavigationBar.style.scss'
 
 export function FloatingNavigationBar({
-  onOpenSettings
+  onOpenSettings,
+  onOpenProfileSettings
 }: FloatingNavigationBarProps) {
   const { t } = useTranslations()
   const location = useLocation()
@@ -187,6 +188,7 @@ export function FloatingNavigationBar({
           onRetryProfiles={retryProfiles}
           onSelectProfile={selectProfile}
           onOpenSettings={handleOpenSettings}
+          onOpenProfileSettings={onOpenProfileSettings}
           onSignOut={handleSignOut}
           onClose={closePanels}
         />

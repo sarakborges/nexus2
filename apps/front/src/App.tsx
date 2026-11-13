@@ -18,16 +18,26 @@ const SettingsModal = lazy(() =>
   }))
 )
 
+const ProfileSettingsModal = lazy(() =>
+  import('@/pages/ProfileSettingsPage').then(module => ({
+    default: module.ProfileSettingsModal
+  }))
+)
+
 export function App() {
   const { hasAuthenticatedSession, shouldInitializeAuth } =
     useAppInitialization()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [profileSettingsUrl, setProfileSettingsUrl] = useState<string | null>(null)
 
   return (
     <>
       {hasAuthenticatedSession && shouldInitializeAuth && (
         <Suspense fallback={null}>
-          <FloatingNavigationBar onOpenSettings={() => setIsSettingsOpen(true)} />
+          <FloatingNavigationBar
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenProfileSettings={setProfileSettingsUrl}
+          />
         </Suspense>
       )}
       <AppRoutes />
@@ -35,6 +45,15 @@ export function App() {
       {isSettingsOpen && (
         <Suspense fallback={null}>
           <SettingsModal open onClose={() => setIsSettingsOpen(false)} />
+        </Suspense>
+      )}
+      {profileSettingsUrl && (
+        <Suspense fallback={null}>
+          <ProfileSettingsModal
+            open
+            profileUrl={profileSettingsUrl}
+            onClose={() => setProfileSettingsUrl(null)}
+          />
         </Suspense>
       )}
     </>

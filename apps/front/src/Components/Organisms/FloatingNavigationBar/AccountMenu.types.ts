@@ -18,6 +18,7 @@ export type AccountMenuProps = {
   onRetryProfiles: () => void
   onSelectProfile: (profileId: string) => void
   onOpenSettings: () => void
+  onOpenProfileSettings: (profileUrl: string) => void
   onSignOut: () => void
   onClose: () => void
 }
