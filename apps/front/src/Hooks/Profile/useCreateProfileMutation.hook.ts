@@ -8,6 +8,7 @@ import { getCurrentAuthSession } from '@/Services/Auth'
 import { createUserProfile } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useProfileStore } from '@/Stores/Profile.store'
 import type { UseCreateProfileMutationResult } from './useCreateProfileMutation.types'
 
 export function useCreateProfileMutation(): UseCreateProfileMutationResult {
@@ -26,6 +27,19 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
       ) {
         throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
       }
+
+      // Do not keep the previous profile object visible while /me resolves
+      // the profile that the create operation has just made active.
+      useProfileStore.getState().clearProfile()
+      useAuthStore.getState().setSession({
+        ...currentSession,
+        user: result.user,
+        currentProfile: null,
+        currentProfileSettings: null,
+        activities: [],
+        activityCursor: null,
+        hasMoreActivities: false
+      })
 
       const refreshedSession = await getCurrentAuthSession()
       if (
