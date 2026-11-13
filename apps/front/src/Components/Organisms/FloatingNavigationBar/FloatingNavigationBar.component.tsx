@@ -84,16 +84,6 @@ export function FloatingNavigationBar({
     >
       <header className="floating-navigation__bar">
         <div className="floating-navigation__content">
-          <button
-            className="floating-navigation__icon-button"
-            type="button"
-            aria-label={isSidebarCollapsed ? t('NAVIGATION_MENU') : t('SETTINGS_CLOSE')}
-            aria-expanded={!isSidebarCollapsed}
-            aria-controls="floating-navigation-sidebar"
-            onClick={() => setIsSidebarCollapsed((value) => !value)}
-          >
-            <FiMenu aria-hidden="true" />
-          </button>
           <Link className="floating-navigation__brand" to={ROUTES.home}>
             <img
               src="/nexus-logo.png"
@@ -154,18 +144,6 @@ export function FloatingNavigationBar({
         id="floating-navigation-sidebar"
         aria-label={t('NAVIGATION_LABEL')}
       >
-        {currentProfile && (
-          <Link
-            className="floating-navigation__current-profile"
-            to={`${ROUTES.profile}/${currentProfile.url}`}
-            aria-label={`${currentProfile.name} (@${currentProfile.url})`}
-            title={`${currentProfile.name} (@${currentProfile.url})`}
-            onClick={closeNavigationAfterNavigate}
-          >
-            <IdentityAvatar className="floating-navigation__current-profile-avatar" name={currentProfile.name} picture={currentProfile.picture} />
-            <span><strong>{currentProfile.name}</strong><small>@{currentProfile.url}</small></span>
-          </Link>
-        )}
         <FloatingNavigationLinks
           pathname={pathname}
           hasCurrentProfile={Boolean(currentProfile?.url)}
@@ -174,6 +152,17 @@ export function FloatingNavigationBar({
           communitiesRoute={communitiesRoute}
           onNavigate={closeNavigationAfterNavigate}
         />
+        <button
+          className="floating-navigation__sidebar-toggle"
+          type="button"
+          aria-label={isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}
+          aria-expanded={!isSidebarCollapsed}
+          aria-controls="floating-navigation-sidebar"
+          onClick={() => setIsSidebarCollapsed(value => !value)}
+        >
+          <FiMenu aria-hidden="true" />
+          <span>{isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}</span>
+        </button>
       </aside>
       {activePanel === 'account' && (
         <AccountMenu

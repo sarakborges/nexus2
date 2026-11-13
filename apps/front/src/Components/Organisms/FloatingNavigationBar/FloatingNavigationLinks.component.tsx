@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { FiHome, FiMessageCircle, FiUser, FiUserPlus, FiUsers } from 'react-icons/fi'
+import { FiCompass, FiHome, FiMessageCircle, FiUser, FiUsers } from 'react-icons/fi'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -74,7 +74,7 @@ export function FloatingNavigationLinks({
               }
               onClick={onNavigate}
             >
-              <FiUserPlus aria-hidden="true" />
+              <FiUsers aria-hidden="true" />
               <span>{t('PROFILE_FRIENDS_LINK')}</span>
             </Link>
           )}
@@ -88,7 +88,7 @@ export function FloatingNavigationLinks({
               aria-current={pathname === communitiesRoute ? 'page' : undefined}
               onClick={onNavigate}
             >
-              <FiUsers aria-hidden="true" />
+              <FiCompass aria-hidden="true" />
               <span>{t('COMMUNITIES_TITLE')}</span>
             </Link>
           )}

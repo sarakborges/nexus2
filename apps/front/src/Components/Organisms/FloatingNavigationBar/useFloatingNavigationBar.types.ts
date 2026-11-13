@@ -22,7 +22,6 @@ export type UseFloatingNavigationBarResult = {
   messagesRoute: string | null
   communitiesRoute: string | null
   editProfileRoute: string | null
-  accountName: string
   closePanels: () => void
   togglePanel: (panel: NavigationPanel) => void
   toggleProfileSwitcher: () => void

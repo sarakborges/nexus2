@@ -247,6 +247,7 @@
     flex-direction: column;
     box-sizing: border-box;
     width: 248px;
+    justify-content: space-between;
     gap: 14px;
     overflow-x: hidden;
     overflow-y: auto;
@@ -261,6 +262,34 @@
     display: grid;
     width: 100%;
     gap: 4px;
+  }
+
+  &__sidebar-toggle {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 46px;
+    flex: 0 0 auto;
+    gap: 13px;
+    padding: 0 12px;
+    border: 0;
+    background: transparent;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__sidebar-toggle:hover {
+    background: var(--color-background);
+  }
+
+  &__sidebar-toggle svg {
+    width: var(--nexus-icon-size, 20px);
+    height: var(--nexus-icon-size, 20px);
+    flex: 0 0 var(--nexus-icon-size, 20px);
+    color: var(--color-neutral);
   }
 
   &__sidebar-link {
@@ -287,54 +316,6 @@
   &__sidebar-link[aria-current='page'] {
     background: var(--color-background);
     color: var(--color-primary-weak);
-  }
-
-  &__current-profile {
-    display: flex;
-    align-items: center;
-    min-width: 0;
-    gap: 12px;
-    padding: 8px 10px 16px;
-    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-    color: var(--text-color);
-    text-decoration: none;
-  }
-
-  &__current-profile-avatar {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    overflow: hidden;
-    border: var(--nexus-border-width, 2px) solid var(--color-border);
-    border-radius: var(--avatar-shape-radius);
-    background: var(--avatar-background);
-    font-weight: var(--font-weight-bold);
-  }
-
-  &__current-profile-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  &__current-profile > span {
-    display: grid;
-    min-width: 0;
-    gap: 4px;
-  }
-
-  &__current-profile strong,
-  &__current-profile small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__current-profile small {
-    color: var(--color-neutral);
-    font-size: 12px;
   }
 
   &__menu {
@@ -654,11 +635,11 @@
 }
 
 .floating-navigation.is-collapsed .floating-navigation__sidebar-link span,
-.floating-navigation.is-collapsed .floating-navigation__current-profile > span {
+.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle span {
   display: none;
 }
 
-.floating-navigation.is-collapsed .floating-navigation__current-profile {
+.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle {
   justify-content: center;
   padding-inline: 0;
 }
