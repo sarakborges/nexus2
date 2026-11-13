@@ -112,6 +112,30 @@ test('sanitizes HTML before persisting profile messages', async () => {
   assert.doesNotMatch(saved.content, /class=|position|script|alert/i)
 })
 
+test('preserves editor font family and font size while sanitizing rich text', async () => {
+  const collections = new Map([
+    ['profiles', [
+      { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' },
+      { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
+    ]],
+    ['profile_messages', []]
+  ])
+  const service = makeService(collections)
+
+  const message = await service.sendMessage(
+    'user',
+    'sender',
+    'recipient',
+    '<p><font face="Arial" size="6">Formatted text</font></p>'
+  )
+  const saved = collections.get('profile_messages')[0]
+
+  assert.equal(message.content, saved.content)
+  assert.match(saved.content, /font-family:Arial/i)
+  assert.match(saved.content, /font-size:24px/i)
+  assert.match(saved.content, /Formatted text/)
+})
+
 test('sanitizes legacy profile, community, and message HTML on reads', async () => {
   const collections = new Map([
     ['profiles', [
