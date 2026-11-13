@@ -21,6 +21,7 @@
   --color-error: #e04848;
   --color-error-weak: #f08b8b;
   --color-error-strong: #bd2121;
+  --color-error-text: #bd2121;
 
   /* Stable semantic aliases. */
   --color-cancel: var(--color-error);
