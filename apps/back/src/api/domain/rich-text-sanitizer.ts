@@ -8,6 +8,7 @@ const allowedStyles: NonNullable<sanitizeHtml.IOptions['allowedStyles']> = {
     'background-color': [colorValue],
     'font-size': [/^(?:xx-small|x-small|small|medium|large|x-large|xx-large|smaller|larger|(?:0|[1-9]\d?)(?:\.\d+)?(?:px|pt|em|rem|%)?)$/i],
     'font-weight': [/^(?:normal|bold|bolder|lighter|[1-9]00)$/i],
+    'font-family': [/^(?:Arial|Verdana|Georgia|Times New Roman|Courier New|Trebuchet MS|sans-serif|serif|monospace)$/i],
     'font-style': [/^(?:normal|italic|oblique)$/i],
     'text-decoration': [/^(?:none|underline|line-through|overline)$/i],
     'text-align': [/^(?:left|right|center|justify|start|end)$/i],
@@ -18,9 +19,28 @@ const allowedStyles: NonNullable<sanitizeHtml.IOptions['allowedStyles']> = {
   }
 }
 
+const legacyFontSizes: Record<string, string> = {
+  '1': '10px',
+  '2': '12px',
+  '3': '14px',
+  '4': '16px',
+  '5': '18px',
+  '6': '24px',
+  '7': '32px'
+}
+
+const allowedFontFamilies = new Map([
+  ['arial', 'Arial'],
+  ['verdana', 'Verdana'],
+  ['georgia', 'Georgia'],
+  ['times new roman', 'Times New Roman'],
+  ['courier new', 'Courier New'],
+  ['trebuchet ms', 'Trebuchet MS']
+])
+
 const sanitizerOptions: sanitizeHtml.IOptions = {
   allowedTags: [
-    'a', 'b', 'blockquote', 'br', 'code', 'del', 'div', 'em',
+    'a', 'b', 'blockquote', 'br', 'code', 'del', 'div', 'em', 'font',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img',
     'li', 'ol', 'p', 'pre', 's', 'small', 'span', 'strong',
     'sub', 'sup', 'u', 'ul'
@@ -28,9 +48,26 @@ const sanitizerOptions: sanitizeHtml.IOptions = {
   allowedAttributes: {
     '*': ['style'],
     a: ['href', 'title'],
+    font: ['face', 'size'],
     img: ['src', 'alt', 'title']
   },
   allowedStyles,
+  transformTags: {
+    font: (_tagName, attributes) => {
+      const styles: string[] = []
+      const family = attributes.face?.trim().toLowerCase()
+      const safeFamily = family ? allowedFontFamilies.get(family) : undefined
+      const size = attributes.size ? legacyFontSizes[attributes.size] : undefined
+
+      if (safeFamily) styles.push(`font-family:${safeFamily}`)
+      if (size) styles.push(`font-size:${size}`)
+
+      return {
+        tagName: 'span',
+        attribs: styles.length ? { style: styles.join(';') } : {}
+      }
+    }
+  },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {
     img: ['http', 'https']
