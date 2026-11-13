@@ -49,8 +49,9 @@ export function EntityDetailsFields({
   const config = FIELD_CONFIG[entity]
 
   return (
-    <div className="entity-form-page__card">
-      <AvatarUploadField
+    <>
+      <div className="entity-form-page__card entity-form-page__card--avatar">
+        <AvatarUploadField
         label={t(config.avatarLabel)}
         value={picture}
         fallbackName={name}
@@ -64,7 +65,9 @@ export function EntityDetailsFields({
         uploadingLabel={t('UPLOAD_IN_PROGRESS')}
         errorLabel={t('UPLOAD_FAILED')}
         emptyLabel={t('UPLOAD_EMPTY')}
-      />
+        />
+      </div>
+      <div className="entity-form-page__card">
       <FormField
         id={`${entity}-name`}
         label={t(config.nameLabel)}
@@ -100,6 +103,6 @@ export function EntityDetailsFields({
           placeholder={t('RICH_TEXT_PLACEHOLDER')}
         />
       </div>
-    </div>
+    </>
   )
 }
