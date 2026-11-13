@@ -84,6 +84,54 @@ test('parallel requests share one refresh rotation and each receive the new cook
   }
 })
 
+test('parallel requests without an access cookie share the same refresh rotation', async () => {
+  let refreshCalls = 0
+  let apiCalls = 0
+  const http = {
+    axiosRef: {
+      async request(config) {
+        apiCalls += 1
+        assert.equal(config.headers.Authorization, 'Bearer new-access')
+        return { status: 200, headers: {}, data: { success: true } }
+      },
+      async post(_url, body) {
+        refreshCalls += 1
+        assert.equal(body.refreshToken, 'old-refresh')
+        await new Promise(resolve => setTimeout(resolve, 5))
+        return {
+          data: {
+            accessToken: 'new-access',
+            refreshToken: 'new-refresh',
+            expiresIn: 900
+          }
+        }
+      }
+    }
+  }
+  const controller = new ApiProxyController(http)
+  const firstRequest = createRequest()
+  const secondRequest = createRequest()
+  firstRequest.headers.cookie = 'nexus_refresh=old-refresh'
+  secondRequest.headers.cookie = 'nexus_refresh=old-refresh'
+  const firstResponse = createResponse()
+  const secondResponse = createResponse()
+
+  await Promise.all([
+    controller.proxy(firstRequest, firstResponse),
+    controller.proxy(secondRequest, secondResponse)
+  ])
+
+  assert.equal(refreshCalls, 1)
+  assert.equal(apiCalls, 2)
+  assert.equal(firstResponse.statusCode, 200)
+  assert.equal(secondResponse.statusCode, 200)
+  for (const response of [firstResponse, secondResponse]) {
+    const cookies = response.headers['set-cookie'].join(';')
+    assert.match(cookies, /nexus_access=new-access/)
+    assert.match(cookies, /nexus_refresh=new-refresh/)
+  }
+})
+
 test('an automatic refresh failure does not clear cookies on a potentially concurrent response', async () => {
   const http = {
     axiosRef: {
