@@ -1,3 +1,4 @@
+require('reflect-metadata')
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { ApiProxyController } = require('../dist/proxy/api-proxy.controller.js')
