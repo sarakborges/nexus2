@@ -155,7 +155,7 @@ export function FloatingNavigationBar({
         aria-label={t('NAVIGATION_LABEL')}
       >
         {currentProfile && (
-          <Link className="floating-navigation__current-profile" to={`${ROUTES.profile}/${currentProfile.url}`} onClick={closeNavigationAfterNavigate}>
+          <Link\n            className="floating-navigation__current-profile"\n            to={`${ROUTES.profile}/${currentProfile.url}`}\n            aria-label={`${currentProfile.name} (@${currentProfile.url})`}\n            title={`${currentProfile.name} (@${currentProfile.url})`}\n            onClick={closeNavigationAfterNavigate}\n          >
             <IdentityAvatar className="floating-navigation__current-profile-avatar" name={currentProfile.name} picture={currentProfile.picture} />
             <span><strong>{currentProfile.name}</strong><small>@{currentProfile.url}</small></span>
           </Link>
