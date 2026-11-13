@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 
-export type UseFloatingNavigationBarOptions = FloatingNavigationBarProps
+export type UseFloatingNavigationBarOptions = Pick<FloatingNavigationBarProps, 'onOpenSettings'>
 
 export type NavigationPanel = 'account' | 'notifications'
 
