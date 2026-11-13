@@ -1,16 +1,10 @@
 import { useTranslations } from '@/Hooks/Language'
-import type { TranslationKey } from '@/Types/Translation.type'
 import { useProfileSettingsPage } from './useProfileSettingsPage'
-import type { ProfileActivityType } from './useProfileSettingsPage.types'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'
+import { ProfileSettingsMessageAudience } from './ProfileSettingsMessageAudience.component'
+import { ProfileSettingsActivityMatrix } from './ProfileSettingsActivityMatrix.component'
+import { ProfileSettingsSaveBar } from './ProfileSettingsSaveBar.component'
 import './ProfileSettingsPage.style.scss'
-
-const ACTIVITY_TYPES: Array<{ type: ProfileActivityType; label: TranslationKey }> = [
-  { type: 'profile_post', label: 'PROFILE_SETTINGS_ACTIVITY_POSTS' },
-  { type: 'friend_connected', label: 'PROFILE_SETTINGS_ACTIVITY_FRIENDS' },
-  { type: 'community_created', label: 'PROFILE_SETTINGS_ACTIVITY_COMMUNITY_CREATED' },
-  { type: 'community_membership', label: 'PROFILE_SETTINGS_ACTIVITY_COMMUNITY_JOINED' }
-]
 
 export function ProfileSettingsPage({
   profileUrl,
@@ -49,86 +43,23 @@ export function ProfileSettingsPage({
 
       {!isLoading && !isError && (
         <>
-          <section className="profile-settings-page__section" aria-labelledby="profile-message-audience-title">
-            <h2 id="profile-message-audience-title">{t('PROFILE_SETTINGS_MESSAGES')}</h2>
-            <p>{t('PROFILE_SETTINGS_MESSAGES_DESCRIPTION')}</p>
-            <div className="profile-settings-page__radio-group">
-              <label>
-                <input
-                  type="radio"
-                  name="message-audience"
-                  value="friends"
-                  checked={settings.messageAudience === 'friends'}
-                  onChange={() => setMessageAudience('friends')}
-                />
-                <span>{t('PROFILE_SETTINGS_FRIENDS_ONLY')}</span>
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  name="message-audience"
-                  value="everyone"
-                  checked={settings.messageAudience === 'everyone'}
-                  onChange={() => setMessageAudience('everyone')}
-                />
-                <span>{t('PROFILE_SETTINGS_EVERYONE')}</span>
-              </label>
-            </div>
-          </section>
+          <ProfileSettingsMessageAudience
+            value={settings.messageAudience}
+            onChange={setMessageAudience}
+          />
 
-          <section className="profile-settings-page__section" aria-labelledby="profile-feed-settings-title">
-            <h2 id="profile-feed-settings-title">{t('PROFILE_SETTINGS_FEED_TITLE')}</h2>
-            <p>{t('PROFILE_SETTINGS_FEED_DESCRIPTION')}</p>
-            <div className="profile-settings-page__matrix" role="table" aria-label={t('PROFILE_SETTINGS_FEED_TITLE')}>
-              <div className="profile-settings-page__row profile-settings-page__row--header" role="row">
-                <span role="columnheader">{t('PROFILE_SETTINGS_ACTIVITY_TYPE')}</span>
-                <span role="columnheader">{t('PROFILE_SETTINGS_YOUR_POSTS')}</span>
-                <span role="columnheader">{t('PROFILE_SETTINGS_FRIENDS_POSTS')}</span>
-              </div>
-              {ACTIVITY_TYPES.map(activity => (
-                <div className="profile-settings-page__row" role="row" key={activity.type}>
-                  <span role="cell">{t(activity.label)}</span>
-                  <label
-                      role="cell"
-                      data-label={t('PROFILE_SETTINGS_YOUR_POSTS')}
-                      aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_YOUR_POSTS')}
-                    >
-                    <input
-                      type="checkbox"
-                      checked={settings.publishActivityTypes.includes(activity.type)}
-                      onChange={() => toggleActivityType('publishActivityTypes', activity.type)}
-                    />
-                  </label>
-                  <label
-                      role="cell"
-                      data-label={t('PROFILE_SETTINGS_FRIENDS_POSTS')}
-                      aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_FRIENDS_POSTS')}
-                    >
-                    <input
-                      type="checkbox"
-                      checked={settings.showFriendActivityTypes.includes(activity.type)}
-                      onChange={() => toggleActivityType('showFriendActivityTypes', activity.type)}
-                    />
-                  </label>
-                </div>
-              ))}
-            </div>
-          </section>
+          <ProfileSettingsActivityMatrix
+            settings={settings}
+            onToggle={toggleActivityType}
+          />
 
-          <footer className="profile-settings-page__footer">
-            <div aria-live="polite">
-              {saveSuccess && <span className="profile-settings-page__success">{t('PROFILE_SETTINGS_SAVED')}</span>}
-              {saveError && <span className="profile-settings-page__error">{t('PROFILE_SETTINGS_SAVE_ERROR')}</span>}
-            </div>
-            <button
-              className="profile-settings-page__save"
-              type="button"
-              disabled={!isDirty || isSaving}
-              onClick={save}
-            >
-              {isSaving ? t('PROFILE_SETTINGS_SAVING') : t('PROFILE_SETTINGS_SAVE')}
-            </button>
-          </footer>
+          <ProfileSettingsSaveBar
+            isDirty={isDirty}
+            isSaving={isSaving}
+            saveError={saveError}
+            saveSuccess={saveSuccess}
+            onSave={save}
+          />
         </>
       )}
     </>
