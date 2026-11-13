@@ -96,11 +96,13 @@ export function FloatingNavigationBar({
             key={`${location.pathname}:${location.search}`}
           />
           <span className="floating-navigation__spacer" />
-          <NotificationsMenu
-            isOpen={activePanel === 'notifications'}
-            onToggle={() => togglePanel('notifications')}
-            onClose={closePanels}
-          />
+          <div className="floating-navigation__notification-container">
+            <NotificationsMenu
+              isOpen={activePanel === 'notifications'}
+              onToggle={() => togglePanel('notifications')}
+              onClose={closePanels}
+            />
+          </div>
           <button
             className="floating-navigation__account-trigger"
             type="button"
@@ -166,7 +168,6 @@ export function FloatingNavigationBar({
       </aside>
       {activePanel === 'account' && (
         <AccountMenu
-          accountName={accountName}
           profiles={profiles}
           hasProfiles={hasProfiles}
           currentProfileId={currentProfileId}

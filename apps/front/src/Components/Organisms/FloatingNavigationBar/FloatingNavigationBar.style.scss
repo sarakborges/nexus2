@@ -527,6 +527,13 @@
     object-fit: cover;
   }
 
+  &__notification-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 0 40px;
+  }
+
   &__notification-trigger {
     position: relative;
     display: grid;
@@ -585,8 +592,9 @@
   }
 
   &__notification-item {
-    display: grid;
-    gap: 5px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
     padding: 11px 12px;
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
     color: var(--text-color);
@@ -597,6 +605,47 @@
 
   &__notification-item:hover {
     background: var(--color-background);
+  }
+
+  &__notification-avatar {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    overflow: hidden;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+    background: var(--avatar-background);
+    font-size: 13px;
+  }
+
+  &__notification-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__notification-copy {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  &__notification-copy strong {
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__notification-copy small {
+    color: var(--color-neutral);
+    font-size: 11px;
+  }
+
+  &__notification-copy > span {
+    overflow-wrap: anywhere;
   }
 
   &__notifications-state {
@@ -615,7 +664,8 @@
   }
 
   &__menu--notifications {
-    right: 260px;
+    top: calc(100% + 8px);
+    right: 0;
     width: min(360px, calc(100vw - 32px));
   }
 
@@ -799,7 +849,7 @@ html.has-global-navigation .auth-page {
   }
 
   .floating-navigation__menu--notifications {
-    right: 8px;
+    right: 0;
     width: min(360px, calc(100vw - 16px));
   }
 }

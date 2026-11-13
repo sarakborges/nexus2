@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import type { RecentActivity } from '@nexus/common'
 import { FiBell } from 'react-icons/fi'
+import { IdentityAvatar } from '@/Components/Molecules'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -96,10 +97,19 @@ export function NotificationsMenu({
               key={activity.id}
               onClick={onClose}
             >
-              <span>{renderActivity(activity)}</span>
-              <time dateTime={new Date(activity.updatedAt).toISOString()}>
-                {new Date(activity.updatedAt).toLocaleString()}
-              </time>
+              <IdentityAvatar
+                className="floating-navigation__notification-avatar"
+                name={activity.profile.name}
+                picture={activity.profile.picture}
+              />
+              <span className="floating-navigation__notification-copy">
+                <strong>{activity.profile.name}</strong>
+                <small>@{activity.profile.url}</small>
+                <span>{renderActivity(activity)}</span>
+                <time dateTime={new Date(activity.updatedAt).toISOString()}>
+                  {new Date(activity.updatedAt).toLocaleString()}
+                </time>
+              </span>
             </Link>
           ))}
           <Link
