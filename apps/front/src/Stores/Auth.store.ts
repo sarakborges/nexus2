@@ -4,6 +4,7 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import type {
   AuthSession,
   AuthenticatedUser,
+  ProfileSettings,
   SignInCredentials,
   SignUpCredentials
 } from '@nexus/common'
@@ -26,6 +27,7 @@ type AuthStore = {
   signIn: (credentials: SignInCredentials) => Promise<AuthenticatedUser>
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
   setCurrentProfile: (profileId: string) => Promise<boolean>
+  setCurrentProfileSettings: (settings: ProfileSettings) => void
   signOut: () => Promise<void>
 }
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -63,6 +65,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       : {
           user,
           currentProfile: null,
+          currentProfileSettings: null,
           activities: [],
           activityCursor: null,
           hasMoreActivities: false,
@@ -89,6 +92,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       : {
           user,
           currentProfile: null,
+          currentProfileSettings: null,
           activities: [],
           activityCursor: null,
           hasMoreActivities: false,
@@ -112,13 +116,45 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const user = await updateCurrentProfile(profileId)
       useProfileStore.getState().clearProfile()
-      set((state) =>
-        state.session ? { session: { ...state.session, user } } : state
-      )
+
+      // Clear the previous profile snapshot immediately. Keeping it beside the
+      // new user.currentProfile makes pages resolve different acting identities.
+      set((state) => state.session ? {
+        session: {
+          ...state.session,
+          user,
+          currentProfile: null,
+          currentProfileSettings: null,
+          activities: [],
+          activityCursor: null,
+          hasMoreActivities: false
+        }
+      } : state)
+
+      const updatedSession = get().session
+      if (updatedSession) {
+        queryClient.setQueryData(queryKeys.auth.session, updatedSession)
+      }
+
+      const hydratedSession = await getCurrentAuthSession().catch(() => null)
+      if (
+        hydratedSession?.user.id === user.id &&
+        hydratedSession.user.currentProfile === profileId
+      ) {
+        set({ session: hydratedSession })
+        queryClient.setQueryData(queryKeys.auth.session, hydratedSession)
+      }
       return true
     } catch {
       return false
     }
+  },
+  setCurrentProfileSettings: (settings) => {
+    set((state) => state.session ? {
+      session: { ...state.session, currentProfileSettings: settings }
+    } : state)
+    const session = get().session
+    if (session) queryClient.setQueryData(queryKeys.auth.session, session)
   },
   signOut: async () => {
     await signOutUser()

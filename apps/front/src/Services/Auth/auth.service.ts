@@ -3,6 +3,7 @@ import type {
   AuthMeResponse,
   AuthSession,
   AuthenticatedUser,
+  ProfileSettings,
   SignInCredentials,
   SignUpCredentials
 } from '@nexus/common'
@@ -42,11 +43,34 @@ function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
       : fallback
   )
 }
+const PROFILE_ACTIVITY_TYPES = new Set([
+  'friend_connected',
+  'profile_post',
+  'community_created',
+  'community_membership'
+])
+
+function isProfileSettings(value: unknown): value is ProfileSettings {
+  if (typeof value !== 'object' || value === null) return false
+  const settings = value as Record<string, unknown>
+  const isActivityList = (items: unknown): boolean =>
+    Array.isArray(items) &&
+    items.every(item => typeof item === 'string' && PROFILE_ACTIVITY_TYPES.has(item))
+
+  return (
+    (settings.messageAudience === 'friends' || settings.messageAudience === 'everyone') &&
+    isActivityList(settings.publishActivityTypes) &&
+    isActivityList(settings.showFriendActivityTypes)
+  )
+}
+
 function isAuthMeResponse(value: unknown): value is AuthMeResponse {
   if (typeof value !== 'object' || value === null) return false
   const response = value as Record<string, unknown>
   const cursor = response.activityCursor
   const currentProfile = response.currentProfile
+  const currentProfileSettings = response.currentProfileSettings
+  const validProfileSettings = currentProfileSettings === null || isProfileSettings(currentProfileSettings)
   const validProfile = currentProfile === null ||
     (typeof currentProfile === 'object' && currentProfile !== null &&
       typeof (currentProfile as Record<string, unknown>).id === 'string')
@@ -57,6 +81,8 @@ function isAuthMeResponse(value: unknown): value is AuthMeResponse {
   return (
     isAuthenticatedUser(response.user) &&
     validProfile &&
+    Object.prototype.hasOwnProperty.call(response, 'currentProfileSettings') &&
+    validProfileSettings &&
     Array.isArray(response.activities) &&
     validCursor &&
     typeof response.hasMoreActivities === 'boolean'

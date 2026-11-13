@@ -28,12 +28,22 @@ const DEFAULT_SETTINGS: ProfileSettings = {
 export function useProfileSettingsPage(profileUrl?: string): UseProfileSettingsPageResult {
   const routeParams = useParams()
   const url = profileUrl ?? routeParams.url ?? ''
-  const userId = useAuthStore(state => state.session?.user.id ?? null)
+  const session = useAuthStore(state => state.session)
+  const userId = session?.user.id ?? null
+  const currentProfile = session?.currentProfile?.url === url &&
+    session.currentProfile.id === session.user.currentProfile
+    ? session.currentProfile
+    : null
+  const currentProfileSettings = currentProfile
+    ? session?.currentProfileSettings ?? DEFAULT_SETTINGS
+    : null
   const queryClient = useQueryClient()
   const queryKey = queryKeys.profileSettings(url, userId ?? '')
   const [draft, setDraft] = useState<{ profileId: string; value: ProfileSettings } | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  // The active profile and its settings already arrive together in /auth/me.
+  // Only non-active owned profiles need the dedicated settings request.
   const query = useQuery({
     queryKey,
     queryFn: async () => {
@@ -41,79 +51,84 @@ export function useProfileSettingsPage(profileUrl?: string): UseProfileSettingsP
       if (!profile) throw new Error('PROFILE_NOT_FOUND')
       return { profile, settings: await getProfileSettings(profile.id) }
     },
-    enabled: Boolean(url && userId),
+    enabled: Boolean(url && userId && !currentProfile),
     staleTime: 30_000
   })
 
-  const settings = draft && query.data && draft.profileId === query.data.profile.id
-    ? draft.value
+  const profile = currentProfile ?? query.data?.profile
+  const persistedSettings = currentProfile
+    ? currentProfileSettings ?? DEFAULT_SETTINGS
     : query.data?.settings ?? DEFAULT_SETTINGS
+  const settings = draft && profile && draft.profileId === profile.id
+    ? draft.value
+    : persistedSettings
 
   const saveMutation = useMutation({
     mutationFn: () => {
-      if (!query.data) throw new Error('PROFILE_NOT_FOUND')
-      return saveProfileSettings(query.data.profile.id, settings)
+      if (!profile) throw new Error('PROFILE_NOT_FOUND')
+      return saveProfileSettings(profile.id, settings)
     },
     onMutate: () => setSaveSuccess(false),
     onSuccess: saved => {
       queryClient.setQueryData(queryKey, current =>
-        current ? { ...current, settings: saved } : current
+        current
+          ? { ...current, settings: saved }
+          : profile ? { profile, settings: saved } : current
       )
-      setDraft({ profileId: query.data?.profile.id ?? '', value: saved })
+      if (currentProfile) {
+        useAuthStore.getState().setCurrentProfileSettings(saved)
+      }
+      if (profile) setDraft({ profileId: profile.id, value: saved })
       setSaveSuccess(true)
     }
   })
 
-  const isDirty = Boolean(
-    query.data && JSON.stringify(settings) !== JSON.stringify(query.data.settings)
-  )
+  const updateDraft = (update: (current: ProfileSettings) => ProfileSettings) => {
+    if (!profile) return
+    setSaveSuccess(false)
+    setDraft(current => ({
+      profileId: profile.id,
+      value: update(
+        current && current.profileId === profile.id
+          ? current.value
+          : persistedSettings
+      )
+    }))
+  }
 
   const toggleActivityType = (
     field: 'publishActivityTypes' | 'showFriendActivityTypes',
     type: ProfileActivityType
   ) => {
-    setSaveSuccess(false)
-    setDraft(current => {
-      const base = current && query.data && current.profileId === query.data.profile.id
-        ? current.value
-        : query.data?.settings ?? DEFAULT_SETTINGS
-
-      return {
-        profileId: query.data?.profile.id ?? '',
-        value: {
-          ...base,
-          [field]: base[field].includes(type)
-            ? base[field].filter(item => item !== type)
-            : [...base[field], type]
-        }
-      }
-    })
+    updateDraft(base => ({
+      ...base,
+      [field]: base[field].includes(type)
+        ? base[field].filter(item => item !== type)
+        : [...base[field], type]
+    }))
   }
 
+  const isDirty = Boolean(
+    profile && JSON.stringify(settings) !== JSON.stringify(persistedSettings)
+  )
+
   return {
-    isLoading: query.isLoading,
-    isError: query.isError,
-    profileName: query.data?.profile.name ?? '',
+    isLoading: !currentProfile && query.isLoading,
+    isError: !currentProfile && query.isError,
+    profileName: profile?.name ?? '',
     settings,
     isSaving: saveMutation.isPending,
     isDirty,
     saveError: saveMutation.isError,
     saveSuccess,
-    setMessageAudience: value => {
-      setSaveSuccess(false)
-      setDraft(current => {
-        const base = current && query.data && current.profileId === query.data.profile.id
-          ? current.value
-          : query.data?.settings ?? DEFAULT_SETTINGS
-
-        return {
-          profileId: query.data?.profile.id ?? '',
-          value: { ...base, messageAudience: value }
-        }
-      })
-    },
+    setMessageAudience: value => updateDraft(base => ({
+      ...base,
+      messageAudience: value
+    })),
     toggleActivityType,
     save: () => saveMutation.mutate(),
-    retry: () => void query.refetch()
+    retry: () => {
+      if (!currentProfile) void query.refetch()
+    }
   }
 }
