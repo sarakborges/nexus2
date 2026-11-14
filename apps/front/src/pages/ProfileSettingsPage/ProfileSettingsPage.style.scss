@@ -1,4 +1,4 @@
-.profile-settings-page {
+ .profile-settings-page {
   display: grid;
   gap: 28px;
   min-width: 0;
@@ -52,13 +52,6 @@
     gap: 8px;
     min-height: 42px;
     cursor: pointer;
-  }
-
-  input[type='checkbox'] {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 18px;
-    accent-color: var(--color-primary-strong);
   }
 
   &__matrix {

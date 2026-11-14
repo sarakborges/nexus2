@@ -1,3 +1,4 @@
+import { Checkbox } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { TranslationKey } from '@/Types/Translation.type'
 import type { ProfileSettingsActivityMatrixProps, ProfileActivityType } from './ProfileSettingsActivityMatrix.types'
@@ -33,8 +34,7 @@ export function ProfileSettingsActivityMatrix({
               data-label={t('PROFILE_SETTINGS_YOUR_POSTS')}
               aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_YOUR_POSTS')}
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={settings.publishActivityTypes.includes(activity.type)}
                 onChange={() => onToggle('publishActivityTypes', activity.type)}
               />
@@ -44,8 +44,7 @@ export function ProfileSettingsActivityMatrix({
               data-label={t('PROFILE_SETTINGS_FRIENDS_POSTS')}
               aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_FRIENDS_POSTS')}
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={settings.showFriendActivityTypes.includes(activity.type)}
                 onChange={() => onToggle('showFriendActivityTypes', activity.type)}
               />
