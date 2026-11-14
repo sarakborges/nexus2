@@ -1,5 +1,4 @@
-import type { RelationshipActionsProps } from './RelationshipActions.types'
-import type { TranslationKey } from '@/Types/Translation.type'
+import type { RelationshipAction, RelationshipActionsProps } from './RelationshipActions.types'
 import { useRelationshipActions } from './useRelationshipActions'
 
 import { Link } from 'react-router'
@@ -7,12 +6,6 @@ import { Link } from 'react-router'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-
-type RelationshipAction = {
-  label: TranslationKey
-  variation: 'primary' | 'secondary' | 'cancel'
-  run: () => void
-}
 
 export function RelationshipActions({
   targetId,

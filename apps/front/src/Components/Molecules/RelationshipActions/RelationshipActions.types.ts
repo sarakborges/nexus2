@@ -7,3 +7,11 @@ export type RelationshipActionsProps = {
   className?: string
   buttonClassName?: string
 }
+ 
+import type { TranslationKey } from '@/Types/Translation.type'
+
+export type RelationshipAction = {
+  label: TranslationKey
+  variation: 'primary' | 'secondary' | 'cancel'
+  run: () => void
+}
