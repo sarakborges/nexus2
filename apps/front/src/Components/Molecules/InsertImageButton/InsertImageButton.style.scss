@@ -4,7 +4,7 @@ display: none;
 
 .rich-text-editor__upload-error {
 flex-basis: 100%;
-  padding: 3px 6px;
+  padding: var(--nexus-space-1) var(--nexus-space-2);
   color: var(--color-danger, #c33);
   font-size: 12px;
 }
