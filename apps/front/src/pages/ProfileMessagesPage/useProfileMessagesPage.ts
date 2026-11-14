@@ -17,7 +17,7 @@ import {
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
-import type { ProfileMessageViewModel } from './ProfileMessageList.types'
+import type { ProfileMessageViewModel } from '@/Components/Organisms/ProfileMessageList/ProfileMessageList.types'
 import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.types'
 
 export function useProfileMessagesPage(): UseProfileMessagesPageResult {

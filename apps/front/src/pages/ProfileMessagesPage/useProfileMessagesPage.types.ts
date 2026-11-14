@@ -9,7 +9,7 @@ import type { Dispatch, SetStateAction, FormEvent } from 'react'
 
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
-import type { ProfileMessageViewModel } from './ProfileMessageList.types'
+import type { ProfileMessageViewModel } from '@/Components/Organisms/ProfileMessageList/ProfileMessageList.types'
 
 export type UseProfileMessagesPageResult = {
   requestedUrl: string
