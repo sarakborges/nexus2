@@ -2,6 +2,6 @@
   display: flex;
   flex-flow: column;
   align-self: flex-end;
-  gap: 4px;
+  gap: var(--nexus-space-1);
   min-width: 0;
 }
