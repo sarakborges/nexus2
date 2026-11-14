@@ -74,8 +74,8 @@ export function CommunitiesPage() {
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />
-        )}
+          />))}
+        
         <RequestState
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}

@@ -85,8 +85,8 @@ export function CommunityForumTopicPage() {
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
         <p className="profile-type-notice" role="alert">
           {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+        </p>))}
+      
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">
           <div>
@@ -116,8 +116,8 @@ export function CommunityForumTopicPage() {
             onDeleteTopic={deleteTopic}
           />
           {topic.isLocked && (
-            <p className="account-card__description">{t('FORUM_LOCKED')}</p>
-          )}
+            <p className="account-card__description">{t('FORUM_LOCKED')}</p>))}
+          
         </CommunityForumEntry>
 
         <section className="community-forum__replies">
@@ -131,8 +131,8 @@ export function CommunityForumTopicPage() {
               sort={sort}
               onQueryChange={setQuery}
               onSortChange={setSort}
-            />
-          )}
+            />))}
+          
           <RequestState
             isLoading={!isAuthInitialized}
             isFetching={topicPageQuery.isFetching}
@@ -157,8 +157,8 @@ export function CommunityForumTopicPage() {
                     >
                       {t('FORUM_DELETE')}
                     </Button>
-                  </div>
-                )}
+                  </div>))}
+                
               </CommunityForumEntry>
             ))}
           </RequestState>

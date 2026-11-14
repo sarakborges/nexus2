@@ -64,14 +64,14 @@ export function ProfileCommunitiesPage() {
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />
-        )}
+          />))}
+        
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>))}
+        
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}

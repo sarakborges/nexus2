@@ -69,8 +69,8 @@ export function CommunityForumPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>))}
+        
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -81,8 +81,8 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
-            </Button>
-          )}
+            </Button>))}
+          
         </header>
 
         {((forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
@@ -92,8 +92,8 @@ export function CommunityForumPage() {
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />
-        )}
+          />))}
+        
         <RequestState isFetching={forumPageQuery.isFetching} />
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
@@ -105,8 +105,8 @@ export function CommunityForumPage() {
               targetKind="community"
               relationship={viewerRelationship}
             />
-          </div>
-        )}
+          </div>))}
+        
 
         <RequestState
           isLoading={forumPageQuery.isLoading}
