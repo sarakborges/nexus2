@@ -68,19 +68,6 @@
   margin: 0;
 }
 
-.directory-empty-state {
-  display: grid;
-  justify-items: start;
-  gap: 12px;
-  padding: 20px 0;
-  color: var(--color-neutral);
-  line-height: 1.5;
-}
-
-.directory-empty-state a {
-  color: var(--color-primary-weak);
-  font-weight: var(--font-weight-bold);
-}
 
 @media (max-width: 1100px) {
   .social-page__layout:not(.social-page__layout--two-column):not(.social-page__layout--right-sidebar-only) {
