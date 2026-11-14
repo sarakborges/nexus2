@@ -2,7 +2,7 @@
   &__profile-switcher {
 
     display: grid;
-    gap: 4px;
+    gap: var(--nexus-space-1, 4px);
   
   }
   &__profile-toggle {
@@ -37,10 +37,10 @@
 
     display: grid;
     max-height: 260px;
-    gap: 2px;
+    gap: var(--nexus-space-1, 2px);
     overflow-y: auto;
-    margin-left: 20px;
-    padding: 4px 4px 4px 14px;
+    margin-left: var(--nexus-space-5, 20px);
+    padding: var(--nexus-space-1, 4px) var(--nexus-space-1, 4px) var(--nexus-space-1, 4px) var(--nexus-space-3, 14px);
     border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   
   }
@@ -50,8 +50,8 @@
     align-items: center;
     width: 100%;
     min-height: 42px;
-    gap: 9px;
-    padding: 6px 9px;
+    gap: var(--nexus-space-2, 9px);
+    padding: var(--nexus-space-2, 6px) var(--nexus-space-2, 9px);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -112,7 +112,7 @@
   }
   &__profile-status {
 
-    padding: 8px 10px;
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-2, 10px);
     color: var(--color-neutral);
     font-size: 12px;
     line-height: 1.4;
@@ -121,7 +121,7 @@
   &__profile-status button {
 
     display: block;
-    padding: 4px 0;
+    padding: var(--nexus-space-1, 4px) 0;
     border: 0;
     background: transparent;
     color: var(--color-primary-weak);
