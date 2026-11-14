@@ -1,4 +1,5 @@
-import { RelationshipActions, RequestState } from '@/Components'
+import { RelationshipActions } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import {
   CommunitySidebar,
   SocialPageLayout
@@ -8,7 +9,6 @@ import { NotFoundPage } from '@/pages/NotFoundPage'
 import { CommunityForumTopicComposer } from './CommunityForumTopicComposer.component'
 import { useCreateCommunityForumTopicPage } from './useCreateCommunityForumTopicPage'
 
-import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CreateCommunityForumTopicPage() {
@@ -34,25 +34,17 @@ export function CreateCommunityForumTopicPage() {
   } = useCreateCommunityForumTopicPage()
 
   if (!normalized) return <NotFoundPage />
-  if (!isAuthInitialized || composerPageQuery.isLoading)
+  if (!isAuthInitialized || composerPageQuery.isLoading) {
+    return <AuthenticatedPageState isLoading />
+  }
+  if (composerPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void composerPageQuery.refetch()}
+      />
     )
-  if (composerPageQuery.isError)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void composerPageQuery.refetch()}
-          />
-        </section>
-      </main>
-    )
+  }
   if (!community) return <NotFoundPage />
 
   return (
