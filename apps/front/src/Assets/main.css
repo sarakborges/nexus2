@@ -8,30 +8,26 @@
 @import url('./Themes/dark.theme.css');
 @import url('./Themes/nexus.theme.css');
 
-@keyframes route-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+:root {
+  --nexus-control-height: 40px;
+  --nexus-space-1: 4px;
+  --nexus-space-2: 8px;
+  --nexus-space-3: 12px;
+  --nexus-space-4: 16px;
+  --nexus-space-5: 20px;
+  --nexus-space-6: 24px;
 }
 
 html,
 body {
   min-width: 320px;
+  min-height: 100dvh;
   background-color: var(--color-background);
   color: var(--text-color);
 }
 
 body {
   display: block;
-  min-height: 100dvh;
-  background-color: var(--color-background);
-  color: var(--text-color);
 }
 
 #root {
@@ -39,43 +35,38 @@ body {
   width: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
-
   font-size: 14px;
   font-family: var(--font-family);
   line-height: 1;
-
   background-color: var(--color-background);
   color: var(--text-color);
 }
 
 main {
-  animation: route-enter 220ms ease-out both;
+  animation: none !important;
 }
 
-button,
-input[type='button'],
-input[type='submit'],
-input[type='reset'],
-[role='button'] {
-  transition:
-    background-color 160ms ease,
-    color 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease,
-    opacity 160ms ease;
+:where(button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']) {
+  transition: none !important;
 }
 
 :where(a) {
   color: var(--nexus-link-color, var(--color-primary-weak));
+  transition: none !important;
 }
 
 :where(a:hover) {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
 
+:where(a, button, [role='button']):hover,
+:where(a, button, [role='button']):active {
+  transform: none !important;
+  scale: none !important;
+  translate: none !important;
+  animation: none !important;
+}
 
-/* Prevent intrinsic media and long content from widening responsive layouts. */
 :where(img, video, canvas) {
   max-width: 100%;
 }
@@ -86,7 +77,7 @@ input[type='reset'],
 
 @media (max-width: 680px) {
   :where(input:not([type='checkbox']):not([type='radio']), select) {
-    min-height: 40px;
+    min-height: var(--nexus-control-height);
   }
 
   :where(textarea) {
@@ -96,22 +87,14 @@ input[type='reset'],
   :where(button, [role='button']) {
     touch-action: manipulation;
   }
-
-  main {
-    animation-duration: 160ms;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  main {
-    animation: none;
-  }
-
-  button,
-  input[type='button'],
-  input[type='submit'],
-  input[type='reset'],
-  [role='button'] {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
   }
 }

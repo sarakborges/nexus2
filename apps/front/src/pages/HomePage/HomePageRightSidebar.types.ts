@@ -1,7 +1,5 @@
-import type { HomePageData, Profile } from '@nexus/common'
-import type { UseQueryResult } from '@tanstack/react-query'
+import type { Profile } from '@nexus/common'
 
 export type HomePageRightSidebarProps = {
   currentProfile: Profile
-  homeQuery: UseQueryResult<HomePageData>
 }

@@ -1,8 +1,11 @@
 .button {
   display: flex;
+  box-sizing: border-box;
   place-content: center;
   place-items: center;
-  min-height: 40px;
+  width: fit-content;
+  height: var(--nexus-control-height, 40px);
+  min-height: var(--nexus-control-height, 40px);
   padding: 8px 16px;
   border: var(--nexus-border-width, 2px) solid transparent;
   border-radius: var(--nexus-control-radius, 0);
@@ -11,66 +14,63 @@
   line-height: 1.2;
   text-decoration: none;
   font-weight: 400;
-  transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    border-color 180ms ease,
-    box-shadow 180ms ease,
-    opacity 180ms ease,
-    transform 180ms ease;
+  transition: none;
+}
 
-  &:not(:disabled) {
-    cursor: pointer;
-  }
-  &:disabled,
-  &[aria-disabled='true'] {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
+.button:not(:disabled):not([aria-disabled='true']) {
+  cursor: pointer;
+}
 
-  &:not(:disabled):not([aria-disabled='true']):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgb(0 0 0 / 10%);
-  }
+.button:disabled,
+.button[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
-  &:not(:disabled):not([aria-disabled='true']):active {
-    transform: translateY(0) scale(0.98);
-    box-shadow: none;
-  }
+.button:focus-visible {
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 3px;
+}
 
-  &:focus-visible {
-    outline: 2px solid var(--color-primary-strong);
-    outline-offset: 3px;
-  }
+.button--primary {
+  background-color: var(--color-primary-strong);
+  color: #fff;
+}
 
-  &--primary {
-    background-color: var(--color-primary-strong);
-    color: #fff;
-    &:not(:disabled):hover {
-      background-color: var(--color-primary);
-    }
-  }
-  &--secondary {
-    border-color: var(--color-border);
-    background-color: var(--color-surface-raised);
-    color: var(--text-color);
-    &:not(:disabled):hover {
-      border-color: var(--color-primary-weak);
-      background-color: var(--color-surface);
-    }
-  }
-  &--cancel {
-    background-color: var(--color-error-strong);
-    &:not(:disabled):hover {
-      background-color: var(--color-error);
-    }
-  }
-  &--transparent {
-    border-color: transparent;
-    background-color: transparent;
-    &:not(:disabled):hover {
-      border-color: var(--color-border);
-      background-color: var(--color-surface-raised);
-    }
-  }
+.button--primary:not(:disabled):not([aria-disabled='true']):hover {
+  background-color: var(--color-primary);
+}
+
+.button--secondary {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+  color: var(--text-color);
+}
+
+.button--secondary:not(:disabled):not([aria-disabled='true']):hover {
+  border-color: var(--color-primary-weak);
+  background-color: var(--color-surface);
+}
+
+.button--cancel {
+  background-color: var(--color-error-strong);
+}
+
+.button--cancel:not(:disabled):not([aria-disabled='true']):hover {
+  background-color: var(--color-error);
+}
+
+.button--transparent {
+  border-color: transparent;
+  background-color: transparent;
+}
+
+.button--transparent:not(:disabled):not([aria-disabled='true']):hover {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-raised);
+}
+
+.button:active {
+  transform: none;
+  scale: none;
 }

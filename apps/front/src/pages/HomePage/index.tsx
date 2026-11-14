@@ -5,6 +5,7 @@ import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from './HomePageActivityFeed.component'
 import { HomePagePostComposer } from './HomePagePostComposer.component'
+import { HomePageRightSidebar } from './HomePageRightSidebar.component'
 
 import './HomePage.style.scss'
 
@@ -25,7 +26,10 @@ export function HomePage() {
   }
 
   return (
-    <SocialPageLayout className="home-page">
+    <SocialPageLayout
+      className="home-page"
+      rightSidebar={<HomePageRightSidebar currentProfile={currentProfile} />}
+    >
       <section className="home-page__content">
         <header className="home-page__header">
           <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>

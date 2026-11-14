@@ -8,15 +8,18 @@ export function SocialPageLayout({
   rightSidebar,
   className = ''
 }: SocialPageLayoutProps) {
-  const columnsClass = [
-    rightSidebar ? '' : 'social-page__layout--two-column',
-    sidebar ? '' : 'social-page__layout--no-sidebar'
-  ].filter(Boolean).join(' ')
+  const layoutClass = sidebar && rightSidebar
+    ? ''
+    : sidebar
+      ? 'social-page__layout--two-column'
+      : rightSidebar
+        ? 'social-page__layout--right-sidebar-only'
+        : 'social-page__layout--no-sidebar'
 
   return (
     <main className={['social-page', className].filter(Boolean).join(' ')}>
       <div
-        className={['social-page__layout', columnsClass]
+        className={['social-page__layout', layoutClass]
           .filter(Boolean)
           .join(' ')}
       >

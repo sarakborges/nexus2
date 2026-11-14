@@ -1,24 +1,27 @@
 .input {
+  display: block;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 36px;
-  padding: 6px 8px;
-
+  height: var(--nexus-control-height, 40px);
+  min-height: var(--nexus-control-height, 40px);
+  padding: 8px 12px;
   background-color: var(--color-neutral-weak);
-  border: var(--nexus-border-width, 2px) solid var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-control-radius, 0);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  transition: none;
+}
 
-  color: var(--color-neutral-strong);
-  font-size: 12px;
+.input:not(:disabled):focus-visible {
+  border-color: var(--color-primary-strong);
+  outline: 2px solid var(--color-primary-strong);
+  outline-offset: 1px;
+}
 
-  transition:
-    border-color 0.3s,
-    opacity 0.3s;
-
-  &:not(:disabled):focus {
-    border-color: var(--color-primary-strong);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-  }
+.input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
