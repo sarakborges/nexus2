@@ -28,7 +28,12 @@ export function HomePage() {
   return (
     <SocialPageLayout
       className="home-page"
-      rightSidebar={<HomePageRightSidebar currentProfile={currentProfile} />}
+      rightSidebar={
+        <HomePageRightSidebar
+          currentProfile={currentProfile}
+          suggestedCommunities={me?.suggestedCommunities ?? []}
+        />
+      }
     >
       <section className="home-page__content">
         <header className="home-page__header">

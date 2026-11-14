@@ -8,7 +8,6 @@ export function CommunityMemberDirectory({
   pageQuery,
   typeCompatibility,
   tabs,
-  activeTab,
   visibleTab,
   onSelectTab,
   members,
@@ -23,7 +22,6 @@ export function CommunityMemberDirectory({
   isStaff
 }: CommunityMemberDirectoryProps) {
   const { t } = useTranslations()
-  void activeTab
 
   return (
     <section className="account-card">

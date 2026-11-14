@@ -28,7 +28,10 @@ function getDirectoryItems(
 }
 
 
-export function HomePageRightSidebar({ currentProfile }: HomePageRightSidebarProps) {
+export function HomePageRightSidebar({
+  currentProfile,
+  suggestedCommunities
+}: HomePageRightSidebarProps) {
   const { t } = useTranslations()
 
   const friendsQuery = useQuery({
@@ -55,7 +58,7 @@ export function HomePageRightSidebar({ currentProfile }: HomePageRightSidebarPro
 
   const friends = getDirectoryItems(friendsQuery.data, 'friends')
   const communities = getDirectoryItems(communitiesQuery.data, 'communities')
-  const suggestions = currentProfile.suggestedCommunities ?? []
+  const suggestions = suggestedCommunities
 
   const friendsTotal = friendsQuery.data?.kind === 'friends'
     ? friendsQuery.data.friends.totalItems
