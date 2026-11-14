@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 
 import { RequestState } from '@/Components'
 import { ButtonLink } from '@/DesignSystem'
-import { HomePagePreviewEntry } from './HomePagePreviewEntry.component'
+import { HomePagePreviewEntry } from '@/Components/Molecules/HomePagePreviewEntry'
 import type { HomePageEntityPreviewProps } from './HomePageEntityPreview.types'
 
 export function HomePageEntityPreview({

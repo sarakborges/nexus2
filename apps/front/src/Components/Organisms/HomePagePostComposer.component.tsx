@@ -1,7 +1,7 @@
 import { ComposerActions, RichTextComposerField } from '@/Components'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { useHomePagePostComposer } from './useHomePagePostComposer'
+import { useHomePagePostComposer } from '@/Hooks/Home/useHomePagePostComposer.hook'
 import type { HomePagePostComposerProps } from './HomePagePostComposer.types'
 
 export function HomePagePostComposer({ currentProfile }: HomePagePostComposerProps) {

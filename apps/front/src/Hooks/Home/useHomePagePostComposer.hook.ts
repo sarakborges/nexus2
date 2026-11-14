@@ -7,7 +7,7 @@ import { createProfilePost } from '@/Services/Home'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useToastStore } from '@/Stores/Toast.store'
-import type { HomePagePostComposerProps, UseHomePagePostComposerResult } from './HomePagePostComposer.types'
+import type { HomePagePostComposerProps, UseHomePagePostComposerResult } from '@/Components/Organisms/HomePagePostComposer/HomePagePostComposer.types'
 
 export function useHomePagePostComposer({
   currentProfile
