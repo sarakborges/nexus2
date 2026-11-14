@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import type { SearchScope } from '@nexus/common'
+import { Button } from '@/DesignSystem'
 import { IdentityAvatar, ListSortSelect, Pagination } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
@@ -57,9 +58,9 @@ export function SearchPage() {
         {searchQuery.isError && (
           <div className="search-page__state" role="alert">
             <p>{t('SEARCH_FAILED')}</p>
-            <button type="button" onClick={() => void searchQuery.refetch()}>
+            <Button type="button" variation="secondary" onClick={() => void searchQuery.refetch()}>
               {t('SEARCH_RETRY')}
-            </button>
+            </Button>
           </div>
         )}
 

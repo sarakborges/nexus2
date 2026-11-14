@@ -49,15 +49,6 @@
   padding: 14px 0;
 }
 
-.search-page__state button {
-  margin-top: 8px;
-  padding: 7px 12px;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-background);
-  color: var(--text-color);
-  font: inherit;
-  cursor: pointer;
-}
 
 .search-page__results {
   display: grid;
@@ -166,86 +157,6 @@
   }
 }
 
-
-.paginated-list-controls {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-  min-width: 0;
-}
-.paginated-list-controls__search {
-  display: flex;
-  align-items: center;
-  flex: 1 1 260px;
-  min-width: min(100%, 220px);
-  min-height: 40px;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-background);
-}
-.paginated-list-controls__search input {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 38px;
-  padding: 0 10px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--text-color);
-  font: inherit;
-}
-.paginated-list-controls__search button {
-  min-height: 38px;
-  flex: 0 0 auto;
-  padding: 0 12px;
-  border: 0;
-  border-left: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-surface-raised);
-  color: var(--text-color);
-  font: inherit;
-  cursor: pointer;
-}
-.paginated-list-controls__search button:disabled { cursor: default; opacity: .55; }
-.paginated-list-controls__sort {
-  display: grid;
-  gap: 5px;
-  min-width: 190px;
-  color: var(--color-neutral);
-  font-size: 12px;
-}
-.paginated-list-controls__sort select {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 40px;
-  padding: 0 10px;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-background);
-  color: var(--text-color);
-  font: inherit;
-  font-size: 13px;
-}
-@media(max-width:600px) {
-  .paginated-list-controls { align-items: stretch; }
-  .paginated-list-controls__search { flex-basis: 100%; }
-  .paginated-list-controls__sort { flex: 1 1 100%; }
-}
-
-.paginated-list-controls__sort select {
-  appearance: auto;
-  -webkit-appearance: menulist;
-  color: var(--text-color);
-  background-color: var(--color-surface);
-  cursor: pointer;
-}
-.paginated-list-controls__sort select option {
-  color: var(--text-color);
-  background-color: var(--color-surface);
-}
-.paginated-list-controls__sort select:focus-visible {
-  outline: 2px solid var(--color-primary-strong);
-  outline-offset: 2px;
-}
 
 /* Search result avatars use a fixed width and cap portrait images at 1:2. */
 .search-result__avatar {

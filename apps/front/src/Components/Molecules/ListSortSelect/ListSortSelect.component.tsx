@@ -5,6 +5,8 @@ import { SelectField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ListSortSelectProps } from './ListSortSelect.types'
 
+import './ListSortSelect.style.scss'
+
 export function ListSortSelect({ value, onChange }: ListSortSelectProps) {
   const { t } = useTranslations()
   const id = useId()

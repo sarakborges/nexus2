@@ -105,22 +105,14 @@
     background: var(--color-background);
   }
 
-  &__search-form input,
-  &__search-form select {
-    height: 100%;
+  &__search-form .input,
+  &__search-form .select {
     min-width: 0;
-    border: 0;
-    outline: 0;
-    background: transparent;
-    color: var(--text-color);
-    font: inherit;
-    font-size: 12px;
   }
 
-  &__search-form input {
+  &__search-form .input {
     width: auto;
     flex: 1 1 auto;
-    padding: 0 8px;
   }
 
   &__search-form input::placeholder {
@@ -128,13 +120,9 @@
     opacity: 1;
   }
 
-  &__search-form select {
+  &__search-form .select {
     flex: 0 0 112px;
     width: 112px;
-    padding: 0 6px;
-    border-left: var(--nexus-border-width, 2px) solid var(--color-border);
-    appearance: auto;
-    -webkit-appearance: menulist;
   }
 
   &__search-form option {
@@ -156,11 +144,6 @@
     background: transparent;
     color: var(--text-color);
     cursor: pointer;
-  }
-
-  &__search-form button:disabled {
-    cursor: not-allowed;
-    opacity: .45;
   }
 
   &__search-form button svg {
@@ -741,7 +724,7 @@ html.has-global-navigation .auth-page {
     flex: 1 1 300px;
   }
 
-  .floating-navigation__search-form select {
+  .floating-navigation__search-form .select {
     width: 96px;
     flex-basis: 96px;
   }
@@ -819,11 +802,9 @@ html.has-global-navigation .auth-page {
     font-size: 11px;
   }
 
-  .floating-navigation__search-form select {
+  .floating-navigation__search-form .select {
     width: 68px;
     flex: 0 0 68px;
-    padding-inline: 3px;
-    font-size: 10px;
   }
 
   .floating-navigation__search-form button {
@@ -855,7 +836,7 @@ html.has-global-navigation .auth-page {
 }
 
 @media (max-width: 420px) {
-  .floating-navigation__search-form select {
+  .floating-navigation__search-form .select {
     display: none;
   }
 
