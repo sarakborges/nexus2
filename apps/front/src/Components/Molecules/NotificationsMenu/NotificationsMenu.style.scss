@@ -40,7 +40,7 @@
     place-items: center;
     min-width: 17px;
     height: 17px;
-    padding: 0 3px;
+    padding: 0 var(--nexus-space-1, 3px);
     border-radius: 10px;
     background: var(--color-error, #b42318);
     color: white;
@@ -51,8 +51,8 @@
   &__notifications-heading {
 
     display: grid;
-    gap: 3px;
-    padding: 10px 12px 12px;
+    gap: var(--nexus-space-1, 3px);
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   
   }
@@ -67,8 +67,8 @@
 
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 11px 12px;
+    gap: var(--nexus-space-2, 10px);
+    padding: 11px var(--nexus-space-3, 12px);
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
     color: var(--text-color);
     font-size: 13px;
@@ -106,7 +106,7 @@
 
     display: grid;
     min-width: 0;
-    gap: 3px;
+    gap: var(--nexus-space-1, 3px);
   
   }
   &__notification-copy strong {
@@ -130,7 +130,7 @@
   }
   &__notifications-state {
 
-    padding: 14px 12px;
+    padding: var(--nexus-space-3, 14px) var(--nexus-space-3, 12px);
     color: var(--color-neutral);
     font-size: 13px;
   
@@ -138,7 +138,7 @@
   &__notifications-all {
 
     display: block;
-    padding: 12px;
+    padding: var(--nexus-space-3, 12px);
     color: var(--color-primary-weak);
     font-size: 13px;
     font-weight: var(--font-weight-bold);
