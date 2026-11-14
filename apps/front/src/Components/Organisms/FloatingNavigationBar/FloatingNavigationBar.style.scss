@@ -21,11 +21,11 @@
 
     display: flex;
     align-items: center;
-    gap: var(--nexus-space-4, 18px);
+    gap: var(--nexus-space-4);
     box-sizing: border-box;
     width: 100%;
     min-height: 64px;
-    padding: var(--nexus-space-2, 6px) var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-2) var(--nexus-space-3);
   
   }
   &__icon-button,
@@ -70,7 +70,7 @@
 
     display: inline-flex;
     align-items: center;
-    gap: var(--nexus-space-2, 8px);
+    gap: var(--nexus-space-2);
     flex: 0 0 auto;
     margin-left: 0;
     color: var(--text-color);
@@ -102,10 +102,10 @@
   }
   &__account-trigger {
 
-    gap: var(--nexus-space-2, 8px);
+    gap: var(--nexus-space-2);
     max-width: 240px;
     min-height: 40px;
-    padding: var(--nexus-space-2, 8px);
+    padding: var(--nexus-space-2);
     text-align: left;
   
   }
@@ -121,7 +121,7 @@
 
     display: grid;
     min-width: 0;
-    gap: var(--nexus-space-1, 3px);
+    gap: var(--nexus-space-1);
   
   }
   &__account-chevron {
@@ -159,15 +159,14 @@
     box-sizing: border-box;
     width: 248px;
     justify-content: space-between;
-    gap: var(--nexus-space-3, 14px);
+    gap: var(--nexus-space-3);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: var(--nexus-space-4, 16px) var(--nexus-space-3, 12px) var(--nexus-space-6, 24px);
+    padding: var(--nexus-space-4) var(--nexus-space-3) var(--nexus-space-6);
     border: 0;
     background: transparent;
     box-shadow: none;
-    transition: width 160ms ease;
-  
+
   }
   &__sidebar-toggle {
 
@@ -177,7 +176,7 @@
     min-height: 46px;
     flex: 0 0 auto;
     gap: 13px;
-    padding: 0 var(--nexus-space-3, 12px);
+    padding: 0 var(--nexus-space-3);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -209,14 +208,13 @@
     display: grid;
     width: min(320px, calc(100vw - 32px));
     max-height: min(72vh, 560px);
-    gap: var(--nexus-space-1, 4px);
+    gap: var(--nexus-space-1);
     overflow-y: auto;
-    padding: var(--nexus-space-2, 8px);
+    padding: var(--nexus-space-2);
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     background: var(--color-surface);
     box-shadow: 0 16px 42px rgb(0 0 0 / 16%);
-    animation: floating-navigation-enter 140ms ease-out both;
-  
+
   }
   &__menu-item {
 
@@ -224,8 +222,8 @@
     align-items: center;
     width: 100%;
     min-height: 44px;
-    gap: var(--nexus-space-3, 12px);
-    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
+    gap: var(--nexus-space-3);
+    padding: var(--nexus-space-2) var(--nexus-space-3);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -294,7 +292,7 @@
 .floating-navigation.is-collapsed .floating-navigation__sidebar {
 
   width: 68px;
-  padding-inline: var(--nexus-space-2, 8px);
+  padding-inline: var(--nexus-space-2);
 
 }
 .floating-navigation.is-collapsed .floating-navigation__sidebar-toggle {
@@ -303,14 +301,7 @@
   padding-inline: 0;
 
 }
-@keyframes floating-navigation-enter {
-  from {
- opacity: 0; transform: translateY(-4px); 
-  }
-  to {
- opacity: 1; transform: translateY(0); 
-  }
-}
+
 html.has-global-navigation {
 
   --nexus-global-sidebar-offset: 248px;
@@ -329,7 +320,6 @@ html.has-global-navigation .auth-page {
   box-sizing: border-box;
   width: calc(100% - var(--nexus-global-sidebar-offset));
   margin-left: var(--nexus-global-sidebar-offset);
-  transition: width 160ms ease, margin-left 160ms ease;
 
 }
 @media (min-width: 681px) and (max-width: 1100px) {
@@ -350,7 +340,7 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__content {
 
-    gap: var(--nexus-space-3, 12px);
+    gap: var(--nexus-space-3);
   
   }
 }
@@ -369,8 +359,8 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__content {
 
-    gap: var(--nexus-space-2, 8px);
-    padding-inline: var(--nexus-space-2, 8px);
+    gap: var(--nexus-space-2);
+    padding-inline: var(--nexus-space-2);
   
   }
   .floating-navigation__sidebar {
@@ -407,7 +397,7 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__brand {
 
-    gap: var(--nexus-space-2, 5px);
+    gap: var(--nexus-space-2);
     font-size: 14px;
     letter-spacing: .1em;
   
@@ -425,7 +415,7 @@ html.has-global-navigation .auth-page {
     min-width: 40px;
     flex: 0 0 40px;
     gap: 0;
-    padding: var(--nexus-space-1, 4px);
+    padding: var(--nexus-space-1);
   
   }
   .floating-navigation__account-label,
@@ -445,13 +435,9 @@ html.has-global-navigation .auth-page {
   .floating-navigation__bar,
   .floating-navigation__content {
 
-    transition: none;
-  
   }
   .floating-navigation__menu {
 
-    animation: none;
-  
   }
 }
 
