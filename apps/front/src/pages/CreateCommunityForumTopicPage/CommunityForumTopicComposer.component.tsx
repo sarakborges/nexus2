@@ -1,4 +1,4 @@
-import { RichTextComposerField } from '@/Components'
+import { ComposerActions, RichTextComposerField } from '@/Components'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumTopicComposerProps } from './CommunityForumTopicComposer.types'
@@ -12,6 +12,7 @@ export function CommunityForumTopicComposer({
   isSubmitting,
   hasError,
   onSubmit,
+  onCancel,
   onUploadImage
 }: CommunityForumTopicComposerProps) {
   const { t } = useTranslations()
@@ -43,9 +44,19 @@ export function CommunityForumTopicComposer({
           {t('FORUM_TOPIC_ERROR')}
         </p>
       )}
-      <Button type="submit" disabled={!canSubmit || isSubmitting}>
-        {t('FORUM_PUBLISH_TOPIC')}
-      </Button>
+      <ComposerActions>
+        <Button
+          type="button"
+          variation="secondary"
+          disabled={isSubmitting || (!title && !content)}
+          onClick={onCancel}
+        >
+          {t('ACTION_CANCEL')}
+        </Button>
+        <Button type="submit" variation="primary" disabled={!canSubmit || isSubmitting}>
+          {t('FORUM_PUBLISH_TOPIC')}
+        </Button>
+      </ComposerActions>
     </form>
   )
 }

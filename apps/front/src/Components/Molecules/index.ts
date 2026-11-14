@@ -1,5 +1,7 @@
 export { AccountCard } from './AccountCard'
+export { ComposerActions } from './ComposerActions'
 export type { AccountCardProps } from './AccountCard'
+export type { ComposerActionsProps } from './ComposerActions'
 export { AvatarUploadField } from './AvatarUploadField'
 export { ListSortSelect } from './ListSortSelect'
 export { RequestState } from './RequestState'

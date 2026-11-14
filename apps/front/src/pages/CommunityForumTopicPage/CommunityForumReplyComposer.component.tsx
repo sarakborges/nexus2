@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { RelationshipActions, RequestState, RichTextComposerField } from '@/Components'
+import { ComposerActions, RelationshipActions, RequestState, RichTextComposerField } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -21,6 +21,7 @@ export function CommunityForumReplyComposer({
   hasError,
   onChange,
   onSubmit,
+  onCancel,
   onUploadImage
 }: CommunityForumReplyComposerProps) {
   const { t } = useTranslations()
@@ -54,9 +55,19 @@ export function CommunityForumReplyComposer({
               {t('FORUM_TOPIC_ERROR')}
             </p>
           )}
-          <Button type="submit" disabled={!canSubmit || isSending}>
-            {t('FORUM_PUBLISH_REPLY')}
-          </Button>
+          <ComposerActions>
+            <Button
+              type="button"
+              variation="secondary"
+              disabled={!value || isSending}
+              onClick={onCancel}
+            >
+              {t('ACTION_CANCEL')}
+            </Button>
+            <Button type="submit" variation="primary" disabled={!canSubmit || isSending}>
+              {t('FORUM_PUBLISH_REPLY')}
+            </Button>
+          </ComposerActions>
         </form>
       ) : (
         <div className="community-forum__join">

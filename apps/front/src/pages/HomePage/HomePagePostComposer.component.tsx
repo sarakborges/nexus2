@@ -1,4 +1,4 @@
-import { RichTextComposerField } from '@/Components'
+import { ComposerActions, RichTextComposerField } from '@/Components'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useHomePagePostComposer } from './useHomePagePostComposer'
@@ -34,11 +34,19 @@ export function HomePagePostComposer({ currentProfile }: HomePagePostComposerPro
           {t('HOME_POST_FAILED')}
         </p>
       )}
-      <div className="home-page__post-composer-actions">
+      <ComposerActions>
+        <Button
+          type="button"
+          variation="secondary"
+          disabled={!content || isSubmitting}
+          onClick={() => setContent('')}
+        >
+          {t('ACTION_CANCEL')}
+        </Button>
         <Button type="submit" variation="primary" disabled={!canSubmit || isSubmitting}>
           {isSubmitting ? t('HOME_POST_PUBLISHING') : t('HOME_POST_PUBLISH')}
         </Button>
-      </div>
+      </ComposerActions>
     </form>
   )
 }

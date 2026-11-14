@@ -11,5 +11,6 @@ export type CommunityForumTopicComposerProps = {
   isSubmitting: boolean
   hasError: boolean
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
+  onCancel: () => void
   onUploadImage: typeof uploadEditorImage
 }

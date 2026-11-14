@@ -1,9 +1,12 @@
+import { useNavigate } from 'react-router'
+
 import { RelationshipActions } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
+import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { CommunityForumTopicComposer } from './CommunityForumTopicComposer.component'
@@ -13,6 +16,7 @@ import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CreateCommunityForumTopicPage() {
   const { t } = useTranslations()
+  const navigate = useNavigate()
   const {
     normalized,
     session,
@@ -82,6 +86,7 @@ export function CreateCommunityForumTopicPage() {
             isSubmitting={createMutation.isPending}
             hasError={createMutation.isError}
             onSubmit={submit}
+            onCancel={() => navigate(ROUTES.community + '/' + community.url + '/forum')}
             onUploadImage={uploadEditorImage}
           />
         ) : (

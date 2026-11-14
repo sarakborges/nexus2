@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { RichTextComposerField } from '@/Components'
+import { ComposerActions, RichTextComposerField } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -72,9 +72,22 @@ export function ProfileMessageComposer({
           )}
         </p>
       )}
-      <Button type="submit" disabled={!canSubmitMessage || isSendingMessage}>
-        {isSendingMessage ? t('AUTH_SUBMITTING') : t('PROFILE_MESSAGES_SEND')}
-      </Button>
+      <ComposerActions>
+        <Button
+          type="button"
+          variation="secondary"
+          disabled={!content || isSendingMessage}
+          onClick={() => {
+            onContentChange('')
+            onCancelReply?.()
+          }}
+        >
+          {t('ACTION_CANCEL')}
+        </Button>
+        <Button type="submit" variation="primary" disabled={!canSubmitMessage || isSendingMessage}>
+          {isSendingMessage ? t('AUTH_SUBMITTING') : t('PROFILE_MESSAGES_SEND')}
+        </Button>
+      </ComposerActions>
     </form>
   )
 }

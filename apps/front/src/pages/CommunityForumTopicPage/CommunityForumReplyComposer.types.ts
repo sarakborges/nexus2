@@ -17,5 +17,6 @@ export type CommunityForumReplyComposerProps = {
   hasError: boolean
   onChange: (value: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
+  onCancel: () => void
   onUploadImage: typeof uploadEditorImage
 }

@@ -186,6 +186,7 @@ export function CommunityForumTopicPage() {
         hasError={hasReplyError}
         onChange={setReplyContent}
         onSubmit={submitReply}
+        onCancel={() => setReplyContent('')}
         onUploadImage={uploadEditorImage}
       />
     </SocialPageLayout>
