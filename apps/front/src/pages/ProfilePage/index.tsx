@@ -1,4 +1,4 @@
-import { RequestState } from '@/Components'
+import { RequestState, RelationshipActions } from '@/Components'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -9,6 +9,8 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
 import { useProfilePage } from './useProfilePage'
+
+import './ProfilePage.style.scss'
 
 export function ProfilePage() {
   const { t } = useTranslations()
@@ -56,7 +58,7 @@ export function ProfilePage() {
         <ProfileSidebar
           profile={profile}
           active="profile"
-          showRelationshipActions={canInteract}
+          showRelationshipActions={false}
           relationship={viewerRelationship}
         />
       }
@@ -109,20 +111,28 @@ export function ProfilePage() {
       )}
       <article className="social-panel social-panel--about">
         <header className="social-panel__header">
-          <div>
-            <h2 className="social-panel__title">
-              {t('PROFILE_ABOUT_LABEL')}
-            </h2>
+          <h2 className="social-panel__title">
+            {t('PROFILE_ABOUT_LABEL')}
+          </h2>
+          <div className="social-panel__header-actions">
+            {isOwner && canInteract ? (
+              <Button
+                type="button"
+                variation="primary"
+                className="profile-page__action"
+                onClick={openEditProfile}
+              >
+                {t('PROFILE_EDIT')}
+              </Button>
+            ) : (
+              <RelationshipActions
+                targetId={profile.id}
+                relationship={viewerRelationship}
+                className="profile-page__relationship-actions"
+                buttonClassName="profile-page__action"
+              />
+            )}
           </div>
-          {isOwner && canInteract && (
-            <Button
-              type="button"
-              variation="primary"
-              onClick={openEditProfile}
-            >
-              {t('PROFILE_EDIT')}
-            </Button>
-          )}
         </header>
         {profile.about ? (
           <RichTextContent className="social-panel__body" html={profile.about} />

@@ -1,0 +1,31 @@
+.profile-page__relationship-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-page__action {
+  min-width: 140px;
+}
+
+@media (max-width: 680px) {
+  .social-panel__header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .social-panel__header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .profile-page__relationship-actions {
+    width: 100%;
+  }
+
+  .profile-page__relationship-actions .profile-page__action {
+    flex: 1 1 140px;
+  }
+}

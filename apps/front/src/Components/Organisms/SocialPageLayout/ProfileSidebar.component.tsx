@@ -9,7 +9,7 @@ import { useTranslations } from '@/Hooks/Language'
 export function ProfileSidebar({
   profile,
   active,
-  showRelationshipActions = true,
+  showRelationshipActions = false,
   relationship
 }: ProfileSidebarProps) {
   const { t } = useTranslations()
