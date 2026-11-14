@@ -1,20 +1,7 @@
 import { Button } from '@/DesignSystem/Atoms/Button'
+import type { TabOption, TabsProps } from './Tabs.types'
 
 import './Tabs.style.scss'
-
-export type TabOption = {
-  value: string
-  label: string
-  disabled?: boolean
-}
-
-export type TabsProps = {
-  options: TabOption[]
-  value: string
-  onChange: (value: string) => void
-  ariaLabel: string
-  className?: string
-}
 
 export function Tabs({ options, value, onChange, ariaLabel, className }: TabsProps) {
   return (
