@@ -2,7 +2,7 @@
   &__matrix {
     display: grid;
     min-width: 0;
-    margin-top: 8px;
+    margin-top: var(--nexus-space-2, 8px);
     overflow-x: auto;
     border: var(--nexus-border-width, 2px) solid var(--color-border);
   }
@@ -23,7 +23,7 @@
     display: flex;
     align-items: center;
     min-height: 48px;
-    padding: 8px 12px;
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
     border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
@@ -34,7 +34,7 @@
   &__row > label {
     justify-content: center;
     min-height: 42px;
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
     cursor: pointer;
   }
 
@@ -51,7 +51,7 @@
 
 @media (max-width: 560px) {
   .profile-settings-activity-matrix__matrix {
-    gap: 10px;
+    gap: var(--nexus-space-2, 10px);
     overflow: visible;
     border: 0;
   }
@@ -76,7 +76,7 @@
   .profile-settings-activity-matrix__row > span {
     grid-column: 1 / -1;
     min-height: 40px;
-    padding: 10px 12px;
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
     border: 0;
     background: var(--color-surface-raised);
     font-weight: var(--font-weight-bold);
@@ -87,10 +87,10 @@
     justify-content: flex-start;
     min-width: 0;
     min-height: 72px;
-    padding: 10px 12px;
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
     border: 0;
     border-top: var(--nexus-border-width, 2px) solid var(--color-border);
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
   }
 
   .profile-settings-activity-matrix__row > label + label {
@@ -108,6 +108,6 @@
 
 @media (max-width: 380px) {
   .profile-settings-activity-matrix__row > label {
-    padding-inline: 8px;
+    padding-inline: var(--nexus-space-2, 8px);
   }
 }
