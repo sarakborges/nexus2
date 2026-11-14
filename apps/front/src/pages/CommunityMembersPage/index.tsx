@@ -82,7 +82,15 @@ export function CommunityMembersPage() {
     >
       <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalMembers > 0 || query.trim().length > 0) && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />
+        )}
         {isStaff && (
           <CommunityPendingMembersSection
             pageQuery={communityMembersPageQuery}

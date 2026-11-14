@@ -57,7 +57,15 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 || query.trim().length > 0) && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />
+        )}
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">

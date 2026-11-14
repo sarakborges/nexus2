@@ -1,6 +1,6 @@
 import { Pagination, RequestState } from '@/Components'
 import { CommunityMemberEntry } from './CommunityMemberEntry.component'
-import { Button } from '@/DesignSystem'
+import { Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityMemberDirectoryProps } from './CommunityMemberDirectory.types'
 
@@ -23,6 +23,7 @@ export function CommunityMemberDirectory({
   isStaff
 }: CommunityMemberDirectoryProps) {
   const { t } = useTranslations()
+  void activeTab
 
   return (
     <section className="account-card">
@@ -41,20 +42,13 @@ export function CommunityMemberDirectory({
           {t('PROFILE_TYPE_MISMATCH_NOTICE')}
         </p>
       )}
-      <div className="community-member__tabs" role="tablist">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            type="button"
-            role="tab"
-            aria-selected={visibleTab === tab.id}
-            variation={activeTab === tab.id ? 'primary' : 'secondary'}
-            onClick={() => onSelectTab(tab.id)}
-          >
-            {tab.label}
-          </Button>
-        ))}
-      </div>
+      <Tabs
+        className="community-member__tabs"
+        ariaLabel={t('COMMUNITY_MEMBERS_TITLE')}
+        value={visibleTab}
+        onChange={onSelectTab}
+        options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
+      />
       <RequestState
         isLoading={pageQuery.isLoading}
         isFetching={pageQuery.isFetching}

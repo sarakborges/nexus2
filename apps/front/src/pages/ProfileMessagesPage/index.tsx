@@ -107,7 +107,15 @@ export function ProfileMessagesPage() {
             { value: 'favorites', label: t('PROFILE_MESSAGES_TAB_FAVORITES') }
           ]} />
         )}
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 || query.trim().length > 0) && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />
+        )}
         <RequestState
           isLoading={profileMessagesPageQuery.isLoading}
           isFetching={profileMessagesPageQuery.isFetching}

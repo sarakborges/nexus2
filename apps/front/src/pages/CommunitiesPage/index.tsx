@@ -67,7 +67,15 @@ export function CommunitiesPage() {
           { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
           { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
         ]} />
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 || query.trim().length > 0) && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />
+        )}
         <RequestState
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}

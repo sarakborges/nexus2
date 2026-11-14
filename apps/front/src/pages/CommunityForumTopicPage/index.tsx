@@ -124,7 +124,15 @@ export function CommunityForumTopicPage() {
           <h2>
             {t('FORUM_REPLIES')} ({detail.replies.totalItems})
           </h2>
-          <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+          {(detail.replies.totalItems > 0 || query.trim().length > 0) && (
+            <PaginatedListControls
+              key={query}
+              query={query}
+              sort={sort}
+              onQueryChange={setQuery}
+              onSortChange={setSort}
+            />
+          )}
           <RequestState
             isLoading={!isAuthInitialized}
             isFetching={topicPageQuery.isFetching}
