@@ -1,11 +1,13 @@
 import { Link } from 'react-router'
 import { ButtonLink } from '@/DesignSystem'
+import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 
 import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { IdentityAvatar } from '@/Components/Molecules/IdentityAvatar'
 import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview.types'
+import './CommunityPageMembersPreview.style.scss'
 
 export function CommunityPageMembersPreview({
   communityUrl,
@@ -17,14 +19,10 @@ export function CommunityPageMembersPreview({
   const { t } = useTranslations()
 
   return (
-    <section className="social-preview-panel">
-      <header className="social-preview-panel__header">
-        <h2>
-          {t('COMMUNITY_MEMBERS_TITLE')}
-          <span className="social-preview-panel__count">
-            ({memberCount ?? '—'})
-          </span>
-        </h2>
+    <SocialPreviewPanel
+      title={t('COMMUNITY_MEMBERS_TITLE')}
+      count={memberCount ?? '—'}
+      headerActions={
         <ButtonLink
           variation="transparent"
           className="social-preview-panel__all"
@@ -32,7 +30,8 @@ export function CommunityPageMembersPreview({
         >
           {t('COMMON_VIEW_ALL')}
         </ButtonLink>
-      </header>
+      }
+    >
       <RequestState
         isLoading={communityPageQuery.isLoading}
         isFetching={communityPageQuery.isFetching}
@@ -59,6 +58,6 @@ export function CommunityPageMembersPreview({
           ))}
         </div>
       </RequestState>
-    </section>
+    </SocialPreviewPanel>
   )
 }

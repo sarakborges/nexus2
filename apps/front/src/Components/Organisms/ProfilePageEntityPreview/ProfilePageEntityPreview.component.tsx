@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 
 import { IdentityAvatar, RequestState } from '@/Components'
 import { ButtonLink } from '@/DesignSystem'
+import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import type { ProfilePageEntityPreviewProps } from './ProfilePageEntityPreview.types'
 
 export function ProfilePageEntityPreview({
@@ -18,14 +19,10 @@ export function ProfilePageEntityPreview({
   entries
 }: ProfilePageEntityPreviewProps) {
   return (
-    <section className="social-preview-panel">
-      <header className="social-preview-panel__header">
-        <h2>
-          {title}
-          <span className="social-preview-panel__count">
-            ({totalItems ?? '—'})
-          </span>
-        </h2>
+    <SocialPreviewPanel
+      title={title}
+      count={totalItems ?? '—'}
+      headerActions={
         <ButtonLink
           variation="transparent"
           className="social-preview-panel__all"
@@ -33,7 +30,8 @@ export function ProfilePageEntityPreview({
         >
           {allLabel}
         </ButtonLink>
-      </header>
+      }
+    >
       <RequestState
         isLoading={isLoading}
         isFetching={isFetching}
@@ -60,6 +58,6 @@ export function ProfilePageEntityPreview({
           ))}
         </div>
       </RequestState>
-    </section>
+    </SocialPreviewPanel>
   )
 }

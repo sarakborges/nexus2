@@ -37,7 +37,7 @@ export function HomePage() {
     >
       <section className="home-page__content">
         <header className="home-page__header">
-          <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
+          <h1 className="home-page__title">{t('HOME_TITLE')}</h1>
         </header>
         <HomePagePostComposer currentProfile={currentProfile} />
         <HomePageActivityFeed

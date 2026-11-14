@@ -5,6 +5,7 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
+import { SocialPanel } from '@/Components/Molecules/SocialPanel'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ProfilePageEntityPreview } from '@/Components/Organisms'
@@ -109,7 +110,7 @@ export function ProfilePage() {
           {t('PROFILE_TYPE_MISMATCH_NOTICE')}
         </p>
       )}
-      <article className="social-panel social-panel--about">
+      <SocialPanel className="social-panel--about">
         <header className="social-panel__header">
           <h2 className="social-panel__title">
             {t('PROFILE_ABOUT_LABEL')}
@@ -139,7 +140,7 @@ export function ProfilePage() {
         ) : (
           <p className="social-panel__body">{t('PROFILE_ABOUT_EMPTY')}</p>
         )}
-      </article>
+      </SocialPanel>
     </SocialPageLayout>
   )
 }

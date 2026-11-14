@@ -1,5 +1,6 @@
 import { RequestState } from '@/Components'
 import { ButtonLink } from '@/DesignSystem'
+import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import { HomePagePreviewEntry } from '@/Components/Molecules/HomePagePreviewEntry'
 import type { HomePageEntityPreviewProps } from './HomePageEntityPreview.types'
 import './HomePageEntityPreview.style.scss'
@@ -19,24 +20,17 @@ export function HomePageEntityPreview({
   getSecondary
 }: HomePageEntityPreviewProps) {
   return (
-    <section className="social-preview-panel">
-      <header className="social-preview-panel__header">
-        <h2>
-          {title}
-          {totalItems !== undefined && (
-            <span className="social-preview-panel__count">({totalItems})</span>
-          )}
-        </h2>
-        {viewAllHref && viewAllLabel && (
-          <ButtonLink
-            variation="transparent"
-            className="social-preview-panel__all"
-            to={viewAllHref}
-          >
+    <SocialPreviewPanel
+      title={title}
+      count={totalItems}
+      headerActions={
+        viewAllHref && viewAllLabel ? (
+          <ButtonLink variation="transparent" className="social-preview-panel__all" to={viewAllHref}>
             {viewAllLabel}
           </ButtonLink>
-        )}
-      </header>
+        ) : null
+      }
+    >
       <RequestState
         isLoading={isLoading}
         isFetching={isFetching}
@@ -57,6 +51,6 @@ export function HomePageEntityPreview({
           ))}
         </div>
       </RequestState>
-    </section>
+    </SocialPreviewPanel>
   )
 }

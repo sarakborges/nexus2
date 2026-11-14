@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { SocialPanel } from '@/Components/Molecules/SocialPanel'
 
 import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
@@ -15,7 +16,7 @@ export function CommunityPageAboutPreview({
   const { t } = useTranslations()
 
   return (
-    <article className="social-panel social-panel--about">
+    <SocialPanel className="social-panel--about">
       <header className="social-panel__header">
         <div>
           <h2 className="social-panel__title">
@@ -47,6 +48,6 @@ export function CommunityPageAboutPreview({
       ) : (
         <p className="social-panel__body">{t('COMMUNITY_ABOUT_EMPTY')}</p>
       )}
-    </article>
+    </SocialPanel>
   )
 }
