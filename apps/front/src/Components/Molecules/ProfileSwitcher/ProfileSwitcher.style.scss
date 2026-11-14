@@ -2,7 +2,7 @@
   &__profile-switcher {
 
     display: grid;
-    gap: var(--nexus-space-1, 4px);
+    gap: var(--nexus-space-1);
   
   }
   &__profile-toggle {
@@ -25,8 +25,6 @@
   }
   &__profile-chevron {
 
-    transition: transform 150ms ease;
-  
   }
   &__profile-chevron.is-open {
 
@@ -37,10 +35,10 @@
 
     display: grid;
     max-height: 260px;
-    gap: var(--nexus-space-1, 2px);
+    gap: var(--nexus-space-1);
     overflow-y: auto;
-    margin-left: var(--nexus-space-5, 20px);
-    padding: var(--nexus-space-1, 4px) var(--nexus-space-1, 4px) var(--nexus-space-1, 4px) var(--nexus-space-3, 14px);
+    margin-left: var(--nexus-space-5);
+    padding: var(--nexus-space-1) var(--nexus-space-1) var(--nexus-space-1) var(--nexus-space-3);
     border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   
   }
@@ -50,8 +48,8 @@
     align-items: center;
     width: 100%;
     min-height: 42px;
-    gap: var(--nexus-space-2, 9px);
-    padding: var(--nexus-space-2, 6px) var(--nexus-space-2, 9px);
+    gap: var(--nexus-space-2);
+    padding: var(--nexus-space-2) var(--nexus-space-2);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -112,7 +110,7 @@
   }
   &__profile-status {
 
-    padding: var(--nexus-space-2, 8px) var(--nexus-space-2, 10px);
+    padding: var(--nexus-space-2) var(--nexus-space-2);
     color: var(--color-neutral);
     font-size: 12px;
     line-height: 1.4;
@@ -121,7 +119,7 @@
   &__profile-status button {
 
     display: block;
-    padding: var(--nexus-space-1, 4px) 0;
+    padding: var(--nexus-space-1) 0;
     border: 0;
     background: transparent;
     color: var(--color-primary-weak);
