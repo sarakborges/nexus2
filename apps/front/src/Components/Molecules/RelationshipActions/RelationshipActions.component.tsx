@@ -1,4 +1,5 @@
 import type { RelationshipAction, RelationshipActionsProps } from './RelationshipActions.types'
+import type { TranslationKey } from '@/Types/Translation.type'
 import { useRelationshipActions } from './useRelationshipActions'
 
 import { Link } from 'react-router'
