@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 
 import type { ProfileDirectoryPageData } from '@nexus/common'
-import { HomePageEntityPreview } from './HomePageEntityPreview.component'
-import type { HomePageEntityPreviewItem } from './HomePageEntityPreview.types'
+import { HomePageEntityPreview } from '@/Components/Organisms/HomePageEntityPreview'
+import type { HomePageEntityPreviewItem } from '@/Components/Organisms/HomePageEntityPreview/HomePageEntityPreview.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
 
-import './HomePage.style.scss'
 
 const PREVIEW_PAGE_SIZE = 100
 const PREVIEW_ITEMS = 4

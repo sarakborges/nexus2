@@ -5,7 +5,7 @@ import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
 import { HomePageActivityFeed } from '@/Components/Organisms/HomePageActivityFeed'
 import { HomePagePostComposer } from '@/Components/Organisms/HomePagePostComposer'
-import { HomePageRightSidebar } from './HomePageRightSidebar.component'
+import { HomePageRightSidebar } from '@/Components/Organisms/HomePageRightSidebar'
 
 import './HomePage.style.scss'
 

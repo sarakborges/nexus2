@@ -25,3 +25,6 @@ export { HomePageEntityPreview } from './HomePageEntityPreview'
 export type { HomePageEntityPreviewProps } from './HomePageEntityPreview'
 export { HomePagePostComposer } from './HomePagePostComposer'
 export type { HomePagePostComposerProps } from './HomePagePostComposer'
+
+export { HomePageRightSidebar } from './HomePageRightSidebar'
+export type { HomePageRightSidebarProps } from './HomePageRightSidebar'
