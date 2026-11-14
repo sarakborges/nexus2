@@ -6,7 +6,6 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateProfilePage } from './useCreateProfilePage'
 
-
 export function CreateProfilePage() {
   const { t } = useTranslations()
   const {

@@ -5,6 +5,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPageAboutPreviewProps } from './CommunityPageAboutPreview.types'
+import './CommunityPageAboutPreview.style.scss'
 
 export function CommunityPageAboutPreview({
   community,

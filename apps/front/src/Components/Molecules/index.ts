@@ -47,3 +47,5 @@ export { SocialSidebar } from './SocialSidebar'
 export type { SocialSidebarProps, SocialSidebarNavigationItem } from './SocialSidebar'
 export { SocialPanel } from './SocialPanel'
 export { SocialPreviewPanel } from './SocialPreviewPanel'
+
+export { SearchResultItem } from './SearchResultItem'

@@ -10,7 +10,6 @@ import { CommunityPageForumPreview } from '@/Components/Organisms/CommunityPageF
 import { CommunityPageMembersPreview } from '@/Components/Organisms/CommunityPageMembersPreview'
 import { useCommunityPage } from './useCommunityPage'
 
-import './CommunityPage.style.scss'
 
 export function CommunityPage() {
   const { t } = useTranslations()

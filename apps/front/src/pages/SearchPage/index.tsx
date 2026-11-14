@@ -1,10 +1,11 @@
 import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import type { SearchScope } from '@nexus/common'
 import { Button } from '@/DesignSystem'
-import { IdentityAvatar, ListSortSelect, Pagination } from '@/Components'
+import { ListSortSelect, Pagination } from '@/Components'
+import { SearchResultItem } from '@/Components/Molecules/SearchResultItem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -75,32 +76,15 @@ export function SearchPage() {
             {results.map(item => {
               const result = getSearchResultDetails(item)
               return (
-                <article
-                  className="search-result"
+                <SearchResultItem
                   key={`${result.kind}:${result.id}`}
-                >
-                  <Link className="search-result__link" to={result.href}>
-                    <IdentityAvatar
-                      className="search-result__avatar"
-                      name={result.name}
-                      picture={result.picture}
-                    />
-                    <span className="search-result__copy">
-                      <strong>{result.name}</strong>
-                      <span className="search-result__address">
-                        {result.address}
-                      </span>
-                      {result.about && (
-                        <span className="search-result__about">
-                          {result.about}
-                        </span>
-                      )}
-                    </span>
-                    <span className="search-result__kind">
-                      {t(result.kind === 'profile' ? 'SEARCH_PROFILE' : 'SEARCH_COMMUNITY')}
-                    </span>
-                  </Link>
-                </article>
+                  name={result.name}
+                  picture={result.picture}
+                  address={result.address}
+                  href={result.href}
+                  about={result.about}
+                  kindLabel={t(result.kind === 'profile' ? 'SEARCH_PROFILE' : 'SEARCH_COMMUNITY')}
+                />
               )
             })}
           </div>
