@@ -6,7 +6,7 @@
   width: fit-content;
   height: var(--nexus-control-height, 40px);
   min-height: var(--nexus-control-height, 40px);
-  padding: 8px 16px;
+  padding: var(--nexus-space-2) var(--nexus-space-4);
   border: var(--nexus-border-width, 2px) solid transparent;
   border-radius: var(--nexus-control-radius, 0);
   color: var(--text-color);
