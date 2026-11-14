@@ -36,7 +36,6 @@
     background: transparent;
     color: var(--text-color);
     cursor: pointer;
-    transition: background-color 150ms ease;
   }
 
   &__icon-button {
@@ -285,7 +284,6 @@
     font-size: 14px;
     text-decoration: none;
     white-space: nowrap;
-    transition: background-color 140ms ease, color 140ms ease;
   }
 
   &__sidebar-link svg {
@@ -340,7 +338,6 @@
     text-align: left;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 150ms ease, transform 150ms ease;
   }
 
   &__menu-item svg {
@@ -352,7 +349,6 @@
 
   &__menu-item:hover:not(:disabled) {
     background: var(--color-background);
-    transform: translateY(-1px);
   }
 
   &__menu-item:disabled {
