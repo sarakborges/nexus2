@@ -1,0 +1,6 @@
+.home-page__previews {
+  display: grid;
+  align-content: start;
+  gap: var(--nexus-space-4, 16px);
+  min-width: 0;
+}

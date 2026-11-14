@@ -1,14 +1,14 @@
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Tabs } from '@/DesignSystem'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfileMessageComposer } from './ProfileMessageComposer.component'
-import { ProfileMessageList } from './ProfileMessageList.component'
+import { ProfileMessageComposer } from '@/Components/Molecules'
+import { ProfileMessageList } from '@/Components/Organisms'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 
-import '../AuthenticatedPage.style.scss'
 
 export function ProfileMessagesPage() {
   const { t } = useTranslations()
@@ -51,23 +51,13 @@ export function ProfileMessagesPage() {
 
   if (!requestedUrl) return <NotFoundPage />
   if (!isAuthInitialized || profileMessagesPageQuery.isLoading)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   if (profileMessagesPageQuery.isError)
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void profileMessagesPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void profileMessagesPageQuery.refetch()}
+      />
     )
   if (!profile) return <NotFoundPage />
 
@@ -80,8 +70,8 @@ export function ProfileMessagesPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>)}
+        
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">
@@ -91,8 +81,8 @@ export function ProfileMessagesPage() {
               {t(
                 isProfileOwner
                   ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION'
-                  : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION'
-              )}
+                  : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}
+              
             </p>
           </div>
         </header>
@@ -117,7 +107,15 @@ export function ProfileMessagesPage() {
             { value: 'favorites', label: t('PROFILE_MESSAGES_TAB_FAVORITES') }
           ]} />
         )}
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />))}
+        
         <RequestState
           isLoading={profileMessagesPageQuery.isLoading}
           isFetching={profileMessagesPageQuery.isFetching}

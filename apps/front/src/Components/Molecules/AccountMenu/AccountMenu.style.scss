@@ -1,0 +1,34 @@
+.floating-navigation {
+  &__menu-divider {
+
+    height: 1px;
+    margin: var(--nexus-space-1, 4px) var(--nexus-space-2, 8px);
+    background: var(--color-border);
+  
+  }
+  &__account-label > span,
+  &__menu-heading > span {
+
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  
+  }
+  &__menu-heading {
+
+    display: grid;
+    min-width: 0;
+    gap: var(--nexus-space-1, 4px);
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
+  
+  }
+  &__menu-item--danger,
+  &__menu-item--danger svg {
+
+    color: var(--color-error-text, var(--color-error-strong, #bd2121));
+  
+  }
+}

@@ -1,55 +1,18 @@
-import { Link, useSearchParams } from 'react-router'
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
-import type { SearchResultItem, SearchScope } from '@nexus/common'
-import { IdentityAvatar, Pagination } from '@/Components'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
-import { ROUTES } from '@/Constants/routes'
+import type { SearchScope } from '@nexus/common'
+import { Button } from '@/DesignSystem'
+import { ListSortSelect, Pagination } from '@/Components'
+import { SearchResultItem } from '@/Components/Molecules/SearchResultItem'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { searchEntities } from '@/Services/Search/search.service'
+import { getSearchResultDetails } from './searchResult.utils'
 
 import './SearchPage.style.scss'
-
-function getPlainText(value: string): string {
-  return value
-    .replace(/<br\s*\/?\s*>/gi, ' ')
-    .replace(/<\/(?:p|div|li|h[1-6])\s*>/gi, ' ')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;|&#160;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function resultDetails(item: SearchResultItem) {
-  if (item.kind === 'profile') {
-    return {
-      id: item.profile.id,
-      name: item.profile.name,
-      picture: item.profile.picture,
-      about: getPlainText(item.profile.about),
-      address: `/profile/${item.profile.url}`,
-      href: `${ROUTES.profile}/${item.profile.url}`,
-      kind: 'profile' as const
-    }
-  }
-
-  return {
-    id: item.community.id,
-    name: item.community.name,
-    picture: item.community.picture,
-    about: getPlainText(item.community.about),
-    address: `/community/${item.community.url}`,
-    href: `${ROUTES.community}/${item.community.url}`,
-    kind: 'community' as const
-  }
-}
 
 export function SearchPage() {
   const { t } = useTranslations()
@@ -71,7 +34,7 @@ export function SearchPage() {
   const totalItems = searchQuery.data?.totalItems ?? 0
 
   return (
-    <main className="search-page">
+    <AuthenticatedPageTemplate className="search-page">
       <section className="search-page__content">
         <header className="search-page__header">
           <div>
@@ -85,7 +48,9 @@ export function SearchPage() {
           )}
         </header>
 
-        <PaginatedListControls query={query} sort={sort} onQueryChange={() => undefined} onSortChange={setSort} showQuery={false} />
+        {totalItems > 0 && (
+          <ListSortSelect value={sort} onChange={setSort} />
+        )}
 
         {searchQuery.isLoading && (
           <p className="search-page__state" role="status">
@@ -96,9 +61,9 @@ export function SearchPage() {
         {searchQuery.isError && (
           <div className="search-page__state" role="alert">
             <p>{t('SEARCH_FAILED')}</p>
-            <button type="button" onClick={() => void searchQuery.refetch()}>
+            <Button type="button" variation="secondary" onClick={() => void searchQuery.refetch()}>
               {t('SEARCH_RETRY')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -109,34 +74,17 @@ export function SearchPage() {
         {results.length > 0 && (
           <div className="search-page__results">
             {results.map(item => {
-              const result = resultDetails(item)
+              const result = getSearchResultDetails(item)
               return (
-                <article
-                  className="search-result"
+                <SearchResultItem
                   key={`${result.kind}:${result.id}`}
-                >
-                  <Link className="search-result__link" to={result.href}>
-                    <IdentityAvatar
-                      className="search-result__avatar"
-                      name={result.name}
-                      picture={result.picture}
-                    />
-                    <span className="search-result__copy">
-                      <strong>{result.name}</strong>
-                      <span className="search-result__address">
-                        {result.address}
-                      </span>
-                      {result.about && (
-                        <span className="search-result__about">
-                          {result.about}
-                        </span>
-                      )}
-                    </span>
-                    <span className="search-result__kind">
-                      {t(result.kind === 'profile' ? 'SEARCH_PROFILE' : 'SEARCH_COMMUNITY')}
-                    </span>
-                  </Link>
-                </article>
+                  name={result.name}
+                  picture={result.picture}
+                  address={result.address}
+                  href={result.href}
+                  about={result.about}
+                  kindLabel={t(result.kind === 'profile' ? 'SEARCH_PROFILE' : 'SEARCH_COMMUNITY')}
+                />
               )
             })}
           </div>
@@ -149,6 +97,6 @@ export function SearchPage() {
           onPageChange={setPage}
         />
       </section>
-    </main>
+    </AuthenticatedPageTemplate>
   )
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -11,7 +12,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useProfileCommunitiesPage } from './useProfileCommunitiesPage'
 
-import '../AuthenticatedPage.style.scss'
 
 export function ProfileCommunitiesPage() {
   const { t } = useTranslations()
@@ -35,24 +35,14 @@ export function ProfileCommunitiesPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (profileDirectoryQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void profileDirectoryQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void profileDirectoryQuery.refetch()}
+      />
     )
   }
   if (!profile) return <NotFoundPage />
@@ -67,13 +57,21 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />))}
+        
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>)}
+        
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}

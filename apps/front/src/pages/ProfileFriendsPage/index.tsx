@@ -1,6 +1,7 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Link } from 'react-router'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -11,7 +12,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useProfileFriendsPage } from './useProfileFriendsPage'
 
-import '../AuthenticatedPage.style.scss'
 
 export function ProfileFriendsPage() {
   const { t } = useTranslations()
@@ -37,24 +37,14 @@ export function ProfileFriendsPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (profileDirectoryQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void profileDirectoryQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void profileDirectoryQuery.refetch()}
+      />
     )
   }
   if (!profile) return <NotFoundPage />
@@ -67,13 +57,21 @@ export function ProfileFriendsPage() {
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
         </header>
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />))}
+        
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>)}
+        
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}

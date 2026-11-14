@@ -12,15 +12,15 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 12px;
+  gap: var(--nexus-space-3, 12px);
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--nexus-space-3, 12px) var(--nexus-space-3, 14px);
   text-align: left;
 
   &__content {
     display: grid;
     flex: 1;
-    gap: 4px;
+    gap: var(--nexus-space-1, 4px);
     min-width: 0;
   }
 

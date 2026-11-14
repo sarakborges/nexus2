@@ -139,7 +139,10 @@ test('an automatic refresh failure does not clear cookies on a potentially concu
         return { status: 401, headers: {}, data: { message: 'ACCESS_TOKEN_INVALID_OR_EXPIRED' } }
       },
       async post() {
-        throw new Error('REFRESH_TOKEN_REVOKED')
+        throw Object.assign(new Error('REFRESH_TOKEN_REVOKED'), {
+          isAxiosError: true,
+          response: { status: 401 }
+        })
       }
     }
   }
@@ -149,5 +152,30 @@ test('an automatic refresh failure does not clear cookies on a potentially concu
   await controller.proxy(createRequest(), response)
 
   assert.equal(response.statusCode, 401)
+  assert.equal(response.headers['set-cookie'], undefined)
+})
+
+
+test('a transient refresh service failure returns 502 instead of a false 401 logout', async () => {
+  const http = {
+    axiosRef: {
+      async request() {
+        return { status: 401, headers: {}, data: { message: 'ACCESS_TOKEN_INVALID_OR_EXPIRED' } }
+      },
+      async post() {
+        throw Object.assign(new Error('BACKEND_UNAVAILABLE'), {
+          isAxiosError: true,
+          response: { status: 503 }
+        })
+      }
+    }
+  }
+  const controller = new ApiProxyController(http)
+  const response = createResponse()
+
+  await controller.proxy(createRequest(), response)
+
+  assert.equal(response.statusCode, 502)
+  assert.equal(response.body.message, 'BACKEND_UNAVAILABLE')
   assert.equal(response.headers['set-cookie'], undefined)
 })

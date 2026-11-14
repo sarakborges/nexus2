@@ -3,6 +3,7 @@ import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
+import { useEntityDetailsDraft } from '@/Hooks/Forms'
 import { useCreateCommunityMutation } from '@/Hooks/Community'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
@@ -17,10 +18,8 @@ export function useCreateCommunityPage(): UseCreateCommunityPageResult {
   const session = useAuthStore((state) => state.session)
   const ownerProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
-  const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
-  const [picture, setPicture] = useState('')
-  const [about, setAbout] = useState('')
+  const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
+    useEntityDetailsDraft()
   const [privacy, setPrivacy] = useState<CommunityPrivacy>('public')
   const [errorMessage, setErrorMessage] = useState('')
   const createCommunityMutation = useCreateCommunityMutation()

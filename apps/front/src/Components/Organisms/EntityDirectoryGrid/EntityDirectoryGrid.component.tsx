@@ -2,6 +2,8 @@ import { Link } from 'react-router'
 
 import type { EntityDirectoryGridProps } from './EntityDirectoryGrid.types'
 
+import './EntityDirectoryGrid.style.scss'
+
 export function EntityDirectoryGrid({ entries }: EntityDirectoryGridProps) {
   return (
     <div className="account-card__profile-list account-card__profile-list--grid">

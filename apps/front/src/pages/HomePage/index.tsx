@@ -1,10 +1,11 @@
-import { RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
-import { HomePageActivityFeed } from './HomePageActivityFeed.component'
-import { HomePagePostComposer } from './HomePagePostComposer.component'
+import { HomePageActivityFeed } from '@/Components/Organisms/HomePageActivityFeed'
+import { HomePagePostComposer } from '@/Components/Organisms/HomePagePostComposer'
+import { HomePageRightSidebar } from '@/Components/Organisms/HomePageRightSidebar'
 
 import './HomePage.style.scss'
 
@@ -16,19 +17,27 @@ export function HomePage() {
 
   if (!currentProfile) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading={homeQuery.isLoading} isError={homeQuery.isError} onRetry={() => void homeQuery.refetch()} />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isLoading={homeQuery.isLoading}
+        isError={homeQuery.isError}
+        onRetry={() => void homeQuery.refetch()}
+      />
     )
   }
 
   return (
-    <SocialPageLayout className="home-page">
+    <SocialPageLayout
+      className="home-page"
+      rightSidebar={
+        <HomePageRightSidebar
+          currentProfile={currentProfile}
+          suggestedCommunities={me?.suggestedCommunities ?? []}
+        />
+      }
+    >
       <section className="home-page__content">
         <header className="home-page__header">
-          <h1 className="social-panel__title">{t('HOME_TITLE')}</h1>
+          <h1 className="home-page__title">{t('HOME_TITLE')}</h1>
         </header>
         <HomePagePostComposer currentProfile={currentProfile} />
         <HomePageActivityFeed

@@ -2,14 +2,14 @@
   display: flex;
   place-items: center;
   justify-content: flex-start;
-  gap: 8px;
+  gap: var(--nexus-space-2, 8px);
 
   width: 100%;
-  padding: 8px 24px;
+  padding: var(--nexus-space-2, 8px) var(--nexus-space-6, 24px);
 
   &__label {
     flex: 1;
-    padding: 4px 0;
+    padding: var(--nexus-space-1, 4px) 0;
 
     font-size: 12px;
     text-align: left;

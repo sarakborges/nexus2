@@ -17,7 +17,7 @@ import {
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
-import type { ProfileMessageViewModel } from './ProfileMessageList.types'
+import type { ProfileMessageViewModel } from '@/Components/Organisms/ProfileMessageList/ProfileMessageList.types'
 import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.types'
 
 export function useProfileMessagesPage(): UseProfileMessagesPageResult {
@@ -55,12 +55,22 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const isProfileOwner = pageData?.isProfileOwner ?? false
   const viewerRelationship = pageData?.viewerRelationship ?? null
   const currentProfileType = pageData?.currentProfileType ?? null
-  const isChecking = Boolean(currentProfileId && profileMessagesPageQuery.isLoading)
-  const isCompatible = !currentProfileId || (profileMessagesPageQuery.isSuccess && currentProfileType === (profile?.type ?? 'social'))
+
+  // A profile owner can always view and manage their own message inbox.
+  // Cross-type restrictions apply only when the active profile is acting on
+  // another profile, not when the user is reading their own profile.
+  const isChecking = Boolean(
+    !isProfileOwner && currentProfileId && profileMessagesPageQuery.isLoading
+  )
+  const isCompatible =
+    isProfileOwner ||
+    !currentProfileId ||
+    (profileMessagesPageQuery.isSuccess &&
+      currentProfileType === (profile?.type ?? 'social'))
   const typeCompatibility = {
     isChecking,
     isCompatible,
-    canInteract: !session || (isCompatible && !isChecking)
+    canInteract: isProfileOwner || !session || (isCompatible && !isChecking)
   }
   const canInteract = typeCompatibility.canInteract
   const messages = pageData?.messages.items ?? []

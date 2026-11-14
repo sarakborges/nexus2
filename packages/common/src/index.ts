@@ -32,6 +32,7 @@ export type AuthMeResponse = {
   user: AuthenticatedUser
   currentProfile: Profile | null
   currentProfileSettings: ProfileSettings | null
+  suggestedCommunities: Community[]
   activities: RecentActivity[]
   activityCursor: ActivityFeedCursor | null
   hasMoreActivities: boolean

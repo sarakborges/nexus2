@@ -1,11 +1,11 @@
 .language-selector {
   display: flex;
   flex-flow: column;
-  gap: 4px;
+  gap: var(--nexus-space-1, 4px);
 
   &__options {
     display: flex;
     flex-flow: column;
-    gap: 4px;
+    gap: var(--nexus-space-1, 4px);
   }
 }

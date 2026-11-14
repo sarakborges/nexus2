@@ -1,4 +1,4 @@
-import type { Profile } from '@nexus/common'
+import type { CommunityMember } from '@/Models/CommunityMember.model'
 
-export type MemberTab = 'all' | 'staff' | 'banned'
-export type Member = Profile & { role: string }
+export type { MemberTab } from '@/Components/Organisms/CommunityMemberDirectory/CommunityMemberDirectory.types'
+export type Member = CommunityMember

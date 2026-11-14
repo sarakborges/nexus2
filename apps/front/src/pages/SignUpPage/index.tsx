@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { Link } from 'react-router'
 
 import { AuthPageLayout } from '@/Components/Organisms/AuthPageLayout/AuthPageLayout.component'
@@ -6,7 +7,6 @@ import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useSignUpPage } from './useSignUpPage'
 
-import '../AuthPage.style.scss'
 
 export function SignUpPage() {
   const { t } = useTranslations()
@@ -26,10 +26,10 @@ export function SignUpPage() {
     <AuthPageLayout>
       <section className="auth-form-content" aria-labelledby="sign-up-title">
         <header className="auth-form-content__header">
-          <h1 className="auth-card__title" id="sign-up-title">
+          <h1 className="auth-form-content__title" id="sign-up-title">
             {t('AUTH_SIGN_UP_TITLE')}
           </h1>
-          <p className="auth-card__description">
+          <p className="auth-form-content__description">
             {t('AUTH_SIGN_UP_DESCRIPTION')}
           </p>
         </header>
@@ -64,15 +64,13 @@ export function SignUpPage() {
             required
           />
           {errorMessage && (
-            <p className="auth-card__error" role="alert">
-              {errorMessage}
-            </p>
+            <FormErrorMessage>{errorMessage}</FormErrorMessage>
           )}
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? t('AUTH_SUBMITTING') : t('AUTH_SIGN_UP_ACTION')}
           </Button>
         </form>
-        <p className="auth-card__footer">
+        <p className="auth-form-content__footer">
           {t('AUTH_HAS_ACCOUNT')}{' '}
           <Link to={ROUTES.signIn}>{t('AUTH_SIGN_IN_LINK')}</Link>
         </p>

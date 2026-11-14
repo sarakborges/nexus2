@@ -1,0 +1,18 @@
+.profile-settings-message-audience__section {
+  display: grid;
+  gap: var(--nexus-space-2, 8px);
+  padding-top: var(--nexus-space-5, 20px);
+  border-top: var(--nexus-border-width, 2px) solid var(--color-border);
+
+  > p {
+    margin: 0;
+    color: var(--color-neutral);
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-settings-message-audience__section {
+    padding-top: var(--nexus-space-4, 16px);
+  }
+}

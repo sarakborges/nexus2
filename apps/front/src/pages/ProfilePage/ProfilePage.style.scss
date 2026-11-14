@@ -1,6 +1,26 @@
-.social-page__state {
+.profile-page__relationship-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--nexus-space-2);
+}
+
+.profile-page__action {
   box-sizing: border-box;
-  width: min(100%, var(--main-content-max-width));
-  margin: 0 auto;
-  padding-inline: var(--main-content-gutter);
+  width: 140px;
+  min-width: 140px;
+  flex: 0 0 140px;
+}
+
+@media (max-width: 680px) {
+  .profile-page__relationship-actions {
+    width: 100%;
+  }
+
+  .profile-page__relationship-actions .profile-page__action,
+  .social-panel__header-actions > .profile-page__action {
+    width: 140px;
+    flex: 0 0 140px;
+  }
 }

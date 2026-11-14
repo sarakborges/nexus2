@@ -17,7 +17,8 @@ export function useAppInitialization(): UseAppInitializationResult {
   const shouldInitializeAuth = true
   const setSession = useAuthStore((state) => state.setSession)
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
-  const userId = useAuthStore((state) => state.session?.user.id ?? null)
+  const session = useAuthStore((state) => state.session)
+  const userId = session?.user.id ?? null
   const resetSettings = useSettingsStore((state) => state.resetSettings)
   const setSettings = useSettingsStore((state) => state.setSettings)
 
@@ -36,9 +37,14 @@ export function useAppInitialization(): UseAppInitializationResult {
   useThemePreference()
 
   useEffect(() => {
-    if (authQuery.isSuccess) setSession(authQuery.data ?? null)
-    else if (authQuery.isError) setSession(null, true)
-  }, [authQuery.isSuccess, authQuery.isError, authQuery.data, setSession])
+    if (authQuery.isSuccess) {
+      setSession(authQuery.data ?? null)
+    } else if (authQuery.isError && !session) {
+      // A transient BFF/network failure must not erase a session that was
+      // already hydrated by sign-in or by a previous successful /auth/me.
+      setSession(null, true)
+    }
+  }, [authQuery.isSuccess, authQuery.isError, authQuery.data, setSession, session])
 
   useEffect(() => {
     if (preferencesQuery.data) setSettings(preferencesQuery.data)

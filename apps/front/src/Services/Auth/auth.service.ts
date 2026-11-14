@@ -83,6 +83,7 @@ function isAuthMeResponse(value: unknown): value is AuthMeResponse {
     validProfile &&
     Object.prototype.hasOwnProperty.call(response, 'currentProfileSettings') &&
     validProfileSettings &&
+    Array.isArray(response.suggestedCommunities) &&
     Array.isArray(response.activities) &&
     validCursor &&
     typeof response.hasMoreActivities === 'boolean'

@@ -1,14 +1,14 @@
 import type { Profile, ProfileEditPageData } from '@nexus/common'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 
 import { ROUTES } from '@/Constants/routes'
 import { useUpdateProfileMutation } from '@/Hooks/Profile'
-import { useEntityFormDraft } from '@/Hooks/Forms'
+import { useEntityEditPageState } from '@/Hooks/Forms'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { getApiErrorCode } from '@/Services/Http/api'
@@ -16,7 +16,12 @@ import { getProfileEditPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import type { ProfileForm } from './EditProfilePage.types'
 import type { UseEditProfilePageResult } from './useEditProfilePage.types'
+
+function createProfileEditForm(profile: Profile): ProfileForm {
+  return { name: profile.name, url: profile.url, about: profile.about }
+}
 
 export function useEditProfilePage(): UseEditProfilePageResult {
   const { url } = useParams<{ url: string }>()
@@ -30,7 +35,7 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const showToast = useToastStore((state) => state.showToast)
   const requestedUrl = normalizeEntityUrl(url)
 
-  const profileEditPageQuery = useQuery({
+  const editState = useEntityEditPageState<ProfileEditPageData, Profile, ProfileForm>({
     queryKey: queryKeys.profileEditPage(
       requestedUrl,
       viewerUserId,
@@ -38,29 +43,17 @@ export function useEditProfilePage(): UseEditProfilePageResult {
     ),
     queryFn: () => getProfileEditPage(requestedUrl),
     enabled: Boolean(requestedUrl && isAuthInitialized),
-    staleTime: 30 * 1000
+    currentProfileId,
+    selectEntity: (data) => data.profile,
+    getEntityId: (profile) => profile.id,
+    getEntityType: (profile) => profile.type,
+    getCurrentProfileType: (data) => data.currentProfileType,
+    createInitialForm: createProfileEditForm
   })
-  const profile = profileEditPageQuery.data?.profile
-  const currentProfileType =
-    profileEditPageQuery.data?.currentProfileType ?? null
-  const typeCompatibility = {
-    isChecking: Boolean(currentProfileId && profileEditPageQuery.isLoading),
-    isCompatible:
-      !currentProfileId ||
-      (profileEditPageQuery.isSuccess &&
-        currentProfileType === (profile?.type ?? 'social'))
-  }
-  const initialForm = useMemo(
-    () =>
-      profile
-        ? { name: profile.name, url: profile.url, about: profile.about }
-        : null,
-    [profile]
-  )
-  const { form, updateForm } = useEntityFormDraft(
-    profile?.id ?? null,
-    initialForm
-  )
+  const profileEditPageQuery = editState.query
+  const profile = editState.entity
+  const typeCompatibility = editState.typeCompatibility
+  const { form, updateForm } = editState
   const [errorMessage, setErrorMessage] = useState('')
   const updateMutation = useUpdateProfileMutation()
 

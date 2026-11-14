@@ -1,5 +1,6 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import {
   CommunitySidebar,
@@ -10,7 +11,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useCommunityForumPage } from './useCommunityForumPage'
 
-import '../AuthenticatedPage.style.scss'
 import './CommunityForumPage.style.scss'
 
 export function CommunityForumPage() {
@@ -39,24 +39,14 @@ export function CommunityForumPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || forumPageQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (forumPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void forumPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void forumPageQuery.refetch()}
+      />
     )
   }
   if (!community) return <NotFoundPage />
@@ -79,8 +69,8 @@ export function CommunityForumPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+          </p>)}
+        
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -91,11 +81,19 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
-            </Button>
-          )}
+            </Button>)}
+          
         </header>
 
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {((forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />))}
+        
         <RequestState isFetching={forumPageQuery.isFetching} />
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
@@ -107,8 +105,8 @@ export function CommunityForumPage() {
               targetKind="community"
               relationship={viewerRelationship}
             />
-          </div>
-        )}
+          </div>)}
+        
 
         <RequestState
           isLoading={forumPageQuery.isLoading}

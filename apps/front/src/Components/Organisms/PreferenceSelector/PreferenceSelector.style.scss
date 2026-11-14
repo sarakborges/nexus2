@@ -1,8 +1,8 @@
 .preference-selector {
   display: grid;
-  gap: 12px;
+  gap: var(--nexus-space-3, 12px);
   min-width: 0;
-  padding: 16px;
+  padding: var(--nexus-space-4, 16px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
@@ -17,7 +17,7 @@
 
   &__options {
     display: grid;
-    gap: 6px;
+    gap: var(--nexus-space-2, 6px);
     min-width: 0;
   }
 }

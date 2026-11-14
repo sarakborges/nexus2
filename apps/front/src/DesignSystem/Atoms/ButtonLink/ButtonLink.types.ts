@@ -4,4 +4,5 @@ import type { ButtonVariation } from '../Button/Button.types'
 
 export type ButtonLinkProps = LinkProps & {
   variation?: ButtonVariation
+  disabled?: boolean
 }

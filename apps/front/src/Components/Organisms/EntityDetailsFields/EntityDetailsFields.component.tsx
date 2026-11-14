@@ -4,9 +4,8 @@ import type {
   EntityDetailsFieldsProps
 } from './EntityDetailsFields.types'
 
-import { AvatarUploadField } from '@/Components/Molecules/AvatarUploadField'
-import { RichTextEditor } from '@/Components/Molecules/RichTextEditor'
-import { FormField, Label } from '@/DesignSystem'
+import { AvatarUploadField, RichTextComposerField } from '@/Components'
+import { FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 const FIELD_CONFIG: Record<EntityDetailsEntity, EntityDetailsFieldConfig> = {
@@ -88,21 +87,17 @@ export function EntityDetailsFields({
           autoComplete="off"
         />
         <p className="account-card__description">{t(config.urlHelp)}</p>
-        <div className="form-field">
-          <Label id={`${entity}-about-label`} htmlFor={`${entity}-about`}>
-            {t(config.aboutLabel)}
-          </Label>
-          <RichTextEditor
-            id={`${entity}-about`}
-            value={about}
-            onChange={onAboutChange}
-            maxHtmlLength={8000}
-            imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-            imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-            onUploadImage={onUploadImage}
-            placeholder={t('RICH_TEXT_PLACEHOLDER')}
-          />
-        </div>
+        <RichTextComposerField
+          id={`${entity}-about`}
+          label={t(config.aboutLabel)}
+          value={about}
+          onChange={onAboutChange}
+          maxHtmlLength={8000}
+          imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+          imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+          onUploadImage={onUploadImage}
+          placeholder={t('RICH_TEXT_PLACEHOLDER')}
+        />
       </div>
     </>
   )

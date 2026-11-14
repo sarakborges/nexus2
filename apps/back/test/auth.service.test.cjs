@@ -39,10 +39,11 @@ function createAuthHarness({ failTransaction = false } = {}) {
           item.expiresAt > now
         )
         if (!previous) throw new Error('REFRESH_TOKEN_REVOKED')
+        // Match the relational RPC: keep the previous token briefly so
+        // another serverless instance can complete the same rotation race.
+        previous.expiresAt = Math.min(previous.expiresAt, now + 30_000)
       }
-      const next = tokens.filter(item =>
-        item.expiresAt > now && (!rotation || item.id !== rotation.id)
-      )
+      const next = tokens.filter(item => item.expiresAt > now)
       next.push(structuredClone(record))
       collections.set('refresh_tokens', next)
     },
@@ -156,18 +157,30 @@ test('refresh reads only the account identified by the signed token', async () =
   assert.deepEqual(accountIds, [initial.user.id])
 })
 
-test('refresh rotates tokens and rejects replay of the previous token', async () => {
+test('refresh allows concurrent rotations during the short grace window then rejects replay', async () => {
   const { service, collections } = createAuthHarness()
   const initial = await service.signUp({ email: 'person@example.com', password: 'a-secure-password' })
+  const originalNow = Date.now
+  const now = originalNow()
+  Date.now = () => now
 
-  const rotated = await service.refresh(initial.refreshToken)
-  assert.notEqual(rotated.refreshToken, initial.refreshToken)
-  assert.equal(collections.get('refresh_tokens').length, 1)
+  try {
+    const firstRotation = await service.refresh(initial.refreshToken)
+    const concurrentRotation = await service.refresh(initial.refreshToken)
 
-  await assert.rejects(
-    service.refresh(initial.refreshToken),
-    error => error.getStatus() === 401 && error.message === 'REFRESH_TOKEN_REVOKED'
-  )
+    assert.notEqual(firstRotation.refreshToken, initial.refreshToken)
+    assert.notEqual(concurrentRotation.refreshToken, initial.refreshToken)
+    assert.notEqual(firstRotation.refreshToken, concurrentRotation.refreshToken)
+    assert.equal(collections.get('refresh_tokens').length, 3)
+
+    Date.now = () => now + 30_001
+    await assert.rejects(
+      service.refresh(initial.refreshToken),
+      error => error.getStatus() === 401 && error.message === 'REFRESH_TOKEN_REVOKED'
+    )
+  } finally {
+    Date.now = originalNow
+  }
 })
 
 test('a user cannot select a profile that is not linked to their account', async () => {
@@ -196,7 +209,7 @@ test('remove-profile rolls back ownership and restores the previous active profi
 })
 
 
-test('concurrent refresh requests rotate a refresh token only once', async () => {
+test('concurrent refresh requests from separate callers both complete within the grace window', async () => {
   const { service, collections } = createAuthHarness()
   const initial = await service.signUp({ email: 'race@example.com', password: 'a-secure-password' })
 
@@ -205,12 +218,9 @@ test('concurrent refresh requests rotate a refresh token only once', async () =>
     service.refresh(initial.refreshToken)
   ])
 
-  assert.equal(results.filter(result => result.status === 'fulfilled').length, 1)
-  assert.equal(results.filter(result => result.status === 'rejected').length, 1)
-  const rejection = results.find(result => result.status === 'rejected')
-  assert.equal(rejection.reason.getStatus(), 401)
-  assert.equal(rejection.reason.message, 'REFRESH_TOKEN_REVOKED')
-  assert.equal(collections.get('refresh_tokens').length, 1)
+  assert.equal(results.filter(result => result.status === 'fulfilled').length, 2)
+  assert.equal(results.filter(result => result.status === 'rejected').length, 0)
+  assert.equal(collections.get('refresh_tokens').length, 3)
 })
 
 test('concurrent sign-ups cannot create duplicate normalized emails', async () => {
