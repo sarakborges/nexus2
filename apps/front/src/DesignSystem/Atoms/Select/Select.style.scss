@@ -1,0 +1,29 @@
+.select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+
+  background-color: var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-neutral-weak);
+  border-radius: var(--nexus-control-radius, 0);
+
+  color: var(--color-neutral-strong);
+  font: inherit;
+  font-size: 12px;
+
+  transition:
+    border-color 0.3s,
+    opacity 0.3s;
+
+  &:not(:disabled):focus-visible {
+    border-color: var(--color-primary-strong);
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}
