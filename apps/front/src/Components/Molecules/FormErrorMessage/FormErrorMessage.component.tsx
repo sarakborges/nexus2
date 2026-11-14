@@ -1,10 +1,6 @@
-import type { ReactNode } from 'react'
+import type { FormErrorMessageProps } from './FormErrorMessage.types'
 
 import './FormErrorMessage.style.scss'
-
-export type FormErrorMessageProps = {
-  children: ReactNode
-}
 
 export function FormErrorMessage({ children }: FormErrorMessageProps) {
   return (

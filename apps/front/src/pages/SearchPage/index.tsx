@@ -47,7 +47,9 @@ export function SearchPage() {
           )}
         </header>
 
-        <ListSortSelect value={sort} onChange={setSort} />
+        {totalItems > 0 && (
+          <ListSortSelect value={sort} onChange={setSort} />
+        )}
 
         {searchQuery.isLoading && (
           <p className="search-page__state" role="status">
