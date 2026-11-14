@@ -4,43 +4,53 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 12px;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   margin-inline: auto;
-  padding: 1rem;
+  padding: 16px;
   text-align: center;
 }
 
 .request-state__spinner {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 20px;
+  height: 20px;
   border: var(--nexus-border-width, 2px) solid var(--border-color, currentColor);
   border-right-color: transparent;
   border-radius: 50%;
-  animation: request-state-spin 0.7s linear infinite;
-}
-
-@keyframes request-state-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .request-state--inline {
   flex-direction: row;
   justify-content: center;
   min-height: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.request-state--empty {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 20px 0;
+  text-align: left;
+}
+
+.request-state__empty-message {
+  width: 100%;
+  margin: 0;
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .request-state__empty-action {
   display: flex;
-  justify-content: center;
-  margin-top: 0.75rem;
-  text-align: center;
+  justify-content: flex-start;
+  width: 100%;
+  margin: 0;
+  text-align: left;
 }
 
 .request-state__empty-action a {

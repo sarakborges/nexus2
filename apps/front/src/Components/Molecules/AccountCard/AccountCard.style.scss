@@ -1,0 +1,174 @@
+.account-card {
+  display: flex;
+  box-sizing: border-box;
+  flex-direction: column;
+  gap: 24px;
+  width: min(100%, var(--main-content-max-width));
+  min-width: 0;
+  margin-inline: auto;
+  padding: 24px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
+  background: var(--color-surface);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.account-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.account-card__title {
+  color: var(--text-color);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.account-card__description {
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-card__link {
+  width: fit-content;
+  color: var(--color-primary-weak);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.account-card__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--nexus-control-radius, 0);
+  background: var(--color-primary-strong);
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.account-card__profile-list {
+  display: grid;
+  gap: 12px;
+}
+
+.account-card__profile-list--grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+.account-card__profile-list h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
+.account-card__details {
+  display: grid;
+  gap: 12px;
+}
+
+.account-card__details dt {
+  color: var(--color-neutral);
+  font-size: 12px;
+}
+
+.account-card__details dd {
+  margin-top: 4px;
+  color: var(--text-color);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.account-card__onboarding {
+  display: grid;
+  gap: 10px;
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.account-card__onboarding h2 {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
+.account-card__onboarding ul {
+  display: grid;
+  gap: 6px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.account-card__onboarding li {
+  font-size: 14px;
+}
+
+.account-card__picture {
+  width: 96px;
+  height: auto;
+  max-height: 192px;
+  border-radius: var(--avatar-shape-radius);
+  background: var(--color-neutral-weak);
+  object-fit: cover;
+}
+
+.account-card__profile-link {
+  color: var(--color-primary-weak);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.account-card__relationship-actions,
+.account-card__actions,
+.account-card__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .account-card {
+    padding: 16px;
+  }
+
+  .account-card__header {
+    flex-direction: column;
+  }
+
+  .account-card__header-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .account-card {
+    padding: 18px;
+  }
+
+  .account-card__profile-list--grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-card__header {
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .account-card__header-actions > *,
+  .account-card__relationship-actions > *,
+  .account-card__actions > * {
+    flex: 1 1 140px;
+    max-width: 100%;
+  }
+}

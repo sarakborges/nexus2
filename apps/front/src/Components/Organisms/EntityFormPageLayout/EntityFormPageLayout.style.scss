@@ -1,0 +1,67 @@
+.entity-form-page-template {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.entity-form-page {
+  display: grid;
+  gap: 20px;
+  width: min(100%, var(--main-content-max-width));
+  color: var(--text-color);
+}
+
+.entity-form-page__header {
+  display: grid;
+  gap: 8px;
+}
+
+.entity-form-page__title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.entity-form-page__description {
+  margin: 0;
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.entity-form-page__form {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+}
+
+.entity-form-page__card {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  padding: 24px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.entity-form-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .entity-form-page__card {
+    padding: 18px;
+  }
+
+  .entity-form-page__actions {
+    flex-direction: column-reverse;
+  }
+
+  .entity-form-page__actions > .button {
+    width: 100%;
+  }
+}

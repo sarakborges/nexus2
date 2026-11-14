@@ -1,0 +1,113 @@
+.profile-settings-activity-matrix {
+  &__matrix {
+    display: grid;
+    min-width: 0;
+    margin-top: 8px;
+    overflow-x: auto;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+  }
+
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(220px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr);
+    min-width: 0;
+    border-top: var(--nexus-border-width, 2px) solid var(--color-border);
+  }
+
+  &__row:first-child {
+    border-top: 0;
+  }
+
+  &__row > span,
+  &__row > label {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 8px 12px;
+    border-left: var(--nexus-border-width, 2px) solid var(--color-border);
+  }
+
+  &__row > :first-child {
+    border-left: 0;
+  }
+
+  &__row > label {
+    justify-content: center;
+    min-height: 42px;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  &__row--header,
+  &__row--header > * {
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__row--header {
+    background: var(--color-surface-raised);
+  }
+}
+
+@media (max-width: 560px) {
+  .profile-settings-activity-matrix__matrix {
+    gap: 10px;
+    overflow: visible;
+    border: 0;
+  }
+
+  .profile-settings-activity-matrix__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-width: 0;
+    overflow: hidden;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+  }
+
+  .profile-settings-activity-matrix__row--header {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .profile-settings-activity-matrix__row > span {
+    grid-column: 1 / -1;
+    min-height: 40px;
+    padding: 10px 12px;
+    border: 0;
+    background: var(--color-surface-raised);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .profile-settings-activity-matrix__row > label {
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 72px;
+    padding: 10px 12px;
+    border: 0;
+    border-top: var(--nexus-border-width, 2px) solid var(--color-border);
+    gap: 8px;
+  }
+
+  .profile-settings-activity-matrix__row > label + label {
+    border-left: var(--nexus-border-width, 2px) solid var(--color-border);
+  }
+
+  .profile-settings-activity-matrix__row > label::before {
+    content: attr(data-label);
+    color: var(--color-neutral);
+    font-size: 12px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 380px) {
+  .profile-settings-activity-matrix__row > label {
+    padding-inline: 8px;
+  }
+}

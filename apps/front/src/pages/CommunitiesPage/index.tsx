@@ -1,7 +1,8 @@
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   ProfileSidebar,
   SocialPageLayout
@@ -11,7 +12,7 @@ import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunitiesPage } from './useCommunitiesPage'
 
-import '../AuthenticatedPage.style.scss'
+import './CommunitiesPage.style.scss'
 
 export function CommunitiesPage() {
   const { t } = useTranslations()
@@ -34,15 +35,11 @@ export function CommunitiesPage() {
 
   if (!currentProfile)
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
-            isError={communitiesPageQuery.isError}
-            onRetry={() => void communitiesPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
+        isError={communitiesPageQuery.isError}
+        onRetry={() => void communitiesPageQuery.refetch()}
+      />
     )
 
   return (
@@ -70,7 +67,15 @@ export function CommunitiesPage() {
           { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
           { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
         ]} />
-        <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+        {(totalItems > 0 && (
+          <PaginatedListControls
+            key={query}
+            query={query}
+            sort={sort}
+            onQueryChange={setQuery}
+            onSortChange={setSort}
+          />))}
+        
         <RequestState
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}

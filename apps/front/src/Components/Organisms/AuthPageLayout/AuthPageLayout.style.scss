@@ -235,3 +235,41 @@
     grid-template-columns: 28px minmax(0, 1fr);
   }
 }
+
+.auth-form-content__title {
+  color: var(--text-color);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.auth-form-content__description {
+  margin-top: 8px;
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.auth-form-content__footer {
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-form-content__footer a {
+  color: var(--color-primary-weak);
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.auth-form .button {
+  width: 100%;
+}

@@ -1,0 +1,23 @@
+.communities-page__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.communities-page__header .account-card__action {
+  justify-self: end;
+}
+
+@media (max-width: 680px) {
+  .communities-page__header {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .communities-page__header .account-card__action {
+    justify-self: stretch;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

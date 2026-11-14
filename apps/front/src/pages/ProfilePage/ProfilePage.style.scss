@@ -1,6 +1,21 @@
-.social-page__state {
-  box-sizing: border-box;
-  width: min(100%, var(--main-content-max-width));
-  margin: 0 auto;
-  padding-inline: var(--main-content-gutter);
+.profile-page__relationship-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-page__action {
+  min-width: 140px;
+}
+
+@media (max-width: 680px) {
+  .profile-page__relationship-actions {
+    width: 100%;
+  }
+
+  .profile-page__relationship-actions .profile-page__action {
+    flex: 1 1 140px;
+  }
 }

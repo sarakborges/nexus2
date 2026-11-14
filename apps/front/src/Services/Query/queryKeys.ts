@@ -90,6 +90,11 @@ export const queryKeys = {
     session: ['auth', 'session'] as const,
     preferences: (userId: string) => ['auth', 'preferences', userId] as const
   },
+  homeSidebar: {
+    friends: (profileId: string) => ['home-sidebar', 'friends', profileId] as const,
+    communities: (profileId: string) => ['home-sidebar', 'communities', profileId] as const,
+    suggestions: (profileId: string) => ['home-sidebar', 'suggestions', profileId] as const
+  },
   profiles: {
     owned: (userId: string, page: number, pageSize: number) =>
       ['profiles', 'owned', userId, page, pageSize] as const,

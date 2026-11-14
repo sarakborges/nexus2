@@ -1,18 +1,22 @@
-import { RelationshipActions, RequestState } from '@/Components'
+import { useNavigate } from 'react-router'
+
+import { RelationshipActions } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
+import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityForumTopicComposer } from './CommunityForumTopicComposer.component'
+import { CommunityForumTopicComposer } from '@/Components/Molecules'
 import { useCreateCommunityForumTopicPage } from './useCreateCommunityForumTopicPage'
 
-import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CreateCommunityForumTopicPage() {
   const { t } = useTranslations()
+  const navigate = useNavigate()
   const {
     normalized,
     session,
@@ -34,25 +38,17 @@ export function CreateCommunityForumTopicPage() {
   } = useCreateCommunityForumTopicPage()
 
   if (!normalized) return <NotFoundPage />
-  if (!isAuthInitialized || composerPageQuery.isLoading)
+  if (!isAuthInitialized || composerPageQuery.isLoading) {
+    return <AuthenticatedPageState isLoading />
+  }
+  if (composerPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void composerPageQuery.refetch()}
+      />
     )
-  if (composerPageQuery.isError)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void composerPageQuery.refetch()}
-          />
-        </section>
-      </main>
-    )
+  }
   if (!community) return <NotFoundPage />
 
   return (
@@ -90,6 +86,7 @@ export function CreateCommunityForumTopicPage() {
             isSubmitting={createMutation.isPending}
             hasError={createMutation.isError}
             onSubmit={submit}
+            onCancel={() => navigate(ROUTES.community + '/' + community.url + '/forum')}
             onUploadImage={uploadEditorImage}
           />
         ) : (

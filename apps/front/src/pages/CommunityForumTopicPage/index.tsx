@@ -1,8 +1,7 @@
-import { CommunityForumEntry } from './CommunityForumEntry.component'
-import { CommunityForumReplyComposer } from './CommunityForumReplyComposer.component'
-import { CommunityForumTopicModerationActions } from './CommunityForumTopicModerationActions.component'
+import { CommunityForumEntry, CommunityForumReplyComposer, CommunityForumTopicModerationActions } from '@/Components/Molecules'
 import { Pagination, RequestState } from '@/Components'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import { Button } from '@/DesignSystem'
 import {
   CommunitySidebar,
@@ -12,7 +11,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
-import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CommunityForumTopicPage() {
@@ -59,24 +57,14 @@ export function CommunityForumTopicPage() {
 
   if (!normalized || !topicId) return <NotFoundPage />
   if (!isAuthInitialized || topicPageQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (topicPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void topicPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void topicPageQuery.refetch()}
+      />
     )
   }
   if (!community || !detail || !topic) return <NotFoundPage />
@@ -95,8 +83,8 @@ export function CommunityForumTopicPage() {
       {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
         <p className="profile-type-notice" role="alert">
           {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+        </p>)}
+      
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">
           <div>
@@ -108,7 +96,7 @@ export function CommunityForumTopicPage() {
         </header>
 
         <CommunityForumEntry
-          className="community-forum__post community-forum__entry"
+          className="community-forum-entry community-forum-entry--post"
           author={topicAuthor}
           content={topic.content}
           createdAt={topic.createdAt}
@@ -126,15 +114,23 @@ export function CommunityForumTopicPage() {
             onDeleteTopic={deleteTopic}
           />
           {topic.isLocked && (
-            <p className="account-card__description">{t('FORUM_LOCKED')}</p>
-          )}
+            <p className="account-card__description">{t('FORUM_LOCKED')}</p>)}
+          
         </CommunityForumEntry>
 
         <section className="community-forum__replies">
           <h2>
             {t('FORUM_REPLIES')} ({detail.replies.totalItems})
           </h2>
-          <PaginatedListControls key={query} query={query} sort={sort} onQueryChange={setQuery} onSortChange={setSort} />
+          {(detail.replies.totalItems > 0 && (
+            <PaginatedListControls
+              key={query}
+              query={query}
+              sort={sort}
+              onQueryChange={setQuery}
+              onSortChange={setSort}
+            />))}
+          
           <RequestState
             isLoading={!isAuthInitialized}
             isFetching={topicPageQuery.isFetching}
@@ -144,7 +140,7 @@ export function CommunityForumTopicPage() {
             {replyItems.map(({ reply, author, canDelete }) => (
               <CommunityForumEntry
                 key={reply.id}
-                className="community-forum__reply community-forum__entry"
+                className="community-forum-entry community-forum-entry--reply"
                 author={author}
                 content={reply.content}
                 createdAt={reply.createdAt}
@@ -159,8 +155,8 @@ export function CommunityForumTopicPage() {
                     >
                       {t('FORUM_DELETE')}
                     </Button>
-                  </div>
-                )}
+                  </div>)}
+                
               </CommunityForumEntry>
             ))}
           </RequestState>
@@ -188,6 +184,7 @@ export function CommunityForumTopicPage() {
         hasError={hasReplyError}
         onChange={setReplyContent}
         onSubmit={submitReply}
+        onCancel={() => setReplyContent('')}
         onUploadImage={uploadEditorImage}
       />
     </SocialPageLayout>

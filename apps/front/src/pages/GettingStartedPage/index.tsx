@@ -1,18 +1,20 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { Button, ButtonLink } from '@/DesignSystem'
+import { AccountCard } from '@/Components/Molecules/AccountCard'
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
 import { useTranslations } from '@/Hooks/Language'
 import { useGettingStartedPage } from './useGettingStartedPage'
 
 import { ROUTES } from '@/Constants/routes'
 
-import '../AuthenticatedPage.style.scss'
 
 export function GettingStartedPage() {
   const { t } = useTranslations()
   const { isSigningOut, hasSignOutError, signOut } = useGettingStartedPage()
 
   return (
-    <main className="account-page">
-      <section className="account-card">
+    <AuthenticatedPageTemplate>
+      <AccountCard>
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">
@@ -27,9 +29,7 @@ export function GettingStartedPage() {
           </Button>
         </header>
         {hasSignOutError && (
-          <p className="auth-card__error" role="alert">
-            {t('REQUEST_FAILED')}
-          </p>
+          <FormErrorMessage>{t('REQUEST_FAILED')}</FormErrorMessage>
         )}
         <div className="account-card__onboarding">
           <h2>{t('GETTING_STARTED_PROFILE_TITLE')}</h2>
@@ -48,7 +48,7 @@ export function GettingStartedPage() {
         >
           {t('GETTING_STARTED_CREATE_PROFILE')}
         </ButtonLink>
-      </section>
-    </main>
+      </AccountCard>
+    </AuthenticatedPageTemplate>
   )
 }

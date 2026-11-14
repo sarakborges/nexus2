@@ -1,6 +1,6 @@
 import { All, Controller, HttpStatus, Logger, Req, Res } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
-import type { AxiosRequestConfig, Method } from 'axios'
+import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import type { Request, Response } from 'express'
 import { ACCESS_COOKIE, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
@@ -82,14 +82,24 @@ export class ApiProxyController {
       refresh = this.http.axiosRef
         .post<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
         .then(response => response.data)
-        .catch(() => null)
+        .catch(error => {
+          // Only a definitive invalid/revoked refresh token means the user
+          // must authenticate again. A timeout or backend 5xx is transient.
+          if (
+            axios.isAxiosError(error) &&
+            [HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN].includes(error.response?.status ?? 0)
+          ) {
+            return null
+          }
+          throw error
+        })
 
       this.refreshInFlight.set(token, refresh)
-      void refresh.then(() => {
+      void refresh.finally(() => {
         if (this.refreshInFlight.get(token) === refresh) {
           this.refreshInFlight.delete(token)
         }
-      })
+      }).catch(() => undefined)
     }
 
     const tokens = await refresh

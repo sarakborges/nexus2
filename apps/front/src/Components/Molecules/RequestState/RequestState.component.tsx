@@ -43,18 +43,14 @@ export function RequestState({
 
   if (isEmpty) {
     return (
-      <>
-        <p className="account-card__description">{emptyMessage}</p>
+      <div className="request-state request-state--empty">
+        <p className="request-state__empty-message">{emptyMessage}</p>
         {emptyAction && (
           <div className="request-state__empty-action">{emptyAction}</div>
         )}
-      </>
+      </div>
     )
   }
 
-  return (
-    <>
-      {children}
-    </>
-  )
+  return <>{children}</>
 }

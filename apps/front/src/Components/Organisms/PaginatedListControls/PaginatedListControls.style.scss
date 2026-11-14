@@ -1,0 +1,35 @@
+.paginated-list-controls {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.paginated-list-controls__search {
+  display: flex;
+  align-items: center;
+  flex: 1 1 260px;
+  min-width: min(100%, 220px);
+  gap: 10px;
+}
+
+.paginated-list-controls__search .input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .paginated-list-controls {
+    align-items: stretch;
+  }
+
+  .paginated-list-controls__search {
+    flex-basis: 100%;
+  }
+
+  .list-sort-select {
+    flex: 1 1 100%;
+  }
+}
