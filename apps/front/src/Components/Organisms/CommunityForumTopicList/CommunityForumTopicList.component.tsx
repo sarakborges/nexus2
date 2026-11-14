@@ -19,7 +19,7 @@ export function CommunityForumTopicList({
       {topics.map((topic) => {
         const author = authorsById.get(topic.profileId)
         return (
-          <article className="community-forum__topic" key={topic.id}>
+          <article className="community-forum-topic-list__topic" key={topic.id}>
             <div className="community-forum-topic-list__author">
               {author ? (
                 <Link
