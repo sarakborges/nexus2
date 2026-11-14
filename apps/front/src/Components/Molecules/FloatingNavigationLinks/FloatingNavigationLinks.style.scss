@@ -3,7 +3,7 @@
 
     display: grid;
     width: 100%;
-    gap: 4px;
+    gap: var(--nexus-space-1);
   
   }
   &__sidebar-link {
@@ -12,7 +12,7 @@
     align-items: center;
     gap: 13px;
     min-height: 46px;
-    padding: 0 12px;
+    padding: 0 var(--nexus-space-3);
     color: var(--text-color);
     font-size: 14px;
     text-decoration: none;
