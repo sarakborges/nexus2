@@ -1,10 +1,10 @@
 .community-forum {
-  gap: 22px;
+  gap: var(--nexus-space-6, 22px);
 }
 
 .community-forum__replies {
   display: grid;
-  gap: 14px;
+  gap: var(--nexus-space-3, 14px);
 }
 
 .community-forum__replies > .request-state {
@@ -13,7 +13,7 @@
 
 .community-forum__join {
   display: grid;
-  gap: 10px;
+  gap: var(--nexus-space-2, 10px);
 }
 
 .community-forum__topic-detail-card > .community-forum-entry--post {
@@ -21,5 +21,5 @@
 }
 
 .community-forum__topic-detail-card .community-forum__replies {
-  gap: 8px;
+  gap: var(--nexus-space-2, 8px);
 }
