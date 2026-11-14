@@ -16,6 +16,8 @@
   --nexus-space-4: 16px;
   --nexus-space-5: 20px;
   --nexus-space-6: 24px;
+  --nexus-space-7: 32px;
+  --nexus-space-8: 40px;
 }
 
 html,
@@ -68,17 +70,29 @@ main {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
 
-*:hover,
-*:hover *,
-*:active,
-*:active * {
+:where(*, *::before, *::after) {
   transition: none !important;
   animation: none !important;
+}
+
+:where(
+  *:hover,
+  *:hover *,
+  *:hover::before,
+  *:hover::after,
+  *:active,
+  *:active *,
+  *:active::before,
+  *:active::after,
+  *:focus-visible,
+  *:focus-visible *,
+  *:focus-visible::before,
+  *:focus-visible::after
+) {
   transform: none !important;
   scale: none !important;
   translate: none !important;
 }
-
 :where(img, video, canvas) {
   max-width: 100%;
 }
