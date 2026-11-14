@@ -1,4 +1,11 @@
 .floating-navigation {
+  &__menu-divider {
+
+    height: 1px;
+    margin: 4px 8px;
+    background: var(--color-border);
+  
+  }
   &__account-label > span,
   &__menu-heading > span {
 

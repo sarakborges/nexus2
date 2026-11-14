@@ -1,13 +1,4 @@
 .floating-navigation {
-  &__icon-button:focus-visible,
-  &__sidebar-link:focus-visible,
-  &__account-trigger:focus-visible,
-  &__menu-item:focus-visible {
-
-    outline: 2px solid var(--color-primary-strong);
-    outline-offset: 2px;
-  
-  }
   &__sidebar-links {
 
     display: grid;
@@ -50,8 +41,7 @@
   padding-inline: 0;
 
 }
-.floating-navigation.is-collapsed .floating-navigation__sidebar-link span,
-.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle span {
+.floating-navigation.is-collapsed .floating-navigation__sidebar-link span {
 
   display: none;
 

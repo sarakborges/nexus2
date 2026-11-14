@@ -138,6 +138,15 @@
     background: var(--color-background);
   
   }
+  &__icon-button:focus-visible,
+  &__sidebar-link:focus-visible,
+  &__account-trigger:focus-visible,
+  &__menu-item:focus-visible {
+
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 2px;
+  
+  }
   &__sidebar {
 
     position: fixed;
@@ -246,11 +255,12 @@
     opacity: .6;
   
   }
-  &__menu-divider {
+  &__notification-container {
 
-    height: 1px;
-    margin: 4px 8px;
-    background: var(--color-border);
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 0 40px;
   
   }
   &__topbar-avatar {
@@ -443,4 +453,8 @@ html.has-global-navigation .auth-page {
     animation: none;
   
   }
+}
+
+.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle span {
+  display: none;
 }
