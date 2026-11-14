@@ -3,7 +3,7 @@ import { RequestState } from '@/Components'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getRecentActivity } from '@/Services/Activity/activity.service'
-import { HomePageActivityEntry } from './HomePageActivityEntry.component'
+import { HomePageActivityEntry } from '@/Components/Molecules/HomePageActivityEntry'
 import type { HomePageActivityFeedProps } from './HomePageActivityFeed.types'
 
 export function HomePageActivityFeed({

@@ -17,3 +17,6 @@ export { SettingsModal } from './SettingsModal'
 export { CommunitySidebar, ProfileSidebar, SocialPageLayout } from './SocialPageLayout'
 export { ThemeSelector } from './ThemeSelector'
 export { ToastViewport } from './Toast/ToastViewport.component'
+
+export { HomePageActivityFeed } from './HomePageActivityFeed'
+export type { HomePageActivityFeedProps } from './HomePageActivityFeed'

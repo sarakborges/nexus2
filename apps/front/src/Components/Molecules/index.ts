@@ -16,3 +16,8 @@ export { IdentityAvatar } from './IdentityAvatar'
 export { AccountIdentityLink } from './AccountIdentityLink'
 
 export * from './ProfileTypeNotice'
+
+export { HomePageActivityEntry } from './HomePageActivityEntry'
+export type { HomePageActivityEntryProps } from './HomePageActivityEntry'
+export { HomePagePreviewEntry } from './HomePagePreviewEntry'
+export type { HomePagePreviewEntryProps } from './HomePagePreviewEntry'
