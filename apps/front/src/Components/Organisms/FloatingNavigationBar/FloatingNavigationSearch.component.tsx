@@ -4,6 +4,7 @@ import { FiSearch } from 'react-icons/fi'
 import type { SearchScope } from '@nexus/common'
 
 import { ROUTES } from '@/Constants/routes'
+import { Button, Input, Select } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 export function FloatingNavigationSearch() {
@@ -41,7 +42,7 @@ export function FloatingNavigationSearch() {
       role="search"
       onSubmit={handleSearch}
     >
-      <input
+      <Input
         type="search"
         aria-label={t('SEARCH_PLACEHOLDER')}
         placeholder={t('SEARCH_PLACEHOLDER')}
@@ -49,7 +50,7 @@ export function FloatingNavigationSearch() {
         value={searchText}
         onChange={(event) => setSearchDraft({ routeKey, text: event.target.value, scope: searchScope })}
       />
-      <select
+      <Select
         aria-label={t('SEARCH_SCOPE_LABEL')}
         value={searchScope}
         onChange={(event) => setSearchDraft({ routeKey, text: searchText, scope: event.target.value as SearchScope })}
@@ -57,13 +58,14 @@ export function FloatingNavigationSearch() {
         <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
         <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
         <option value="communities">{t('SEARCH_SCOPE_COMMUNITIES')}</option>
-      </select>
-      <button
+      </Select>
+      <Button
         type="submit"
+        variation="transparent"
         aria-label={t('SEARCH_SUBMIT')}
       >
         <FiSearch aria-hidden="true" />
-      </button>
+      </Button>
     </form>
   )
 }

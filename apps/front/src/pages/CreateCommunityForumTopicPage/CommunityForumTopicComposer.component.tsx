@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react'
 
 import { RichTextEditor } from '@/Components'
-import { Button, Label } from '@/DesignSystem'
+import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumTopicComposerProps } from './CommunityForumTopicComposer.types'
 
@@ -24,26 +24,16 @@ export function CommunityForumTopicComposer({
 
   return (
     <form className="community-forum__composer" onSubmit={handleSubmit}>
+      <FormField
+        id="forum-topic-title"
+        label={t('FORUM_TOPIC_TITLE')}
+        type="text"
+        value={title}
+        maxLength={140}
+        onChange={(event) => onTitleChange(event.target.value)}
+        required
+      />
       <div className="form-field">
-        <Label htmlFor="forum-topic-title">
-          {t('FORUM_TOPIC_TITLE')}
-        </Label>
-        <input
-          id="forum-topic-title"
-          className="input"
-          value={title}
-          maxLength={140}
-          onChange={(event) => onTitleChange(event.target.value)}
-          required
-        />
-      </div>
-      <div className="form-field">
-        <Label
-          id="forum-topic-content-label"
-          htmlFor="forum-topic-content"
-        >
-          {t('FORUM_TOPIC_CONTENT')}
-        </Label>
         <RichTextEditor
           id="forum-topic-content"
           value={content}
