@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import type { ListSort } from '@nexus/common'
 
 import { SelectField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
