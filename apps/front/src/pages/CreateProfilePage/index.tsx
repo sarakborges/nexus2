@@ -1,7 +1,6 @@
 import { RequestState } from '@/Components'
-import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
+import { EntityFormPageLayout, PreferenceSelector, ProfileDetailsFields } from '@/Components/Organisms'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateProfilePage } from './useCreateProfilePage'
@@ -40,72 +39,63 @@ export function CreateProfilePage() {
   }
 
   return (
-    <main className="auth-page">
-      <section
-        className="entity-form-page"
-        aria-labelledby="create-profile-title"
-      >
-        <header className="entity-form-page__header">
-          <h1 className="auth-card__title" id="create-profile-title">
-            {t('CREATE_PROFILE_TITLE')}
-          </h1>
-          <p className="auth-card__description">
-            {t('CREATE_PROFILE_DESCRIPTION')}
+    <EntityFormPageLayout
+      title={t('CREATE_PROFILE_TITLE')}
+      description={t('CREATE_PROFILE_DESCRIPTION')}
+      titleId="create-profile-title"
+    >
+      <form className="entity-form-page__form" onSubmit={handleSubmit}>
+        <ProfileDetailsFields
+          name={name}
+          url={url}
+          picture={picture}
+          about={about}
+          onNameChange={setName}
+          onUrlChange={setUrl}
+          onPictureChange={setPicture}
+          onAboutChange={setAbout}
+          onUploadImage={uploadEditorImage}
+        />
+        {errorMessage && (
+          <p className="auth-card__error" role="alert">
+            {errorMessage}
           </p>
-        </header>
-        <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <ProfileDetailsFields
-            name={name}
-            url={url}
-            picture={picture}
-            about={about}
-            onNameChange={setName}
-            onUrlChange={setUrl}
-            onPictureChange={setPicture}
-            onAboutChange={setAbout}
-            onUploadImage={uploadEditorImage}
+        )}
+        <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
+          <PreferenceOption
+            label={t('PROFILE_TYPE_SOCIAL')}
+            description={t('PROFILE_TYPE_SOCIAL_DESCRIPTION')}
+            isSelected={type === 'social'}
+            onSelect={() => setType('social')}
           />
-          {errorMessage && (
-            <p className="auth-card__error" role="alert">
-              {errorMessage}
-            </p>
-          )}
-          <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
-            <PreferenceOption
-              label={t('PROFILE_TYPE_SOCIAL')}
-              description={t('PROFILE_TYPE_SOCIAL_DESCRIPTION')}
-              isSelected={type === 'social'}
-              onSelect={() => setType('social')}
-            />
-            <PreferenceOption
-              label={t('PROFILE_TYPE_RP')}
-              description={t('PROFILE_TYPE_RP_DESCRIPTION')}
-              isSelected={type === 'rp'}
-              onSelect={() => setType('rp')}
-            />
-            <PreferenceOption
-              label={t('PROFILE_TYPE_BUSINESS')}
-              description={t('PROFILE_TYPE_BUSINESS_DESCRIPTION')}
-              isSelected={type === 'business'}
-              onSelect={() => setType('business')}
-            />
-          </PreferenceSelector>
-          <div className="entity-form-page__actions">
-            <Button
-              type="button"
-              variation="secondary"
-              onClick={handleCancel}
-            >
-              {t('ACTION_CANCEL')}
-            </Button>
-            <Button type="submit" disabled={isSubmitting || about.length > 8000}>
-              {isSubmitting
-                ? t('AUTH_SUBMITTING')
-                : t('CREATE_PROFILE_ACTION')}
-            </Button>
-          </div>
-        </form>
-      </section>
-    </main>
+          <PreferenceOption
+            label={t('PROFILE_TYPE_RP')}
+            description={t('PROFILE_TYPE_RP_DESCRIPTION')}
+            isSelected={type === 'rp'}
+            onSelect={() => setType('rp')}
+          />
+          <PreferenceOption
+            label={t('PROFILE_TYPE_BUSINESS')}
+            description={t('PROFILE_TYPE_BUSINESS_DESCRIPTION')}
+            isSelected={type === 'business'}
+            onSelect={() => setType('business')}
+          />
+        </PreferenceSelector>
+        <div className="entity-form-page__actions">
+          <Button
+            type="button"
+            variation="secondary"
+            onClick={handleCancel}
+          >
+            {t('ACTION_CANCEL')}
+          </Button>
+          <Button type="submit" disabled={isSubmitting || about.length > 8000}>
+            {isSubmitting
+              ? t('AUTH_SUBMITTING')
+              : t('CREATE_PROFILE_ACTION')}
+          </Button>
+        </div>
+      </form>
+    </EntityFormPageLayout>
   )
 }
