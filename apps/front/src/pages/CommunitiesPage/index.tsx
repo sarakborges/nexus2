@@ -2,7 +2,7 @@ import { Pagination, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   ProfileSidebar,
   SocialPageLayout

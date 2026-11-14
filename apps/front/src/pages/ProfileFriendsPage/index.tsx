@@ -1,7 +1,7 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Link } from 'react-router'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   ProfileSidebar,
   SocialPageLayout

@@ -1,4 +1,5 @@
 import type { RelationshipActionsProps } from './RelationshipActions.types'
+import type { TranslationKey } from '@/Types/Translation.type'
 import { useRelationshipActions } from './useRelationshipActions'
 
 import { Link } from 'react-router'
@@ -47,7 +48,7 @@ export function RelationshipActions({
   }
 
   let primaryAction: RelationshipAction
-  let contextMessage: string | null = null
+  let contextMessage: TranslationKey | null = null
 
   if (actions.isLegacyBlock) {
     contextMessage = 'RELATIONSHIP_LEGACY_BLOCKED'

@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Button, Input } from '@/DesignSystem'
 import { ListSortSelect } from '@/Components/Molecules/ListSortSelect'
 import { useTranslations } from '@/Hooks/Language'
-import type { PaginatedListControlsProps } from './PaginatedListControls.component.types'
+import type { PaginatedListControlsProps } from './PaginatedListControls.types'
 
 import './PaginatedListControls.style.scss'
 
