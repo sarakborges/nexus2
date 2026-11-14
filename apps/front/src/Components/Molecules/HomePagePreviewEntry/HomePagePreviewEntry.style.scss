@@ -1,0 +1,10 @@
+.home-page__preview-entry {
+  display: flex; align-items: center; gap: 14px; min-width: 0; padding: 12px 0;
+  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
+  color: var(--text-color); text-decoration: none;
+}
+.home-page__preview-entry:last-child { border-bottom: 0; }
+.home-page__preview-avatar { width: 56px; height: 56px; flex: 0 0 56px; }
+.home-page__preview-copy { display: grid; gap: 6px; min-width: 0; }
+.home-page__preview-copy .account-card__link { overflow-wrap: anywhere; text-decoration: none; }
+.home-page__preview-copy .account-card__profile-entry-secondary { font-size: 12px; }

@@ -1,5 +1,7 @@
 import type { HomePagePreviewEntryProps } from './HomePagePreviewEntry.types'
 
+import './HomePagePreviewEntry.style.scss'
+
 import { AccountIdentityLink } from '@/Components'
 
 export function HomePagePreviewEntry({
