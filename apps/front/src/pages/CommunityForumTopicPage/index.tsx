@@ -96,7 +96,7 @@ export function CommunityForumTopicPage() {
         </header>
 
         <CommunityForumEntry
-          className="community-forum__post community-forum__entry"
+          className="community-forum-entry community-forum-entry--post"
           author={topicAuthor}
           content={topic.content}
           createdAt={topic.createdAt}
@@ -140,7 +140,7 @@ export function CommunityForumTopicPage() {
             {replyItems.map(({ reply, author, canDelete }) => (
               <CommunityForumEntry
                 key={reply.id}
-                className="community-forum__reply community-forum__entry"
+                className="community-forum-entry community-forum-entry--reply"
                 author={author}
                 content={reply.content}
                 createdAt={reply.createdAt}

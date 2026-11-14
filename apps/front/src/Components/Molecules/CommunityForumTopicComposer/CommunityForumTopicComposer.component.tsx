@@ -2,6 +2,7 @@ import { ComposerActions, RichTextComposerField } from '@/Components'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumTopicComposerProps } from './CommunityForumTopicComposer.types'
+import './CommunityForumTopicComposer.style.scss'
 
 export function CommunityForumTopicComposer({
   title,
@@ -18,7 +19,7 @@ export function CommunityForumTopicComposer({
   const { t } = useTranslations()
 
   return (
-    <form className="community-forum__composer" onSubmit={onSubmit}>
+    <form className="community-forum-topic-composer" onSubmit={onSubmit}>
       <FormField
         id="forum-topic-title"
         label={t('FORUM_TOPIC_TITLE')}

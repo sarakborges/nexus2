@@ -5,6 +5,7 @@ import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTo
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPageForumPreviewProps } from './CommunityPageForumPreview.types'
+import './CommunityPageForumPreview.style.scss'
 
 export function CommunityPageForumPreview({
   communityUrl,

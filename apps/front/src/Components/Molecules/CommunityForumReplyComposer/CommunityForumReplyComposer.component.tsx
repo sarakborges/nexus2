@@ -5,6 +5,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumReplyComposerProps } from './CommunityForumReplyComposer.types'
+import './CommunityForumReplyComposer.style.scss'
 
 export function CommunityForumReplyComposer({
   isLoading,
@@ -27,7 +28,7 @@ export function CommunityForumReplyComposer({
   const { t } = useTranslations()
 
   return (
-    <section className="account-card community-forum community-forum__reply-composer-card">
+    <section className="account-card community-forum community-forum-reply-composer__card">
       {isLoading || isError ? (
         <RequestState
           isLoading={isLoading}
@@ -36,7 +37,7 @@ export function CommunityForumReplyComposer({
         />
       ) : canReply ? (
         <form
-          className="community-forum__reply-composer"
+          className="community-forum-reply-composer"
           onSubmit={onSubmit}
         >
           <RichTextComposerField

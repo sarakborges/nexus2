@@ -1,0 +1,12 @@
+.community-forum-topic-composer {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-card-radius, 0);
+  background: var(--color-surface);
+}
+
+.community-forum-topic-composer .rich-text-editor {
+  width: 100%;
+}

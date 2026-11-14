@@ -1,4 +1,5 @@
 import type { CommunityForumTopicListProps } from './CommunityForumTopicList.types'
+import './CommunityForumTopicList.style.scss'
 
 import { Link } from 'react-router'
 
@@ -14,12 +15,12 @@ export function CommunityForumTopicList({
   const { t } = useTranslations()
 
   return (
-    <div className="community-forum__topics">
+    <div className="community-forum-topic-list">
       {topics.map((topic) => {
         const author = authorsById.get(topic.profileId)
         return (
           <article className="community-forum__topic" key={topic.id}>
-            <div className="community-forum__topic-author">
+            <div className="community-forum-topic-list__author">
               {author ? (
                 <Link
                   to={ROUTES.profile + '/' + author.url}
@@ -27,42 +28,42 @@ export function CommunityForumTopicList({
                   title={author.name}
                 >
                   <IdentityAvatar
-                    className="community-forum__author-avatar"
+                    className="community-forum-topic-list__avatar"
                     name={author.name}
                     picture={author.picture}
                   />
                 </Link>
               ) : (
                 <span
-                  className="community-forum__author-avatar"
+                  className="community-forum-topic-list__avatar"
                   aria-hidden="true"
                 >
                   ?
                 </span>
               )}
             </div>
-            <div className="community-forum__topic-main">
-              <div className="community-forum__topic-labels">
+            <div className="community-forum-topic-list__main">
+              <div className="community-forum-topic-list__labels">
                 {topic.isLocked && (
-                  <span className="community-forum__label">
+                  <span className="community-forum-topic-list__label">
                     {t('FORUM_LOCKED')}
                   </span>
                 )}
                 {topic.isPinned && (
-                  <span className="community-forum__label">
+                  <span className="community-forum-topic-list__label">
                     {t('FORUM_PINNED')}
                   </span>
                 )}
               </div>
               <Link
-                className="community-forum__topic-title"
+                className="community-forum-topic-list__title"
                 to={
                   ROUTES.community + '/' + communityUrl + '/forum/' + topic.id
                 }
               >
                 {topic.title}
               </Link>
-              <div className="community-forum__topic-meta">
+              <div className="community-forum-topic-list__meta">
                 <span>
                   {author ? (
                     <Link to={ROUTES.profile + '/' + author.url}>
@@ -74,12 +75,12 @@ export function CommunityForumTopicList({
                 </span>
               </div>
             </div>
-            <div className="community-forum__topic-stats">
-              <span className="community-forum__reply-count">
+            <div className="community-forum-topic-list__stats">
+              <span className="community-forum-topic-list__reply-count">
                 {topic.replyCount} {t('FORUM_REPLIES')}
               </span>
               <time
-                className="community-forum__topic-last-post"
+                className="community-forum-topic-list__last-post"
                 dateTime={new Date(topic.updatedAt).toISOString()}
               >
                 {new Date(topic.updatedAt).toLocaleString()}
