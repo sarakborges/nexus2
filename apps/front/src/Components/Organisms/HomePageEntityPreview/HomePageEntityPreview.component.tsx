@@ -2,6 +2,7 @@ import { RequestState } from '@/Components'
 import { ButtonLink } from '@/DesignSystem'
 import { HomePagePreviewEntry } from '@/Components/Molecules/HomePagePreviewEntry'
 import type { HomePageEntityPreviewProps } from './HomePageEntityPreview.types'
+import './HomePageEntityPreview.style.scss'
 
 export function HomePageEntityPreview({
   title,

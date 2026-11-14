@@ -1,0 +1,21 @@
+.home-page__activity {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.home-page__activity-title {
+  color: var(--text-color);
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+}
+
+.home-page__activity-list {
+  display: grid;
+  gap: 12px;
+}
+.home-page__activity-more {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}

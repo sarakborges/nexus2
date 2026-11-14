@@ -3,6 +3,7 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useHomePagePostComposer } from '@/Hooks/Home/useHomePagePostComposer.hook'
 import type { HomePagePostComposerProps } from './HomePagePostComposer.types'
+import './HomePagePostComposer.style.scss'
 
 export function HomePagePostComposer({ currentProfile }: HomePagePostComposerProps) {
   const { t } = useTranslations()

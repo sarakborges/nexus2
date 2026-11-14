@@ -5,6 +5,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { getRecentActivity } from '@/Services/Activity/activity.service'
 import { HomePageActivityEntry } from '@/Components/Molecules/HomePageActivityEntry'
 import type { HomePageActivityFeedProps } from './HomePageActivityFeed.types'
+import './HomePageActivityFeed.style.scss'
 
 export function HomePageActivityFeed({
   homeQuery,

@@ -8,6 +8,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
+import './HomePageRightSidebar.style.scss'
 
 
 const PREVIEW_PAGE_SIZE = 100
