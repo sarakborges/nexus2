@@ -1,5 +1,5 @@
 import { Button } from '@/DesignSystem/Atoms/Button'
-import type { TabOption, TabsProps } from './Tabs.types'
+import type { TabsProps } from './Tabs.types'
 
 import './Tabs.style.scss'
 
