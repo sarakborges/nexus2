@@ -5,14 +5,14 @@
 
 .entity-form-page {
   display: grid;
-  gap: 20px;
+  gap: var(--nexus-space-5, 20px);
   width: min(100%, var(--main-content-max-width));
   color: var(--text-color);
 }
 
 .entity-form-page__header {
   display: grid;
-  gap: 8px;
+  gap: var(--nexus-space-2, 8px);
 }
 
 .entity-form-page__title {
@@ -32,15 +32,15 @@
 
 .entity-form-page__form {
   display: grid;
-  gap: 16px;
+  gap: var(--nexus-space-4, 16px);
   width: 100%;
 }
 
 .entity-form-page__card {
   display: grid;
-  gap: 16px;
+  gap: var(--nexus-space-4, 16px);
   width: 100%;
-  padding: 24px;
+  padding: var(--nexus-space-6, 24px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface);
 }
@@ -49,12 +49,12 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: var(--nexus-space-2, 10px);
 }
 
 @media (max-width: 560px) {
   .entity-form-page__card {
-    padding: 18px;
+    padding: var(--nexus-space-4, 18px);
   }
 
   .entity-form-page__actions {
