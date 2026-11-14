@@ -4,7 +4,7 @@ import { ButtonLink } from '@/DesignSystem'
 import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { PreviewAvatar } from './PreviewAvatar.component'
+import { IdentityAvatar } from '@/Components/Molecules/IdentityAvatar'
 import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview.types'
 
 export function CommunityPageMembersPreview({
@@ -54,7 +54,7 @@ export function CommunityPageMembersPreview({
               aria-label={member.name}
               title={member.name}
             >
-              <PreviewAvatar name={member.name} picture={member.picture} />
+              <IdentityAvatar className="social-preview-avatar" name={member.name} picture={member.picture} />
             </Link>
           ))}
         </div>

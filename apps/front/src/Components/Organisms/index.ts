@@ -28,3 +28,10 @@ export type { HomePagePostComposerProps } from './HomePagePostComposer'
 
 export { HomePageRightSidebar } from './HomePageRightSidebar'
 export type { HomePageRightSidebarProps } from './HomePageRightSidebar'
+
+export { CommunityPageAboutPreview } from './CommunityPageAboutPreview'
+export type { CommunityPageAboutPreviewProps } from './CommunityPageAboutPreview'
+export { CommunityPageForumPreview } from './CommunityPageForumPreview'
+export type { CommunityPageForumPreviewProps } from './CommunityPageForumPreview'
+export { CommunityPageMembersPreview } from './CommunityPageMembersPreview'
+export type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview'

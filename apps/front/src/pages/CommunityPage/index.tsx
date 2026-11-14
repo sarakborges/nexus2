@@ -5,9 +5,9 @@ import {
 } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityPageAboutPreview } from './CommunityPageAboutPreview.component'
-import { CommunityPageForumPreview } from './CommunityPageForumPreview.component'
-import { CommunityPageMembersPreview } from './CommunityPageMembersPreview.component'
+import { CommunityPageAboutPreview } from '@/Components/Organisms/CommunityPageAboutPreview'
+import { CommunityPageForumPreview } from '@/Components/Organisms/CommunityPageForumPreview'
+import { CommunityPageMembersPreview } from '@/Components/Organisms/CommunityPageMembersPreview'
 import { useCommunityPage } from './useCommunityPage'
 
 import './CommunityPage.style.scss'
