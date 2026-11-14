@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
+import type { ListSort } from '@nexus/common'
 
 import { useTranslations } from '@/Hooks/Language'
 import { Button, Input, Label, Select } from '@/DesignSystem'
@@ -12,6 +13,7 @@ export function PaginatedListControls({
   showQuery = true
 }: PaginatedListControlsProps) {
   const { t } = useTranslations()
+  const sortId = useId()
   const [value, setValue] = useState(query)
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -40,10 +42,10 @@ export function PaginatedListControls({
           </Button>
         </form>
       )}
-      <Label className="paginated-list-controls__sort" htmlFor="list-sort">
+      <Label className="paginated-list-controls__sort" htmlFor={sortId}>
         <span>{t('LIST_SORT_LABEL')}</span>
         <Select
-          id="list-sort"
+          id={sortId}
           value={sort}
           onChange={(event) => onSortChange(event.target.value as ListSort)}
         >
