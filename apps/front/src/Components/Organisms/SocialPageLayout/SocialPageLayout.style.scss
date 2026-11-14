@@ -40,14 +40,16 @@
 }
 
 .social-page__main-column > .account-card,
-.social-page__main-column > .social-page__main-column > .request-state,
-.social-page__left-column > .request-state {
+.social-page__main-column > .social-panel {
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 
-.social-panel {
-  display: grid;
-  gap: 20px;
+.social-page__main-column > .request-state,
+.social-page__left-column > .request-state {
+  width: 100%;
 }
 
 .social-page__content-stack {
@@ -115,7 +117,6 @@
   .social-page__main-column {
     gap: 16px;
   }
-
 }
 
 @media (max-width: 680px) {
@@ -136,5 +137,4 @@
   .social-page__right-column {
     gap: 14px;
   }
-
-            }
+}
