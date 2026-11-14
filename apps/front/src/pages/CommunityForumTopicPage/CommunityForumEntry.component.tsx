@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
+import { RichTextContent } from '@/DesignSystem'
 import type { CommunityForumEntryProps } from './CommunityForumEntry.types'
 
 export function CommunityForumEntry({
@@ -50,9 +51,9 @@ export function CommunityForumEntry({
             {new Date(createdAt).toLocaleString()}
           </time>
         </header>
-        <div
-          className="community-forum__post-content rich-text-content"
-          dangerouslySetInnerHTML={{ __html: content }}
+        <RichTextContent
+          className="community-forum__post-content"
+          html={content}
         />
         {children}
       </div>

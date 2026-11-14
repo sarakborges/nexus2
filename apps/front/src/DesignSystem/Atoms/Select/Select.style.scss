@@ -2,20 +2,23 @@
   display: block;
   box-sizing: border-box;
   width: 100%;
-  min-height: 36px;
-  padding: 6px 8px;
+  min-height: 40px;
+  padding: 8px 12px;
 
+  appearance: auto;
+  -webkit-appearance: menulist;
   background-color: var(--color-neutral-weak);
-  border: var(--nexus-border-width, 2px) solid var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-control-radius, 0);
 
-  color: var(--color-neutral-strong);
+  color: var(--text-color);
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
 
   transition:
-    border-color 0.3s,
-    opacity 0.3s;
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    opacity 0.15s ease;
 
   &:not(:disabled):focus-visible {
     border-color: var(--color-primary-strong);
@@ -24,6 +27,13 @@
   }
 
   &:disabled {
-    opacity: 0.4;
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  option {
+    background-color: var(--color-surface);
+    color: var(--text-color);
+    font: inherit;
   }
 }

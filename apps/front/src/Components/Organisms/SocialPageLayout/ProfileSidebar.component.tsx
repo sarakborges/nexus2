@@ -48,6 +48,12 @@ export function ProfileSidebar({
           {t('PROFILE_TITLE')}
         </Link>
         <Link
+          to={ROUTES.profile + '/' + profile.url + '/messages'}
+          aria-current={active === 'messages' ? 'page' : undefined}
+        >
+          {t('PROFILE_MESSAGES_LINK')}
+        </Link>
+        <Link
           to={ROUTES.profile + '/' + profile.url + '/friends'}
           aria-current={active === 'friends' ? 'page' : undefined}
         >
@@ -58,12 +64,6 @@ export function ProfileSidebar({
           aria-current={active === 'communities' ? 'page' : undefined}
         >
           {t('PROFILE_COMMUNITIES_LINK')}
-        </Link>
-        <Link
-          to={ROUTES.profile + '/' + profile.url + '/messages'}
-          aria-current={active === 'messages' ? 'page' : undefined}
-        >
-          {t('PROFILE_MESSAGES_LINK')}
         </Link>
       </nav>
     </div>
