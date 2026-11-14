@@ -1,6 +1,6 @@
 .community-forum-reply-composer {
   display: grid;
-  gap: 14px;
+  gap: var(--nexus-space-3, 14px);
   width: 100%;
 }
 
