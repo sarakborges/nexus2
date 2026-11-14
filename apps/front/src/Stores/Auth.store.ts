@@ -94,6 +94,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           user,
           currentProfile: null,
           currentProfileSettings: null,
+          suggestedCommunities: [],
           activities: [],
           activityCursor: null,
           hasMoreActivities: false,
