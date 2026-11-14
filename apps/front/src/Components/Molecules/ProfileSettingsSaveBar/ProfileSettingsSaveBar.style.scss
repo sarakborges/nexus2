@@ -3,12 +3,12 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding-top: 18px;
+  gap: var(--nexus-space-3, 12px);
+  padding-top: var(--nexus-space-4, 18px);
 
   &__button {
     min-height: 42px;
-    padding: 8px 18px;
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-4, 18px);
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     background: var(--color-primary-strong);
     color: white;
