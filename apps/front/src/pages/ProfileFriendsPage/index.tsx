@@ -57,7 +57,7 @@ export function ProfileFriendsPage() {
         <header className="account-card__header">
           <h1 className="account-card__title">{t('PROFILE_FRIENDS_TITLE')}</h1>
         </header>
-        {(totalItems > 0 || query.trim().length > 0) && (
+        {(totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}

@@ -17,7 +17,6 @@ export type CommunityMemberDirectoryProps = {
     canInteract: boolean
   }
   tabs: CommunityMemberTabOption[]
-  activeTab: MemberTab
   visibleTab: MemberTab
   onSelectTab: (tab: MemberTab) => void
   members: Member[]

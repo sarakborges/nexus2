@@ -67,7 +67,7 @@ export function CommunitiesPage() {
           { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
           { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
         ]} />
-        {(totalItems > 0 || query.trim().length > 0) && (
+        {(totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}

@@ -107,7 +107,7 @@ export function ProfileMessagesPage() {
             { value: 'favorites', label: t('PROFILE_MESSAGES_TAB_FAVORITES') }
           ]} />
         )}
-        {(totalItems > 0 || query.trim().length > 0) && (
+        {(totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}

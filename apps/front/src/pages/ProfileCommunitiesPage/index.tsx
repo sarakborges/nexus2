@@ -57,7 +57,7 @@ export function ProfileCommunitiesPage() {
             {t('PROFILE_COMMUNITIES_TITLE')}
           </h1>
         </header>
-        {(totalItems > 0 || query.trim().length > 0) && (
+        {(totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}

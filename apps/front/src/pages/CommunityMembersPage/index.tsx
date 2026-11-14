@@ -18,7 +18,6 @@ export function CommunityMembersPage() {
   const {
     normalized,
     isAuthInitialized,
-    activeTab,
     setActiveTab,
     query,
     sort,
@@ -82,7 +81,7 @@ export function CommunityMembersPage() {
     >
       <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
-        {(totalMembers > 0 || query.trim().length > 0) && (
+        {(totalMembers > 0 && (
           <PaginatedListControls
             key={query}
             query={query}
@@ -110,7 +109,6 @@ export function CommunityMembersPage() {
           pageQuery={communityMembersPageQuery}
           typeCompatibility={typeCompatibility}
           tabs={tabs}
-          activeTab={activeTab}
           visibleTab={visibleTab}
           onSelectTab={setActiveTab}
           members={members}

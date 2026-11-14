@@ -44,7 +44,7 @@ export function CommunityMemberDirectory({
         className="community-member__tabs"
         ariaLabel={t('COMMUNITY_MEMBERS_TITLE')}
         value={visibleTab}
-        onChange={onSelectTab}
+        onChange={value => onSelectTab(value as typeof visibleTab)}
         options={tabs.map(tab => ({ value: tab.id, label: tab.label }))}
       />
       <RequestState

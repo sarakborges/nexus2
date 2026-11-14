@@ -124,7 +124,7 @@ export function CommunityForumTopicPage() {
           <h2>
             {t('FORUM_REPLIES')} ({detail.replies.totalItems})
           </h2>
-          {(detail.replies.totalItems > 0 || query.trim().length > 0) && (
+          {(detail.replies.totalItems > 0 && (
             <PaginatedListControls
               key={query}
               query={query}
