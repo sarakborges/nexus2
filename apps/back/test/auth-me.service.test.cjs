@@ -2,7 +2,23 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { AuthMeService } = require('../dist/api/auth/auth-me.service.js')
 
-test('me response includes the active owned profile and the first relational feed page', async () => {
+const defaultProfileSettings = {
+  messageAudience: 'everyone',
+  publishActivityTypes: [
+    'friend_connected',
+    'profile_post',
+    'community_created',
+    'community_membership'
+  ],
+  showFriendActivityTypes: [
+    'friend_connected',
+    'profile_post',
+    'community_created',
+    'community_membership'
+  ]
+}
+
+test('me response includes the active owned profile, settings and first relational feed page', async () => {
   const user = {
     id: 'account-1',
     email: 'person@example.com',
@@ -34,6 +50,10 @@ test('me response includes the active owned profile and the first relational fee
     { async readProfilesByIds(ids) {
       calls.push(['profiles', ids])
       return [profile]
+    } },
+    { async getSettings(accountId, profileId) {
+      calls.push(['settings', accountId, profileId])
+      return defaultProfileSettings
     } }
   )
 
@@ -42,6 +62,7 @@ test('me response includes the active owned profile and the first relational fee
   assert.deepEqual(result, {
     user,
     currentProfile: profile,
+    currentProfileSettings: defaultProfileSettings,
     activities: feedPage.items,
     activityCursor: feedPage.nextCursor,
     hasMoreActivities: true
@@ -49,20 +70,26 @@ test('me response includes the active owned profile and the first relational fee
   assert.deepEqual(calls, [
     ['user', 'account-1'],
     ['profiles', ['profile-2']],
-    ['feed', 'account-1', 10]
+    ['feed', 'account-1', 10],
+    ['settings', 'account-1', 'profile-2']
   ])
 })
 
-test('me response falls back to the first owned profile when no current profile is selected', async () => {
+test('me persists its first owned profile as current when the account has no valid selection', async () => {
+  let selectedProfileId = null
+  const user = {
+    id: 'account-2',
+    email: 'another@example.com',
+    profiles: ['profile-first', 'profile-second'],
+    currentProfile: null
+  }
+  const selectedUser = { ...user, currentProfile: 'profile-first' }
   const profile = { id: 'profile-first', name: 'First' }
   const service = new AuthMeService(
-    { async getUser() {
-      return {
-        id: 'account-2',
-        email: 'another@example.com',
-        profiles: ['profile-first', 'profile-second'],
-        currentProfile: null
-      }
+    { async getUser() { return user }, async updateCurrentProfile(userId, profileId) {
+      assert.equal(userId, 'account-2')
+      selectedProfileId = profileId
+      return selectedUser
     } },
     { async getRecentActivityPage() {
       return { items: [], nextCursor: null, hasMore: false }
@@ -70,9 +97,42 @@ test('me response falls back to the first owned profile when no current profile 
     { async readProfilesByIds(ids) {
       assert.deepEqual(ids, ['profile-first'])
       return [profile]
+    } },
+    { async getSettings(userId, profileId) {
+      assert.equal(profileId, 'profile-first')
+      return defaultProfileSettings
     } }
   )
 
   const result = await service.getMe('account-2')
+  assert.equal(selectedProfileId, 'profile-first')
+  assert.equal(result.user.currentProfile, 'profile-first')
   assert.deepEqual(result.currentProfile, profile)
+  assert.deepEqual(result.currentProfileSettings, defaultProfileSettings)
+})
+
+test('me returns no current profile settings when the account owns no profiles', async () => {
+  const service = new AuthMeService(
+    { async getUser() {
+      return {
+        id: 'account-3',
+        email: 'empty@example.com',
+        profiles: [],
+        currentProfile: null
+      }
+    } },
+    { async getRecentActivityPage() {
+      return { items: [], nextCursor: null, hasMore: false }
+    } },
+    { async readProfilesByIds() {
+      assert.fail('No profile should be fetched')
+    } },
+    { async getSettings() {
+      assert.fail('Settings should not be fetched without a profile')
+    } }
+  )
+
+  const result = await service.getMe('account-3')
+  assert.equal(result.currentProfile, null)
+  assert.equal(result.currentProfileSettings, null)
 })

@@ -16,7 +16,8 @@ import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 import './FloatingNavigationBar.style.scss'
 
 export function FloatingNavigationBar({
-  onOpenSettings
+  onOpenSettings,
+  onOpenProfileSettings
 }: FloatingNavigationBarProps) {
   const { t } = useTranslations()
   const location = useLocation()
@@ -35,7 +36,6 @@ export function FloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
-    accountName,
     closePanels,
     togglePanel,
     toggleProfileSwitcher,
@@ -54,6 +54,13 @@ export function FloatingNavigationBar({
     handleOpenSettings,
     handleSignOut
   } = useFloatingNavigationBar({ onOpenSettings })
+
+  const closeNavigationAfterNavigate = () => {
+    closePanels()
+    if (window.matchMedia('(max-width: 680px)').matches) {
+      setIsSidebarCollapsed(true)
+    }
+  }
 
   useEffect(() => {
     const root = document.documentElement
@@ -76,16 +83,6 @@ export function FloatingNavigationBar({
     >
       <header className="floating-navigation__bar">
         <div className="floating-navigation__content">
-          <button
-            className="floating-navigation__icon-button"
-            type="button"
-            aria-label={t('NAVIGATION_MENU')}
-            aria-expanded={!isSidebarCollapsed}
-            aria-controls="floating-navigation-sidebar"
-            onClick={() => setIsSidebarCollapsed((value) => !value)}
-          >
-            <FiMenu aria-hidden="true" />
-          </button>
           <Link className="floating-navigation__brand" to={ROUTES.home}>
             <img
               src="/nexus-logo.png"
@@ -98,11 +95,13 @@ export function FloatingNavigationBar({
             key={`${location.pathname}:${location.search}`}
           />
           <span className="floating-navigation__spacer" />
-          <NotificationsMenu
-            isOpen={activePanel === 'notifications'}
-            onToggle={() => togglePanel('notifications')}
-            onClose={closePanels}
-          />
+          <div className="floating-navigation__notification-container">
+            <NotificationsMenu
+              isOpen={activePanel === 'notifications'}
+              onToggle={() => togglePanel('notifications')}
+              onClose={closePanels}
+            />
+          </div>
           <button
             className="floating-navigation__account-trigger"
             type="button"
@@ -120,9 +119,6 @@ export function FloatingNavigationBar({
             ) : (
               <FiUser className="floating-navigation__account-icon" aria-hidden="true" />
             )}
-            <span className="floating-navigation__account-label">
-              <span>{accountName}</span>
-            </span>
             <FiChevronDown
               className="floating-navigation__account-chevron"
               aria-hidden="true"
@@ -130,29 +126,44 @@ export function FloatingNavigationBar({
           </button>
         </div>
       </header>
+      {!isSidebarCollapsed && (
+        <button
+          className="floating-navigation__sidebar-backdrop"
+          type="button"
+          aria-label={t('SETTINGS_CLOSE')}
+          onClick={() => {
+            closePanels()
+            setIsSidebarCollapsed(true)
+          }}
+        />
+      )}
       <aside
         className="floating-navigation__sidebar"
         id="floating-navigation-sidebar"
         aria-label={t('NAVIGATION_LABEL')}
       >
-        {currentProfile && (
-          <Link className="floating-navigation__current-profile" to={`${ROUTES.profile}/${currentProfile.url}`} onClick={closePanels}>
-            <IdentityAvatar className="floating-navigation__current-profile-avatar" name={currentProfile.name} picture={currentProfile.picture} />
-            <span><strong>{currentProfile.name}</strong><small>@{currentProfile.url}</small></span>
-          </Link>
-        )}
         <FloatingNavigationLinks
           pathname={pathname}
           hasCurrentProfile={Boolean(currentProfile?.url)}
           profileRoute={profileRoute}
           messagesRoute={messagesRoute}
           communitiesRoute={communitiesRoute}
-          onNavigate={closePanels}
+          onNavigate={closeNavigationAfterNavigate}
         />
+        <button
+          className="floating-navigation__sidebar-toggle"
+          type="button"
+          aria-label={isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}
+          aria-expanded={!isSidebarCollapsed}
+          aria-controls="floating-navigation-sidebar"
+          onClick={() => setIsSidebarCollapsed(value => !value)}
+        >
+          <FiMenu aria-hidden="true" />
+          <span>{isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}</span>
+        </button>
       </aside>
       {activePanel === 'account' && (
         <AccountMenu
-          accountName={accountName}
           profiles={profiles}
           hasProfiles={hasProfiles}
           currentProfileId={currentProfileId}
@@ -169,6 +180,7 @@ export function FloatingNavigationBar({
           onRetryProfiles={retryProfiles}
           onSelectProfile={selectProfile}
           onOpenSettings={handleOpenSettings}
+          onOpenProfileSettings={onOpenProfileSettings}
           onSignOut={handleSignOut}
           onClose={closePanels}
         />

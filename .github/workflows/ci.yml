@@ -83,6 +83,9 @@ jobs:
       - name: Test backend authentication, authorization and Supabase persistence
         run: npm test --workspace @nexus/back
 
+      - name: Test BFF token refresh concurrency
+        run: npm test --workspace @nexus/bff
+
       - name: Lint frontend
         run: npm run lint --workspace @nexus/front
 

@@ -6,6 +6,7 @@
     "dev": "nest start --watch",
     "prebuild": "npm --prefix ../.. run build --workspace @nexus/common",
     "build": "nest build",
+    "test": "node --test test/*.test.cjs",
     "start": "node dist/main.js"
   },
   "dependencies": {

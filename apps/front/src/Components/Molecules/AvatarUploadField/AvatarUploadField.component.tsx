@@ -32,7 +32,7 @@ export function AvatarUploadField({
   })
 
   return (
-    <div className="avatar-upload-field">
+    <div className="avatar-upload-field" aria-busy={busy}>
       <span className="avatar-upload-field__label">{label}</span>
       <div className="avatar-upload-field__preview">
         {value ? (
@@ -63,7 +63,7 @@ export function AvatarUploadField({
             disabled={busy}
             onClick={() => void handleRemove()}
           >
-            {removeLabel}
+            {busy ? uploadingLabel : removeLabel}
           </button>
         )}
       </div>

@@ -338,3 +338,32 @@
   height: var(--nexus-icon-size, 20px);
   flex: 0 0 var(--nexus-icon-size, 20px);
 }
+
+
+@media (max-width: 560px) {
+  .rich-text-editor__html-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .rich-text-editor__html-editor {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .rich-text-editor__line-numbers {
+    padding-inline: 4px;
+    font-size: 11px;
+  }
+
+  .rich-text-editor__highlight,
+  .rich-text-editor__html-source {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+
+  .rich-text-editor .rsw-toolbar {
+    gap: 3px;
+    padding: 5px;
+  }
+}

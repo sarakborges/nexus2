@@ -25,7 +25,6 @@ import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.i
 import type { CommunityMemberProfile, ForumTopicModerationChanges } from './domain.types'
 import { AuthService } from '../auth/auth.service'
 import { PaginationDto } from '../pagination/pagination.dto'
-import { paginate } from '../pagination/pagination.helper'
 import { filterAndSortList } from '../pagination/list-query.helper'
 import { getRichTextPlainText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
@@ -73,7 +72,6 @@ export class DomainService {
     q: PaginationDto
   ): Promise<PaginatedResult<SearchResultItem>> {
     const normalizedQuery = query.trim().toLocaleLowerCase()
-    if (!normalizedQuery) return paginate([], q)
     return this.data.searchEntities(normalizedQuery, scope, q.page, q.sort)
   }
   listProfiles(q: PaginationDto): Promise<PaginatedResult<Profile>> {

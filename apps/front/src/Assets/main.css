@@ -73,3 +73,45 @@ input[type='reset'],
 :where(a:hover) {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
+
+
+/* Prevent intrinsic media and long content from widening responsive layouts. */
+:where(img, video, canvas) {
+  max-width: 100%;
+}
+
+:where(pre, code) {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 680px) {
+  :where(input:not([type='checkbox']):not([type='radio']), select) {
+    min-height: 40px;
+  }
+
+  :where(textarea) {
+    min-height: 96px;
+  }
+
+  :where(button, [role='button']) {
+    touch-action: manipulation;
+  }
+
+  main {
+    animation-duration: 160ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main {
+    animation: none;
+  }
+
+  button,
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'],
+  [role='button'] {
+    transition: none;
+  }
+}

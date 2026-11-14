@@ -3,7 +3,7 @@ import type { RefObject } from 'react'
 
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 
-export type UseFloatingNavigationBarOptions = FloatingNavigationBarProps
+export type UseFloatingNavigationBarOptions = Pick<FloatingNavigationBarProps, 'onOpenSettings'>
 
 export type NavigationPanel = 'account' | 'notifications'
 
@@ -22,7 +22,6 @@ export type UseFloatingNavigationBarResult = {
   messagesRoute: string | null
   communitiesRoute: string | null
   editProfileRoute: string | null
-  accountName: string
   closePanels: () => void
   togglePanel: (panel: NavigationPanel) => void
   toggleProfileSwitcher: () => void

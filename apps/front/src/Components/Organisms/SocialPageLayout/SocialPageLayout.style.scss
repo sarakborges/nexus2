@@ -488,3 +488,63 @@
 
 .social-page__layout--no-sidebar { grid-template-columns:minmax(0,1fr); }
 .social-page__layout--no-sidebar .social-page__main-column { grid-column:1; }
+
+
+/* Preserve the profile sidebar on tablets and move auxiliary previews below
+   the primary content before the three-column layout becomes too narrow. */
+@media (min-width: 681px) and (max-width: 1100px) {
+  .social-page__layout:not(.social-page__layout--two-column) {
+    grid-template-columns: minmax(170px, 200px) minmax(0, 1fr);
+    column-gap: 20px;
+    row-gap: 18px;
+  }
+
+  .social-page__layout:not(.social-page__layout--two-column) .social-page__right-column {
+    grid-column: 2;
+  }
+
+  .social-page__layout--two-column {
+    grid-template-columns: minmax(170px, 200px) minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .social-preview-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 681px) and (max-width: 900px) {
+  .social-page__layout:not(.social-page__layout--no-sidebar) {
+    column-gap: 16px;
+  }
+
+  .social-page__layout:not(.social-page__layout--two-column) {
+    grid-template-columns: minmax(150px, 176px) minmax(0, 1fr);
+  }
+
+  .social-page__layout--two-column {
+    grid-template-columns: minmax(150px, 176px) minmax(0, 1fr);
+  }
+
+  .social-page__left-column,
+  .social-page__right-column,
+  .social-page__main-column {
+    gap: 16px;
+  }
+
+  .social-panel,
+  .social-preview-panel {
+    padding: 18px;
+  }
+}
+
+
+@media (min-width: 681px) and (max-width: 1100px) {
+  .social-page__layout.social-page__layout--no-sidebar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .social-page__layout--no-sidebar .social-page__right-column {
+    grid-column: 1;
+  }
+}

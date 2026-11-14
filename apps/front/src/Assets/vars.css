@@ -9,3 +9,22 @@
   --avatar-background: var(--color-surface-raised);
   --avatar-fallback-color: var(--color-neutral-strong);
 }
+
+
+@media (max-width: 1024px) {
+  :root {
+    --main-content-gutter: 20px;
+  }
+}
+
+@media (max-width: 680px) {
+  :root {
+    --main-content-gutter: 16px;
+  }
+}
+
+@media (max-width: 380px) {
+  :root {
+    --main-content-gutter: 12px;
+  }
+}

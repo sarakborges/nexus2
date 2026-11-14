@@ -76,7 +76,6 @@ export function useFloatingNavigationBar({
   const editProfileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url + '/edit'
     : null
-  const accountName = currentProfile?.name ?? t('NAVIGATION_ACCOUNT')
 
   const closePanels = () => {
     setOpenPanel(null)
@@ -141,7 +140,6 @@ export function useFloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
-    accountName,
     closePanels,
     togglePanel,
     toggleProfileSwitcher: () =>

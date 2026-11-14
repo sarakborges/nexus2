@@ -8,4 +8,5 @@ export type UseToolbarCommandButtonOptions = Pick<
 
 export type UseToolbarCommandButtonResult = {
   handleMouseDown: (event: MouseEvent<HTMLButtonElement>) => void
+  isActive: boolean
 }

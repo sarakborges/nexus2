@@ -34,8 +34,8 @@ export function RichTextEditor({
         <div className="rich-text-editor__html-mode">
           <header className="rich-text-editor__html-toolbar">
             <span>
-              <strong>HTML</strong>
-              <small>Source editor</small>
+              <strong>{t('RICH_TEXT_HTML')}</strong>
+              <small>{t('RICH_TEXT_SOURCE_EDITOR')}</small>
             </span>
             <button
               className="rich-text-editor__visual-mode-button"

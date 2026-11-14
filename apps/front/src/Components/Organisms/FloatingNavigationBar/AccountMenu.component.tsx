@@ -15,7 +15,6 @@ import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
 export function AccountMenu({
-  accountName,
   profiles,
   hasProfiles,
   currentProfileId,
@@ -32,6 +31,7 @@ export function AccountMenu({
   onRetryProfiles,
   onSelectProfile,
   onOpenSettings,
+  onOpenProfileSettings,
   onSignOut,
   onClose
 }: AccountMenuProps) {
@@ -44,10 +44,6 @@ export function AccountMenu({
       role="menu"
       aria-label={t('NAVIGATION_ACCOUNT_MENU')}
     >
-      <div className="floating-navigation__menu-heading">
-        <span>{accountName}</span>
-      </div>
-
       <ProfileSwitcher
         profiles={profiles}
         hasProfiles={hasProfiles}
@@ -74,40 +70,44 @@ export function AccountMenu({
           <span>{t('PROFILE_EDIT')}</span>
         </Link>
       )}
+
+      <div className="floating-navigation__menu-divider" />
+
+      <Link
+        className="floating-navigation__menu-item"
+        to={ROUTES.createProfile}
+        role="menuitem"
+        onClick={onClose}
+      >
+        <FiUserPlus aria-hidden="true" />
+        <span>{t('HOME_CREATE_PROFILE')}</span>
+      </Link>
+      <Link
+        className="floating-navigation__menu-item"
+        to={ROUTES.createCommunity}
+        role="menuitem"
+        onClick={onClose}
+      >
+        <FiPlusCircle aria-hidden="true" />
+        <span>{t('COMMUNITIES_CREATE')}</span>
+      </Link>
+
+      <div className="floating-navigation__menu-divider" />
+
       {currentProfile && (
-        <>
-          <Link
-            className="floating-navigation__menu-item"
-            to={ROUTES.profile + '/' + currentProfile.url + '/settings'}
-            role="menuitem"
-            onClick={onClose}
-          >
-            <FiSliders aria-hidden="true" />
-            <span>{t('PROFILE_SETTINGS_TITLE')}</span>
-          </Link>
-          <Link
-            className="floating-navigation__menu-item"
-            to={ROUTES.createProfile}
-            role="menuitem"
-            onClick={onClose}
-          >
-            <FiUserPlus aria-hidden="true" />
-            <span>{t('HOME_CREATE_PROFILE')}</span>
-          </Link>
-          <Link
-            className="floating-navigation__menu-item"
-            to={ROUTES.createCommunity}
-            role="menuitem"
-            onClick={onClose}
-          >
-            <FiPlusCircle aria-hidden="true" />
-            <span>{t('COMMUNITIES_CREATE')}</span>
-          </Link>
-
-          <div className="floating-navigation__menu-divider" />
-        </>
+        <button
+          className="floating-navigation__menu-item"
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onClose()
+            onOpenProfileSettings(currentProfile.url)
+          }}
+        >
+          <FiSliders aria-hidden="true" />
+          <span>{t('PROFILE_SETTINGS_TITLE')}</span>
+        </button>
       )}
-
       <button
         className="floating-navigation__menu-item"
         type="button"
@@ -117,6 +117,9 @@ export function AccountMenu({
         <FiSettings aria-hidden="true" />
         <span>{t('DISPLAY_SETTINGS_TITLE')}</span>
       </button>
+
+      <div className="floating-navigation__menu-divider" />
+
       <button
         className="floating-navigation__menu-item floating-navigation__menu-item--danger"
         type="button"
@@ -125,9 +128,7 @@ export function AccountMenu({
         onClick={onSignOut}
       >
         <FiLogOut aria-hidden="true" />
-        <span>
-          {isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}
-        </span>
+        <span>{isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
       </button>
     </div>
   )
