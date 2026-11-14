@@ -21,11 +21,11 @@
 
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: var(--nexus-space-4, 18px);
     box-sizing: border-box;
     width: 100%;
     min-height: 64px;
-    padding: 6px 12px;
+    padding: var(--nexus-space-2, 6px) var(--nexus-space-3, 12px);
   
   }
   &__icon-button,
@@ -70,7 +70,7 @@
 
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
     flex: 0 0 auto;
     margin-left: 0;
     color: var(--text-color);
@@ -102,10 +102,10 @@
   }
   &__account-trigger {
 
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
     max-width: 240px;
     min-height: 40px;
-    padding: 8px;
+    padding: var(--nexus-space-2, 8px);
     text-align: left;
   
   }
@@ -121,7 +121,7 @@
 
     display: grid;
     min-width: 0;
-    gap: 3px;
+    gap: var(--nexus-space-1, 3px);
   
   }
   &__account-chevron {
@@ -159,10 +159,10 @@
     box-sizing: border-box;
     width: 248px;
     justify-content: space-between;
-    gap: 14px;
+    gap: var(--nexus-space-3, 14px);
     overflow-x: hidden;
     overflow-y: auto;
-    padding: 16px 12px 24px;
+    padding: var(--nexus-space-4, 16px) var(--nexus-space-3, 12px) var(--nexus-space-6, 24px);
     border: 0;
     background: transparent;
     box-shadow: none;
@@ -177,7 +177,7 @@
     min-height: 46px;
     flex: 0 0 auto;
     gap: 13px;
-    padding: 0 12px;
+    padding: 0 var(--nexus-space-3, 12px);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -209,9 +209,9 @@
     display: grid;
     width: min(320px, calc(100vw - 32px));
     max-height: min(72vh, 560px);
-    gap: 4px;
+    gap: var(--nexus-space-1, 4px);
     overflow-y: auto;
-    padding: 8px;
+    padding: var(--nexus-space-2, 8px);
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     background: var(--color-surface);
     box-shadow: 0 16px 42px rgb(0 0 0 / 16%);
@@ -224,8 +224,8 @@
     align-items: center;
     width: 100%;
     min-height: 44px;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
     border: 0;
     background: transparent;
     color: var(--text-color);
@@ -294,7 +294,7 @@
 .floating-navigation.is-collapsed .floating-navigation__sidebar {
 
   width: 68px;
-  padding-inline: 8px;
+  padding-inline: var(--nexus-space-2, 8px);
 
 }
 .floating-navigation.is-collapsed .floating-navigation__sidebar-toggle {
@@ -350,7 +350,7 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__content {
 
-    gap: 12px;
+    gap: var(--nexus-space-3, 12px);
   
   }
 }
@@ -369,8 +369,8 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__content {
 
-    gap: 8px;
-    padding-inline: 8px;
+    gap: var(--nexus-space-2, 8px);
+    padding-inline: var(--nexus-space-2, 8px);
   
   }
   .floating-navigation__sidebar {
@@ -407,7 +407,7 @@ html.has-global-navigation .auth-page {
   }
   .floating-navigation__brand {
 
-    gap: 5px;
+    gap: var(--nexus-space-2, 5px);
     font-size: 14px;
     letter-spacing: .1em;
   
@@ -425,7 +425,7 @@ html.has-global-navigation .auth-page {
     min-width: 40px;
     flex: 0 0 40px;
     gap: 0;
-    padding: 4px;
+    padding: var(--nexus-space-1, 4px);
   
   }
   .floating-navigation__account-label,
