@@ -175,7 +175,7 @@
     width: 100%;
     min-height: 46px;
     flex: 0 0 auto;
-    gap: 13px;
+    gap: var(--nexus-space-3);
     padding: 0 var(--nexus-space-3);
     border: 0;
     background: transparent;
@@ -428,16 +428,6 @@ html.has-global-navigation .auth-page {
 
     display: block;
   
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .floating-navigation__sidebar,
-  .floating-navigation__bar,
-  .floating-navigation__content {
-
-  }
-  .floating-navigation__menu {
-
   }
 }
 
