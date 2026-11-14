@@ -9,9 +9,9 @@ min-width: 0;
 display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--nexus-space-4);
   min-height: 46px;
-  padding: 6px 10px;
+  padding: var(--nexus-space-2) var(--nexus-space-2);
   border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--text-color);
@@ -20,7 +20,7 @@ display: flex;
 .rich-text-editor__html-toolbar > span {
 display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--nexus-space-2);
 }
 
 .rich-text-editor__html-toolbar strong {
@@ -46,7 +46,7 @@ display: grid;
 display: flex;
   flex-direction: column;
   min-height: 180px;
-  padding: 12px 8px;
+  padding: var(--nexus-space-3) var(--nexus-space-2);
   overflow: hidden;
   border-right: var(--nexus-border-width, 2px) solid var(--color-border);
   color: var(--color-neutral);
@@ -75,7 +75,7 @@ box-sizing: border-box;
   min-width: 0;
   min-height: 180px;
   margin: 0;
-  padding: 12px;
+  padding: var(--nexus-space-3);
   border: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 13px;
@@ -155,7 +155,7 @@ color: #e3c86d;
 .rich-text-editor__html-toolbar {
 align-items: flex-start;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--nexus-space-2);
 }
 
 .rich-text-editor__html-editor {
@@ -163,13 +163,13 @@ grid-template-columns: 32px minmax(0, 1fr);
 }
 
 .rich-text-editor__line-numbers {
-padding-inline: 4px;
+padding-inline: var(--nexus-space-1);
     font-size: 11px;
 }
 
 .rich-text-editor__highlight,
   .rich-text-editor__html-source {
-padding: 10px 8px;
+padding: var(--nexus-space-2) var(--nexus-space-2);
     font-size: 12px;
 }
 }
