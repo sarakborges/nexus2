@@ -9,7 +9,7 @@ import {
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityForumTopicComposer } from './CommunityForumTopicComposer.component'
+import { CommunityForumTopicComposer } from '@/Components/Molecules'
 import { useCreateCommunityForumTopicPage } from './useCreateCommunityForumTopicPage'
 
 import '../CommunityForumPage/CommunityForumPage.style.scss'

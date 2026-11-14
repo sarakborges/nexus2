@@ -1,12 +1,11 @@
 import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { ProfileSettingsPage } from './ProfileSettingsPage.component'
 import type { ProfileSettingsModalProps } from './ProfileSettingsModal.types'
 
 export function ProfileSettingsModal({
   open,
-  profileUrl,
-  onClose
+  onClose,
+  children
 }: ProfileSettingsModalProps) {
   const { t } = useTranslations()
 
@@ -18,7 +17,7 @@ export function ProfileSettingsModal({
       closeLabel={t('SETTINGS_CLOSE')}
       className="profile-settings-modal"
     >
-      <ProfileSettingsPage profileUrl={profileUrl} presentation="modal" />
+      {children}
     </Modal>
   )
 }

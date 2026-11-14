@@ -1,9 +1,7 @@
-import { CommunityForumEntry } from './CommunityForumEntry.component'
-import { CommunityForumReplyComposer } from './CommunityForumReplyComposer.component'
-import { CommunityForumTopicModerationActions } from './CommunityForumTopicModerationActions.component'
+import { CommunityForumEntry, CommunityForumReplyComposer, CommunityForumTopicModerationActions } from '@/Components/Molecules'
 import { Pagination, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import { Button } from '@/DesignSystem'
 import {
   CommunitySidebar,

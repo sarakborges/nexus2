@@ -1,9 +1,8 @@
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileSettingsPage } from './useProfileSettingsPage'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'
-import { ProfileSettingsMessageAudience } from './ProfileSettingsMessageAudience.component'
-import { ProfileSettingsActivityMatrix } from './ProfileSettingsActivityMatrix.component'
-import { ProfileSettingsSaveBar } from './ProfileSettingsSaveBar.component'
+import { ProfileSettingsMessageAudience, ProfileSettingsSaveBar } from '@/Components/Molecules'
+import { ProfileSettingsActivityMatrix } from '@/Components/Organisms'
 import './ProfileSettingsPage.style.scss'
 
 export function ProfileSettingsPage({

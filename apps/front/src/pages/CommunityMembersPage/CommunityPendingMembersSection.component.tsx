@@ -1,5 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
-import { CommunityMemberEntry } from './CommunityMemberEntry.component'
+import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPendingMembersSectionProps } from './CommunityPendingMembersSection.types'
 

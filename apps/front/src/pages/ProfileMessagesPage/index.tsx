@@ -1,12 +1,12 @@
 import { Pagination, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Tabs } from '@/DesignSystem'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfileMessageComposer } from './ProfileMessageComposer.component'
-import { ProfileMessageList } from './ProfileMessageList.component'
+import { ProfileMessageComposer } from '@/Components/Molecules'
+import { ProfileMessageList } from '@/Components/Organisms'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 
 

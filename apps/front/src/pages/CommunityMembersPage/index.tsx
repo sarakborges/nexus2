@@ -1,14 +1,13 @@
 import { RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
 import {
   CommunitySidebar,
   SocialPageLayout
 } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityMemberDirectory } from './CommunityMemberDirectory.component'
-import { CommunityPendingMembersSection } from './CommunityPendingMembersSection.component'
+import { CommunityMemberDirectory, CommunityPendingMembersSection } from '@/Components/Organisms'
 import { useCommunityMembersPage } from './useCommunityMembersPage'
 
 import './CommunityMembersPage.style.scss'

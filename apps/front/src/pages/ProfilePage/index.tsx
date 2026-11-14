@@ -7,7 +7,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfilePageEntityPreview } from './ProfilePageEntityPreview.component'
+import { ProfilePageEntityPreview } from '@/Components/Organisms'
 import { useProfilePage } from './useProfilePage'
 
 import './ProfilePage.style.scss'

@@ -19,8 +19,14 @@ const SettingsModal = lazy(() =>
 )
 
 const ProfileSettingsModal = lazy(() =>
-  import('@/pages/ProfileSettingsPage').then(module => ({
+  import('@/Components/Organisms/ProfileSettingsModal').then(module => ({
     default: module.ProfileSettingsModal
+  }))
+)
+
+const ProfileSettingsPage = lazy(() =>
+  import('@/pages/ProfileSettingsPage').then(module => ({
+    default: module.ProfileSettingsPage
   }))
 )
 
@@ -51,9 +57,10 @@ export function App() {
         <Suspense fallback={null}>
           <ProfileSettingsModal
             open
-            profileUrl={profileSettingsUrl}
             onClose={() => setProfileSettingsUrl(null)}
-          />
+          >
+            <ProfileSettingsPage profileUrl={profileSettingsUrl} presentation="modal" />
+          </ProfileSettingsModal>
         </Suspense>
       )}
     </>

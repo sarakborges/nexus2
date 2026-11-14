@@ -1,4 +1,4 @@
-import { ProfileMessageItem } from './ProfileMessageItem.component'
+import { ProfileMessageItem } from '@/Components/Molecules/ProfileMessageItem'
 import type { ProfileMessageListProps } from './ProfileMessageList.types'
 
 import './ProfileMessageList.style.scss'
