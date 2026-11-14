@@ -2,6 +2,7 @@ import { Checkbox } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { TranslationKey } from '@/Types/Translation.type'
 import type { ProfileSettingsActivityMatrixProps, ProfileActivityType } from './ProfileSettingsActivityMatrix.types'
+import './ProfileSettingsActivityMatrix.style.scss'
 
 const ACTIVITY_TYPES: Array<{ type: ProfileActivityType; label: TranslationKey }> = [
   { type: 'profile_post', label: 'PROFILE_SETTINGS_ACTIVITY_POSTS' },
@@ -17,17 +18,17 @@ export function ProfileSettingsActivityMatrix({
   const { t } = useTranslations()
 
   return (
-    <section className="profile-settings-page__section" aria-labelledby="profile-feed-settings-title">
+    <section className="profile-settings-activity-matrix__section" aria-labelledby="profile-feed-settings-title">
       <h2 id="profile-feed-settings-title">{t('PROFILE_SETTINGS_FEED_TITLE')}</h2>
       <p>{t('PROFILE_SETTINGS_FEED_DESCRIPTION')}</p>
-      <div className="profile-settings-page__matrix" role="table" aria-label={t('PROFILE_SETTINGS_FEED_TITLE')}>
-        <div className="profile-settings-page__row profile-settings-page__row--header" role="row">
+      <div className="profile-settings-activity-matrix__matrix" role="table" aria-label={t('PROFILE_SETTINGS_FEED_TITLE')}>
+        <div className="profile-settings-activity-matrix__row profile-settings-activity-matrix__row--header" role="row">
           <span role="columnheader">{t('PROFILE_SETTINGS_ACTIVITY_TYPE')}</span>
           <span role="columnheader">{t('PROFILE_SETTINGS_YOUR_POSTS')}</span>
           <span role="columnheader">{t('PROFILE_SETTINGS_FRIENDS_POSTS')}</span>
         </div>
         {ACTIVITY_TYPES.map(activity => (
-          <div className="profile-settings-page__row" role="row" key={activity.type}>
+          <div className="profile-settings-activity-matrix__row" role="row" key={activity.type}>
             <span role="cell">{t(activity.label)}</span>
             <label
               role="cell"

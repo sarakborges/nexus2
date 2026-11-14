@@ -1,5 +1,6 @@
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsSaveBarProps } from './ProfileSettingsSaveBar.types'
+import './ProfileSettingsSaveBar.style.scss'
 
 export function ProfileSettingsSaveBar({
   isDirty,
@@ -11,13 +12,13 @@ export function ProfileSettingsSaveBar({
   const { t } = useTranslations()
 
   return (
-    <footer className="profile-settings-page__footer">
+    <footer className="profile-settings-save-bar">
       <div aria-live="polite">
-        {saveSuccess && <span className="profile-settings-page__success">{t('PROFILE_SETTINGS_SAVED')}</span>}
-        {saveError && <span className="profile-settings-page__error">{t('PROFILE_SETTINGS_SAVE_ERROR')}</span>}
+        {saveSuccess && <span className="profile-settings-save-bar__success">{t('PROFILE_SETTINGS_SAVED')}</span>}
+        {saveError && <span className="profile-settings-save-bar__error">{t('PROFILE_SETTINGS_SAVE_ERROR')}</span>}
       </div>
       <button
-        className="profile-settings-page__save"
+        className="profile-settings-save-bar__button"
         type="button"
         disabled={!isDirty || isSaving}
         onClick={onSave}

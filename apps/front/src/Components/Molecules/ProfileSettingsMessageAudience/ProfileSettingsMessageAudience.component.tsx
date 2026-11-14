@@ -2,6 +2,7 @@ import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsMessageAudienceProps } from './ProfileSettingsMessageAudience.types'
+import './ProfileSettingsMessageAudience.style.scss'
 
 export function ProfileSettingsMessageAudience({
   value,
@@ -10,7 +11,7 @@ export function ProfileSettingsMessageAudience({
   const { t } = useTranslations()
 
   return (
-    <section className="profile-settings-page__section">
+    <section className="profile-settings-message-audience__section">
       <p>{t('PROFILE_SETTINGS_MESSAGES_DESCRIPTION')}</p>
       <PreferenceSelector title={t('PROFILE_SETTINGS_MESSAGES')}>
         <PreferenceOption

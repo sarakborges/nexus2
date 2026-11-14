@@ -1,0 +1,33 @@
+.profile-settings-save-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 18px;
+
+  &__button {
+    min-height: 42px;
+    padding: 8px 18px;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+    background: var(--color-primary-strong);
+    color: white;
+    font: inherit;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+  }
+
+  &__button:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+  }
+
+  &__success { color: var(--color-success, #18794e); }
+  &__error { color: var(--color-error, #b42318); }
+}
+
+@media (max-width: 560px) {
+  .profile-settings-save-bar {
+    align-items: stretch;
+  }
+}

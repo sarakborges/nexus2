@@ -1,0 +1,11 @@
+.profile-settings-modal {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100dvh - 24px);
+}
+
+@media (max-width: 560px) {
+  .profile-settings-modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+}

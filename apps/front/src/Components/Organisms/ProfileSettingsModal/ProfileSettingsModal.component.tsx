@@ -1,6 +1,7 @@
 import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsModalProps } from './ProfileSettingsModal.types'
+import './ProfileSettingsModal.style.scss'
 
 export function ProfileSettingsModal({
   open,
