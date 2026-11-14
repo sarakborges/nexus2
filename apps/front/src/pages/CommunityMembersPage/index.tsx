@@ -88,7 +88,7 @@ export function CommunityMembersPage() {
             onQueryChange={setQuery}
             onSortChange={setSort}
           />
-        )}
+        ))}
         {isStaff && (
           <CommunityPendingMembersSection
             pageQuery={communityMembersPageQuery}

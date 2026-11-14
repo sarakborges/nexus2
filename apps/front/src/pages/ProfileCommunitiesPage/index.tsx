@@ -70,7 +70,7 @@ export function ProfileCommunitiesPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>))}
+          </p>)}
         
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}

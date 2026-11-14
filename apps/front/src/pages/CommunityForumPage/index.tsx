@@ -69,7 +69,7 @@ export function CommunityForumPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>))}
+          </p>)}
         
         <header className="account-card__header">
           <div>
@@ -81,7 +81,7 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
-            </Button>))}
+            </Button>)}
           
         </header>
 
@@ -105,7 +105,7 @@ export function CommunityForumPage() {
               targetKind="community"
               relationship={viewerRelationship}
             />
-          </div>))}
+          </div>)}
         
 
         <RequestState

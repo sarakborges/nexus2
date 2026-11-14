@@ -70,7 +70,7 @@ export function ProfileMessagesPage() {
         {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
           <p className="profile-type-notice" role="alert">
             {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>))}
+          </p>)}
         
         <header className="account-card__header">
           <div>
@@ -81,7 +81,7 @@ export function ProfileMessagesPage() {
               {t(
                 isProfileOwner
                   ? 'PROFILE_MESSAGES_OWNER_DESCRIPTION'
-                  : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION'))}
+                  : 'PROFILE_MESSAGES_VISITOR_DESCRIPTION')}
               
             </p>
           </div>
