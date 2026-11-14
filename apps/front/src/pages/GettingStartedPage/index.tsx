@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { Button, ButtonLink } from '@/DesignSystem'
 import { AccountCard } from '@/Components/Molecules/AccountCard'
 import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
@@ -28,9 +29,7 @@ export function GettingStartedPage() {
           </Button>
         </header>
         {hasSignOutError && (
-          <p className="auth-card__error" role="alert">
-            {t('REQUEST_FAILED')}
-          </p>
+          <FormErrorMessage>{t('REQUEST_FAILED')}</FormErrorMessage>
         )}
         <div className="account-card__onboarding">
           <h2>{t('GETTING_STARTED_PROFILE_TITLE')}</h2>

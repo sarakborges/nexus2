@@ -1,3 +1,4 @@
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
@@ -32,7 +33,7 @@ export function SearchPage() {
   const totalItems = searchQuery.data?.totalItems ?? 0
 
   return (
-    <main className="search-page">
+    <AuthenticatedPageTemplate className="search-page">
       <section className="search-page__content">
         <header className="search-page__header">
           <div>
@@ -110,6 +111,6 @@ export function SearchPage() {
           onPageChange={setPage}
         />
       </section>
-    </main>
+    </AuthenticatedPageTemplate>
   )
 }

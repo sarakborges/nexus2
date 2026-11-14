@@ -1,4 +1,8 @@
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+
 import type { EntityFormPageLayoutProps } from './EntityFormPageLayout.types'
+
+import './EntityFormPageLayout.style.scss'
 
 export function EntityFormPageLayout({
   title,
@@ -7,19 +11,25 @@ export function EntityFormPageLayout({
   children
 }: EntityFormPageLayoutProps) {
   return (
-    <main className="auth-page">
+    <AuthenticatedPageTemplate className="entity-form-page-template">
       <section
         className="entity-form-page"
         aria-labelledby={titleId}
       >
-        <header className="entity-form-page__header">
-          <h1 className="auth-card__title" id={titleId}>
-            {title}
-          </h1>
-          <p className="auth-card__description">{description}</p>
-        </header>
+        {(title || description) && (
+          <header className="entity-form-page__header">
+            {title && (
+              <h1 className="entity-form-page__title" id={titleId}>
+                {title}
+              </h1>
+            )}
+            {description && (
+              <p className="entity-form-page__description">{description}</p>
+            )}
+          </header>
+        )}
         {children}
       </section>
-    </main>
+    </AuthenticatedPageTemplate>
   )
 }

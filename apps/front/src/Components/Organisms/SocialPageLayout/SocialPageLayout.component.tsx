@@ -1,3 +1,4 @@
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
 import type { SocialPageLayoutProps } from './SocialPageLayout.types'
 
 import '@/Components/Molecules/AccountCard/AccountCard.style.scss'
@@ -17,7 +18,7 @@ export function SocialPageLayout({
         : 'social-page__layout--no-sidebar'
 
   return (
-    <main className={['social-page', className].filter(Boolean).join(' ')}>
+    <AuthenticatedPageTemplate className={['social-page', className].filter(Boolean).join(' ')}>
       <div
         className={['social-page__layout', layoutClass]
           .filter(Boolean)
@@ -29,6 +30,6 @@ export function SocialPageLayout({
           <aside className="social-page__right-column">{rightSidebar}</aside>
         )}
       </div>
-    </main>
+    </AuthenticatedPageTemplate>
   )
 }

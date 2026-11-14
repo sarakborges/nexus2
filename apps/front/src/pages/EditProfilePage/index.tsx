@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
 import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { Button } from '@/DesignSystem'
@@ -5,7 +6,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useEditProfilePage } from './useEditProfilePage'
 
-import '../AuthPage.style.scss'
 
 export function EditProfilePage() {
   const { t } = useTranslations()

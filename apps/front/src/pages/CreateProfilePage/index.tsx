@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { RequestState } from '@/Components'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { EntityFormPageLayout, PreferenceSelector, ProfileDetailsFields } from '@/Components/Organisms'
@@ -5,7 +6,6 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateProfilePage } from './useCreateProfilePage'
 
-import '../AuthPage.style.scss'
 
 export function CreateProfilePage() {
   const { t } = useTranslations()
@@ -30,11 +30,9 @@ export function CreateProfilePage() {
 
   if (!isAuthInitialized) {
     return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
+      <EntityFormPageLayout>
+        <RequestState isLoading />
+      </EntityFormPageLayout>
     )
   }
 
@@ -57,9 +55,7 @@ export function CreateProfilePage() {
           onUploadImage={uploadEditorImage}
         />
         {errorMessage && (
-          <p className="auth-card__error" role="alert">
-            {errorMessage}
-          </p>
+          <FormErrorMessage>{errorMessage}</FormErrorMessage>
         )}
         <PreferenceSelector title={t('PROFILE_TYPE_LABEL')}>
           <PreferenceOption

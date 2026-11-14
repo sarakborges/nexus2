@@ -1,3 +1,4 @@
+import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileSettingsPage } from './useProfileSettingsPage'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'
@@ -69,10 +70,10 @@ export function ProfileSettingsPage({
   }
 
   return (
-    <main className="account-page">
+    <AuthenticatedPageTemplate>
       <section className="account-card profile-settings-page">
         {content}
       </section>
-    </main>
+    </AuthenticatedPageTemplate>
   )
 }

@@ -1,4 +1,7 @@
 .search-page {
+  display: grid;
+  align-content: start;
+  justify-items: stretch;
   box-sizing: border-box;
   width: min(100%, 900px);
   min-height: 100dvh;
@@ -9,6 +12,7 @@
 
 .search-page__content {
   display: grid;
+  width: 100%;
   gap: 18px;
   min-width: 0;
   padding: 22px;

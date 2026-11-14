@@ -6,11 +6,9 @@ import type { EntityEditPageLayoutProps } from './EntityEditPageLayout.types'
 
 function LoadingState() {
   return (
-    <main className="auth-page">
-      <section className="entity-form-page">
-        <RequestState isLoading />
-      </section>
-    </main>
+    <EntityFormPageLayout>
+      <RequestState isLoading />
+    </EntityFormPageLayout>
   )
 }
 
@@ -36,11 +34,9 @@ export function EntityEditPageLayout({
 
   if (isError) {
     return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isError onRetry={onRetry} />
-        </section>
-      </main>
+      <EntityFormPageLayout>
+        <RequestState isError onRetry={onRetry} />
+      </EntityFormPageLayout>
     )
   }
 
@@ -49,13 +45,11 @@ export function EntityEditPageLayout({
 
   if (!isTypeCompatible) {
     return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        </section>
-      </main>
+      <EntityFormPageLayout>
+        <p className="profile-type-notice" role="alert">
+          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
+        </p>
+      </EntityFormPageLayout>
     )
   }
 

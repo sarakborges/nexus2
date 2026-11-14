@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
@@ -6,7 +7,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
-import '../AuthPage.style.scss'
 
 export function EditCommunityPage() {
   const { t } = useTranslations()

@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityFormPageLayout } from '@/Components/Organisms/EntityFormPageLayout'
@@ -5,7 +6,6 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateCommunityPage } from './useCreateCommunityPage'
 
-import '../AuthPage.style.scss'
 
 export function CreateCommunityPage() {
   const { t } = useTranslations()
@@ -46,9 +46,7 @@ export function CreateCommunityPage() {
           onUploadImage={uploadEditorImage}
         />
         {errorMessage && (
-          <p className="auth-card__error" role="alert">
-            {errorMessage}
-          </p>
+          <FormErrorMessage>{errorMessage}</FormErrorMessage>
         )}
         <CommunityPrivacySelector
           value={privacy}
