@@ -4,12 +4,12 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--nexus-space-3);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   margin-inline: auto;
-  padding: 16px;
+  padding: var(--nexus-space-4);
   text-align: center;
 }
 
@@ -25,7 +25,7 @@
   flex-direction: row;
   justify-content: center;
   min-height: 0;
-  padding: 8px 16px;
+  padding: var(--nexus-space-2) var(--nexus-space-4);
   font-size: 14px;
 }
 
@@ -34,11 +34,11 @@
   display: grid;
   align-content: start;
   justify-items: start;
-  gap: var(--nexus-space-3, 12px);
+  gap: var(--nexus-space-3);
   width: 100%;
   min-width: 0;
   margin-inline: auto;
-  padding: var(--nexus-space-5, 20px) 0;
+  padding: var(--nexus-space-5) 0;
   text-align: left;
 }
 
