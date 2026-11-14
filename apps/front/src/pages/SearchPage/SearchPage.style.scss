@@ -58,10 +58,6 @@
   gap: 8px;
 }
 
-.search-result__link:hover {
-  background: var(--color-surface-raised);
-}
-
 @media (max-width: 600px) {
   .search-page {
     padding-top: 88px;
@@ -74,18 +70,6 @@
 }
 
 /* Search result avatars use a fixed width and cap portrait images at 1:2. */
-.search-result__avatar {
-  height: auto;
-  max-height: 108px;
-  aspect-ratio: auto;
-}
-
-.search-result__avatar img {
-  height: auto;
-  max-height: inherit;
-  object-fit: cover;
-}
-
 @media (max-width: 680px) {
   .search-result__avatar {
     height: auto;
