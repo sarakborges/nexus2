@@ -2,7 +2,7 @@
   &__menu-divider {
 
     height: 1px;
-    margin: 4px 8px;
+    margin: var(--nexus-space-1, 4px) var(--nexus-space-2, 8px);
     background: var(--color-border);
   
   }
@@ -21,8 +21,8 @@
 
     display: grid;
     min-width: 0;
-    gap: 4px;
-    padding: 10px 12px 12px;
+    gap: var(--nexus-space-1, 4px);
+    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
   
   }
   &__menu-item--danger,
