@@ -1,14 +1,14 @@
 .community-forum-topic-list {
   display: grid;
-  gap: 14px;
+  gap: var(--nexus-space-3, 14px);
 
   &__topic {
     display: grid;
     grid-template-columns: 56px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
+    gap: var(--nexus-space-3, 12px);
     min-width: 0;
-    padding: 16px;
+    padding: var(--nexus-space-4, 16px);
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     border-radius: var(--nexus-card-radius, 0);
     background: var(--color-surface);
@@ -50,7 +50,7 @@
 
   &__main {
     display: grid;
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
     min-width: 0;
   }
 
@@ -59,7 +59,7 @@
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--nexus-space-2, 10px);
   }
 
   &__title {
@@ -95,7 +95,7 @@
     display: grid;
     justify-items: end;
     align-content: center;
-    gap: 4px;
+    gap: var(--nexus-space-1, 4px);
     min-width: 90px;
   }
 
@@ -113,7 +113,7 @@
   }
 
   &__label {
-    padding: 3px 7px;
+    padding: var(--nexus-space-1, 3px) 7px;
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     border-radius: var(--nexus-control-radius, 0);
     color: var(--color-neutral);
@@ -125,7 +125,7 @@
   .community-forum-topic-list__topic {
     grid-template-columns: 44px minmax(0, 1fr);
     align-items: start;
-    gap: 10px;
+    gap: var(--nexus-space-2, 10px);
   }
 
   .community-forum-topic-list__author {
