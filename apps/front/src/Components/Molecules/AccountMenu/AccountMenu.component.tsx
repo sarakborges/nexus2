@@ -13,6 +13,7 @@ import { Link } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import './AccountMenu.style.scss'
 
 export function AccountMenu({
   profiles,

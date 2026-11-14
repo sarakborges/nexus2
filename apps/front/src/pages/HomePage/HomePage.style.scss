@@ -3,6 +3,7 @@
   align-content: start;
   gap: 20px;
   min-width: 0;
+  width: 100%;
 }
 
 .home-page__previews {
@@ -210,4 +211,12 @@
   .home-page__post-composer {
     padding: 12px;
   }
+}
+
+.home-page__header {
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
 }

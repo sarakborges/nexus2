@@ -5,6 +5,7 @@ import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
 import type { FloatingNavigationLinksProps } from './FloatingNavigationLinks.types'
+import './FloatingNavigationLinks.style.scss'
 
 export function FloatingNavigationLinks({
   pathname,

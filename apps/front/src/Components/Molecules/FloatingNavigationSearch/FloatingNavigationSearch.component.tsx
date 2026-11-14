@@ -6,6 +6,7 @@ import type { SearchScope } from '@nexus/common'
 import { ROUTES } from '@/Constants/routes'
 import { Button, Input, Select } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import './FloatingNavigationSearch.style.scss'
 
 export function FloatingNavigationSearch() {
   const { t } = useTranslations()

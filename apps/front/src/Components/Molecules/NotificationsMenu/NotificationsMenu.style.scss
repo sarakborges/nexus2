@@ -1,0 +1,171 @@
+.floating-navigation {
+  &__notification-container {
+
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 0 0 40px;
+  
+  }
+  &__notification-trigger {
+
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-color);
+    cursor: pointer;
+  
+  }
+  &__notification-trigger:hover {
+
+    background: var(--color-background);
+  
+  }
+  &__notification-trigger:focus-visible {
+
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 2px;
+  
+  }
+  &__notification-trigger svg {
+
+    width: var(--nexus-icon-size, 20px);
+    height: var(--nexus-icon-size, 20px);
+  
+  }
+  &__notification-count {
+
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    display: grid;
+    place-items: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 3px;
+    border-radius: 10px;
+    background: var(--color-error, #b42318);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+  
+  }
+  &__notifications-heading {
+
+    display: grid;
+    gap: 3px;
+    padding: 10px 12px 12px;
+    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
+  
+  }
+  &__notifications-heading span,
+  &__notification-item time {
+
+    color: var(--color-neutral);
+    font-size: 11px;
+  
+  }
+  &__notification-item {
+
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
+    color: var(--text-color);
+    font-size: 13px;
+    line-height: 1.4;
+    text-decoration: none;
+  
+  }
+  &__notification-item:hover {
+
+    background: var(--color-background);
+  
+  }
+  &__notification-avatar {
+
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    overflow: hidden;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+    background: var(--avatar-background);
+    font-size: 13px;
+  
+  }
+  &__notification-avatar img {
+
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  
+  }
+  &__notification-copy {
+
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  
+  }
+  &__notification-copy strong {
+
+    overflow: hidden;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  
+  }
+  &__notification-copy small {
+
+    color: var(--color-neutral);
+    font-size: 11px;
+  
+  }
+  &__notification-copy > span {
+
+    overflow-wrap: anywhere;
+  
+  }
+  &__notifications-state {
+
+    padding: 14px 12px;
+    color: var(--color-neutral);
+    font-size: 13px;
+  
+  }
+  &__notifications-all {
+
+    display: block;
+    padding: 12px;
+    color: var(--color-primary-weak);
+    font-size: 13px;
+    font-weight: var(--font-weight-bold);
+    text-decoration: none;
+  
+  }
+  &__menu--notifications {
+
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(360px, calc(100vw - 32px));
+  
+  }
+}
+@media (max-width: 680px) {
+  .floating-navigation__menu--notifications {
+
+    right: 0;
+    width: min(360px, calc(100vw - 16px));
+  
+  }
+}

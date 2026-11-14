@@ -7,6 +7,7 @@ import {
 
 import { IdentityAvatar } from '@/Components/Molecules'
 import { useTranslations } from '@/Hooks/Language'
+import './ProfileSwitcher.style.scss'
 
 export function ProfileSwitcher({
   profiles,

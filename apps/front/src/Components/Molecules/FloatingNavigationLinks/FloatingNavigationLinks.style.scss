@@ -1,0 +1,58 @@
+.floating-navigation {
+  &__icon-button:focus-visible,
+  &__sidebar-link:focus-visible,
+  &__account-trigger:focus-visible,
+  &__menu-item:focus-visible {
+
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 2px;
+  
+  }
+  &__sidebar-links {
+
+    display: grid;
+    width: 100%;
+    gap: 4px;
+  
+  }
+  &__sidebar-link {
+
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 46px;
+    padding: 0 12px;
+    color: var(--text-color);
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+  
+  }
+  &__sidebar-link svg {
+
+    width: var(--nexus-icon-size, 20px);
+    height: var(--nexus-icon-size, 20px);
+    flex: 0 0 var(--nexus-icon-size, 20px);
+    color: var(--color-neutral);
+  
+  }
+  &__sidebar-link:hover,
+  &__sidebar-link[aria-current='page'] {
+
+    background: var(--color-background);
+    color: var(--color-primary-weak);
+  
+  }
+}
+.floating-navigation.is-collapsed .floating-navigation__sidebar-link {
+
+  justify-content: center;
+  padding-inline: 0;
+
+}
+.floating-navigation.is-collapsed .floating-navigation__sidebar-link span,
+.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle span {
+
+  display: none;
+
+}

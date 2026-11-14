@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import type { RecentActivity } from '@nexus/common'
+import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { FiBell } from 'react-icons/fi'
 import { IdentityAvatar } from '@/Components/Molecules'
 
@@ -9,12 +10,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
-
-type NotificationsMenuProps = {
-  isOpen: boolean
-  onToggle: () => void
-  onClose: () => void
-}
 
 function getActivityHref(activity: RecentActivity): string {
   if (activity.type === 'community_created' || activity.type === 'community_membership') {
