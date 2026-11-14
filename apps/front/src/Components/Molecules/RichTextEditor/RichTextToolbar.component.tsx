@@ -1,8 +1,8 @@
 import type { RichTextToolbarProps } from './RichTextToolbar.types'
-import { InsertImageButton } from './InsertImageButton.component'
-import { ToolbarCommandButton } from './ToolbarCommandButton.component'
-import { RichTextFormatSelect } from './RichTextFormatSelect.component'
-import { RichTextLinkButton } from './RichTextLinkButton.component'
+import { InsertImageButton } from '@/Components/Molecules/InsertImageButton'
+import { ToolbarCommandButton } from '@/Components/Molecules/ToolbarCommandButton'
+import { RichTextFormatSelect } from '@/Components/Molecules/RichTextFormatSelect'
+import { RichTextLinkButton } from '@/Components/Molecules/RichTextLinkButton'
 import { Toolbar } from 'react-simple-wysiwyg'
 import { useTranslations } from '@/Hooks/Language'
 

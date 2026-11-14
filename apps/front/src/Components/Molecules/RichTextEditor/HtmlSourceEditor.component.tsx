@@ -1,5 +1,5 @@
 import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
-import { HtmlSyntaxHighlight } from './HtmlSyntaxHighlight.component'
+import { HtmlSyntaxHighlight } from '@/Components/Molecules/HtmlSyntaxHighlight'
 import { useHtmlSourceEditor } from './useHtmlSourceEditor'
 
 export function HtmlSourceEditor({
