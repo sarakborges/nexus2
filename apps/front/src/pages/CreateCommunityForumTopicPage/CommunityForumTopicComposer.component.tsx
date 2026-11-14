@@ -1,6 +1,4 @@
-import type { FormEvent } from 'react'
-
-import { RichTextEditor } from '@/Components'
+import { RichTextComposerField } from '@/Components'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumTopicComposerProps } from './CommunityForumTopicComposer.types'
@@ -18,12 +16,8 @@ export function CommunityForumTopicComposer({
 }: CommunityForumTopicComposerProps) {
   const { t } = useTranslations()
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    void onSubmit(event)
-  }
-
   return (
-    <form className="community-forum__composer" onSubmit={handleSubmit}>
+    <form className="community-forum__composer" onSubmit={onSubmit}>
       <FormField
         id="forum-topic-title"
         label={t('FORUM_TOPIC_TITLE')}
@@ -33,18 +27,17 @@ export function CommunityForumTopicComposer({
         onChange={(event) => onTitleChange(event.target.value)}
         required
       />
-      <div className="form-field">
-        <RichTextEditor
-          id="forum-topic-content"
-          value={content}
-          onChange={onContentChange}
-          maxHtmlLength={8000}
-          imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-          imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-          onUploadImage={onUploadImage}
-          placeholder={t('RICH_TEXT_PLACEHOLDER')}
-        />
-      </div>
+      <RichTextComposerField
+        id="forum-topic-content"
+        label={t('FORUM_TOPIC_CONTENT')}
+        value={content}
+        onChange={onContentChange}
+        maxHtmlLength={8000}
+        imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+        imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+        onUploadImage={onUploadImage}
+        placeholder={t('RICH_TEXT_PLACEHOLDER')}
+      />
       {hasError && (
         <p className="auth-card__error" role="alert">
           {t('FORUM_TOPIC_ERROR')}

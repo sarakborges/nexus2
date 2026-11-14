@@ -1,5 +1,6 @@
 export { AvatarUploadField } from './AvatarUploadField'
 export { RequestState } from './RequestState'
+export { RichTextComposerField } from './RichTextComposerField'
 export { RichTextEditor } from './RichTextEditor'
 export { CommunityMemberActions } from './CommunityMemberActions'
 export { LanguageOption } from './LanguageOption'

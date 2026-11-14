@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 
-import { RichTextEditor } from '@/Components'
+import { RichTextComposerField } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
-import { Button, Label } from '@/DesignSystem'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileMessageComposerProps } from './ProfileMessageComposer.types'
 
@@ -50,24 +50,17 @@ export function ProfileMessageComposer({
           </Button>
         </div>
       )}
-      <div className="form-field">
-        <Label
-          id="profile-message-content-label"
-          htmlFor="profile-message-content"
-        >
-          {t('PROFILE_MESSAGES_COMPOSE_LABEL')}
-        </Label>
-        <RichTextEditor
-          id="profile-message-content"
-          value={content}
-          onChange={onContentChange}
-          maxHtmlLength={8000}
-          imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-          imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-          onUploadImage={onUploadImage}
-          placeholder={t('RICH_TEXT_PLACEHOLDER')}
-        />
-      </div>
+      <RichTextComposerField
+        id="profile-message-content"
+        label={t('PROFILE_MESSAGES_COMPOSE_LABEL')}
+        value={content}
+        onChange={onContentChange}
+        maxHtmlLength={8000}
+        imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+        imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+        onUploadImage={onUploadImage}
+        placeholder={t('RICH_TEXT_PLACEHOLDER')}
+      />
       {hasSendMessageError && (
         <p className="auth-card__error" role="alert">
           {t(

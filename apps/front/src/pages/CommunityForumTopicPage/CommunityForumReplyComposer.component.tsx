@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 
-import { RelationshipActions, RequestState, RichTextEditor } from '@/Components'
+import { RelationshipActions, RequestState, RichTextComposerField } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
-import { Button, Label } from '@/DesignSystem'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumReplyComposerProps } from './CommunityForumReplyComposer.types'
 
@@ -38,24 +38,17 @@ export function CommunityForumReplyComposer({
           className="community-forum__reply-composer"
           onSubmit={onSubmit}
         >
-          <div className="form-field">
-            <Label
-              id="forum-reply-content-label"
-              htmlFor="forum-reply-content"
-            >
-              {t('FORUM_REPLY')}
-            </Label>
-            <RichTextEditor
-              id="forum-reply-content"
-              value={value}
-              onChange={onChange}
-              maxHtmlLength={8000}
-              imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
-              imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
-              onUploadImage={onUploadImage}
-              placeholder={t('RICH_TEXT_PLACEHOLDER')}
-            />
-          </div>
+          <RichTextComposerField
+            id="forum-reply-content"
+            label={t('FORUM_REPLY')}
+            value={value}
+            onChange={onChange}
+            maxHtmlLength={8000}
+            imageButtonLabel={t('RICH_TEXT_INSERT_IMAGE')}
+            imageUploadErrorLabel={t('RICH_TEXT_IMAGE_UPLOAD_FAILED')}
+            onUploadImage={onUploadImage}
+            placeholder={t('RICH_TEXT_PLACEHOLDER')}
+          />
           {hasError && (
             <p className="auth-card__error" role="alert">
               {t('FORUM_TOPIC_ERROR')}
