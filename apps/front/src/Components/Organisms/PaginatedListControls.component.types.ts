@@ -5,5 +5,4 @@ export type PaginatedListControlsProps = {
   sort: ListSort
   onQueryChange: (query: string) => void
   onSortChange: (sort: ListSort) => void
-  showQuery?: boolean
 }

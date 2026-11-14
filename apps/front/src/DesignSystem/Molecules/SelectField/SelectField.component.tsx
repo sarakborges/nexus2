@@ -5,9 +5,18 @@ import type { SelectFieldProps } from './SelectField.types'
 
 import './SelectField.style.scss'
 
-export function SelectField({ id, label, ...selectProps }: SelectFieldProps) {
+export function SelectField({
+  id,
+  label,
+  containerClassName,
+  ...selectProps
+}: SelectFieldProps) {
+  const classNames = ['select-field', containerClassName]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <div className="select-field">
+    <div className={classNames}>
       <Label htmlFor={id}>{label}</Label>
       <Select id={id} {...selectProps} />
     </div>

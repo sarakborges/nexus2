@@ -2,8 +2,8 @@ import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import type { SearchScope } from '@nexus/common'
-import { IdentityAvatar, Pagination } from '@/Components'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
+import { IdentityAvatar, ListSortSelect, Pagination } from '@/Components'
+import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useTranslations } from '@/Hooks/Language'
 import { queryKeys } from '@/Services/Query/queryKeys'
@@ -46,7 +46,7 @@ export function SearchPage() {
           )}
         </header>
 
-        <PaginatedListControls query={query} sort={sort} onQueryChange={() => undefined} onSortChange={setSort} showQuery={false} />
+        <ListSortSelect value={sort} onChange={setSort} />
 
         {searchQuery.isLoading && (
           <p className="search-page__state" role="status">

@@ -1,4 +1,5 @@
 export { AvatarUploadField } from './AvatarUploadField'
+export { ListSortSelect } from './ListSortSelect'
 export { RequestState } from './RequestState'
 export { RichTextComposerField } from './RichTextComposerField'
 export { RichTextEditor } from './RichTextEditor'
