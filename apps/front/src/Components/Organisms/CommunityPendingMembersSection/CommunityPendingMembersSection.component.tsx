@@ -2,6 +2,7 @@ import { Pagination, RequestState } from '@/Components'
 import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPendingMembersSectionProps } from './CommunityPendingMembersSection.types'
+import './CommunityPendingMembersSection.style.scss'
 
 export function CommunityPendingMembersSection({
   pageQuery,
@@ -19,7 +20,7 @@ export function CommunityPendingMembersSection({
   const { t } = useTranslations()
 
   return (
-    <section className="account-card community-members-page__pending">
+    <section className="account-card community-pending-members-section">
       <header className="account-card__header">
         <div>
           <h1 className="account-card__title">

@@ -1,4 +1,5 @@
 import type { CommunityMemberEntryProps } from './CommunityMemberEntry.types'
+import './CommunityMemberEntry.style.scss'
 
 import { CommunityMemberActions } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
@@ -51,7 +52,7 @@ export function CommunityMemberEntry({
             @{profile.url}
           </span>
           {roleKey && (
-            <span className="community-member__role">{t(roleKey)}</span>
+            <span className="community-member-entry__role">{t(roleKey)}</span>
           )}
         </span>
       </Link>

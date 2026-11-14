@@ -3,6 +3,7 @@ import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntr
 import { Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityMemberDirectoryProps } from './CommunityMemberDirectory.types'
+import './CommunityMemberDirectory.style.scss'
 
 export function CommunityMemberDirectory({
   pageQuery,
@@ -41,7 +42,7 @@ export function CommunityMemberDirectory({
         </p>
       )}
       <Tabs
-        className="community-member__tabs"
+        className="community-member-directory__tabs"
         ariaLabel={t('COMMUNITY_MEMBERS_TITLE')}
         value={visibleTab}
         onChange={value => onSelectTab(value as typeof visibleTab)}

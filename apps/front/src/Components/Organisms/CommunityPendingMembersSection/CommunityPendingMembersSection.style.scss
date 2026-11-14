@@ -1,0 +1,12 @@
+.community-pending-members-section {
+  border-color: var(--color-primary-weak);
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+
+.community-pending-members-section .account-card__header {
+  align-items: baseline;
+}
+
+.community-pending-members-section .account-card__description {
+  margin-top: 0;
+}
