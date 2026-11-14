@@ -1,8 +1,8 @@
 .social-panel {
   display: grid;
-  gap: 20px;
+  gap: var(--nexus-space-5, 20px);
   min-width: 0;
-  padding: 22px;
+  padding: var(--nexus-space-6, 22px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--nexus-space-3, 12px);
 }
 
 .social-panel__header-actions {
@@ -21,7 +21,7 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--nexus-space-2, 8px);
 }
 
 .social-panel__title {
@@ -45,13 +45,13 @@
 
 @media (max-width: 900px) and (min-width: 681px) {
   .social-panel {
-    padding: 18px;
+    padding: var(--nexus-space-4, 18px);
   }
 }
 
 @media (max-width: 680px) {
   .social-panel {
-    padding: 16px;
+    padding: var(--nexus-space-4, 16px);
   }
 }
 
