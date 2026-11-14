@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 
 import type { ProfileType } from '@/Models/Profile.model'
 import { ROUTES } from '@/Constants/routes'
+import { useEntityDetailsDraft } from '@/Hooks/Forms'
 import { useCreateProfileMutation } from '@/Hooks/Profile'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
@@ -18,10 +19,8 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
   const user = session?.user
   const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const showToast = useToastStore((state) => state.showToast)
-  const [name, setName] = useState('')
-  const [url, setUrl] = useState('')
-  const [picture, setPicture] = useState('')
-  const [about, setAbout] = useState('')
+  const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
+    useEntityDetailsDraft()
   const [type, setType] = useState<ProfileType>('social')
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useCreateProfileMutation()

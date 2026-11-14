@@ -1,17 +1,10 @@
 import type { ProfileType } from '@/Models/Profile.model'
-import type { Dispatch, FormEvent, SetStateAction } from 'react'
+import type { FormEvent, Dispatch, SetStateAction } from 'react'
+import type { UseEntityDetailsDraftResult } from '@/Hooks/Forms'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
-export type UseCreateProfilePageResult = {
+export type UseCreateProfilePageResult = UseEntityDetailsDraftResult & {
   isAuthInitialized: boolean
-  name: string
-  setName: Dispatch<SetStateAction<string>>
-  url: string
-  setUrl: Dispatch<SetStateAction<string>>
-  picture: string
-  setPicture: Dispatch<SetStateAction<string>>
-  about: string
-  setAbout: Dispatch<SetStateAction<string>>
   type: ProfileType
   setType: Dispatch<SetStateAction<ProfileType>>
   errorMessage: string
