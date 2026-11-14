@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 16px;
+  gap: var(--nexus-space-4, 16px);
 }
 
 .communities-page__header .account-card__action {
