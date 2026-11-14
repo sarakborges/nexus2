@@ -4,6 +4,8 @@ import { Button } from '@/DesignSystem'
 import { getTotalPages } from '@/Helpers/Math/pagination.helper'
 import { useTranslations } from '@/Hooks/Language'
 
+import './Pagination.style.scss'
+
 export function Pagination({
   page,
   totalItems,
@@ -13,6 +15,7 @@ export function Pagination({
   const { t } = useTranslations()
   const totalPages = getTotalPages(totalItems, pageSize)
   if (totalPages <= 1) return null
+
   return (
     <nav className="pagination" aria-label={t('PAGINATION_LABEL')}>
       <Button

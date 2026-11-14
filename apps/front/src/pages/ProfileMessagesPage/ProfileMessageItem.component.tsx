@@ -5,6 +5,8 @@ import { useTranslations } from '@/Hooks/Language'
 import { FiCornerUpLeft, FiStar, FiTrash2 } from 'react-icons/fi'
 import type { ProfileMessageItemProps } from './ProfileMessageItem.types'
 
+import './ProfileMessageItem.style.scss'
+
 export function ProfileMessageItem({
   item,
   isActionPending,

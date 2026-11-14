@@ -11,7 +11,7 @@ import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunitiesPage } from './useCommunitiesPage'
 
-import '../AuthenticatedPage.style.scss'
+import './CommunitiesPage.style.scss'
 
 export function CommunitiesPage() {
   const { t } = useTranslations()
@@ -34,15 +34,15 @@ export function CommunitiesPage() {
 
   if (!currentProfile)
     return (
-      <main className="account-page">
-        <section className="account-card">
+      <AuthenticatedPageTemplate>
+        <AccountCard>
           <RequestState
             isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
             isError={communitiesPageQuery.isError}
             onRetry={() => void communitiesPageQuery.refetch()}
           />
-        </section>
-      </main>
+        </AccountCard>
+      </AuthenticatedPageTemplate>
     )
 
   return (

@@ -1,6 +1,8 @@
 import { ProfileMessageItem } from './ProfileMessageItem.component'
 import type { ProfileMessageListProps } from './ProfileMessageList.types'
 
+import './ProfileMessageList.style.scss'
+
 export function ProfileMessageList({
   items,
   isActionPending,

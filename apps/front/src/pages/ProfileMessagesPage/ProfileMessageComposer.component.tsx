@@ -6,6 +6,8 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileMessageComposerProps } from './ProfileMessageComposer.types'
 
+import './ProfileMessageComposer.style.scss'
+
 export function ProfileMessageComposer({
   hasSession,
   isProfileOwner,

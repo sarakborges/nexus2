@@ -1,4 +1,5 @@
 export { AuthPageLayout } from './AuthPageLayout/AuthPageLayout.component'
+export { AuthenticatedPageTemplate } from './AuthenticatedPageTemplate'
 export { CommunityDetailsFields } from './CommunityDetailsFields'
 export { CommunityForumTopicList } from './CommunityForumTopicList/CommunityForumTopicList.component'
 export { CommunityPrivacySelector } from './CommunityPrivacySelector'

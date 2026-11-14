@@ -1,5 +1,7 @@
 import type { SocialPageLayoutProps } from './SocialPageLayout.types'
 
+import '@/Components/Molecules/AccountCard/AccountCard.style.scss'
+
 export function SocialPageLayout({
   sidebar,
   children,
