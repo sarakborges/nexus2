@@ -4,7 +4,7 @@
   width: 100%;
   height: var(--nexus-control-height, 40px);
   min-height: var(--nexus-control-height, 40px);
-  padding: 8px 12px;
+  padding: var(--nexus-space-2) var(--nexus-space-3);
   background-color: var(--color-neutral-weak);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-control-radius, 0);
