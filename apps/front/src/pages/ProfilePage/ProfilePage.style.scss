@@ -3,13 +3,14 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--nexus-space-2);
 }
 
 .profile-page__action {
   box-sizing: border-box;
   width: 140px;
   min-width: 140px;
+  flex: 0 0 140px;
 }
 
 @media (max-width: 680px) {
@@ -17,8 +18,9 @@
     width: 100%;
   }
 
-  .profile-page__relationship-actions .profile-page__action {
-    width: auto;
-    flex: 1 1 140px;
+  .profile-page__relationship-actions .profile-page__action,
+  .social-panel__header-actions > .profile-page__action {
+    width: 140px;
+    flex: 0 0 140px;
   }
 }
