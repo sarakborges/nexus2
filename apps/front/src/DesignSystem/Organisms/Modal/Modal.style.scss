@@ -21,16 +21,16 @@
     position: relative;
     display: flex;
     flex-flow: column;
-    gap: 16px;
-    padding: 24px;
+    gap: var(--nexus-space-4, 16px);
+    padding: var(--nexus-space-6, 24px);
   }
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding-right: 40px;
+    gap: var(--nexus-space-4, 16px);
+    padding-right: var(--nexus-space-8, 40px);
   }
 
   &__title {
@@ -88,12 +88,12 @@
     max-height: calc(100dvh - 20px);
 
     &__content {
-      gap: 12px;
-      padding: 16px;
+      gap: var(--nexus-space-3, 12px);
+      padding: var(--nexus-space-4, 16px);
     }
 
     &__header {
-      padding-right: 36px;
+      padding-right: var(--nexus-space-8, 36px);
     }
 
     &__close {
