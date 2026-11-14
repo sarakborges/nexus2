@@ -1,4 +1,5 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import {
@@ -10,7 +11,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useCommunityForumPage } from './useCommunityForumPage'
 
-import '../AuthenticatedPage.style.scss'
 import './CommunityForumPage.style.scss'
 
 export function CommunityForumPage() {
@@ -39,24 +39,14 @@ export function CommunityForumPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || forumPageQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (forumPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void forumPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void forumPageQuery.refetch()}
+      />
     )
   }
   if (!community) return <NotFoundPage />

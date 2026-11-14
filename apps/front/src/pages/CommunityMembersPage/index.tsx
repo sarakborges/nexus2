@@ -1,4 +1,5 @@
 import { RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   CommunitySidebar,
@@ -10,7 +11,6 @@ import { CommunityMemberDirectory } from './CommunityMemberDirectory.component'
 import { CommunityPendingMembersSection } from './CommunityPendingMembersSection.component'
 import { useCommunityMembersPage } from './useCommunityMembersPage'
 
-import '../AuthenticatedPage.style.scss'
 import './CommunityMembersPage.style.scss'
 
 export function CommunityMembersPage() {
@@ -57,24 +57,14 @@ export function CommunityMembersPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || communityMembersPageQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (communityMembersPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void communityMembersPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void communityMembersPageQuery.refetch()}
+      />
     )
   }
   if (!community) return <NotFoundPage />

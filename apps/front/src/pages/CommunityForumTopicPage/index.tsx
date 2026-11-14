@@ -2,6 +2,7 @@ import { CommunityForumEntry } from './CommunityForumEntry.component'
 import { CommunityForumReplyComposer } from './CommunityForumReplyComposer.component'
 import { CommunityForumTopicModerationActions } from './CommunityForumTopicModerationActions.component'
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { Button } from '@/DesignSystem'
 import {
@@ -12,7 +13,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
-import '../AuthenticatedPage.style.scss'
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
 export function CommunityForumTopicPage() {
@@ -59,24 +59,14 @@ export function CommunityForumTopicPage() {
 
   if (!normalized || !topicId) return <NotFoundPage />
   if (!isAuthInitialized || topicPageQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (topicPageQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void topicPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void topicPageQuery.refetch()}
+      />
     )
   }
   if (!community || !detail || !topic) return <NotFoundPage />

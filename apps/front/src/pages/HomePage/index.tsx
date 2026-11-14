@@ -1,4 +1,4 @@
-import { RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { formatHomeActivityDate } from './formatHomeActivityDate'
@@ -16,11 +16,11 @@ export function HomePage() {
 
   if (!currentProfile) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading={homeQuery.isLoading} isError={homeQuery.isError} onRetry={() => void homeQuery.refetch()} />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isLoading={homeQuery.isLoading}
+        isError={homeQuery.isError}
+        onRetry={() => void homeQuery.refetch()}
+      />
     )
   }
 

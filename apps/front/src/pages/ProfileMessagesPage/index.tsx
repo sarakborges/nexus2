@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Tabs } from '@/DesignSystem'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
@@ -8,7 +9,6 @@ import { ProfileMessageComposer } from './ProfileMessageComposer.component'
 import { ProfileMessageList } from './ProfileMessageList.component'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 
-import '../AuthenticatedPage.style.scss'
 
 export function ProfileMessagesPage() {
   const { t } = useTranslations()
@@ -51,23 +51,13 @@ export function ProfileMessagesPage() {
 
   if (!requestedUrl) return <NotFoundPage />
   if (!isAuthInitialized || profileMessagesPageQuery.isLoading)
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   if (profileMessagesPageQuery.isError)
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void profileMessagesPageQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void profileMessagesPageQuery.refetch()}
+      />
     )
   if (!profile) return <NotFoundPage />
 

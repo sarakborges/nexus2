@@ -1,5 +1,7 @@
 import { Link } from 'react-router'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
 import {
   ProfileSidebar,
@@ -11,7 +13,6 @@ import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { useProfileCommunitiesPage } from './useProfileCommunitiesPage'
 
-import '../AuthenticatedPage.style.scss'
 
 export function ProfileCommunitiesPage() {
   const { t } = useTranslations()
@@ -35,24 +36,14 @@ export function ProfileCommunitiesPage() {
 
   if (!normalized) return <NotFoundPage />
   if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
-    return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
+    return <AuthenticatedPageState isLoading />
   }
   if (profileDirectoryQuery.isError) {
     return (
-      <main className="account-page">
-        <section className="account-card">
-          <RequestState
-            isError
-            onRetry={() => void profileDirectoryQuery.refetch()}
-          />
-        </section>
-      </main>
+      <AuthenticatedPageState
+        isError
+        onRetry={() => void profileDirectoryQuery.refetch()}
+      />
     )
   }
   if (!profile) return <NotFoundPage />

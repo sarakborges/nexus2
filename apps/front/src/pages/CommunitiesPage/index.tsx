@@ -1,4 +1,5 @@
 import { Pagination, RequestState } from '@/Components'
+import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls.component'
@@ -34,15 +35,11 @@ export function CommunitiesPage() {
 
   if (!currentProfile)
     return (
-      <AuthenticatedPageTemplate>
-        <AccountCard>
-          <RequestState
-            isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
-            isError={communitiesPageQuery.isError}
-            onRetry={() => void communitiesPageQuery.refetch()}
-          />
-        </AccountCard>
-      </AuthenticatedPageTemplate>
+      <AuthenticatedPageState
+        isLoading={!isAuthInitialized || communitiesPageQuery.isLoading}
+        isError={communitiesPageQuery.isError}
+        onRetry={() => void communitiesPageQuery.refetch()}
+      />
     )
 
   return (
