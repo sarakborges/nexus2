@@ -20,12 +20,6 @@
   color: var(--color-neutral-strong);
 }
 
-.profile-message-form__reply-context .button {
-  min-height: 32px;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
 @media (max-width: 680px) {
   .profile-message-form {
     padding: 16px;

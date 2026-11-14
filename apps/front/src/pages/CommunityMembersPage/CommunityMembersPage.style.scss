@@ -19,11 +19,7 @@
 }
 
 .community-member__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-  padding-bottom: 12px;
+  padding-bottom: 4px;
 }
 
 .community-member__identity {

@@ -46,8 +46,17 @@ main {
   animation: none !important;
 }
 
-:where(button, input[type='button'], input[type='submit'], input[type='reset'], [role='button']) {
+:where(.button, button, [role='button'], input[type='button'], input[type='submit'], input[type='reset']) {
+  box-sizing: border-box !important;
+  height: var(--nexus-control-height) !important;
+  min-height: var(--nexus-control-height) !important;
   transition: none !important;
+}
+
+:where(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']), select) {
+  box-sizing: border-box !important;
+  height: var(--nexus-control-height) !important;
+  min-height: var(--nexus-control-height) !important;
 }
 
 :where(a) {
@@ -59,12 +68,15 @@ main {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
 
-:where(a, button, [role='button']):hover,
-:where(a, button, [role='button']):active {
+*:hover,
+*:hover *,
+*:active,
+*:active * {
+  transition: none !important;
+  animation: none !important;
   transform: none !important;
   scale: none !important;
   translate: none !important;
-  animation: none !important;
 }
 
 :where(img, video, canvas) {
@@ -76,10 +88,6 @@ main {
 }
 
 @media (max-width: 680px) {
-  :where(input:not([type='checkbox']):not([type='radio']), select) {
-    min-height: var(--nexus-control-height);
-  }
-
   :where(textarea) {
     min-height: 96px;
   }
