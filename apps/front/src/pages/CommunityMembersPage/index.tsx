@@ -102,7 +102,7 @@ export function CommunityMembersPage() {
             actorProfileId={actorProfileId}
             actorRole={currentRole}
             isStaff={isStaff}
-          />))}
+          />)}
         
         <CommunityMemberDirectory
           pageQuery={communityMembersPageQuery}
