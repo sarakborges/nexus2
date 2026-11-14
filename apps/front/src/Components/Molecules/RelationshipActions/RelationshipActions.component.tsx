@@ -9,7 +9,7 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 type RelationshipAction = {
-  label: string
+  label: TranslationKey
   variation: 'primary' | 'secondary' | 'cancel'
   run: () => void
 }
