@@ -1,8 +1,8 @@
 .social-preview-panel {
   display: grid;
-  gap: 14px;
+  gap: var(--nexus-space-3, 14px);
   min-width: 0;
-  padding: 16px;
+  padding: var(--nexus-space-4, 16px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
@@ -13,14 +13,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--nexus-space-2, 10px);
 }
 
 .social-preview-panel__header h2 {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--nexus-space-2, 6px);
   min-width: 0;
   color: var(--text-color);
   font-size: 15px;
@@ -39,7 +39,7 @@
   justify-self: end;
   min-height: var(--nexus-control-height, 40px);
   height: var(--nexus-control-height, 40px);
-  padding: 8px 12px;
+  padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
   border: 0;
   background: transparent;
   color: var(--color-primary-weak);
@@ -50,12 +50,12 @@
 
 @media (max-width: 900px) and (min-width: 681px) {
   .social-preview-panel {
-    padding: 18px;
+    padding: var(--nexus-space-4, 18px);
   }
 }
 
 @media (max-width: 680px) {
   .social-preview-panel {
-    padding: 16px;
+    padding: var(--nexus-space-4, 16px);
   }
 }
