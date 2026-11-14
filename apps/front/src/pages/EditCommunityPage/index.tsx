@@ -1,4 +1,3 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
