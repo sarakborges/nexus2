@@ -1,3 +1,4 @@
+import './RichTextToolbar.style.scss'
 import type { RichTextToolbarProps } from './RichTextToolbar.types'
 import { InsertImageButton } from '@/Components/Molecules/InsertImageButton'
 import { ToolbarCommandButton } from '@/Components/Molecules/ToolbarCommandButton'

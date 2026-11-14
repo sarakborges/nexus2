@@ -1,3 +1,4 @@
+import './InsertImageButton.style.scss'
 import type { InsertImageButtonProps } from './InsertImageButton.types'
 import { useInsertImageButton } from './useInsertImageButton'
 import { FiImage } from 'react-icons/fi'

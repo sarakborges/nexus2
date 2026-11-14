@@ -1,0 +1,10 @@
+.rich-text-editor__file-input {
+display: none;
+}
+
+.rich-text-editor__upload-error {
+flex-basis: 100%;
+  padding: 3px 6px;
+  color: var(--color-danger, #c33);
+  font-size: 12px;
+}

@@ -1,3 +1,4 @@
+import './HtmlSourceEditor.style.scss'
 import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
 import { HtmlSyntaxHighlight } from '@/Components/Molecules/HtmlSyntaxHighlight'
 import { useHtmlSourceEditor } from './useHtmlSourceEditor'
