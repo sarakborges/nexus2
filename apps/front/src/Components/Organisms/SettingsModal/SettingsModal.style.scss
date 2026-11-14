@@ -7,13 +7,13 @@
 
   &__preferences {
     display: grid;
-    gap: 20px;
+    gap: var(--nexus-space-5, 20px);
   }
 }
 
 
 @media (max-width: 560px) {
   .settings-modal__preferences {
-    gap: 14px;
+    gap: var(--nexus-space-3, 14px);
   }
 }
