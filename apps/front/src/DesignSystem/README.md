@@ -13,3 +13,10 @@ The shared `Button` atom exposes a `variation` prop: `primary` (default), `secon
 Use `Input`, `Select` and `Checkbox` for standard form controls, and compose labeled inputs/selects through `FormField` and `SelectField`. Feature-specific editors may keep specialized text areas or controls when their behavior or appearance is intrinsic to the editor.
 
 The `Modal` is a controlled native `dialog` and uses the browser's modal focus and keyboard behavior. `Toast` notifications dismiss themselves after 5,000 ms by default; consumers may override the duration or provide `0` to disable auto-dismissal.
+
+## Visual consistency
+
+- Standard controls use `--nexus-control-height` (40px) for buttons, inputs and selects. Do not introduce component-specific heights for these controls.
+- Layout spacing uses the shared `--nexus-space-1` through `--nexus-space-8` scale. Prefer these tokens for gaps, padding and margins instead of new arbitrary spacing values.
+- `FormField` and `SelectField` align to the bottom of their parent row so the control itself lines up with neighboring buttons and controls.
+- The interface has no transitions or keyframe animations. Hover and active states may change color or background, but must not move, scale or resize elements.
