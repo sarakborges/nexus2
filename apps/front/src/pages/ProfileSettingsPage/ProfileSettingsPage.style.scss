@@ -1,6 +1,6 @@
 .profile-settings-page {
   display: grid;
-  gap: 28px;
+  gap: var(--nexus-space-7, 28px);
   min-width: 0;
   font-size: 14px;
   line-height: 1.5;
@@ -12,7 +12,7 @@
   &__header,
   &__section {
     display: grid;
-    gap: 8px;
+    gap: var(--nexus-space-2, 8px);
   }
 
   &__header h1,
@@ -39,28 +39,28 @@
   }
 
   &__section {
-    padding-top: 20px;
+    padding-top: var(--nexus-space-5, 20px);
     border-top: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
   &__feedback {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--nexus-space-3, 12px);
   }
 }
 
 .profile-settings-page--modal {
   width: 100%;
-  gap: 20px;
+  gap: var(--nexus-space-5, 20px);
 }
 
 @media (max-width: 900px) {
   .profile-settings-page {
-    gap: 22px;
+    gap: var(--nexus-space-6, 22px);
   }
 
   .profile-settings-page__section {
-    padding-top: 16px;
+    padding-top: var(--nexus-space-4, 16px);
   }
 }
