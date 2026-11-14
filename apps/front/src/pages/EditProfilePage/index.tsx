@@ -1,4 +1,4 @@
-import { RequestState } from '@/Components'
+import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
 import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -26,69 +26,22 @@ export function EditProfilePage() {
     handleSubmit
   } = useEditProfilePage()
 
-  if (!requestedUrl) return <NotFoundPage />
-  if (!isAuthInitialized || profileEditPageQuery.isLoading)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-  if (profileEditPageQuery.isError)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState
-            isError
-            onRetry={() => void profileEditPageQuery.refetch()}
-          />
-        </section>
-      </main>
-    )
-  if (!profile || !session?.user.profiles.includes(profile.id))
-    return <NotFoundPage />
-  if (typeCompatibility.isChecking)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-  if (!typeCompatibility.isCompatible)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        </section>
-      </main>
-    )
-  if (!form)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-
   return (
-    <main className="auth-page">
-      <section
-        className="entity-form-page"
-        aria-labelledby="edit-profile-title"
-      >
-        <header className="entity-form-page__header">
-          <h1 className="auth-card__title" id="edit-profile-title">
-            {t('PROFILE_EDIT')}
-          </h1>
-          <p className="auth-card__description">
-            {t('PROFILE_EDIT_DESCRIPTION')}
-          </p>
-        </header>
+    <EntityEditPageLayout
+      title={t('PROFILE_EDIT')}
+      description={t('PROFILE_EDIT_DESCRIPTION')}
+      titleId="edit-profile-title"
+      hasValidRequest={Boolean(requestedUrl)}
+      isLoading={!isAuthInitialized || profileEditPageQuery.isLoading}
+      isError={profileEditPageQuery.isError}
+      onRetry={() => void profileEditPageQuery.refetch()}
+      isEntityAvailable={Boolean(profile && session?.user.profiles.includes(profile.id))}
+      isTypeChecking={typeCompatibility.isChecking}
+      isTypeCompatible={typeCompatibility.isCompatible}
+      isFormReady={Boolean(form)}
+      notFound={<NotFoundPage />}
+    >
+      {form && profile && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <ProfileDetailsFields
             name={form.name}
@@ -122,7 +75,7 @@ export function EditProfilePage() {
             </Button>
           </div>
         </form>
-      </section>
-    </main>
+      )}
+    </EntityEditPageLayout>
   )
 }

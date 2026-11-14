@@ -1,10 +1,7 @@
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
 
 import type { EntityEditPageLayoutProps } from './EntityEditPageLayout.types'
-
-import './EntityEditPageLayout.style.scss'
 
 function LoadingState() {
   return (
@@ -28,17 +25,13 @@ export function EntityEditPageLayout({
   isTypeChecking,
   isTypeCompatible,
   isFormReady,
+  notFound,
   children
 }: EntityEditPageLayoutProps) {
   const { t } = useTranslations()
 
-  if (!hasValidRequest || (!isLoading && !isError && !isEntityAvailable)) {
-    return <NotFoundPage />
-  }
-
-  if (isLoading || isTypeChecking || !isFormReady) {
-    return <LoadingState />
-  }
+  if (!hasValidRequest) return notFound
+  if (isLoading) return <LoadingState />
 
   if (isError) {
     return (
@@ -49,6 +42,9 @@ export function EntityEditPageLayout({
       </main>
     )
   }
+
+  if (!isEntityAvailable) return notFound
+  if (isTypeChecking) return <LoadingState />
 
   if (!isTypeCompatible) {
     return (
@@ -61,6 +57,8 @@ export function EntityEditPageLayout({
       </main>
     )
   }
+
+  if (!isFormReady) return <LoadingState />
 
   return (
     <main className="auth-page">

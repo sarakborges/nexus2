@@ -12,5 +12,6 @@ export type EntityEditPageLayoutProps = {
   isTypeChecking: boolean
   isTypeCompatible: boolean
   isFormReady: boolean
+  notFound: ReactNode
   children: ReactNode
 }

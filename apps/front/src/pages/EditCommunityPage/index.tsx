@@ -1,6 +1,6 @@
-import { RequestState } from '@/Components'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
+import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -27,60 +27,22 @@ export function EditCommunityPage() {
     handleSubmit
   } = useEditCommunityPage()
 
-  if (!requestedUrl) return <NotFoundPage />
-  if (!isAuthInitialized || communityEditPageQuery.isLoading)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-  if (communityEditPageQuery.isError)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState
-            isError
-            onRetry={() => void communityEditPageQuery.refetch()}
-          />
-        </section>
-      </main>
-    )
-  if (!community || !ownerProfileId || !form) return <NotFoundPage />
-  if (typeCompatibility.isChecking)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <RequestState isLoading />
-        </section>
-      </main>
-    )
-  if (!typeCompatibility.isCompatible)
-    return (
-      <main className="auth-page">
-        <section className="entity-form-page">
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        </section>
-      </main>
-    )
-
   return (
-    <main className="auth-page">
-      <section
-        className="entity-form-page"
-        aria-labelledby="edit-community-title"
-      >
-        <header className="entity-form-page__header">
-          <h1 className="auth-card__title" id="edit-community-title">
-            {t('COMMUNITY_EDIT')}
-          </h1>
-          <p className="auth-card__description">
-            {t('COMMUNITY_EDIT_DESCRIPTION')}
-          </p>
-        </header>
+    <EntityEditPageLayout
+      title={t('COMMUNITY_EDIT')}
+      description={t('COMMUNITY_EDIT_DESCRIPTION')}
+      titleId="edit-community-title"
+      hasValidRequest={Boolean(requestedUrl)}
+      isLoading={!isAuthInitialized || communityEditPageQuery.isLoading}
+      isError={communityEditPageQuery.isError}
+      onRetry={() => void communityEditPageQuery.refetch()}
+      isEntityAvailable={Boolean(community && ownerProfileId)}
+      isTypeChecking={typeCompatibility.isChecking}
+      isTypeCompatible={typeCompatibility.isCompatible}
+      isFormReady={Boolean(form)}
+      notFound={<NotFoundPage />}
+    >
+      {form && community && ownerProfileId && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
           <CommunityDetailsFields
             name={form.name}
@@ -115,7 +77,7 @@ export function EditCommunityPage() {
             </Button>
           </div>
         </form>
-      </section>
-    </main>
+      )}
+    </EntityEditPageLayout>
   )
 }
