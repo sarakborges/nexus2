@@ -1,7 +1,7 @@
 .home-page__post-composer {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: var(--nexus-space-3, 14px);
+  padding: var(--nexus-space-4, 18px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
@@ -15,7 +15,7 @@
 
 @media (max-width: 680px) {
   .home-page__post-composer {
-    padding: 12px;
+    padding: var(--nexus-space-3, 12px);
   }
 }
 
