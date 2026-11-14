@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   align-items: start;
-  gap: 16px;
+  gap: var(--nexus-space-4);
   min-width: 0;
   border: 0;
   border-radius: 0;
@@ -52,7 +52,7 @@
 
   &__main {
     display: grid;
-    gap: 12px;
+    gap: var(--nexus-space-3);
     min-width: 0;
   }
 
@@ -61,7 +61,7 @@
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--nexus-space-2);
     color: var(--color-neutral);
     font-size: 12px;
   }
@@ -93,17 +93,17 @@
     align-items: center;
     justify-content: flex-end;
     flex-wrap: wrap;
-    gap: 10px;
-    padding-top: 8px;
+    gap: var(--nexus-space-2);
+    padding-top: var(--nexus-space-2);
     border-top: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
   &--post {
-    padding: 0 0 16px;
+    padding: 0 0 var(--nexus-space-4);
   }
 
   &--reply {
-    padding: 14px 0;
+    padding: var(--nexus-space-3) 0;
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
@@ -115,8 +115,8 @@
 @media (max-width: 600px) {
   .community-forum-entry {
     grid-template-columns: 44px minmax(0, 1fr);
-    gap: 10px;
-    padding: 12px;
+    gap: var(--nexus-space-2);
+    padding: var(--nexus-space-3);
   }
 
   .community-forum-entry__author-link,
