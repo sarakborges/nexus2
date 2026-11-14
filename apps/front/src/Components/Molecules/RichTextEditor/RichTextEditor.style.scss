@@ -23,7 +23,7 @@ display: grid;
 display: block;
   width: 100%;
   min-height: 150px;
-  padding: 12px;
+  padding: var(--nexus-space-3, 12px);
   overflow-wrap: anywhere;
   outline: none;
   color: var(--text-color);
@@ -67,12 +67,12 @@ text-decoration: line-through;
 }
 
 .rich-text-editor .rsw-ce ul {
-padding-left: 24px;
+padding-left: var(--nexus-space-6, 24px);
   list-style: disc;
 }
 
 .rich-text-editor .rsw-ce ol {
-padding-left: 24px;
+padding-left: var(--nexus-space-6, 24px);
   list-style: decimal;
 }
 
@@ -98,7 +98,7 @@ min-width: 0;
 
 .rich-text-editor__visual-mode-button {
 min-height: 34px;
-  padding: 5px 10px;
+  padding: var(--nexus-space-2, 5px) var(--nexus-space-2, 10px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface);
   color: var(--text-color);
@@ -115,8 +115,8 @@ display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  margin: 4px 0 0;
+  gap: var(--nexus-space-2, 6px) var(--nexus-space-3, 12px);
+  margin: var(--nexus-space-1, 4px) 0 0;
   color: var(--color-neutral);
   font-size: 12px;
   line-height: 1.4;
