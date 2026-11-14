@@ -76,6 +76,20 @@ export class SupabaseRelationalRepository implements DataRepository {
     }))
   }
 
+  async getSuggestedCommunities(profileId: string, limit: number): Promise<Community[]> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_suggested_communities', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_profile_id: profileId, p_limit: limit })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (!Array.isArray(result)) {
+      throw new Error('Supabase suggested communities returned an invalid result.')
+    }
+    return result as Community[]
+  }
+
   async getCommunitiesByIds(ids: readonly string[]): Promise<Community[]> {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []

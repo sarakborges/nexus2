@@ -14,6 +14,10 @@ export class DomainAccessService {
     return this.normalizeProfiles(await this.data.getProfilesByIds(ids))
   }
 
+  async readSuggestedCommunities(profileId: string): Promise<Community[]> {
+    return this.normalizeCommunities(await this.data.getSuggestedCommunities(profileId, 4))
+  }
+
   async readCommunitiesByIds(ids: string[]): Promise<Community[]> {
     const uniqueIds = [...new Set(ids)]
     if (uniqueIds.length === 0) return []

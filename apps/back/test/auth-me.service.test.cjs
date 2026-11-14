@@ -50,6 +50,9 @@ test('me response includes the active owned profile, settings and first relation
     { async readProfilesByIds(ids) {
       calls.push(['profiles', ids])
       return [profile]
+    }, async readSuggestedCommunities(profileId) {
+      calls.push(['suggestions', profileId])
+      return [{ id: 'community-1', name: 'Suggested' }]
     } },
     { async getSettings(accountId, profileId) {
       calls.push(['settings', accountId, profileId])
@@ -63,6 +66,7 @@ test('me response includes the active owned profile, settings and first relation
     user,
     currentProfile: profile,
     currentProfileSettings: defaultProfileSettings,
+    suggestedCommunities: [{ id: 'community-1', name: 'Suggested' }],
     activities: feedPage.items,
     activityCursor: feedPage.nextCursor,
     hasMoreActivities: true
@@ -71,7 +75,8 @@ test('me response includes the active owned profile, settings and first relation
     ['user', 'account-1'],
     ['profiles', ['profile-2']],
     ['feed', 'account-1', 10],
-    ['settings', 'account-1', 'profile-2']
+    ['settings', 'account-1', 'profile-2'],
+    ['suggestions', 'profile-2']
   ])
 })
 
@@ -97,6 +102,9 @@ test('me persists its first owned profile as current when the account has no val
     { async readProfilesByIds(ids) {
       assert.deepEqual(ids, ['profile-first'])
       return [profile]
+    }, async readSuggestedCommunities(profileId) {
+      assert.equal(profileId, 'profile-first')
+      return []
     } },
     { async getSettings(userId, profileId) {
       assert.equal(profileId, 'profile-first')
@@ -126,6 +134,8 @@ test('me returns no current profile settings when the account owns no profiles',
     } },
     { async readProfilesByIds() {
       assert.fail('No profile should be fetched')
+    }, async readSuggestedCommunities() {
+      assert.fail('Suggestions should not be fetched without a profile')
     } },
     { async getSettings() {
       assert.fail('Settings should not be fetched without a profile')
@@ -135,4 +145,5 @@ test('me returns no current profile settings when the account owns no profiles',
   const result = await service.getMe('account-3')
   assert.equal(result.currentProfile, null)
   assert.equal(result.currentProfileSettings, null)
+  assert.deepEqual(result.suggestedCommunities, [])
 })

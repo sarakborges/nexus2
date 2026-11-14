@@ -1,12 +1,10 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import type { Community, ProfileDirectoryPageData } from '@nexus/common'
+import type { ProfileDirectoryPageData } from '@nexus/common'
 import { HomePageEntityPreview } from './HomePageEntityPreview.component'
 import type { HomePageEntityPreviewItem } from './HomePageEntityPreview.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { getCommunities } from '@/Services/Community'
 import { getProfileDirectoryPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
@@ -29,20 +27,6 @@ function getDirectoryItems(
   return []
 }
 
-function getPublicSuggestions(
-  candidates: Community[],
-  memberships: ProfileDirectoryPageData | undefined
-): Community[] {
-  const memberIds = new Set(
-    memberships?.kind === 'communities'
-      ? memberships.communities.items.map(community => community.id)
-      : []
-  )
-
-  return candidates
-    .filter(community => community.privacy === 'public' && !memberIds.has(community.id))
-    .slice(0, PREVIEW_ITEMS)
-}
 
 export function HomePageRightSidebar({ currentProfile }: HomePageRightSidebarProps) {
   const { t } = useTranslations()
@@ -69,26 +53,9 @@ export function HomePageRightSidebar({ currentProfile }: HomePageRightSidebarPro
     staleTime: 60 * 1000
   })
 
-  const suggestionsQuery = useQuery({
-    queryKey: queryKeys.homeSidebar.suggestions(currentProfile.id),
-    queryFn: () => getCommunities({
-      page: 1,
-      pageSize: PREVIEW_PAGE_SIZE,
-      sort: 'activity-desc'
-    }),
-    enabled: Boolean(currentProfile.id),
-    staleTime: 60 * 1000
-  })
-
   const friends = getDirectoryItems(friendsQuery.data, 'friends')
   const communities = getDirectoryItems(communitiesQuery.data, 'communities')
-  const suggestions = useMemo(
-    () => getPublicSuggestions(
-      suggestionsQuery.data?.items ?? [],
-      communitiesQuery.data
-    ),
-    [suggestionsQuery.data?.items, communitiesQuery.data]
-  )
+  const suggestions = currentProfile.suggestedCommunities ?? []
 
   const friendsTotal = friendsQuery.data?.kind === 'friends'
     ? friendsQuery.data.friends.totalItems
@@ -131,13 +98,10 @@ export function HomePageRightSidebar({ currentProfile }: HomePageRightSidebarPro
         title={t('HOME_SUGGESTED_COMMUNITIES')}
         items={suggestions}
         emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
-        isLoading={suggestionsQuery.isLoading || communitiesQuery.isLoading}
-        isFetching={suggestionsQuery.isFetching || communitiesQuery.isFetching}
-        isError={suggestionsQuery.isError || communitiesQuery.isError}
-        onRetry={() => {
-          void suggestionsQuery.refetch()
-          void communitiesQuery.refetch()
-        }}
+        isLoading={false}
+        isFetching={false}
+        isError={false}
+        onRetry={() => void friendsQuery.refetch()}
         getHref={item => ROUTES.community + '/' + item.url}
         getSecondary={item => '/community/' + item.url}
       />
