@@ -45,13 +45,16 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     enabled: Boolean(normalized && topicId && isAuthInitialized),
     staleTime: 30 * 1000
   })
+  const isTopicPageSuccess = topicPageQuery.isSuccess
+  const refetchTopicPage = topicPageQuery.refetch
+
   useEffect(() => {
-    if (!topicId || !topicPageQuery.isSuccess) return
+    if (!topicId || !isTopicPageSuccess) return
 
     return subscribeToCommunityForumTopic(topicId, () => {
-      void topicPageQuery.refetch()
+      void refetchTopicPage()
     })
-  }, [topicId, topicPageQuery.isSuccess, topicPageQuery.refetch])
+  }, [topicId, isTopicPageSuccess, refetchTopicPage])
 
   const pageData = topicPageQuery.data
   const community = pageData?.community
