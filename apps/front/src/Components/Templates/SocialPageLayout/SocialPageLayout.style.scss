@@ -108,7 +108,7 @@
 
 @media (max-width: 680px) {
   .social-page {
-    padding: 78px 0 var(--nexus-space-7, 28px);
+    padding: 78px 0 var(--nexus-space-7, 32px);
   }
 
   .social-page__layout,
@@ -116,12 +116,12 @@
   .social-page__layout--right-sidebar-only,
   .social-page__layout--no-sidebar {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--nexus-space-4, 18px);
+    gap: var(--nexus-space-4, 16px);
     padding-inline: var(--main-content-gutter);
   }
 
   .social-page__left-column,
   .social-page__right-column {
-    gap: var(--nexus-space-3, 14px);
+    gap: var(--nexus-space-3, 12px);
   }
 }
