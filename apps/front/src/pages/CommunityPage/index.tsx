@@ -90,7 +90,6 @@ export function CommunityPage() {
         />
       }
     >
-      <RequestState isFetching={communityPageQuery.isFetching} />
       <ProfileTypeNotice
         isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
         message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
