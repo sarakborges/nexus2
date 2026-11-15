@@ -90,7 +90,7 @@
 
 .account-card__onboarding {
   display: grid;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
   color: var(--color-neutral);
   font-size: 14px;
   line-height: 1.5;
@@ -104,7 +104,7 @@
 
 .account-card__onboarding ul {
   display: grid;
-  gap: var(--nexus-space-2, 6px);
+  gap: var(--nexus-space-2, 8px);
   padding-left: var(--nexus-space-5, 20px);
   list-style: disc;
 }
@@ -134,12 +134,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
 }
 
 @media (max-width: 680px) {
   .account-card {
-    padding: var(--nexus-space-4, 18px);
+    padding: var(--nexus-space-4, 16px);
   }
 
   .account-card__profile-list--grid {
