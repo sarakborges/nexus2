@@ -1,8 +1,6 @@
 import { RequestState, RelationshipActions } from '@/Components'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
 import { SocialPanel } from '@/Components/Molecules/SocialPanel'
