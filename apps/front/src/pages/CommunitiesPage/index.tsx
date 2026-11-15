@@ -1,4 +1,5 @@
-import { Pagination, RequestState } from '@/Components'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
