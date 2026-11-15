@@ -86,7 +86,7 @@ export function CommunityForumPage() {
           )}
         </header>
 
-        {forumPageQuery.data?.topics.totalItems > 0 && (
+        {(forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
           <PaginatedListControls
             key={query}
             query={query}
