@@ -15,7 +15,7 @@
 .account-card__profile-entry--card {
   min-width: 0;
   min-height: 88px;
-  padding: var(--nexus-space-3, 14px);
+  padding: var(--nexus-space-3, 12px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface-raised);
@@ -25,7 +25,7 @@
   display: flex;
   align-items: center;
   flex: 1 1 180px;
-  gap: var(--nexus-space-3, 14px);
+  gap: var(--nexus-space-3, 12px);
   min-width: 0;
   color: var(--text-color);
   text-decoration: none;
@@ -58,7 +58,7 @@
 
 .account-card__profile-entry-copy {
   display: grid;
-  gap: var(--nexus-space-2, 6px);
+  gap: var(--nexus-space-2, 8px);
   min-width: 0;
 }
 
@@ -91,12 +91,12 @@
 @media (max-width: 680px) {
   .account-card__profile-entry--card {
     align-items: flex-start;
-    gap: var(--nexus-space-2, 10px);
+    gap: var(--nexus-space-2, 8px);
   }
 }
 
 @media (max-width: 420px) {
   .account-card__profile-entry--card {
-    padding: var(--nexus-space-2, 10px);
+    padding: var(--nexus-space-2, 8px);
   }
 }
