@@ -3,6 +3,8 @@ import type { InsertImageButtonProps } from './InsertImageButton.types'
 import { useInsertImageButton } from './useInsertImageButton'
 import { FiImage } from 'react-icons/fi'
 
+import { Input } from '@/DesignSystem'
+
 export function InsertImageButton({
   label,
   uploadErrorLabel,
@@ -33,7 +35,7 @@ export function InsertImageButton({
       >
         <FiImage aria-hidden="true" />
       </button>
-      <input
+      <Input
         ref={inputRef}
         className="rich-text-editor__file-input"
         type="file"
