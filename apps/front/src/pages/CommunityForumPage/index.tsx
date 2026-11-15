@@ -96,7 +96,6 @@ export function CommunityForumPage() {
           />
         )}
 
-        <RequestState isFetching={forumPageQuery.isFetching} />
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
             <p className="account-card__description">
