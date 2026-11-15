@@ -1,5 +1,7 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { Pagination, RelationshipActions, RequestState } from '@/Components/Molecules'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunityForumTopicList } from '@/Components/Molecules/CommunityForumTopicList'
