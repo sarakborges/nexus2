@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Pagination, RequestState } from '@/Components'
 import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
 import { Tabs } from '@/DesignSystem'
@@ -36,11 +37,7 @@ export function CommunityMemberDirectory({
           </p>
         </div>
       </header>
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
       <Tabs
         className="community-member-directory__tabs"
         ariaLabel={t('COMMUNITY_MEMBERS_TITLE')}

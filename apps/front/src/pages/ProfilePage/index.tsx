@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { RequestState, RelationshipActions } from '@/Components'
 import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
@@ -103,11 +104,7 @@ export function ProfilePage() {
       }
     >
       <RequestState isFetching={profilePageQuery.isFetching} />
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
       <SocialPanel className="social-panel--about">
         <header className="social-panel__header">
           <h2 className="social-panel__title">

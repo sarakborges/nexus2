@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
@@ -64,10 +65,7 @@ export function CommunityForumPage() {
       }
     >
       <section className="community-forum social-page__content-stack">
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>)}
+        <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
         
         <header className="account-card__header">
           <div>

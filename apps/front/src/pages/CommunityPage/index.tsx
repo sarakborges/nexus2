@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { RequestState } from '@/Components'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
@@ -74,11 +75,7 @@ export function CommunityPage() {
       }
     >
       <RequestState isFetching={communityPageQuery.isFetching} />
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
       <CommunityPageAboutPreview
         community={community}
         canViewMembers={canViewMembers}

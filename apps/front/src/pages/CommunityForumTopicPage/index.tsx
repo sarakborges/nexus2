@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { CommunityForumEntry, CommunityForumTopicModerationActions } from '@/Components/Molecules'
 import { CommunityForumReplyComposer } from '@/Components/Organisms/CommunityForumReplyComposer'
 import { Pagination, RequestState } from '@/Components'
@@ -79,10 +80,7 @@ export function CommunityForumTopicPage() {
         />
       }
     >
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>)}
+      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
       
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">

@@ -1,3 +1,4 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Link } from 'react-router'
 import { Pagination, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
@@ -65,10 +66,7 @@ export function ProfileCommunitiesPage() {
           />))}
         
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>)}
+        <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
         
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}
