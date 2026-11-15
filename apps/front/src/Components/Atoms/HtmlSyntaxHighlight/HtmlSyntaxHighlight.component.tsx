@@ -1,9 +1,6 @@
 import { Fragment } from 'react'
 
-import type {
-  HtmlSyntaxAttributePart,
-  HtmlSyntaxHighlightProps
-} from './HtmlSyntaxHighlight.types'
+import type { HtmlSyntaxHighlightProps } from './HtmlSyntaxHighlight.types'
 import { tokenizeHtml } from './htmlSyntaxHighlight.utils'
 
 import './HtmlSyntaxHighlight.style.scss'
