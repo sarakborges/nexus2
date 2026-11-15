@@ -1,20 +1,16 @@
 import { useState } from 'react'
 
 import type {
+  PaginatedListSearchDraft,
   UsePaginatedListControlsOptions,
   UsePaginatedListControlsResult
 } from './usePaginatedListControls.types'
-
-type SearchDraft = {
-  sourceQuery: string
-  value: string
-}
 
 export function usePaginatedListControls({
   query,
   onQueryChange
 }: UsePaginatedListControlsOptions): UsePaginatedListControlsResult {
-  const [draft, setDraft] = useState<SearchDraft | null>(null)
+  const [draft, setDraft] = useState<PaginatedListSearchDraft | null>(null)
   const value = draft?.sourceQuery === query ? draft.value : query
 
   return {
