@@ -1,4 +1,4 @@
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '../AuthenticatedPageTemplate'
 
 import type { EntityFormPageLayoutProps } from './EntityFormPageLayout.types'
 

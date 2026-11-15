@@ -1,4 +1,4 @@
-import { EntityFormPageLayout } from '@/Components/Organisms/EntityFormPageLayout'
+import { EntityFormPageLayout } from '../EntityFormPageLayout'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { useTranslations } from '@/Hooks/Language'
 

@@ -1,4 +1,4 @@
-import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
+import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'

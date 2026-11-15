@@ -1,6 +1,6 @@
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
-import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
+import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'

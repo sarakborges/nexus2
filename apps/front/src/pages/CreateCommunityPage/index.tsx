@@ -1,7 +1,7 @@
 import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
-import { EntityFormPageLayout } from '@/Components/Organisms/EntityFormPageLayout'
+import { EntityFormPageLayout } from '@/Components/Templates/EntityFormPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateCommunityPage } from './useCreateCommunityPage'

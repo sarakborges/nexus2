@@ -1,5 +1,3 @@
-import './SocialPageLayout.style.scss'
-
-export { SocialPageLayout } from './SocialPageLayout.component'
+export { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 export { ProfileSidebar } from '../ProfileSidebar'
 export { CommunitySidebar } from '../CommunitySidebar'

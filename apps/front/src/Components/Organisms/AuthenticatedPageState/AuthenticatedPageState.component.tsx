@@ -1,5 +1,5 @@
 import { AccountCard, RequestState } from '@/Components/Molecules'
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'
 
 import type { AuthenticatedPageStateProps } from './AuthenticatedPageState.types'
 

@@ -1,7 +1,8 @@
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '../AuthenticatedPageTemplate'
 import type { SocialPageLayoutProps } from './SocialPageLayout.types'
 
 import '@/Components/Molecules/AccountCard/AccountCard.style.scss'
+import './SocialPageLayout.style.scss'
 
 export function SocialPageLayout({
   sidebar,
