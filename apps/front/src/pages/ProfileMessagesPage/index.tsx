@@ -69,7 +69,6 @@ export function ProfileMessagesPage() {
       sidebar={<ProfileSidebar profile={profile} active="messages" relationship={viewerRelationship} />}
     >
       <div className="social-page__content-stack">
-        <RequestState isFetching={profileMessagesPageQuery.isFetching} />
         <ProfileTypeNotice
         isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
         message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
