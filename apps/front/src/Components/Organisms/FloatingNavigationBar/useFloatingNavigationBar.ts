@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router'
 
 import type {
@@ -26,13 +25,17 @@ export function useFloatingNavigationBar({
   const navigationRef = useRef<HTMLDivElement>(null)
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 680px)').matches
+  )
   const activePanel =
     openPanel?.pathname === location.pathname ? openPanel.panel : null
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
-
   const currentProfile = session?.currentProfile ?? undefined
 
   const otherProfileIds = profileIds.filter(
@@ -85,6 +88,18 @@ export function useFloatingNavigationBar({
   const profileSelectionMutation = useSetCurrentProfileMutation()
 
   useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('has-global-navigation')
+    root.classList.toggle('global-navigation-collapsed', isSidebarCollapsed)
+    return () => {
+      root.classList.remove(
+        'has-global-navigation',
+        'global-navigation-collapsed'
+      )
+    }
+  }, [isSidebarCollapsed])
+
+  useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target
       if (!(target instanceof Node) || !navigationRef.current?.contains(target)) {
@@ -130,7 +145,16 @@ export function useFloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
+    isSidebarCollapsed,
     closePanels,
+    closeNavigationAfterNavigate: () => {
+      closePanels()
+      if (window.matchMedia('(max-width: 680px)').matches) {
+        setIsSidebarCollapsed(true)
+      }
+    },
+    collapseSidebar: () => setIsSidebarCollapsed(true),
+    toggleSidebar: () => setIsSidebarCollapsed(value => !value),
     togglePanel,
     toggleProfileSwitcher: () =>
       setIsProfileSwitcherOpen((open) => !open),

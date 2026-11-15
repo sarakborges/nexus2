@@ -22,7 +22,11 @@ export type UseFloatingNavigationBarResult = {
   messagesRoute: string | null
   communitiesRoute: string | null
   editProfileRoute: string | null
+  isSidebarCollapsed: boolean
   closePanels: () => void
+  closeNavigationAfterNavigate: () => void
+  collapseSidebar: () => void
+  toggleSidebar: () => void
   togglePanel: (panel: NavigationPanel) => void
   toggleProfileSwitcher: () => void
   profiles: Profile[]
