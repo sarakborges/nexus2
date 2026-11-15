@@ -1,4 +1,4 @@
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileSettingsPage } from './useProfileSettingsPage'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'

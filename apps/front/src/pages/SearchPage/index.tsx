@@ -1,4 +1,4 @@
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'
 import { useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 

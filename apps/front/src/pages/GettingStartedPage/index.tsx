@@ -1,7 +1,7 @@
 import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
 import { Button, ButtonLink } from '@/DesignSystem'
 import { AccountCard } from '@/Components/Molecules/AccountCard'
-import { AuthenticatedPageTemplate } from '@/Components/Organisms/AuthenticatedPageTemplate'
+import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'
 import { useTranslations } from '@/Hooks/Language'
 import { useGettingStartedPage } from './useGettingStartedPage'
 

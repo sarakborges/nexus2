@@ -6,7 +6,7 @@ import { PaginatedListControls } from '@/Components/Organisms/PaginatedListContr
 import {
   ProfileSidebar,
   SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+} from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'

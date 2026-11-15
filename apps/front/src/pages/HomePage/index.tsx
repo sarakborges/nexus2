@@ -1,5 +1,5 @@
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { formatHomeActivityDate } from './formatHomeActivityDate'
 import { useHomePage } from './useHomePage'
