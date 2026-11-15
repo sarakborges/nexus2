@@ -23,13 +23,15 @@ export function EntityAvatarPreview({
       title={title}
       count={totalItems ?? '—'}
       headerActions={
-        <ButtonLink
-          variation="transparent"
-          className="social-preview-panel__all"
-          to={allHref}
-        >
-          {allLabel}
-        </ButtonLink>
+        allHref && allLabel ? (
+          <ButtonLink
+            variation="transparent"
+            className="social-preview-panel__all"
+            to={allHref}
+          >
+            {allLabel}
+          </ButtonLink>
+        ) : null
       }
     >
       <RequestState
