@@ -1,9 +1,9 @@
 .search-results-panel {
   display: grid;
   width: 100%;
-  gap: var(--nexus-space-4, 18px);
+  gap: var(--nexus-space-4, 16px);
   min-width: 0;
-  padding: var(--nexus-space-6, 22px);
+  padding: var(--nexus-space-6, 24px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
@@ -24,7 +24,7 @@
 }
 
 .search-results-panel__header p {
-  margin: var(--nexus-space-2, 6px) 0 0;
+  margin: var(--nexus-space-2, 8px) 0 0;
   color: var(--color-neutral);
   font-size: 14px;
   overflow-wrap: anywhere;
@@ -38,7 +38,7 @@
 
 .search-results-panel__state {
   margin: 0;
-  padding: var(--nexus-space-3, 14px) 0;
+  padding: var(--nexus-space-3, 12px) 0;
 }
 
 .search-results-panel__results {
