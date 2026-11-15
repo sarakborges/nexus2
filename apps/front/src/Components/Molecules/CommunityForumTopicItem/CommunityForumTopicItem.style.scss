@@ -55,7 +55,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
 }
 
 .community-forum-topic-item__title {
@@ -112,7 +112,7 @@
   .community-forum-topic-item {
     grid-template-columns: 44px minmax(0, 1fr);
     align-items: start;
-    gap: var(--nexus-space-2, 10px);
+    gap: var(--nexus-space-2, 8px);
   }
 
   .community-forum-topic-item__author {
