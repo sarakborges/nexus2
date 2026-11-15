@@ -1,7 +1,7 @@
 import type { CommunityMemberEntryProps } from './CommunityMemberEntry.types'
-import './CommunityMemberEntry.style.scss'
 
 import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
+import { Badge } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { CommunityMemberActions } from '@/Components/Molecules/CommunityMemberActions'
 import { useTranslations } from '@/Hooks/Language'
@@ -46,7 +46,7 @@ export function CommunityMemberEntry({
         ariaLabel={profile.name}
       >
         {roleKey && (
-          <span className="community-member-entry__role">{t(roleKey)}</span>
+          <Badge>{t(roleKey)}</Badge>
         )}
       </AccountIdentityLink>
       {isStaff && actorProfileId && profile.role !== 'owner' && (

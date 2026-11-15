@@ -2,8 +2,8 @@ import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedP
 import { useTranslations } from '@/Hooks/Language'
 import { useProfileSettingsPage } from './useProfileSettingsPage'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'
-import { ProfileSettingsMessageAudience, ProfileSettingsSaveBar } from '@/Components/Molecules'
-import { ProfileSettingsActivityMatrix } from '@/Components/Organisms'
+import { ProfileSettingsSaveBar } from '@/Components/Molecules'
+import { ProfileSettingsActivityMatrix, ProfileSettingsMessageAudience } from '@/Components/Organisms'
 import { Button } from '@/DesignSystem'
 import './ProfileSettingsPage.style.scss'
 

@@ -1,6 +1,6 @@
 import { RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'

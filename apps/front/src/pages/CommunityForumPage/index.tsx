@@ -1,6 +1,6 @@
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'

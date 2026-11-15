@@ -6,6 +6,8 @@ import type {
 } from './HtmlSyntaxHighlight.types'
 import { tokenizeHtml } from './htmlSyntaxHighlight.utils'
 
+import './HtmlSyntaxHighlight.style.scss'
+
 const tokenClassNames = {
   comment: 'rich-text-editor__token--comment',
   entity: 'rich-text-editor__token--entity',

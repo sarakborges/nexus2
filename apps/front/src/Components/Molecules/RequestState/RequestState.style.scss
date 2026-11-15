@@ -13,14 +13,6 @@
   text-align: center;
 }
 
-.request-state__spinner {
-  width: 20px;
-  height: 20px;
-  border: var(--nexus-border-width, 2px) solid var(--border-color, currentColor);
-  border-right-color: transparent;
-  border-radius: 50%;
-}
-
 .request-state--inline {
   flex-direction: row;
   justify-content: center;
