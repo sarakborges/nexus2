@@ -1,5 +1,6 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { RequestState, RelationshipActions } from '@/Components'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
 import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
