@@ -1,11 +1,9 @@
 import type { CommunityMemberEntryProps } from './CommunityMemberEntry.types'
 import './CommunityMemberEntry.style.scss'
 
-import { CommunityMemberActions } from '@/Components'
-import { ROUTES } from '@/Constants/routes'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
+import { CommunityMemberActions } from '@/Components/Molecules/CommunityMemberActions'
 import { useTranslations } from '@/Hooks/Language'
-
-import { Link } from 'react-router'
 
 export function CommunityMemberEntry({
   profile,
@@ -33,29 +31,23 @@ export function CommunityMemberEntry({
 
   return (
     <article className="account-card__profile-entry">
-      <Link
+      <AccountIdentityLink
+        to={'/profile/' + profile.url}
+        name={profile.name}
+        picture={profile.picture}
+        secondary={'@' + profile.url}
         className="account-card__profile-entry-identity"
-        to={ROUTES.profile + '/' + profile.url}
+        avatarClassName="account-card__profile-entry-avatar"
+        copyClassName="account-card__profile-entry-copy"
+        nameClassName="account-card__link"
+        secondaryClassName="account-card__profile-entry-secondary"
+        title={profile.name}
+        ariaLabel={profile.name}
       >
-        <span className="account-card__profile-entry-avatar">
-          {profile.picture ? (
-            <img src={profile.picture} alt="" />
-          ) : (
-            <span aria-hidden="true">
-              {profile.name.trim().charAt(0).toUpperCase()}
-            </span>
-          )}
-        </span>
-        <span className="account-card__profile-entry-copy">
-          <span className="account-card__link">{profile.name}</span>
-          <span className="account-card__profile-entry-secondary">
-            @{profile.url}
-          </span>
-          {roleKey && (
-            <span className="community-member-entry__role">{t(roleKey)}</span>
-          )}
-        </span>
-      </Link>
+        {roleKey && (
+          <span className="community-member-entry__role">{t(roleKey)}</span>
+        )}
+      </AccountIdentityLink>
       {isStaff && actorProfileId && profile.role !== 'owner' && (
         <CommunityMemberActions
           memberProfileId={profile.id}

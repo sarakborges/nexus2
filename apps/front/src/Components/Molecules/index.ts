@@ -45,5 +45,7 @@ export { SocialSidebar } from './SocialSidebar'
 export type { SocialSidebarProps, SocialSidebarNavigationItem } from './SocialSidebar'
 export { SocialPanel } from './SocialPanel'
 export { SocialPreviewPanel } from './SocialPreviewPanel'
+export { IdentityAvatarGrid } from './IdentityAvatarGrid'
+export type { IdentityAvatarGridEntry, IdentityAvatarGridProps } from './IdentityAvatarGrid'
 
 export { SearchResultItem } from './SearchResultItem'

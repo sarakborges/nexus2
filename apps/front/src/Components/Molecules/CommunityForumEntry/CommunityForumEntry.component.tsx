@@ -1,8 +1,10 @@
 import { Link } from 'react-router'
 
-import { ROUTES } from '@/Constants/routes'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { RichTextContent } from '@/DesignSystem'
+import { ROUTES } from '@/Constants/routes'
 import type { CommunityForumEntryProps } from './CommunityForumEntry.types'
+
 import './CommunityForumEntry.style.scss'
 
 export function CommunityForumEntry({
@@ -23,20 +25,18 @@ export function CommunityForumEntry({
             aria-label={author.name}
             title={author.name}
           >
-            <span className="community-forum-entry__author-avatar">
-              {author.picture ? (
-                <img src={author.picture} alt="" />
-              ) : (
-                <span aria-hidden="true">
-                  {author.name.trim().charAt(0).toUpperCase()}
-                </span>
-              )}
-            </span>
+            <IdentityAvatar
+              className="community-forum-entry__author-avatar"
+              name={author.name}
+              picture={author.picture}
+            />
           </Link>
         ) : (
-          <span className="community-forum-entry__author-avatar" aria-hidden="true">
-            ?
-          </span>
+          <IdentityAvatar
+            className="community-forum-entry__author-avatar"
+            name="?"
+            picture=""
+          />
         )}
       </aside>
       <div className="community-forum-entry__main">

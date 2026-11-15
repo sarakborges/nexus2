@@ -1,7 +1,6 @@
-import { Link } from 'react-router'
-
-import { IdentityAvatar, RequestState } from '@/Components'
 import { ButtonLink } from '@/DesignSystem'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { IdentityAvatarGrid } from '@/Components/Molecules/IdentityAvatarGrid'
 import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import type { ProfilePageEntityPreviewProps } from './ProfilePageEntityPreview.types'
 
@@ -40,23 +39,7 @@ export function ProfilePageEntityPreview({
         emptyMessage={emptyMessage}
         onRetry={onRetry}
       >
-        <div className="social-preview-grid">
-          {entries.map((entry) => (
-            <Link
-              className="social-preview-link"
-              key={entry.id}
-              to={entry.href}
-              aria-label={entry.name}
-              title={entry.name}
-            >
-              <IdentityAvatar
-                className="social-preview-avatar"
-                name={entry.name}
-                picture={entry.picture}
-              />
-            </Link>
-          ))}
-        </div>
+        <IdentityAvatarGrid entries={entries} />
       </RequestState>
     </SocialPreviewPanel>
   )

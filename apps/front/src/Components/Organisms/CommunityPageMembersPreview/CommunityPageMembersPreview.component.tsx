@@ -1,11 +1,10 @@
-import { Link } from 'react-router'
 import { ButtonLink } from '@/DesignSystem'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { IdentityAvatarGrid } from '@/Components/Molecules/IdentityAvatarGrid'
 import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 
-import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview.types'
 
 export function CommunityPageMembersPreview({
@@ -43,19 +42,14 @@ export function CommunityPageMembersPreview({
         }
         onRetry={() => void communityPageQuery.refetch()}
       >
-        <div className="social-preview-grid">
-          {members.map((member) => (
-            <Link
-              className="social-preview-link"
-              key={member.id}
-              to={ROUTES.profile + '/' + member.url}
-              aria-label={member.name}
-              title={member.name}
-            >
-              <IdentityAvatar className="social-preview-avatar" name={member.name} picture={member.picture} />
-            </Link>
-          ))}
-        </div>
+        <IdentityAvatarGrid
+          entries={members.map((member) => ({
+            id: member.id,
+            href: ROUTES.profile + '/' + member.url,
+            name: member.name,
+            picture: member.picture
+          }))}
+        />
       </RequestState>
     </SocialPreviewPanel>
   )
