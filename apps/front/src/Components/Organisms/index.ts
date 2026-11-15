@@ -53,3 +53,6 @@ export { CommunityForumTopicComposer } from './CommunityForumTopicComposer'
 export { ProfileMessageComposer } from './ProfileMessageComposer'
 export { RichTextComposerField } from './RichTextComposerField'
 export { RichTextEditor } from './RichTextEditor'
+
+export { SearchResultsPanel } from './SearchResultsPanel'
+export type { SearchResultsPanelProps } from './SearchResultsPanel'

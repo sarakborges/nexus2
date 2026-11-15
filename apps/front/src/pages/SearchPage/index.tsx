@@ -1,103 +1,38 @@
 import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'
-import { useSearchParams } from 'react-router'
-import { useQuery } from '@tanstack/react-query'
-
-import type { SearchScope } from '@nexus/common'
-import { Button } from '@/DesignSystem'
-import { ListSortSelect } from '@/Components/Molecules/ListSortSelect'
-import { Pagination } from '@/Components/Molecules/Pagination'
-import { SearchResultItem } from '@/Components/Molecules/SearchResultItem'
-import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { useTranslations } from '@/Hooks/Language'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { searchEntities } from '@/Services/Search/search.service'
-import { getSearchResultDetails } from './searchResult.utils'
+import { SearchResultsPanel } from '@/Components/Organisms/SearchResultsPanel'
+import { useSearchPage } from './useSearchPage'
 
 import './SearchPage.style.scss'
 
 export function SearchPage() {
-  const { t } = useTranslations()
-  const [searchParams] = useSearchParams()
-  const query = (searchParams.get('query') ?? '').trim()
-  const requestedScope = searchParams.get('scope')
-  const scope: SearchScope =
-    requestedScope === 'profiles' || requestedScope === 'communities'
-      ? requestedScope
-      : 'all'
-  const { page, pageSize, setPage, sort, setSort } = useUrlPagination()
-
-  const searchQuery = useQuery({
-    queryKey: queryKeys.search(query, scope, sort, page, pageSize),
-    queryFn: () => searchEntities({ query, scope, page, pageSize, sort }),
-    enabled: true
-  })
-  const results = searchQuery.data?.items ?? []
-  const totalItems = searchQuery.data?.totalItems ?? 0
+  const {
+    query,
+    searchQuery,
+    results,
+    totalItems,
+    page,
+    pageSize,
+    sort,
+    setPage,
+    setSort
+  } = useSearchPage()
 
   return (
     <AuthenticatedPageTemplate className="search-page">
-      <section className="search-page__content">
-        <header className="search-page__header">
-          <div>
-            <h1>{t('SEARCH_TITLE')}</h1>
-            {query && <p>{t('SEARCH_QUERY_LABEL', { query })}</p>}
-          </div>
-          {searchQuery.isSuccess && (
-            <span className="search-page__count">
-              {t('SEARCH_RESULTS_COUNT', { count: totalItems })}
-            </span>
-          )}
-        </header>
-
-        {totalItems > 0 && (
-          <ListSortSelect value={sort} onChange={setSort} />
-        )}
-
-        {searchQuery.isLoading && (
-          <p className="search-page__state" role="status">
-            {t('SEARCH_LOADING')}
-          </p>
-        )}
-
-        {searchQuery.isError && (
-          <div className="search-page__state" role="alert">
-            <p>{t('SEARCH_FAILED')}</p>
-            <Button type="button" variation="secondary" onClick={() => void searchQuery.refetch()}>
-              {t('SEARCH_RETRY')}
-            </Button>
-          </div>
-        )}
-
-        {searchQuery.isSuccess && totalItems === 0 && (
-          <p className="search-page__state">{t('SEARCH_NO_RESULTS')}</p>
-        )}
-
-        {results.length > 0 && (
-          <div className="search-page__results">
-            {results.map(item => {
-              const result = getSearchResultDetails(item)
-              return (
-                <SearchResultItem
-                  key={`${result.kind}:${result.id}`}
-                  name={result.name}
-                  picture={result.picture}
-                  address={result.address}
-                  href={result.href}
-                  about={result.about}
-                  kindLabel={t(result.kind === 'profile' ? 'SEARCH_PROFILE' : 'SEARCH_COMMUNITY')}
-                />
-              )
-            })}
-          </div>
-        )}
-
-        <Pagination
-          page={searchQuery.data?.page ?? page}
-          pageSize={searchQuery.data?.pageSize ?? pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-        />
-      </section>
+      <SearchResultsPanel
+        query={query}
+        isLoading={searchQuery.isLoading}
+        isError={searchQuery.isError}
+        isSuccess={searchQuery.isSuccess}
+        results={results}
+        totalItems={totalItems}
+        page={page}
+        pageSize={pageSize}
+        sort={sort}
+        onSortChange={setSort}
+        onPageChange={setPage}
+        onRetry={() => void searchQuery.refetch()}
+      />
     </AuthenticatedPageTemplate>
   )
 }

@@ -5,7 +5,15 @@
   gap: var(--nexus-space-4, 16px);
 }
 
-.communities-page__header .account-card__action {
+.communities-page__title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.communities-page__create-action {
   justify-self: end;
 }
 
@@ -15,7 +23,7 @@
     align-items: stretch;
   }
 
-  .communities-page__header .account-card__action {
+  .communities-page__create-action {
     justify-self: stretch;
     width: 100%;
     box-sizing: border-box;

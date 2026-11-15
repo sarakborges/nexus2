@@ -1,5 +1,4 @@
 import type { SearchResultItem } from '@nexus/common'
-
 import { ROUTES } from '@/Constants/routes'
 
 export type SearchResultDetails = {
@@ -34,8 +33,8 @@ export function getSearchResultDetails(item: SearchResultItem): SearchResultDeta
       name: item.profile.name,
       picture: item.profile.picture,
       about: getPlainText(item.profile.about),
-      address: `/profile/${item.profile.url}`,
-      href: `${ROUTES.profile}/${item.profile.url}`,
+      address: '/profile/' + item.profile.url,
+      href: ROUTES.profile + '/' + item.profile.url,
       kind: 'profile'
     }
   }
@@ -45,8 +44,8 @@ export function getSearchResultDetails(item: SearchResultItem): SearchResultDeta
     name: item.community.name,
     picture: item.community.picture,
     about: getPlainText(item.community.about),
-    address: `/community/${item.community.url}`,
-    href: `${ROUTES.community}/${item.community.url}`,
+    address: '/community/' + item.community.url,
+    href: ROUTES.community + '/' + item.community.url,
     kind: 'community'
   }
 }

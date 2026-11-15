@@ -10,69 +10,8 @@
   color: var(--text-color);
 }
 
-.search-page__content {
-  display: grid;
-  width: 100%;
-  gap: var(--nexus-space-4, 18px);
-  min-width: 0;
-  padding: var(--nexus-space-6, 22px);
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  border-radius: var(--nexus-card-radius, 0);
-  background: var(--color-surface);
-  box-shadow: 0 10px 28px rgb(0 0 0 / 8%);
-}
-
-.search-page__header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--nexus-space-4, 16px);
-}
-
-.search-page__header h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: var(--font-weight-bold);
-}
-
-.search-page__header p {
-  margin: var(--nexus-space-2, 6px) 0 0;
-  color: var(--color-neutral);
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-
-.search-page__count,
-.search-page__state {
-  color: var(--color-neutral);
-  font-size: 13px;
-}
-
-.search-page__state {
-  margin: 0;
-  padding: var(--nexus-space-3, 14px) 0;
-}
-
-.search-page__results {
-  display: grid;
-  gap: var(--nexus-space-2, 8px);
-}
-
 @media (max-width: 600px) {
   .search-page {
     padding-top: 88px;
-  }
-
-  .search-page__content {
-    padding: var(--nexus-space-4, 16px);
-  }
-
-}
-
-/* Search result avatars use a fixed width and cap portrait images at 1:2. */
-@media (max-width: 680px) {
-  .search-result__avatar {
-    height: auto;
-    max-height: 88px;
   }
 }
