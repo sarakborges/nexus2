@@ -48,19 +48,6 @@ main {
   animation: none !important;
 }
 
-:where(.button, button, [role='button'], input[type='button'], input[type='submit'], input[type='reset']) {
-  box-sizing: border-box !important;
-  height: var(--nexus-control-height) !important;
-  min-height: var(--nexus-control-height) !important;
-  transition: none !important;
-}
-
-:where(input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']), select) {
-  box-sizing: border-box !important;
-  height: var(--nexus-control-height) !important;
-  min-height: var(--nexus-control-height) !important;
-}
-
 :where(a) {
   color: var(--nexus-link-color, var(--color-primary-weak));
   transition: none !important;
@@ -77,15 +64,12 @@ main {
 
 :where(
   *:hover,
-  *:hover *,
   *:hover::before,
   *:hover::after,
   *:active,
-  *:active *,
   *:active::before,
   *:active::after,
   *:focus-visible,
-  *:focus-visible *,
   *:focus-visible::before,
   *:focus-visible::after
 ) {
