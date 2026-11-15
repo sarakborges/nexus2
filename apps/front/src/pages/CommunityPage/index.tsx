@@ -2,7 +2,6 @@ import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { RequestState } from '@/Components'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
-import { useTranslations } from '@/Hooks/Language'
 import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { CommunityPageAboutPreview } from '@/Components/Organisms/CommunityPageAboutPreview'
 import { CommunityPageForumPreview } from '@/Components/Organisms/CommunityPageForumPreview'
@@ -11,7 +10,6 @@ import { useCommunityPage } from './useCommunityPage'
 
 
 export function CommunityPage() {
-  const { t } = useTranslations()
   const {
     requestedUrl,
     isAuthInitialized,
