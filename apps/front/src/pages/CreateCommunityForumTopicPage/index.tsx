@@ -2,7 +2,7 @@ import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { useNavigate } from 'react-router'
 
 import { RelationshipActions } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'

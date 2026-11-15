@@ -1,5 +1,5 @@
 import { RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'

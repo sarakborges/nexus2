@@ -1,6 +1,6 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'

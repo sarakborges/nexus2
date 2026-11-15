@@ -1,6 +1,6 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Pagination, RelationshipActions, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
