@@ -5,7 +5,7 @@ import { PaginatedListControls } from '@/Components/Organisms/PaginatedListContr
 import { ProfileSidebar, SocialPageLayout } from '@/Components/Organisms/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfileMessageComposer } from '@/Components/Molecules'
+import { ProfileMessageComposer } from '@/Components/Organisms/ProfileMessageComposer'
 import { ProfileMessageList } from '@/Components/Organisms'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 

@@ -1,5 +1,5 @@
 
-import { SocialSidebar } from '@/Components/Molecules/SocialSidebar'
+import { SocialSidebar } from '@/Components/Organisms/SocialSidebar'
 import { RelationshipActions } from '@/Components/Molecules'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'

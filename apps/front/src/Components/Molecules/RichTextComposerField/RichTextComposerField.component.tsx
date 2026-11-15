@@ -1,4 +1,4 @@
-import { RichTextEditor } from '@/Components/Molecules/RichTextEditor'
+import { RichTextEditor } from '@/Components/Organisms/RichTextEditor'
 import { Label } from '@/DesignSystem'
 
 import type { RichTextComposerFieldProps } from './RichTextComposerField.types'

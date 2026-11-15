@@ -1,4 +1,5 @@
-import { CommunityForumEntry, CommunityForumReplyComposer, CommunityForumTopicModerationActions } from '@/Components/Molecules'
+import { CommunityForumEntry, CommunityForumTopicModerationActions } from '@/Components/Molecules'
+import { CommunityForumReplyComposer } from '@/Components/Organisms/CommunityForumReplyComposer'
 import { Pagination, RequestState } from '@/Components'
 import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
