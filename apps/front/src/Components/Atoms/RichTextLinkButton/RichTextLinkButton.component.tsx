@@ -1,6 +1,7 @@
 import type { MouseEvent } from 'react'
 import { useEditorState } from 'react-simple-wysiwyg'
 import type { RichTextLinkButtonProps } from './RichTextLinkButton.types'
+import { Button } from '@/DesignSystem'
 
 export function RichTextLinkButton({ label, promptLabel }: RichTextLinkButtonProps) {
   const editorState = useEditorState()
@@ -23,5 +24,5 @@ export function RichTextLinkButton({ label, promptLabel }: RichTextLinkButtonPro
     document.execCommand('createLink', false, value.trim())
     editor.focus()
   }
-  return <button className="rsw-btn rich-text-editor__toolbar-button" type="button" title={label} aria-label={label} onMouseDown={handleMouseDown}><span aria-hidden="true">↗</span></button>
+  return <Button variation="transparent" className="rsw-btn rich-text-editor__toolbar-button" type="button" title={label} aria-label={label} onMouseDown={handleMouseDown}><span aria-hidden="true">↗</span></Button>
 }

@@ -11,6 +11,7 @@ import {
 
 import { Link } from 'react-router'
 
+import { Button } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import './AccountMenu.style.scss'
@@ -96,7 +97,7 @@ export function AccountMenu({
       <div className="floating-navigation__menu-divider" />
 
       {currentProfile && (
-        <button
+        <Button variation="transparent"
           className="floating-navigation__menu-item"
           type="button"
           role="menuitem"
@@ -107,9 +108,9 @@ export function AccountMenu({
         >
           <FiSliders aria-hidden="true" />
           <span>{t('PROFILE_SETTINGS_TITLE')}</span>
-        </button>
+        </Button>
       )}
-      <button
+      <Button variation="transparent"
         className="floating-navigation__menu-item"
         type="button"
         role="menuitem"
@@ -117,11 +118,11 @@ export function AccountMenu({
       >
         <FiSettings aria-hidden="true" />
         <span>{t('DISPLAY_SETTINGS_TITLE')}</span>
-      </button>
+      </Button>
 
       <div className="floating-navigation__menu-divider" />
 
-      <button
+      <Button variation="transparent"
         className="floating-navigation__menu-item floating-navigation__menu-item--danger"
         type="button"
         role="menuitem"
@@ -130,7 +131,7 @@ export function AccountMenu({
       >
         <FiLogOut aria-hidden="true" />
         <span>{isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
-      </button>
+      </Button>
     </div>
   )
 }

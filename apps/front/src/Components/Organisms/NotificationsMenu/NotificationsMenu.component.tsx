@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { FiBell } from 'react-icons/fi'
 
 import { NotificationActivityEntry } from '@/Components/Molecules/NotificationActivityEntry'
+import { Button } from '@/DesignSystem'
 import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -19,7 +20,8 @@ export function NotificationsMenu({
 
   return (
     <>
-      <button
+      <Button
+        variation="transparent"
         className="floating-navigation__notification-trigger"
         type="button"
         aria-label={t('NOTIFICATIONS_BUTTON')}
@@ -33,7 +35,7 @@ export function NotificationsMenu({
             {activities.length > 9 ? '9+' : activities.length}
           </span>
         )}
-      </button>
+      </Button>
 
       {isOpen && (
         <section

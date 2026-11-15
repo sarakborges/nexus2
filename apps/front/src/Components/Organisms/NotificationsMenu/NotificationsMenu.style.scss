@@ -1,5 +1,5 @@
 .floating-navigation {
-  &__notification-trigger {
+  &__notification-trigger.button {
     position: relative;
     display: grid;
     place-items: center;
@@ -13,11 +13,11 @@
     cursor: pointer;
   }
 
-  &__notification-trigger:hover {
+  &__notification-trigger.button:hover {
     background: var(--color-background);
   }
 
-  &__notification-trigger:focus-visible {
+  &__notification-trigger.button:focus-visible {
     outline: 2px solid var(--color-primary-strong);
     outline-offset: 2px;
   }

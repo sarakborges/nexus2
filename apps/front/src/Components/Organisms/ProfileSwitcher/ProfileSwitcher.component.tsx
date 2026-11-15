@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fi'
 
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import './ProfileSwitcher.style.scss'
 
@@ -37,7 +38,7 @@ export function ProfileSwitcher({
 
   return (
     <div className="floating-navigation__profile-switcher">
-      <button
+      <Button variation="transparent"
         className="floating-navigation__menu-item floating-navigation__profile-toggle"
         type="button"
         role="menuitem"
@@ -55,7 +56,7 @@ export function ProfileSwitcher({
           }
           aria-hidden="true"
         />
-      </button>
+      </Button>
 
       {isOpen && (
         <div
@@ -72,12 +73,13 @@ export function ProfileSwitcher({
           {profilesError && (
             <div className="floating-navigation__profile-status" role="alert">
               <span>{t('NAVIGATION_PROFILES_ERROR')}</span>
-              <button
+              <Button variation="transparent"
+                className="floating-navigation__profile-retry"
                 type="button"
                 onClick={onRetry}
               >
                 {t('NAVIGATION_PROFILES_RETRY')}
-              </button>
+              </Button>
             </div>
           )}
           {profilesSuccess && profiles.length === 0 && (
@@ -88,7 +90,7 @@ export function ProfileSwitcher({
           {profiles.map((profile) => {
             const isCurrent = profile.id === currentProfileId
             return (
-              <button
+              <Button variation="transparent"
                 className="floating-navigation__profile-option"
                 key={profile.id}
                 type="button"
@@ -108,7 +110,7 @@ export function ProfileSwitcher({
                 {isCurrent && (
                   <FiCheck aria-label={t('HOME_CURRENT_PROFILE')} />
                 )}
-              </button>
+              </Button>
             )
           })}
           {isSelectionError && (

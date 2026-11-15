@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router'
 import { FiChevronDown, FiMenu, FiUser } from 'react-icons/fi'
 
+import { Button } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { useTranslations } from '@/Hooks/Language'
@@ -81,7 +82,8 @@ export function FloatingNavigationBar({
               onClose={closePanels}
             />
           </div>
-          <button
+          <Button
+            variation="transparent"
             className="floating-navigation__account-trigger"
             type="button"
             aria-label={t('NAVIGATION_ACCOUNT_MENU')}
@@ -102,7 +104,7 @@ export function FloatingNavigationBar({
               className="floating-navigation__account-chevron"
               aria-hidden="true"
             />
-          </button>
+          </Button>
         </div>
       </header>
       {!isSidebarCollapsed && (
@@ -129,7 +131,8 @@ export function FloatingNavigationBar({
           communitiesRoute={communitiesRoute}
           onNavigate={closeNavigationAfterNavigate}
         />
-        <button
+        <Button
+          variation="transparent"
           className="floating-navigation__sidebar-toggle"
           type="button"
           aria-label={isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}
@@ -139,7 +142,7 @@ export function FloatingNavigationBar({
         >
           <FiMenu aria-hidden="true" />
           <span>{isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}</span>
-        </button>
+        </Button>
       </aside>
       {activePanel === 'account' && (
         <AccountMenu

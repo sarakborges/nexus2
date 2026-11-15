@@ -5,6 +5,7 @@ import { ToolbarCommandButton } from '@/Components/Atoms/ToolbarCommandButton'
 import { RichTextFormatSelect } from '@/Components/Molecules/RichTextFormatSelect'
 import { RichTextLinkButton } from '@/Components/Atoms/RichTextLinkButton'
 import { Toolbar } from 'react-simple-wysiwyg'
+import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 export function RichTextToolbar({
@@ -50,9 +51,9 @@ export function RichTextToolbar({
       <span className="rsw-separator" />
       <InsertImageButton label={imageButtonLabel} uploadErrorLabel={imageUploadErrorLabel} onUploadImage={onUploadImage} onUploadingChange={onUploadingChange} />
       <ToolbarCommandButton title={t('RICH_TEXT_CLEAR_FORMATTING')} command="removeFormat"><span aria-hidden="true">T×</span></ToolbarCommandButton>
-      <button className="rsw-btn rich-text-editor__toolbar-button rich-text-editor__mode-button" type="button" title={t('RICH_TEXT_EDIT_HTML')} aria-label={t('RICH_TEXT_EDIT_HTML')} onMouseDown={onHtmlModeMouseDown} onClick={onOpenHtmlMode}>
+      <Button variation="transparent" className="rsw-btn rich-text-editor__toolbar-button rich-text-editor__mode-button" type="button" title={t('RICH_TEXT_EDIT_HTML')} aria-label={t('RICH_TEXT_EDIT_HTML')} onMouseDown={onHtmlModeMouseDown} onClick={onOpenHtmlMode}>
         <span aria-hidden="true">{'</>'}</span>
-      </button>
+      </Button>
     </Toolbar>
   )
 }

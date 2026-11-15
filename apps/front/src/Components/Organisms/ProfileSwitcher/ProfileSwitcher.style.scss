@@ -42,7 +42,7 @@
     border-left: var(--nexus-border-width, 2px) solid var(--color-border);
   
   }
-  &__profile-option {
+  &__profile-option.button {
 
     display: flex;
     align-items: center;
@@ -59,12 +59,12 @@
     cursor: pointer;
   
   }
-  &__profile-option:hover:not(:disabled) {
+  &__profile-option.button:hover:not(:disabled) {
 
     background: var(--color-background);
   
   }
-  &__profile-option:disabled {
+  &__profile-option.button:disabled {
 
     cursor: wait;
     opacity: .6;
@@ -116,7 +116,7 @@
     line-height: 1.4;
   
   }
-  &__profile-status button {
+  &__profile-status .floating-navigation__profile-retry.button {
 
     display: block;
     padding: var(--nexus-space-1) 0;

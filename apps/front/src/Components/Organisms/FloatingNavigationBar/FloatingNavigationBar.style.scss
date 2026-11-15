@@ -29,7 +29,7 @@
   
   }
   &__icon-button,
-  &__account-trigger {
+  &__account-trigger.button {
 
     display: inline-flex;
     align-items: center;
@@ -133,14 +133,14 @@
   
   }
   &__icon-button:hover,
-  &__account-trigger:hover {
+  &__account-trigger.button:hover {
 
     background: var(--color-background);
   
   }
   &__icon-button:focus-visible,
   &__sidebar-link:focus-visible,
-  &__account-trigger:focus-visible,
+  &__account-trigger.button:focus-visible,
   &__menu-item:focus-visible {
 
     outline: 2px solid var(--color-primary-strong);
@@ -168,7 +168,7 @@
     box-shadow: none;
 
   }
-  &__sidebar-toggle {
+  &__sidebar-toggle.button {
 
     display: flex;
     align-items: center;
@@ -186,7 +186,7 @@
     cursor: pointer;
   
   }
-  &__sidebar-toggle:hover {
+  &__sidebar-toggle.button:hover {
 
     background: var(--color-background);
   
@@ -216,7 +216,7 @@
     box-shadow: 0 16px 42px rgb(0 0 0 / 16%);
 
   }
-  &__menu-item {
+  &__menu-item.button {
 
     display: flex;
     align-items: center;
@@ -242,12 +242,12 @@
     color: var(--color-neutral);
   
   }
-  &__menu-item:hover:not(:disabled) {
+  &__menu-item.button:hover:not(:disabled) {
 
     background: var(--color-background);
   
   }
-  &__menu-item:disabled {
+  &__menu-item.button:disabled {
 
     cursor: wait;
     opacity: .6;
@@ -295,7 +295,7 @@
   padding-inline: var(--nexus-space-2);
 
 }
-.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle {
+.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle.button {
 
   justify-content: center;
   padding-inline: 0;
@@ -409,7 +409,7 @@ html.has-global-navigation .auth-page {
     flex-basis: 20px;
   
   }
-  .floating-navigation__account-trigger {
+  .floating-navigation__account-trigger.button {
 
     width: 40px;
     min-width: 40px;

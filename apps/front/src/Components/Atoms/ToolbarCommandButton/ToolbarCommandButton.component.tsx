@@ -1,5 +1,6 @@
 import type { ToolbarCommandButtonProps } from './ToolbarCommandButton.types'
 import { useToolbarCommandButton } from './useToolbarCommandButton'
+import { Button } from '@/DesignSystem'
 
 export function ToolbarCommandButton({
   title,
@@ -9,7 +10,8 @@ export function ToolbarCommandButton({
   const { handleMouseDown, isActive } = useToolbarCommandButton({ command })
 
   return (
-    <button
+    <Button
+      variation="transparent"
       className="rsw-btn rich-text-editor__toolbar-button"
       data-active={isActive ? 'true' : 'false'}
       aria-pressed={isActive}
@@ -19,6 +21,6 @@ export function ToolbarCommandButton({
       onMouseDown={handleMouseDown}
     >
       {children}
-    </button>
+    </Button>
   )
 }
