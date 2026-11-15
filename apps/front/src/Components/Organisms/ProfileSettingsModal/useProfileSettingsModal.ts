@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import type { ProfileSettings } from '@nexus/common'
 
 import { saveProfileSettings } from '@/Services/ProfileSettings'
+import { areProfileSettingsEquivalent } from './profileSettings.utils'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type {
   ProfileActivityType,
@@ -85,7 +86,7 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
   }
 
   const isDirty = Boolean(
-    profileId && JSON.stringify(settings) !== JSON.stringify(persistedSettings)
+    profileId && !areProfileSettingsEquivalent(settings, persistedSettings)
   )
   const isCurrentProfileMutation = saveMutation.variables?.profileId === profileId
 
