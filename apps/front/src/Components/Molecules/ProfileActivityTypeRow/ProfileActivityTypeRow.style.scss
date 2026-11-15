@@ -36,7 +36,7 @@
   .profile-activity-type-row > span {
     grid-column: 1 / -1;
     min-height: 40px;
-    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
     border: 0;
     background: var(--color-surface-raised);
     font-weight: var(--font-weight-bold);
@@ -47,7 +47,7 @@
     justify-content: flex-start;
     min-width: 0;
     min-height: 72px;
-    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
     border: 0;
     border-top: var(--nexus-border-width, 2px) solid var(--color-border);
     gap: var(--nexus-space-2, 8px);
