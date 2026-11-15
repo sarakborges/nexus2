@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
-import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
+import { IdentityAvatarLink } from '@/Components/Atoms/IdentityAvatarLink'
 import { Badge } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
