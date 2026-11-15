@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import { RichTextContent } from '@/DesignSystem'
@@ -37,7 +38,7 @@ export function CommunityForumEntry({
         <header className="community-forum-entry__header">
           <span>
             {author ? (
-              <a href={ROUTES.profile + '/' + author.url}>{author.name}</a>
+              <Link to={ROUTES.profile + '/' + author.url}>{author.name}</Link>
             ) : (
               unknownAuthorLabel
             )}
