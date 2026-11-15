@@ -7,7 +7,7 @@
 .search-result__link {
   display: flex;
   align-items: center;
-  gap: var(--nexus-space-3, 14px);
+  gap: var(--nexus-space-3, 12px);
   min-width: 0;
   padding: var(--nexus-space-3, 12px);
   color: inherit;
@@ -79,8 +79,8 @@
 @media (max-width: 600px) {
   .search-result__link {
     align-items: flex-start;
-    gap: var(--nexus-space-2, 10px);
-    padding: var(--nexus-space-2, 10px);
+    gap: var(--nexus-space-2, 8px);
+    padding: var(--nexus-space-2, 8px);
   }
 
   .search-result__avatar {
