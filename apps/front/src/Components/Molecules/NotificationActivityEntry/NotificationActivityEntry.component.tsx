@@ -1,7 +1,6 @@
-import { Link } from 'react-router'
 import type { RecentActivity } from '@nexus/common'
 
-import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 
@@ -58,24 +57,24 @@ export function NotificationActivityEntry({
   })()
 
   return (
-    <Link
-      className="notification-activity-entry"
+    <AccountIdentityLink
       to={getActivityHref(activity)}
+      name={activity.profile.name}
+      picture={activity.profile.picture}
+      secondary={`@${activity.profile.url}`}
+      className="notification-activity-entry"
+      avatarClassName="notification-activity-entry__avatar"
+      copyClassName="notification-activity-entry__copy"
+      nameClassName="notification-activity-entry__name"
+      secondaryClassName="notification-activity-entry__handle"
+      title={activity.profile.name}
+      ariaLabel={activity.profile.name}
       onClick={onClick}
     >
-      <IdentityAvatar
-        className="notification-activity-entry__avatar"
-        name={activity.profile.name}
-        picture={activity.profile.picture}
-      />
-      <span className="notification-activity-entry__copy">
-        <strong>{activity.profile.name}</strong>
-        <small>@{activity.profile.url}</small>
-        <span>{description}</span>
-        <time dateTime={new Date(activity.updatedAt).toISOString()}>
-          {new Date(activity.updatedAt).toLocaleString()}
-        </time>
-      </span>
-    </Link>
+      <span>{description}</span>
+      <time dateTime={new Date(activity.updatedAt).toISOString()}>
+        {new Date(activity.updatedAt).toLocaleString()}
+      </time>
+    </AccountIdentityLink>
   )
 }

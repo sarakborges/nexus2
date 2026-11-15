@@ -17,10 +17,11 @@ export function AccountIdentityLink({
   children,
   trailing,
   title,
-  ariaLabel
+  ariaLabel,
+  onClick
 }: AccountIdentityLinkProps) {
   return (
-    <Link className={className} to={to} title={title} aria-label={ariaLabel}>
+    <Link className={className} to={to} title={title} aria-label={ariaLabel} onClick={onClick}>
       <IdentityAvatar
         name={name}
         picture={picture}

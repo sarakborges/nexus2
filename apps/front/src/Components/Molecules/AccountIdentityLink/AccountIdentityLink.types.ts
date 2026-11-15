@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
 
 export type AccountIdentityLinkProps = {
   to: string
@@ -12,6 +12,7 @@ export type AccountIdentityLinkProps = {
   secondaryClassName?: string
   children?: ReactNode
   trailing?: ReactNode
+  onClick?: MouseEventHandler<HTMLAnchorElement>
   title?: string
   ariaLabel?: string
 }

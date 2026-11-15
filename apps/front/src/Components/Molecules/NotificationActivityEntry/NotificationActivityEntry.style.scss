@@ -39,14 +39,14 @@
   gap: var(--nexus-space-1, 3px);
 }
 
-.notification-activity-entry__copy strong {
+.notification-activity-entry__name {
   overflow: hidden;
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.notification-activity-entry__copy small,
+.notification-activity-entry__handle,
 .notification-activity-entry__copy time {
   color: var(--color-neutral);
   font-size: 11px;
