@@ -1,4 +1,4 @@
 export type ProfileTypeNoticeProps = {
-  isCompatible: boolean
-  isChecking: boolean
+  isVisible: boolean
+  message: string
 }

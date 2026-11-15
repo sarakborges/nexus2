@@ -80,7 +80,10 @@ export function CommunityForumTopicPage() {
         />
       }
     >
-      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">

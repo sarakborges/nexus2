@@ -1,10 +1,11 @@
 import { ButtonLink } from '@/DesignSystem'
-import { RequestState } from '@/Components/Molecules/RequestState'
 import { IdentityAvatarGrid } from '@/Components/Molecules/IdentityAvatarGrid'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
-import type { ProfilePageEntityPreviewProps } from './ProfilePageEntityPreview.types'
 
-export function ProfilePageEntityPreview({
+import type { EntityAvatarPreviewProps } from './EntityAvatarPreview.types'
+
+export function EntityAvatarPreview({
   title,
   totalItems,
   allHref,
@@ -12,11 +13,11 @@ export function ProfilePageEntityPreview({
   isLoading,
   isFetching,
   isError,
-  isSuccess,
+  isEmpty,
   emptyMessage,
   onRetry,
   entries
-}: ProfilePageEntityPreviewProps) {
+}: EntityAvatarPreviewProps) {
   return (
     <SocialPreviewPanel
       title={title}
@@ -35,7 +36,7 @@ export function ProfilePageEntityPreview({
         isLoading={isLoading}
         isFetching={isFetching}
         isError={isError}
-        isEmpty={isSuccess && entries.length === 0}
+        isEmpty={isEmpty}
         emptyMessage={emptyMessage}
         onRetry={onRetry}
       >

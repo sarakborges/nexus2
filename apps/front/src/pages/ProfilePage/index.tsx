@@ -7,7 +7,7 @@ import { Button, RichTextContent } from '@/DesignSystem'
 import { SocialPanel } from '@/Components/Atoms/SocialPanel'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundState } from '@/Components/Organisms/NotFoundState'
-import { ProfilePageEntityPreview } from '@/Components/Organisms'
+import { EntityAvatarPreview } from '@/Components/Organisms/EntityAvatarPreview'
 import { useProfilePage } from './useProfilePage'
 
 import './ProfilePage.style.scss'
@@ -64,7 +64,7 @@ export function ProfilePage() {
       }
       rightSidebar={
         <>
-          <ProfilePageEntityPreview
+          <EntityAvatarPreview
             title={t('PROFILE_FRIENDS_TITLE')}
             totalItems={profilePageQuery.data?.friends.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/friends`}
@@ -72,7 +72,7 @@ export function ProfilePage() {
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}
-            isSuccess={profilePageQuery.isSuccess}
+            isEmpty={profilePageQuery.isSuccess && friends.length === 0}
             emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
             onRetry={() => void profilePageQuery.refetch()}
             entries={friends.map((friend) => ({
@@ -82,7 +82,7 @@ export function ProfilePage() {
               href: `${ROUTES.profile}/${friend.url}`
             }))}
           />
-          <ProfilePageEntityPreview
+          <EntityAvatarPreview
             title={t('PROFILE_COMMUNITIES_TITLE')}
             totalItems={profilePageQuery.data?.communities.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/communities`}
@@ -90,7 +90,7 @@ export function ProfilePage() {
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}
-            isSuccess={profilePageQuery.isSuccess}
+            isEmpty={profilePageQuery.isSuccess && communities.length === 0}
             emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
             onRetry={() => void profilePageQuery.refetch()}
             entries={communities.map((community) => ({
@@ -104,7 +104,10 @@ export function ProfilePage() {
       }
     >
       <RequestState isFetching={profilePageQuery.isFetching} />
-      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       <SocialPanel className="social-panel--about">
         <header className="social-panel__header">
           <h2 className="social-panel__title">

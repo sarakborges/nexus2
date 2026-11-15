@@ -66,7 +66,10 @@ export function ProfileCommunitiesPage() {
           />))}
         
         <RequestState isFetching={profileDirectoryQuery.isFetching} />
-        <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
+        <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
         
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}

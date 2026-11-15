@@ -65,7 +65,10 @@ export function CommunityForumPage() {
       }
     >
       <section className="community-forum social-page__content-stack">
-        <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
+        <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
         
         <header className="account-card__header">
           <div>

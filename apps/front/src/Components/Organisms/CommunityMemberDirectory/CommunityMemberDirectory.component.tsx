@@ -38,7 +38,10 @@ export function CommunityMemberDirectory({
           </p>
         </div>
       </header>
-      <ProfileTypeNotice isChecking={typeCompatibility.isChecking} isCompatible={typeCompatibility.isCompatible} />
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       <Tabs
         className="community-member-directory__tabs"
         ariaLabel={t('COMMUNITY_MEMBERS_TITLE')}
