@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 
-import type { HomePageEntityPreviewItem } from '@/Components/Organisms/HomePageEntityPreview/HomePageEntityPreview.types'
 import { getProfilePage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
+import type { HomePagePreviewItem } from './HomePageRightSidebar.types'
 import type {
   UseHomePageRightSidebarOptions,
   UseHomePageRightSidebarResult
 } from './useHomePageRightSidebar.types'
 
-const PREVIEW_ITEMS = 4
+const PREVIEW_ITEMS = 16
 
 export function useHomePageRightSidebar({
   currentProfile,
@@ -33,6 +33,7 @@ export function useHomePageRightSidebar({
       isLoading: profilePageQuery.isLoading,
       isFetching: profilePageQuery.isFetching,
       isError: profilePageQuery.isError,
+      isEmpty: profilePageQuery.isSuccess && (friends?.totalItems ?? 0) === 0,
       onRetry: () => void profilePageQuery.refetch()
     },
     communities: {
@@ -41,13 +42,16 @@ export function useHomePageRightSidebar({
       isLoading: profilePageQuery.isLoading,
       isFetching: profilePageQuery.isFetching,
       isError: profilePageQuery.isError,
+      isEmpty: profilePageQuery.isSuccess && (communities?.totalItems ?? 0) === 0,
       onRetry: () => void profilePageQuery.refetch()
     },
-    suggestedCommunities: suggestedCommunities.map(({ id, name, url, picture }) => ({
-      id,
-      name,
-      url,
-      picture
-    }) satisfies HomePageEntityPreviewItem)
+    suggestedCommunities: suggestedCommunities
+      .slice(0, PREVIEW_ITEMS)
+      .map(({ id, name, url, picture }): HomePagePreviewItem => ({
+        id,
+        name,
+        url,
+        picture
+      }))
   }
 }
