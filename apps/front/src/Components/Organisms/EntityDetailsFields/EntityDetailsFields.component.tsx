@@ -4,7 +4,8 @@ import type {
   EntityDetailsFieldsProps
 } from './EntityDetailsFields.types'
 
-import { AvatarUploadField, RichTextComposerField } from '@/Components'
+import { AvatarUploadField } from '@/Components/Molecules/AvatarUploadField'
+import { RichTextComposerField } from '@/Components/Organisms/RichTextComposerField'
 import { FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 

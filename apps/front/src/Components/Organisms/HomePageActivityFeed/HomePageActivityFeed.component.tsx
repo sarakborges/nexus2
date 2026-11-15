@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RequestState } from '@/Components'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { getRecentActivity } from '@/Services/Activity/activity.service'

@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { RequestState } from '@/Components'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'

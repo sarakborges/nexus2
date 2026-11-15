@@ -1,4 +1,4 @@
-import { RequestState } from '@/Components'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { ButtonLink } from '@/DesignSystem'
 import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import { HomePagePreviewEntry } from '@/Components/Molecules/HomePagePreviewEntry'
