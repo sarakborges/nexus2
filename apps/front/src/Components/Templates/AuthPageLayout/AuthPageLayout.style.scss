@@ -72,7 +72,7 @@
 
 .auth-split-page__intro h1 {
   max-width: 720px;
-  margin-top: var(--nexus-space-4, 18px);
+  margin-top: var(--nexus-space-4, 16px);
   color: var(--text-color);
   font-size: clamp(44px, 6.5vw, 84px);
   font-weight: var(--font-weight-bold);
@@ -95,7 +95,7 @@
   display: grid;
   width: min(100%, 800px);
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--nexus-space-4, 18px);
+  gap: var(--nexus-space-4, 16px);
 }
 
 .auth-split-page__feature {
@@ -131,7 +131,7 @@
 .auth-split-page__footer {
   position: relative;
   z-index: 1;
-  padding-top: var(--nexus-space-4, 18px);
+  padding-top: var(--nexus-space-4, 16px);
   border-top: var(--nexus-border-width, 2px) solid var(--color-border);
   color: var(--color-neutral);
   font-size: 12px;
@@ -160,7 +160,7 @@
 }
 
 .auth-split-page__form-panel .auth-form {
-  gap: var(--nexus-space-4, 18px);
+  gap: var(--nexus-space-4, 16px);
 }
 
 @media (max-width: 920px) {
@@ -168,7 +168,7 @@
     grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
   }
   .auth-split-page__story {
-    padding: var(--nexus-space-7, 30px);
+    padding: var(--nexus-space-7, 32px);
   }
   .auth-split-page__features {
     grid-template-columns: 1fr;
@@ -216,7 +216,7 @@
     font-size: 12px;
   }
   .auth-split-page__footer {
-    padding-top: var(--nexus-space-3, 14px);
+    padding-top: var(--nexus-space-3, 12px);
   }
   .auth-split-page__form-panel {
     min-height: auto;
@@ -266,7 +266,7 @@
 
 .auth-form {
   display: grid;
-  gap: var(--nexus-space-4, 18px);
+  gap: var(--nexus-space-4, 16px);
   width: 100%;
 }
 
