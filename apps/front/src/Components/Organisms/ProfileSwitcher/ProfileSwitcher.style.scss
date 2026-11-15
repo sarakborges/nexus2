@@ -51,6 +51,7 @@
     gap: var(--nexus-space-2);
     padding: var(--nexus-space-2) var(--nexus-space-2);
     border: 0;
+    border-radius: 0;
     background: transparent;
     color: var(--text-color);
     font: inherit;
@@ -119,14 +120,22 @@
   &__profile-status .floating-navigation__profile-retry.button {
 
     display: block;
+    width: fit-content;
+    height: auto;
+    min-height: 0;
     padding: var(--nexus-space-1) 0;
     border: 0;
+    border-radius: 0;
     background: transparent;
     color: var(--color-primary-weak);
     font: inherit;
     text-decoration: underline;
     cursor: pointer;
   
+  }
+  &__profile-status .floating-navigation__profile-retry.button:hover:not(:disabled) {
+    background: transparent;
+    text-decoration-thickness: 2px;
   }
   &__profile-status--error {
 
