@@ -3,10 +3,8 @@ import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPage
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Templates/SocialPageLayout'
+import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'

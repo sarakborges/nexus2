@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { createProfilePost } from '@/Services/Home'
 import { queryKeys } from '@/Services/Query/queryKeys'

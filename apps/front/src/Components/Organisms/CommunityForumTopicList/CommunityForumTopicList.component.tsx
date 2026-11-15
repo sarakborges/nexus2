@@ -3,7 +3,7 @@ import './CommunityForumTopicList.style.scss'
 
 import { Link } from 'react-router'
 
-import { IdentityAvatar } from '@/Components/Molecules'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 

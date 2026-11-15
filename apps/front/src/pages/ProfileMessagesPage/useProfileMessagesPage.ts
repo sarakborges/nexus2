@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'

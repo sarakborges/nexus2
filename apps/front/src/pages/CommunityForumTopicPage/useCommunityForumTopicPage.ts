@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useCreateCommunityForumReplyMutation } from '@/Hooks/CommunityForum'

@@ -1,4 +1,4 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { Button, ButtonLink } from '@/DesignSystem'
 import { AccountCard } from '@/Components/Molecules/AccountCard'
 import { AuthenticatedPageTemplate } from '@/Components/Templates/AuthenticatedPageTemplate'

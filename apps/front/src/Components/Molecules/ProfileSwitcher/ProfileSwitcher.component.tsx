@@ -5,7 +5,7 @@ import {
   FiUsers
 } from 'react-icons/fi'
 
-import { IdentityAvatar } from '@/Components/Molecules'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { useTranslations } from '@/Hooks/Language'
 import './ProfileSwitcher.style.scss'
 

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { useCreateCommunityForumTopicMutation } from '@/Hooks/CommunityForum'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor/richText.utils'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getCommunityForumComposerPage } from '@/Services/Community'
