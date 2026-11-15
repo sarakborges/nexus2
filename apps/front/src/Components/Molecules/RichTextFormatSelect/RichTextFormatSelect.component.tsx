@@ -1,7 +1,10 @@
 import { useRef, useState } from 'react'
 import { useEditorState } from 'react-simple-wysiwyg'
 
+import { Select } from '@/DesignSystem'
 import type { RichTextFormatSelectProps } from './RichTextFormatSelect.types'
+
+import './RichTextFormatSelect.style.scss'
 
 export function RichTextFormatSelect({ command, label, options }: RichTextFormatSelectProps) {
   const editorState = useEditorState()
@@ -32,10 +35,8 @@ export function RichTextFormatSelect({ command, label, options }: RichTextFormat
     setValue('')
   }
 
-  // This is a toolbar-specific native control. Keeping the library's rsw-dd
-  // element avoids overriding react-simple-wysiwyg's selection/focus behavior.
   return (
-    <select
+    <Select
       className="rsw-dd rich-text-editor__format-select"
       aria-label={label}
       title={label}
@@ -49,6 +50,6 @@ export function RichTextFormatSelect({ command, label, options }: RichTextFormat
           {option.label}
         </option>
       ))}
-    </select>
+    </Select>
   )
 }
