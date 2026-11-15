@@ -137,20 +137,6 @@
   gap: var(--nexus-space-2, 10px);
 }
 
-@media (max-width: 480px) {
-  .account-card {
-    padding: var(--nexus-space-4, 16px);
-  }
-
-  .account-card__header {
-    flex-direction: column;
-  }
-
-  .account-card__header-actions {
-    width: 100%;
-  }
-}
-
 @media (max-width: 680px) {
   .account-card {
     padding: var(--nexus-space-4, 18px);
@@ -170,5 +156,19 @@
   .account-card__actions > * {
     flex: 1 1 140px;
     max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-card {
+    padding: var(--nexus-space-4, 16px);
+  }
+
+  .account-card__header {
+    flex-direction: column;
+  }
+
+  .account-card__header-actions {
+    width: 100%;
   }
 }
