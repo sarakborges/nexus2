@@ -46,22 +46,10 @@
   gap: var(--nexus-space-2);
 }
 
-.avatar-upload-field__button,
-.avatar-upload-field__remove {
-  min-height: 34px;
-  padding: var(--nexus-space-2) var(--nexus-space-2);
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--text-color);
-  font: inherit;
+.avatar-upload-field__button.button,
+.avatar-upload-field__remove.button {
+  padding-inline: var(--nexus-space-3);
   font-size: 12px;
-  cursor: pointer;
-}
-
-.avatar-upload-field__button:hover,
-.avatar-upload-field__remove:hover {
-  border-color: var(--color-primary-weak);
-  background: var(--color-surface-raised);
 }
 
 .avatar-upload-field__button:disabled,
@@ -70,11 +58,15 @@
   opacity: 0.65;
 }
 
-.avatar-upload-field__remove {
+.avatar-upload-field__remove.button {
   color: var(--color-danger, var(--text-color));
 }
 
-.avatar-upload-field__input {
+.avatar-upload-field__remove.button:hover:not(:disabled) {
+  color: var(--color-danger, var(--text-color));
+}
+
+.avatar-upload-field__input.input {
   display: none;
 }
 
@@ -82,11 +74,6 @@
   margin: 0;
   color: var(--color-danger, #c33);
   font-size: 12px;
-}
-
-.avatar-upload-field__fallback svg {
-  width: 24px;
-  height: 24px;
 }
 
 /* Avatar preview keeps its 88px width and accepts portraits up to 176px tall. */
@@ -104,13 +91,14 @@
 .avatar-upload-field__fallback {
   width: 100%;
   aspect-ratio: 1 / 1;
-}
-
-.avatar-upload-field__fallback {
   height: auto;
   max-height: inherit;
 }
 
+.avatar-upload-field__fallback svg {
+  width: 24px;
+  height: 24px;
+}
 
 @media (max-width: 560px) {
   .avatar-upload-field__actions {
@@ -120,6 +108,6 @@
   .avatar-upload-field__button,
   .avatar-upload-field__remove {
     flex: 1 1 132px;
-    min-height: 40px;
+    min-height: var(--nexus-control-height, 40px);
   }
 }
