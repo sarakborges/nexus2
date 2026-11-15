@@ -7,6 +7,7 @@ import './RequestState.style.scss'
 
 export function RequestState({
   isLoading = false,
+  isFetching = false,
   isError = false,
   isEmpty = false,
   emptyMessage,
@@ -52,5 +53,15 @@ export function RequestState({
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {isFetching && (
+        <div className="request-state request-state--inline" role="status" aria-live="polite">
+          <LoadingIndicator size="small" />
+          <span>{t('REQUEST_LOADING')}</span>
+        </div>
+      )}
+      {children}
+    </>
+  )
 }
