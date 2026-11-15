@@ -13,7 +13,7 @@ export type HomePageEntityPreviewProps = {
   isLoading: boolean
   isFetching: boolean
   isError: boolean
-  onRetry: () => void
+  onRetry?: () => void
   viewAllHref?: string
   viewAllLabel?: string
   getHref: (item: HomePageEntityPreviewItem) => string
