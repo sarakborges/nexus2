@@ -4,7 +4,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--nexus-space-3, 12px);
-  padding-top: var(--nexus-space-4, 18px);
+  padding-top: var(--nexus-space-4, 16px);
 
   &__success { color: var(--color-success, #18794e); }
   &__error { color: var(--color-error, #b42318); }
