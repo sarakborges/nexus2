@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { FiBell } from 'react-icons/fi'
 
@@ -6,8 +5,6 @@ import { NotificationActivityEntry } from '@/Components/Molecules/NotificationAc
 import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { getCurrentAuthSession } from '@/Services/Auth'
-import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 
 import './NotificationsMenu.style.scss'
@@ -18,16 +15,7 @@ export function NotificationsMenu({
   onClose
 }: NotificationsMenuProps) {
   const { t } = useTranslations()
-  const session = useAuthStore(state => state.session)
-  const userId = session?.user.id ?? null
-  const activityQuery = useQuery({
-    queryKey: queryKeys.auth.session,
-    queryFn: getCurrentAuthSession,
-    enabled: Boolean(userId),
-    initialData: session ?? undefined,
-    staleTime: 30_000
-  })
-  const activities = activityQuery.data?.activities.slice(0, 8) ?? []
+  const activities = useAuthStore(state => state.session?.activities.slice(0, 8) ?? [])
 
   return (
     <>
@@ -57,14 +45,10 @@ export function NotificationsMenu({
             <strong>{t('NOTIFICATIONS_TITLE')}</strong>
             <span>{t('NOTIFICATIONS_RECENT')}</span>
           </header>
-          {activityQuery.isLoading && (
-            <p className="floating-navigation__notifications-state">{t('NOTIFICATIONS_LOADING')}</p>
-          )}
-          {activityQuery.isError && (
-            <p className="floating-navigation__notifications-state">{t('NOTIFICATIONS_LOAD_ERROR')}</p>
-          )}
-          {!activityQuery.isLoading && !activityQuery.isError && activities.length === 0 && (
-            <p className="floating-navigation__notifications-state">{t('NOTIFICATIONS_EMPTY')}</p>
+          {activities.length === 0 && (
+            <p className="floating-navigation__notifications-state">
+              {t('NOTIFICATIONS_EMPTY')}
+            </p>
           )}
           {activities.map(activity => (
             <NotificationActivityEntry
