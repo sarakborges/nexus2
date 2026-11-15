@@ -1,4 +1,3 @@
-export { AuthenticatedPageState } from './AuthenticatedPageState'
 export { CommunityForumTopicList } from './CommunityForumTopicList'
 export type { CommunityForumTopicListProps } from './CommunityForumTopicList'
 export { CommunityPrivacySelector } from './CommunityPrivacySelector'
