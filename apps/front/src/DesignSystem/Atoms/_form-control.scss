@@ -1,0 +1,24 @@
+@mixin base {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--nexus-control-height, 40px);
+  min-height: var(--nexus-control-height, 40px);
+  padding: var(--nexus-space-2) var(--nexus-space-3);
+  background-color: var(--color-neutral-weak);
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-radius: var(--nexus-control-radius, 0);
+  color: var(--text-color);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.2;
+  transition: none;
+}
+
+@mixin focus {
+  &:not(:disabled):focus-visible {
+    border-color: var(--color-primary-strong);
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 1px;
+  }
+}

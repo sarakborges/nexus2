@@ -1,0 +1,7 @@
+@mixin base {
+  display: flex;
+  flex-flow: column;
+  align-self: flex-end;
+  gap: var(--nexus-space-1);
+  min-width: 0;
+}
