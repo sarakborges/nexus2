@@ -36,7 +36,7 @@
     place-items: center;
     min-width: 17px;
     height: 17px;
-    padding: 0 var(--nexus-space-1, 3px);
+    padding: 0 var(--nexus-space-1, 4px);
     border-radius: 10px;
     background: var(--color-error, #b42318);
     color: white;
@@ -46,8 +46,8 @@
 
   &__notifications-heading {
     display: grid;
-    gap: var(--nexus-space-1, 3px);
-    padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
+    gap: var(--nexus-space-1, 4px);
+    padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
@@ -57,7 +57,7 @@
   }
 
   &__notifications-state {
-    padding: var(--nexus-space-3, 14px) var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
     color: var(--color-neutral);
     font-size: 13px;
   }
