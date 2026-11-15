@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from 'react'
 
-import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
+import '@/Components/Atoms/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 import { ToastViewport } from '@/Components/Organisms/ToastViewport'
 import { AppRoutes } from '@/routes'
 
