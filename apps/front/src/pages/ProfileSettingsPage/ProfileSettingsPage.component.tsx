@@ -4,6 +4,7 @@ import { useProfileSettingsPage } from './useProfileSettingsPage'
 import type { ProfileSettingsPageProps } from './ProfileSettingsPage.component.types'
 import { ProfileSettingsMessageAudience, ProfileSettingsSaveBar } from '@/Components/Molecules'
 import { ProfileSettingsActivityMatrix } from '@/Components/Organisms'
+import { Button } from '@/DesignSystem'
 import './ProfileSettingsPage.style.scss'
 
 export function ProfileSettingsPage({
@@ -37,7 +38,9 @@ export function ProfileSettingsPage({
       {isError && (
         <div className="profile-settings-page__feedback" role="alert">
           <p>{t('PROFILE_SETTINGS_LOAD_ERROR')}</p>
-          <button type="button" onClick={retry}>{t('REQUEST_RETRY')}</button>
+          <Button type="button" variation="secondary" onClick={retry}>
+            {t('REQUEST_RETRY')}
+          </Button>
         </div>
       )}
 
