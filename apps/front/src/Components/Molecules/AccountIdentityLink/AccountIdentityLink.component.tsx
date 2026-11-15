@@ -15,6 +15,7 @@ export function AccountIdentityLink({
   secondary,
   secondaryClassName,
   children,
+  trailing,
   title,
   ariaLabel
 }: AccountIdentityLinkProps) {
@@ -32,6 +33,7 @@ export function AccountIdentityLink({
         )}
         {children}
       </span>
+      {trailing}
     </Link>
   )
 }

@@ -1,6 +1,4 @@
-import { Link } from 'react-router'
-
-import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import type { SearchResultItemProps } from './SearchResultItem.types'
 
 import './SearchResultItem.style.scss'
@@ -15,21 +13,22 @@ export function SearchResultItem({
 }: SearchResultItemProps) {
   return (
     <article className="search-result">
-      <Link className="search-result__link" to={href}>
-        <IdentityAvatar
-          className="search-result__avatar"
-          name={name}
-          picture={picture}
-        />
-        <span className="search-result__copy">
-          <strong>{name}</strong>
-          <span className="search-result__address">{address}</span>
-          {about && (
-            <span className="search-result__about">{about}</span>
-          )}
-        </span>
-        <span className="search-result__kind">{kindLabel}</span>
-      </Link>
+      <AccountIdentityLink
+        to={href}
+        name={name}
+        picture={picture}
+        secondary={address}
+        className="search-result__link"
+        avatarClassName="search-result__avatar"
+        copyClassName="search-result__copy"
+        nameClassName="search-result__name"
+        secondaryClassName="search-result__address"
+        trailing={<span className="search-result__kind">{kindLabel}</span>}
+        title={name}
+        ariaLabel={name}
+      >
+        {about && <span className="search-result__about">{about}</span>}
+      </AccountIdentityLink>
     </article>
   )
 }

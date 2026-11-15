@@ -49,9 +49,10 @@
   min-width: 0;
 }
 
-.search-result__copy strong {
+.search-result__name {
   overflow-wrap: anywhere;
   font-size: 15px;
+  font-weight: var(--font-weight-bold);
 }
 
 .search-result__address,

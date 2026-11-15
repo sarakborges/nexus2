@@ -11,6 +11,7 @@ export type AccountIdentityLinkProps = {
   secondary?: ReactNode
   secondaryClassName?: string
   children?: ReactNode
+  trailing?: ReactNode
   title?: string
   ariaLabel?: string
 }
