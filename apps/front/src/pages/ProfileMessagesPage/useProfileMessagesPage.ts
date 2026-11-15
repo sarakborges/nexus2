@@ -1,5 +1,5 @@
 import { type FormEvent, useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
@@ -7,12 +7,14 @@ import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor/richTe
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { useCreateProfileMessageMutation } from '@/Hooks/ProfileMessage'
+import {
+  useCreateProfileMessageMutation,
+  useDeleteProfileMessageMutation,
+  useSetProfileMessageFavoriteMutation
+} from '@/Hooks/ProfileMessage'
 import {
   ProfileMessageError,
-  deleteProfileMessage,
-  getProfileMessagesPage,
-  setProfileMessageFavorite
+  getProfileMessagesPage
 } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -32,7 +34,6 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const [content, setContent] = useState('')
   const [requestedMessageTab, setRequestedMessageTab] = useState<'all' | 'favorites'>('all')
   const [replyTo, setReplyTo] = useState<import('@nexus/common').Profile | null>(null)
-  const queryClient = useQueryClient()
 
   const profileMessagesPageQuery = useQuery({
     queryKey: queryKeys.profileMessagesPage(
@@ -134,27 +135,28 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const invalidateMessagePages = async () => queryClient.invalidateQueries({
     queryKey: ['profile-messages-page', requestedUrl]
   })
-  const deleteMessageMutation = useMutation({
-    mutationFn: ({ messageId, actorProfileId }: { messageId: string; actorProfileId: string }) =>
-      deleteProfileMessage(profile?.id ?? '', messageId, actorProfileId),
-    onSuccess: invalidateMessagePages
-  })
-  const favoriteMessageMutation = useMutation({
-    mutationFn: ({ messageId, isFavorite }: { messageId: string; isFavorite: boolean }) =>
-      setProfileMessageFavorite(profile?.id ?? '', messageId, profile?.id ?? '', isFavorite),
-    onSuccess: invalidateMessagePages
-  })
+  const deleteMessageMutation = useDeleteProfileMessageMutation()
+  const favoriteMessageMutation = useSetProfileMessageFavoriteMutation()
   const handleDeleteMessage = (item: ProfileMessageViewModel) => {
     if (!profile || !item.canDelete) return
     const actorProfileId = isProfileOwner ? profile.id : item.message.fromProfileId
-    deleteMessageMutation.mutate({ messageId: item.message.id, actorProfileId }, {
+    deleteMessageMutation.mutate({
+      recipientProfileId: profile.id,
+      messageId: item.message.id,
+      actorProfileId
+    }, {
       onSuccess: () => showToast(t('PROFILE_MESSAGE_DELETED')),
       onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
     })
   }
   const handleFavoriteMessage = (item: ProfileMessageViewModel) => {
     if (!profile || !item.canFavorite) return
-    favoriteMessageMutation.mutate({ messageId: item.message.id, isFavorite: !item.message.isFavorite }, {
+    favoriteMessageMutation.mutate({
+      recipientProfileId: profile.id,
+      messageId: item.message.id,
+      actorProfileId: profile.id,
+      isFavorite: !item.message.isFavorite
+    }, {
       onSuccess: () => showToast(t('PROFILE_MESSAGE_FAVORITE_UPDATED')),
       onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
     })
