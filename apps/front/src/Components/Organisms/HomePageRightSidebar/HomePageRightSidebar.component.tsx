@@ -1,4 +1,4 @@
-import { HomePageEntityPreview } from '@/Components/Organisms/HomePageEntityPreview'
+import { EntityAvatarPreview } from '@/Components/Organisms/EntityAvatarPreview'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useHomePageRightSidebar } from './useHomePageRightSidebar'
@@ -14,45 +14,62 @@ export function HomePageRightSidebar({
   const { friends, communities, suggestedCommunities: suggestions } =
     useHomePageRightSidebar({ currentProfile, suggestedCommunities })
 
+  const friendEntries = friends.items.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.profile + '/' + item.url
+  }))
+  const communityEntries = communities.items.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.community + '/' + item.url
+  }))
+  const suggestedCommunityEntries = suggestions.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.community + '/' + item.url
+  }))
+
   return (
     <div className="home-page__previews">
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('PROFILE_FRIENDS_TITLE')}
-        items={friends.items}
         totalItems={friends.totalItems}
-        emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
         isLoading={friends.isLoading}
         isFetching={friends.isFetching}
         isError={friends.isError}
+        isEmpty={friends.isEmpty}
+        emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
         onRetry={friends.onRetry}
-        viewAllHref={ROUTES.profile + '/' + currentProfile.url + '/friends'}
-        viewAllLabel={t('COMMON_VIEW_ALL')}
-        getHref={item => ROUTES.profile + '/' + item.url}
-        getSecondary={item => '@' + item.url}
+        allHref={ROUTES.profile + '/' + currentProfile.url + '/friends'}
+        allLabel={t('COMMON_VIEW_ALL')}
+        entries={friendEntries}
       />
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('PROFILE_COMMUNITIES_TITLE')}
-        items={communities.items}
         totalItems={communities.totalItems}
-        emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
         isLoading={communities.isLoading}
         isFetching={communities.isFetching}
         isError={communities.isError}
+        isEmpty={communities.isEmpty}
+        emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
         onRetry={communities.onRetry}
-        viewAllHref={ROUTES.profile + '/' + currentProfile.url + '/communities'}
-        viewAllLabel={t('COMMON_VIEW_ALL')}
-        getHref={item => ROUTES.community + '/' + item.url}
-        getSecondary={item => '/community/' + item.url}
+        allHref={ROUTES.profile + '/' + currentProfile.url + '/communities'}
+        allLabel={t('COMMON_VIEW_ALL')}
+        entries={communityEntries}
       />
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('HOME_SUGGESTED_COMMUNITIES')}
-        items={suggestions}
-        emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
+        totalItems={suggestions.length}
         isLoading={false}
         isFetching={false}
         isError={false}
-        getHref={item => ROUTES.community + '/' + item.url}
-        getSecondary={item => '/community/' + item.url}
+        isEmpty={suggestions.length === 0}
+        emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
+        entries={suggestedCommunityEntries}
       />
     </div>
   )
