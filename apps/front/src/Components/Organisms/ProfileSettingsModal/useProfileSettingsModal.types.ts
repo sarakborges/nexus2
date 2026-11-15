@@ -2,6 +2,16 @@ import type { ProfileSettings } from '@nexus/common'
 
 export type ProfileActivityType = ProfileSettings['publishActivityTypes'][number]
 
+export type ProfileSettingsDraft = {
+  profileId: string
+  value: ProfileSettings
+}
+
+export type SaveProfileSettingsVariables = {
+  profileId: string
+  settings: ProfileSettings
+}
+
 export type UseProfileSettingsModalResult = {
   hasProfile: boolean
   isLoading: boolean
