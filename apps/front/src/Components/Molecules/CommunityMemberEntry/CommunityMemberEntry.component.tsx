@@ -2,6 +2,7 @@ import type { CommunityMemberEntryProps } from './CommunityMemberEntry.types'
 import './CommunityMemberEntry.style.scss'
 
 import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
+import { ROUTES } from '@/Constants/routes'
 import { CommunityMemberActions } from '@/Components/Molecules/CommunityMemberActions'
 import { useTranslations } from '@/Hooks/Language'
 
@@ -32,7 +33,7 @@ export function CommunityMemberEntry({
   return (
     <article className="account-card__profile-entry">
       <AccountIdentityLink
-        to={'/profile/' + profile.url}
+        to={ROUTES.profile + '/' + profile.url}
         name={profile.name}
         picture={profile.picture}
         secondary={'@' + profile.url}
