@@ -1,5 +1,5 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { CommunityMemberList } from '@/Components/Molecules/CommunityMemberList'
+import { CommunityMemberList } from '@/Components/Organisms/CommunityMemberList'
 import { Pagination } from '@/Components/Molecules/Pagination'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Tabs } from '@/DesignSystem'

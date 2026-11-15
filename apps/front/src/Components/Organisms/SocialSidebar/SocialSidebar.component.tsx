@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { IdentityAvatarLink } from '@/Components/Atoms/IdentityAvatarLink'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import type { SocialSidebarProps } from './SocialSidebar.types'
 
 import './SocialSidebar.style.scss'

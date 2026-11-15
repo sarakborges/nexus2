@@ -1,4 +1,4 @@
-import { IdentityAvatarLink } from '@/Components/Atoms/IdentityAvatarLink'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import type { IdentityAvatarGridProps } from './IdentityAvatarGrid.types'
 
 import './IdentityAvatarGrid.style.scss'

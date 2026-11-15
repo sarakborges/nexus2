@@ -1,5 +1,5 @@
 import { ButtonLink } from '@/DesignSystem'
-import { IdentityAvatarGrid } from '@/Components/Molecules/IdentityAvatarGrid'
+import { IdentityAvatarGrid } from '@/Components/Organisms/IdentityAvatarGrid'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 

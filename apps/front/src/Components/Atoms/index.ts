@@ -1,7 +1,5 @@
 export { LanguageFlag } from './LanguageFlag'
 export { IdentityAvatar } from './IdentityAvatar'
-export { IdentityAvatarLink } from './IdentityAvatarLink'
-export type { IdentityAvatarLinkProps } from './IdentityAvatarLink'
 export { FormErrorMessage } from './FormErrorMessage'
 export type { FormErrorMessageProps } from './FormErrorMessage'
 export { HtmlSyntaxHighlight } from './HtmlSyntaxHighlight'
