@@ -2,7 +2,7 @@ import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayou
 import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useEditProfilePage } from './useEditProfilePage'
 
 
@@ -38,7 +38,7 @@ export function EditProfilePage() {
       isTypeChecking={typeCompatibility.isChecking}
       isTypeCompatible={typeCompatibility.isCompatible}
       isFormReady={Boolean(form)}
-      notFound={<NotFoundPage />}
+      notFound={<NotFoundState />}
     >
       {form && profile && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>

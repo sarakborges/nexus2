@@ -3,7 +3,7 @@ import { RequestState } from '@/Components'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { CommunityPageAboutPreview } from '@/Components/Organisms/CommunityPageAboutPreview'
 import { CommunityPageForumPreview } from '@/Components/Organisms/CommunityPageForumPreview'
 import { CommunityPageMembersPreview } from '@/Components/Organisms/CommunityPageMembersPreview'
@@ -30,7 +30,7 @@ export function CommunityPage() {
     forumAuthorsById
   } = useCommunityPage()
 
-  if (!requestedUrl) return <NotFoundPage />
+  if (!requestedUrl) return <NotFoundState />
 
   if (!isAuthInitialized || communityPageQuery.isLoading) {
     return (
@@ -51,7 +51,7 @@ export function CommunityPage() {
     )
   }
 
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout

@@ -4,7 +4,7 @@ import { PaginatedListControls } from '@/Components/Molecules/PaginatedListContr
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { CommunityMemberDirectory, CommunityPendingMembersSection } from '@/Components/Organisms'
 import { useCommunityMembersPage } from './useCommunityMembersPage'
 
@@ -51,7 +51,7 @@ export function CommunityMembersPage() {
       : [])
   ]
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || communityMembersPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -63,7 +63,7 @@ export function CommunityMembersPage() {
       />
     )
   }
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout

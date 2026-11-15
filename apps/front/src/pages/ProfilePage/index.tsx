@@ -6,7 +6,7 @@ import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
 import { SocialPanel } from '@/Components/Atoms/SocialPanel'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { ProfilePageEntityPreview } from '@/Components/Organisms'
 import { useProfilePage } from './useProfilePage'
 
@@ -28,7 +28,7 @@ export function ProfilePage() {
     openEditProfile
   } = useProfilePage()
 
-  if (!requestedUrl) return <NotFoundPage />
+  if (!requestedUrl) return <NotFoundState />
 
   if (!isAuthInitialized || profilePageQuery.isLoading) {
     return (
@@ -49,7 +49,7 @@ export function ProfilePage() {
     )
   }
 
-  if (!profile) return <NotFoundPage />
+  if (!profile) return <NotFoundState />
 
   return (
     <SocialPageLayout

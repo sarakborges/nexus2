@@ -8,7 +8,7 @@ import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useProfileFriendsPage } from './useProfileFriendsPage'
 
 
@@ -34,7 +34,7 @@ export function ProfileFriendsPage() {
     totalItems
   } = useProfileFriendsPage()
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -46,7 +46,7 @@ export function ProfileFriendsPage() {
       />
     )
   }
-  if (!profile) return <NotFoundPage />
+  if (!profile) return <NotFoundState />
 
   return (
     <SocialPageLayout

@@ -3,7 +3,7 @@ import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivac
 import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
 
@@ -39,7 +39,7 @@ export function EditCommunityPage() {
       isTypeChecking={typeCompatibility.isChecking}
       isTypeCompatible={typeCompatibility.isCompatible}
       isFormReady={Boolean(form)}
-      notFound={<NotFoundPage />}
+      notFound={<NotFoundState />}
     >
       {form && community && ownerProfileId && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>

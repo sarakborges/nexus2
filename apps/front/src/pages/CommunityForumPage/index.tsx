@@ -7,7 +7,7 @@ import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useCommunityForumPage } from './useCommunityForumPage'
 
 import './CommunityForumPage.style.scss'
@@ -36,7 +36,7 @@ export function CommunityForumPage() {
     authorsById
   } = useCommunityForumPage()
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || forumPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -48,7 +48,7 @@ export function CommunityForumPage() {
       />
     )
   }
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout

@@ -9,7 +9,7 @@ import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
@@ -55,7 +55,7 @@ export function CommunityForumTopicPage() {
     deleteReply
   } = useCommunityForumTopicPage()
 
-  if (!normalized || !topicId) return <NotFoundPage />
+  if (!normalized || !topicId) return <NotFoundState />
   if (!isAuthInitialized || topicPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -67,7 +67,7 @@ export function CommunityForumTopicPage() {
       />
     )
   }
-  if (!community || !detail || !topic) return <NotFoundPage />
+  if (!community || !detail || !topic) return <NotFoundState />
 
   return (
     <SocialPageLayout
