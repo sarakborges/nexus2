@@ -1,5 +1,6 @@
 export { AuthenticatedPageState } from './AuthenticatedPageState'
-export { CommunityForumTopicList } from './CommunityForumTopicList/CommunityForumTopicList.component'
+export { CommunityForumTopicList } from './CommunityForumTopicList'
+export type { CommunityForumTopicListProps } from './CommunityForumTopicList'
 export { CommunityPrivacySelector } from './CommunityPrivacySelector'
 export { EntityDetailsFields } from './EntityDetailsFields'
 export { EntityDirectoryGrid } from './EntityDirectoryGrid'
