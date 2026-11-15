@@ -12,7 +12,7 @@
 .social-identity {
   display: grid;
   justify-items: center;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
   min-width: 0;
   text-align: center;
 }
@@ -72,7 +72,7 @@
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px);
+  padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
   border: 0;
   border-radius: var(--nexus-control-radius, 0);
   color: var(--text-color);
