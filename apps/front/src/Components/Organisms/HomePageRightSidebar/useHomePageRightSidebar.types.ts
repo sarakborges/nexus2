@@ -1,13 +1,16 @@
-import type { HomePageEntityPreviewItem } from '@/Components/Organisms/HomePageEntityPreview/HomePageEntityPreview.types'
-import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
+import type {
+  HomePagePreviewItem,
+  HomePageRightSidebarProps
+} from './HomePageRightSidebar.types'
 
 export type HomePageEntityPreviewState = {
-  items: HomePageEntityPreviewItem[]
+  items: HomePagePreviewItem[]
   totalItems: number
   isLoading: boolean
   isFetching: boolean
   isError: boolean
-  onRetry: () => void
+  isEmpty: boolean
+  onRetry?: () => void
 }
 
 export type UseHomePageRightSidebarOptions = HomePageRightSidebarProps
@@ -15,5 +18,5 @@ export type UseHomePageRightSidebarOptions = HomePageRightSidebarProps
 export type UseHomePageRightSidebarResult = {
   friends: HomePageEntityPreviewState
   communities: HomePageEntityPreviewState
-  suggestedCommunities: HomePageEntityPreviewItem[]
+  suggestedCommunities: HomePagePreviewItem[]
 }
