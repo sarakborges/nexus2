@@ -3,13 +3,7 @@ import { useLocation, useNavigate } from 'react-router'
 import type { SearchScope } from '@nexus/common'
 
 import { ROUTES } from '@/Constants/routes'
-import type { UseFloatingNavigationSearchResult } from './useFloatingNavigationSearch.types'
-
-type SearchDraft = {
-  routeKey: string
-  text: string
-  scope: SearchScope
-}
+import type { FloatingNavigationSearchDraft, UseFloatingNavigationSearchResult } from './useFloatingNavigationSearch.types'
 
 export function useFloatingNavigationSearch(): UseFloatingNavigationSearchResult {
   const navigate = useNavigate()
@@ -25,7 +19,7 @@ export function useFloatingNavigationSearch(): UseFloatingNavigationSearchResult
     (requestedScope === 'profiles' || requestedScope === 'communities')
       ? requestedScope
       : 'all'
-  const [draft, setDraft] = useState<SearchDraft | null>(null)
+  const [draft, setDraft] = useState<FloatingNavigationSearchDraft | null>(null)
   const searchText = draft?.routeKey === routeKey ? draft.text : routeQuery
   const searchScope = draft?.routeKey === routeKey ? draft.scope : routeScope
 
