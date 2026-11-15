@@ -13,6 +13,8 @@ Application components follow Atomic Design and compose the shared design system
 - A component directory contains exactly one `.component.tsx` implementation.
 - A component must never be nested inside another component's directory. Components composed by a parent are siblings in the appropriate layer, not subcomponents stored under that parent.
 - Styles, types, hooks, stories and utilities that belong to a component stay in that component's directory.
+- Imports must respect the layer direction: Atoms may use the Design System and domain helpers, Molecules may compose Atoms and other Molecules, Organisms may compose lower layers and other Organisms, and Templates compose the page-level structure. Atoms, Molecules and Organisms must never depend on Templates.
+- Internal component imports must target the explicit component/layer path. The aggregate `@/Components` barrel is for route/page consumers; component implementations must not use it to import their own layer or another layer.
 - `pages` contains route-level page components and page orchestration. Feature UI components must live in `Atoms`, `Molecules`, `Organisms` or `Templates`, even when used by only one page.
 - Route guards and other routing infrastructure remain under `routes`; they are not Atomic Design UI components.
 
