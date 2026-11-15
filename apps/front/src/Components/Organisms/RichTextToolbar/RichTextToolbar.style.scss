@@ -5,7 +5,7 @@
   flex-wrap: wrap;
   gap: var(--nexus-space-1, 4px);
   min-height: 52px;
-  padding: var(--nexus-space-2, 6px);
+  padding: var(--nexus-space-2, 8px);
   border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface-inset, var(--color-background));
 }
@@ -48,7 +48,7 @@
   align-self: center;
   width: var(--nexus-border-width, 2px);
   height: 22px;
-  margin: 0 var(--nexus-space-1, 3px);
+  margin: 0 var(--nexus-space-1, 4px);
   background: var(--color-border);
 }
 
@@ -69,7 +69,7 @@
 
 @media (max-width: 560px) {
   .rich-text-editor .rsw-toolbar {
-    gap: var(--nexus-space-1, 3px);
-    padding: var(--nexus-space-2, 5px);
+    gap: var(--nexus-space-1, 4px);
+    padding: var(--nexus-space-2, 8px);
   }
 }
