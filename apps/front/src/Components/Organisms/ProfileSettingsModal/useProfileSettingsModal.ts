@@ -6,6 +6,8 @@ import { saveProfileSettings } from '@/Services/ProfileSettings'
 import { useAuthStore } from '@/Stores/Auth.store'
 import type {
   ProfileActivityType,
+  ProfileSettingsDraft,
+  SaveProfileSettingsVariables,
   UseProfileSettingsModalResult
 } from './useProfileSettingsModal.types'
 
@@ -25,16 +27,6 @@ const DEFAULT_SETTINGS: ProfileSettings = {
   ]
 }
 
-type Draft = {
-  profileId: string
-  value: ProfileSettings
-}
-
-type SaveVariables = {
-  profileId: string
-  settings: ProfileSettings
-}
-
 export function useProfileSettingsModal(): UseProfileSettingsModalResult {
   const session = useAuthStore(state => state.session)
   const setCurrentProfileSettings = useAuthStore(
@@ -43,7 +35,7 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
   const profile = session?.currentProfile ?? null
   const profileId = profile?.id ?? null
   const persistedSettings = session?.currentProfileSettings ?? DEFAULT_SETTINGS
-  const [draft, setDraft] = useState<Draft | null>(null)
+  const [draft, setDraft] = useState<ProfileSettingsDraft | null>(null)
   const [saveSuccessProfileId, setSaveSuccessProfileId] = useState<string | null>(null)
 
   const settings = draft && draft.profileId === profileId
@@ -51,7 +43,7 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
     : persistedSettings
 
   const saveMutation = useMutation({
-    mutationFn: ({ profileId, settings }: SaveVariables) =>
+    mutationFn: ({ profileId, settings }: SaveProfileSettingsVariables) =>
       saveProfileSettings(profileId, settings),
     onMutate: () => setSaveSuccessProfileId(null),
     onSuccess: (saved, variables) => {
