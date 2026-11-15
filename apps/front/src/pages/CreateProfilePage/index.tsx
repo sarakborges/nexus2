@@ -1,7 +1,7 @@
 import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { RequestState } from '@/Components'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector, ProfileDetailsFields } from '@/Components/Organisms'
+import { EntityDetailsFields, PreferenceSelector } from '@/Components/Organisms'
 import { EntityFormPageLayout } from '@/Components/Templates'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -43,7 +43,8 @@ export function CreateProfilePage() {
       titleId="create-profile-title"
     >
       <form className="entity-form-page__form" onSubmit={handleSubmit}>
-        <ProfileDetailsFields
+        <EntityDetailsFields
+          entity="profile"
           name={name}
           url={url}
           picture={picture}

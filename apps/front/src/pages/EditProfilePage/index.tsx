@@ -1,5 +1,5 @@
 import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
-import { ProfileDetailsFields } from '@/Components/Organisms/ProfileDetailsFields'
+import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -42,7 +42,8 @@ export function EditProfilePage() {
     >
       {form && profile && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <ProfileDetailsFields
+          <EntityDetailsFields
+            entity="profile"
             name={form.name}
             url={form.url}
             picture={profile.picture}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { SocialPanel } from '@/Components/Molecules/SocialPanel'
+import { SocialPanel } from '@/Components/Atoms/SocialPanel'
 
 import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'

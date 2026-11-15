@@ -2,7 +2,7 @@
 
 The design system follows Atomic Design and contains presentation-focused, reusable UI building blocks.
 
-- **Atoms** are primitives such as buttons, text, labels, inputs, selects, checkboxes and portraits.
+- **Atoms** are primitives such as buttons, text, labels, inputs, selects, checkboxes, portraits, badges and loading indicators.
 - **Molecules** combine atoms into focused reusable controls, such as form fields and select fields.
 - **Organisms** compose interface-level elements such as dialogs and notifications.
 

@@ -1,4 +1,4 @@
-import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
+import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { Button } from '@/DesignSystem'
@@ -43,7 +43,8 @@ export function EditCommunityPage() {
     >
       {form && community && ownerProfileId && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <CommunityDetailsFields
+          <EntityDetailsFields
+            entity="community"
             name={form.name}
             url={form.url}
             picture={community.picture}
