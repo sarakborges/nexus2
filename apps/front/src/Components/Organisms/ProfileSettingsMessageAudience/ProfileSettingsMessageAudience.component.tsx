@@ -1,5 +1,5 @@
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
+import { PreferenceSelector } from '@/Components/Molecules/PreferenceSelector'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsMessageAudienceProps } from './ProfileSettingsMessageAudience.types'
 import './ProfileSettingsMessageAudience.style.scss'

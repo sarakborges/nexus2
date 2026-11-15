@@ -1,5 +1,5 @@
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
+import { PreferenceSelector } from '@/Components/Molecules/PreferenceSelector'
 import {
   SUPPORTED_THEME_PREFERENCES,
   THEME_PREFERENCE_NAME_KEYS
