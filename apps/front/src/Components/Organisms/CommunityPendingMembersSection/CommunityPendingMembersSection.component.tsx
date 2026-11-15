@@ -1,7 +1,9 @@
-import { Pagination, RequestState } from '@/Components'
-import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
+import { CommunityMemberList } from '@/Components/Organisms/CommunityMemberList'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPendingMembersSectionProps } from './CommunityPendingMembersSection.types'
+
 import './CommunityPendingMembersSection.style.scss'
 
 export function CommunityPendingMembersSection({
@@ -39,19 +41,14 @@ export function CommunityPendingMembersSection({
         emptyMessage={t('COMMUNITY_MEMBERS_PENDING_EMPTY')}
         onRetry={() => void pageQuery.refetch()}
       >
-        <div className="account-card__profile-list account-card__profile-list--grid">
-          {pending.map((profile) => (
-            <CommunityMemberEntry
-              key={profile.id}
-              profile={profile}
-              relationships={relationships}
-              communityId={communityId}
-              actorProfileId={actorProfileId}
-              actorRole={actorRole}
-              isStaff={isStaff}
-            />
-          ))}
-        </div>
+        <CommunityMemberList
+          members={pending}
+          relationships={relationships}
+          communityId={communityId}
+          actorProfileId={actorProfileId}
+          actorRole={actorRole}
+          isStaff={isStaff}
+        />
       </RequestState>
       {totalPending > pageSize && (
         <Pagination

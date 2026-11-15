@@ -14,8 +14,7 @@ export function useHomePage(): UseHomePageResult {
     queryFn: getCurrentAuthSession,
     enabled: Boolean(userId),
     initialData: session ?? undefined,
-    staleTime: 30 * 1000,
-    refetchOnWindowFocus: true
+    staleTime: Infinity
   })
 
   return { homeQuery }

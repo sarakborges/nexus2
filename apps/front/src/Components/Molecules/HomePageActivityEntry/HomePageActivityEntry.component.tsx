@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { IdentityAvatar } from '@/Components'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import { RichTextContent } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -17,31 +17,24 @@ export function HomePageActivityEntry({
 
   return (
     <article className="home-page__activity-item">
-      <header className="home-page__activity-header">
-        <Link
-          className="home-page__activity-avatar-link"
+      <header>
+        <AccountIdentityLink
           to={profileHref}
-          aria-label={activity.profile.name}
+          name={activity.profile.name}
+          picture={activity.profile.picture}
+          secondary={`@${activity.profile.url}`}
+          className="home-page__activity-header"
+          avatarClassName="home-page__activity-avatar"
+          copyClassName="home-page__activity-author"
+          nameClassName="home-page__activity-author-name"
+          secondaryClassName="home-page__activity-author-url"
           title={activity.profile.name}
+          ariaLabel={activity.profile.name}
         >
-          <IdentityAvatar
-            className="home-page__activity-avatar"
-            name={activity.profile.name}
-            picture={activity.profile.picture}
-          />
-        </Link>
-        <div className="home-page__activity-author">
-          <Link
-            className="home-page__activity-author-name"
-            to={profileHref}
-          >
-            {activity.profile.name}
-          </Link>
-          <Link className="home-page__activity-author-url" to={profileHref}>@{activity.profile.url}</Link>
           <time dateTime={new Date(activity.updatedAt).toISOString()}>
             {formatDate(activity.updatedAt)}
           </time>
-        </div>
+        </AccountIdentityLink>
       </header>
       {activity.type === 'profile_post' ? (
         <RichTextContent

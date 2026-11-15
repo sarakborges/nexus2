@@ -1,13 +1,13 @@
-import { RequestState } from '@/Components'
-import {
-  CommunitySidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
+import { EntityAvatarPreview } from '@/Components/Organisms/EntityAvatarPreview'
+import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { CommunityPageAboutPreview } from '@/Components/Organisms/CommunityPageAboutPreview'
 import { CommunityPageForumPreview } from '@/Components/Organisms/CommunityPageForumPreview'
-import { CommunityPageMembersPreview } from '@/Components/Organisms/CommunityPageMembersPreview'
 import { useCommunityPage } from './useCommunityPage'
 
 
@@ -31,7 +31,7 @@ export function CommunityPage() {
     forumAuthorsById
   } = useCommunityPage()
 
-  if (!requestedUrl) return <NotFoundPage />
+  if (!requestedUrl) return <NotFoundState />
 
   if (!isAuthInitialized || communityPageQuery.isLoading) {
     return (
@@ -52,7 +52,7 @@ export function CommunityPage() {
     )
   }
 
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -66,21 +66,34 @@ export function CommunityPage() {
         />
       }
       rightSidebar={
-        <CommunityPageMembersPreview
-          communityUrl={community.url}
-          communityPageQuery={communityPageQuery}
-          canViewMembers={canViewMembers}
-          members={members}
-          memberCount={memberCount}
+        <EntityAvatarPreview
+          title={t('COMMUNITY_MEMBERS_TITLE')}
+          totalItems={memberCount}
+          allHref={`${ROUTES.community}/${community.url}/members`}
+          allLabel={t('COMMON_VIEW_ALL')}
+          isLoading={communityPageQuery.isLoading}
+          isFetching={communityPageQuery.isFetching}
+          isError={communityPageQuery.isError}
+          isEmpty={!canViewMembers || (communityPageQuery.isSuccess && members.length === 0)}
+          emptyMessage={
+            canViewMembers
+              ? t('COMMUNITY_MEMBERS_EMPTY')
+              : t('COMMUNITY_PRIVATE_RESTRICTED')
+          }
+          onRetry={() => void communityPageQuery.refetch()}
+          entries={members.map(member => ({
+            id: member.id,
+            href: `${ROUTES.profile}/${member.url}`,
+            name: member.name,
+            picture: member.picture
+          }))}
         />
       }
     >
-      <RequestState isFetching={communityPageQuery.isFetching} />
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       <CommunityPageAboutPreview
         community={community}
         canViewMembers={canViewMembers}

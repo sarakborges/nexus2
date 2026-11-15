@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor'
 import { useTranslations } from '@/Hooks/Language'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useCreateCommunityForumReplyMutation } from '@/Hooks/CommunityForum'
@@ -45,13 +45,16 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     enabled: Boolean(normalized && topicId && isAuthInitialized),
     staleTime: 30 * 1000
   })
+  const isTopicPageSuccess = topicPageQuery.isSuccess
+  const refetchTopicPage = topicPageQuery.refetch
+
   useEffect(() => {
-    if (!topicId || !topicPageQuery.isSuccess) return
+    if (!topicId || !isTopicPageSuccess) return
 
     return subscribeToCommunityForumTopic(topicId, () => {
-      void topicPageQuery.refetch()
+      void refetchTopicPage()
     })
-  }, [topicId, topicPageQuery.isSuccess, topicPageQuery.refetch])
+  }, [topicId, isTopicPageSuccess, refetchTopicPage])
 
   const pageData = topicPageQuery.data
   const community = pageData?.community

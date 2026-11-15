@@ -1,7 +1,5 @@
+@use '../_field-layout' as fieldLayout;
+
 .select-field {
-  display: flex;
-  flex-flow: column;
-  align-self: flex-end;
-  gap: var(--nexus-space-1);
-  min-width: 0;
+  @include fieldLayout.base;
 }

@@ -1,7 +1,7 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { Link } from 'react-router'
 
-import { AuthPageLayout } from '@/Components/Organisms/AuthPageLayout/AuthPageLayout.component'
+import { AuthPageLayout } from '@/Components/Templates/AuthPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'

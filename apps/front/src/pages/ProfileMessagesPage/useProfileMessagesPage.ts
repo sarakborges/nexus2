@@ -1,18 +1,21 @@
+import type { Profile } from '@nexus/common'
 import { type FormEvent, useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
 
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
-import { hasRichTextContent } from '@/Components/Molecules/RichTextEditor/richText.utils'
+import { hasRichTextContent } from '@/Components/Organisms/RichTextEditor/richText.utils'
 import { useTranslations } from '@/Hooks/Language'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
-import { useCreateProfileMessageMutation } from '@/Hooks/ProfileMessage'
+import {
+  useCreateProfileMessageMutation,
+  useDeleteProfileMessageMutation,
+  useSetProfileMessageFavoriteMutation
+} from '@/Hooks/ProfileMessage'
 import {
   ProfileMessageError,
-  deleteProfileMessage,
-  getProfileMessagesPage,
-  setProfileMessageFavorite
+  getProfileMessagesPage
 } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
@@ -31,8 +34,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
   const [content, setContent] = useState('')
   const [requestedMessageTab, setRequestedMessageTab] = useState<'all' | 'favorites'>('all')
-  const [replyTo, setReplyTo] = useState<import('@nexus/common').Profile | null>(null)
-  const queryClient = useQueryClient()
+  const [replyTo, setReplyTo] = useState<Profile | null>(null)
 
   const profileMessagesPageQuery = useQuery({
     queryKey: queryKeys.profileMessagesPage(
@@ -73,7 +75,6 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     canInteract: isProfileOwner || !session || (isCompatible && !isChecking)
   }
   const canInteract = typeCompatibility.canInteract
-  const messages = pageData?.messages.items ?? []
   const totalItems = pageData?.messages.totalItems ?? 0
   const sendersById = useMemo(
     () =>
@@ -84,7 +85,8 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       ),
     [pageData?.senders]
   )
-  const messageItems = useMemo<ProfileMessageViewModel[]>(() => messages.map(message => {
+  const messageItems = useMemo<ProfileMessageViewModel[]>(() =>
+    (pageData?.messages.items ?? []).map(message => {
     const permissions = pageData?.messagePermissions[message.id]
     return {
       message,
@@ -93,7 +95,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       canFavorite: permissions?.canFavorite ?? false,
       canReply: permissions?.canReply ?? false
     }
-  }), [messages, sendersById, pageData?.messagePermissions])
+  }), [pageData?.messages.items, sendersById, pageData?.messagePermissions])
   const messageSenderProfileId = replyTo
     ? currentProfileId
     : currentProfileId ?? (isProfileOwner ? (profile?.id ?? null) : null)
@@ -131,35 +133,33 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     )
   }
 
-  const invalidateMessagePages = async () => queryClient.invalidateQueries({
-    queryKey: ['profile-messages-page', requestedUrl]
-  })
-  const deleteMessageMutation = useMutation({
-    mutationFn: ({ messageId, actorProfileId }: { messageId: string; actorProfileId: string }) =>
-      deleteProfileMessage(profile?.id ?? '', messageId, actorProfileId),
-    onSuccess: invalidateMessagePages
-  })
-  const favoriteMessageMutation = useMutation({
-    mutationFn: ({ messageId, isFavorite }: { messageId: string; isFavorite: boolean }) =>
-      setProfileMessageFavorite(profile?.id ?? '', messageId, profile?.id ?? '', isFavorite),
-    onSuccess: invalidateMessagePages
-  })
+  const deleteMessageMutation = useDeleteProfileMessageMutation({ profileUrl: requestedUrl })
+  const favoriteMessageMutation = useSetProfileMessageFavoriteMutation({ profileUrl: requestedUrl })
   const handleDeleteMessage = (item: ProfileMessageViewModel) => {
     if (!profile || !item.canDelete) return
     const actorProfileId = isProfileOwner ? profile.id : item.message.fromProfileId
-    deleteMessageMutation.mutate({ messageId: item.message.id, actorProfileId }, {
+    deleteMessageMutation.mutate({
+      recipientProfileId: profile.id,
+      messageId: item.message.id,
+      actorProfileId
+    }, {
       onSuccess: () => showToast(t('PROFILE_MESSAGE_DELETED')),
       onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
     })
   }
   const handleFavoriteMessage = (item: ProfileMessageViewModel) => {
     if (!profile || !item.canFavorite) return
-    favoriteMessageMutation.mutate({ messageId: item.message.id, isFavorite: !item.message.isFavorite }, {
+    favoriteMessageMutation.mutate({
+      recipientProfileId: profile.id,
+      messageId: item.message.id,
+      actorProfileId: profile.id,
+      isFavorite: !item.message.isFavorite
+    }, {
       onSuccess: () => showToast(t('PROFILE_MESSAGE_FAVORITE_UPDATED')),
       onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
     })
   }
-  const handleReplyMessage = (sender: import('@nexus/common').Profile) => {
+  const handleReplyMessage = (sender: Profile) => {
     setContent('')
     setReplyTo(sender)
   }

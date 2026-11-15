@@ -1,4 +1,5 @@
-import { ComposerActions, RichTextComposerField } from '@/Components'
+import { ComposerActions } from '@/Components/Molecules/ComposerActions'
+import { RichTextComposerField } from '@/Components/Organisms/RichTextComposerField'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useHomePagePostComposer } from '@/Hooks/Home/useHomePagePostComposer.hook'

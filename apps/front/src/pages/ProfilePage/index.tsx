@@ -1,14 +1,14 @@
-import { RequestState, RelationshipActions } from '@/Components'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
+import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { Button, RichTextContent } from '@/DesignSystem'
-import { SocialPanel } from '@/Components/Molecules/SocialPanel'
+import { SocialPanel } from '@/Components/Atoms/SocialPanel'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { ProfilePageEntityPreview } from '@/Components/Organisms'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
+import { EntityAvatarPreview } from '@/Components/Organisms/EntityAvatarPreview'
 import { useProfilePage } from './useProfilePage'
 
 import './ProfilePage.style.scss'
@@ -29,7 +29,7 @@ export function ProfilePage() {
     openEditProfile
   } = useProfilePage()
 
-  if (!requestedUrl) return <NotFoundPage />
+  if (!requestedUrl) return <NotFoundState />
 
   if (!isAuthInitialized || profilePageQuery.isLoading) {
     return (
@@ -50,7 +50,7 @@ export function ProfilePage() {
     )
   }
 
-  if (!profile) return <NotFoundPage />
+  if (!profile) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -65,7 +65,7 @@ export function ProfilePage() {
       }
       rightSidebar={
         <>
-          <ProfilePageEntityPreview
+          <EntityAvatarPreview
             title={t('PROFILE_FRIENDS_TITLE')}
             totalItems={profilePageQuery.data?.friends.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/friends`}
@@ -73,7 +73,7 @@ export function ProfilePage() {
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}
-            isSuccess={profilePageQuery.isSuccess}
+            isEmpty={profilePageQuery.isSuccess && friends.length === 0}
             emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
             onRetry={() => void profilePageQuery.refetch()}
             entries={friends.map((friend) => ({
@@ -83,7 +83,7 @@ export function ProfilePage() {
               href: `${ROUTES.profile}/${friend.url}`
             }))}
           />
-          <ProfilePageEntityPreview
+          <EntityAvatarPreview
             title={t('PROFILE_COMMUNITIES_TITLE')}
             totalItems={profilePageQuery.data?.communities.totalItems}
             allHref={`${ROUTES.profile}/${profile.url}/communities`}
@@ -91,7 +91,7 @@ export function ProfilePage() {
             isLoading={profilePageQuery.isLoading}
             isFetching={profilePageQuery.isFetching}
             isError={profilePageQuery.isError}
-            isSuccess={profilePageQuery.isSuccess}
+            isEmpty={profilePageQuery.isSuccess && communities.length === 0}
             emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
             onRetry={() => void profilePageQuery.refetch()}
             entries={communities.map((community) => ({
@@ -105,11 +105,10 @@ export function ProfilePage() {
       }
     >
       <RequestState isFetching={profilePageQuery.isFetching} />
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>
-      )}
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       <SocialPanel className="social-panel--about">
         <header className="social-panel__header">
           <h2 className="social-panel__title">

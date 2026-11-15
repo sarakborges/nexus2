@@ -1,0 +1,9 @@
+.profile-type-notice {
+  margin: 0;
+  padding: var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
+  border: var(--nexus-border-width, 2px) solid var(--color-warning);
+  background: var(--color-surface-raised);
+  color: var(--text-color);
+  font-size: 13px;
+  line-height: 1.5;
+}

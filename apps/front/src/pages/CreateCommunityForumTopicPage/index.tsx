@@ -1,15 +1,14 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { useNavigate } from 'react-router'
 
-import { RelationshipActions } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import {
-  CommunitySidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
+import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityForumTopicComposer } from '@/Components/Molecules'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
+import { CommunityForumTopicComposer } from '@/Components/Organisms/CommunityForumTopicComposer'
 import { useCreateCommunityForumTopicPage } from './useCreateCommunityForumTopicPage'
 
 import '../CommunityForumPage/CommunityForumPage.style.scss'
@@ -37,7 +36,7 @@ export function CreateCommunityForumTopicPage() {
     canSubmit
   } = useCreateCommunityForumTopicPage()
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || composerPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -49,7 +48,7 @@ export function CreateCommunityForumTopicPage() {
       />
     )
   }
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -63,11 +62,10 @@ export function CreateCommunityForumTopicPage() {
       }
     >
       <section className="community-forum social-page__content-stack">
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>
-        )}
+        <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_NEW_TOPIC')}</h1>

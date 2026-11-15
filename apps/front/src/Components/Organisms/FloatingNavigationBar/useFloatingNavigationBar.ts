@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-
 import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router'
 
 import type {
@@ -26,23 +25,18 @@ export function useFloatingNavigationBar({
   const navigationRef = useRef<HTMLDivElement>(null)
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(max-width: 680px)').matches
+  )
   const activePanel =
     openPanel?.pathname === location.pathname ? openPanel.panel : null
   const session = useAuthStore((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
-
-  const currentProfileQuery = useQuery({
-    queryKey: queryKeys.profiles.byId(currentProfileId),
-    queryFn: async () => {
-      if (!currentProfileId) return null
-      const [profile] = await getProfilesByIds([currentProfileId])
-      return profile ?? null
-    },
-    enabled: Boolean(currentProfileId),
-    staleTime: 5 * 60 * 1000
-  })
+  const currentProfile = session?.currentProfile ?? undefined
 
   const otherProfileIds = profileIds.filter(
     (profileId) => profileId !== currentProfileId
@@ -59,11 +53,10 @@ export function useFloatingNavigationBar({
   )
   const profiles = profileIds.flatMap((profileId) => {
     const profile = profileId === currentProfileId
-      ? currentProfileQuery.data
+      ? currentProfile
       : otherProfilesById.get(profileId)
     return profile ? [profile] : []
   })
-  const currentProfile = currentProfileQuery.data ?? undefined
   const profileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url
     : null
@@ -93,6 +86,18 @@ export function useFloatingNavigationBar({
 
   const signOutMutation = useSignOutMutation()
   const profileSelectionMutation = useSetCurrentProfileMutation()
+
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('has-global-navigation')
+    root.classList.toggle('global-navigation-collapsed', isSidebarCollapsed)
+    return () => {
+      root.classList.remove(
+        'has-global-navigation',
+        'global-navigation-collapsed'
+      )
+    }
+  }, [isSidebarCollapsed])
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -140,7 +145,16 @@ export function useFloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
+    isSidebarCollapsed,
     closePanels,
+    closeNavigationAfterNavigate: () => {
+      closePanels()
+      if (window.matchMedia('(max-width: 680px)').matches) {
+        setIsSidebarCollapsed(true)
+      }
+    },
+    collapseSidebar: () => setIsSidebarCollapsed(true),
+    toggleSidebar: () => setIsSidebarCollapsed(value => !value),
     togglePanel,
     toggleProfileSwitcher: () =>
       setIsProfileSwitcherOpen((open) => !open),
@@ -148,16 +162,14 @@ export function useFloatingNavigationBar({
     hasProfiles: profileIds.length > 0,
     currentProfileId,
     isProfileSwitcherOpen,
-    profilesLoading: profilesQuery.isLoading || currentProfileQuery.isLoading,
-    profilesError: profilesQuery.isError || currentProfileQuery.isError,
-    profilesSuccess: profilesQuery.isSuccess || currentProfileQuery.isSuccess,
+    profilesLoading: Boolean(currentProfileId && !currentProfile) ||
+      (isProfileSwitcherOpen && otherProfileIds.length > 0 && profilesQuery.isLoading),
+    profilesError: profilesQuery.isError,
+    profilesSuccess: Boolean(currentProfile) || profilesQuery.isSuccess,
     isSelectionPending: profileSelectionMutation.isPending,
     isSelectionError: profileSelectionMutation.isError,
     isSigningOut: signOutMutation.isPending,
-    retryProfiles: () => {
-      void currentProfileQuery.refetch()
-      void profilesQuery.refetch()
-    },
+    retryProfiles: () => void profilesQuery.refetch(),
     selectProfile: (profileId: string) =>
       profileSelectionMutation.mutate(profileId, {
         onSuccess: () => {

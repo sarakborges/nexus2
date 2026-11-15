@@ -1,14 +1,15 @@
-import { Pagination, RelationshipActions, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
-import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList/CommunityForumTopicList.component'
-import {
-  CommunitySidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
+import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList'
+import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useCommunityForumPage } from './useCommunityForumPage'
 
 import './CommunityForumPage.style.scss'
@@ -37,7 +38,7 @@ export function CommunityForumPage() {
     authorsById
   } = useCommunityForumPage()
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || forumPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -49,7 +50,7 @@ export function CommunityForumPage() {
       />
     )
   }
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -66,11 +67,11 @@ export function CommunityForumPage() {
       }
     >
       <section className="community-forum social-page__content-stack">
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>)}
-        
+        <ProfileTypeNotice
+          isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+          message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+        />
+
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -81,20 +82,20 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
-            </Button>)}
-          
+            </Button>
+          )}
         </header>
 
-        {((forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
+        {(forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
           <PaginatedListControls
             key={query}
             query={query}
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />))}
-        
-        <RequestState isFetching={forumPageQuery.isFetching} />
+          />
+        )}
+
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
             <p className="account-card__description">
@@ -105,8 +106,8 @@ export function CommunityForumPage() {
               targetKind="community"
               relationship={viewerRelationship}
             />
-          </div>)}
-        
+          </div>
+        )}
 
         <RequestState
           isLoading={forumPageQuery.isLoading}

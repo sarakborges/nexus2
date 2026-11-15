@@ -1,112 +1,75 @@
-import { useQuery } from '@tanstack/react-query'
-
-import type { ProfileDirectoryPageData } from '@nexus/common'
-import { HomePageEntityPreview } from '@/Components/Organisms/HomePageEntityPreview'
-import type { HomePageEntityPreviewItem } from '@/Components/Organisms/HomePageEntityPreview/HomePageEntityPreview.types'
+import { EntityAvatarPreview } from '@/Components/Organisms/EntityAvatarPreview'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { getProfileDirectoryPage } from '@/Services/Profile'
-import { queryKeys } from '@/Services/Query/queryKeys'
+import { useHomePageRightSidebar } from './useHomePageRightSidebar'
 import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
+
 import './HomePageRightSidebar.style.scss'
-
-
-const PREVIEW_PAGE_SIZE = 100
-const PREVIEW_ITEMS = 4
-
-function getDirectoryItems(
-  data: ProfileDirectoryPageData | undefined,
-  kind: 'friends' | 'communities'
-): HomePageEntityPreviewItem[] {
-  if (kind === 'friends' && data?.kind === 'friends') {
-    return data.friends.items.slice(0, PREVIEW_ITEMS)
-  }
-  if (kind === 'communities' && data?.kind === 'communities') {
-    return data.communities.items.slice(0, PREVIEW_ITEMS)
-  }
-  return []
-}
-
 
 export function HomePageRightSidebar({
   currentProfile,
   suggestedCommunities
 }: HomePageRightSidebarProps) {
   const { t } = useTranslations()
+  const { friends, communities, suggestedCommunities: suggestions } =
+    useHomePageRightSidebar({ currentProfile, suggestedCommunities })
 
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.homeSidebar.friends(currentProfile.id),
-    queryFn: () => getProfileDirectoryPage(currentProfile.url, 'friends', {
-      page: 1,
-      pageSize: PREVIEW_PAGE_SIZE,
-      sort: 'activity-desc'
-    }),
-    enabled: Boolean(currentProfile.id),
-    staleTime: 60 * 1000
-  })
-
-  const communitiesQuery = useQuery({
-    queryKey: queryKeys.homeSidebar.communities(currentProfile.id),
-    queryFn: () => getProfileDirectoryPage(currentProfile.url, 'communities', {
-      page: 1,
-      pageSize: PREVIEW_PAGE_SIZE,
-      sort: 'activity-desc'
-    }),
-    enabled: Boolean(currentProfile.id),
-    staleTime: 60 * 1000
-  })
-
-  const friends = getDirectoryItems(friendsQuery.data, 'friends')
-  const communities = getDirectoryItems(communitiesQuery.data, 'communities')
-  const suggestions = suggestedCommunities
-
-  const friendsTotal = friendsQuery.data?.kind === 'friends'
-    ? friendsQuery.data.friends.totalItems
-    : 0
-  const communitiesTotal = communitiesQuery.data?.kind === 'communities'
-    ? communitiesQuery.data.communities.totalItems
-    : 0
+  const friendEntries = friends.items.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.profile + '/' + item.url
+  }))
+  const communityEntries = communities.items.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.community + '/' + item.url
+  }))
+  const suggestedCommunityEntries = suggestions.map(item => ({
+    id: item.id,
+    name: item.name,
+    picture: item.picture,
+    href: ROUTES.community + '/' + item.url
+  }))
 
   return (
     <div className="home-page__previews">
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('PROFILE_FRIENDS_TITLE')}
-        items={friends}
-        totalItems={friendsTotal}
+        totalItems={friends.totalItems}
+        isLoading={friends.isLoading}
+        isFetching={friends.isFetching}
+        isError={friends.isError}
+        isEmpty={friends.isEmpty}
         emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
-        isLoading={friendsQuery.isLoading}
-        isFetching={friendsQuery.isFetching}
-        isError={friendsQuery.isError}
-        onRetry={() => void friendsQuery.refetch()}
-        viewAllHref={ROUTES.profile + '/' + currentProfile.url + '/friends'}
-        viewAllLabel={t('COMMON_VIEW_ALL')}
-        getHref={item => ROUTES.profile + '/' + item.url}
-        getSecondary={item => '@' + item.url}
+        onRetry={friends.onRetry}
+        allHref={ROUTES.profile + '/' + currentProfile.url + '/friends'}
+        allLabel={t('COMMON_VIEW_ALL')}
+        entries={friendEntries}
       />
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('PROFILE_COMMUNITIES_TITLE')}
-        items={communities}
-        totalItems={communitiesTotal}
+        totalItems={communities.totalItems}
+        isLoading={communities.isLoading}
+        isFetching={communities.isFetching}
+        isError={communities.isError}
+        isEmpty={communities.isEmpty}
         emptyMessage={t('PROFILE_COMMUNITIES_EMPTY')}
-        isLoading={communitiesQuery.isLoading}
-        isFetching={communitiesQuery.isFetching}
-        isError={communitiesQuery.isError}
-        onRetry={() => void communitiesQuery.refetch()}
-        viewAllHref={ROUTES.profile + '/' + currentProfile.url + '/communities'}
-        viewAllLabel={t('COMMON_VIEW_ALL')}
-        getHref={item => ROUTES.community + '/' + item.url}
-        getSecondary={item => '/community/' + item.url}
+        onRetry={communities.onRetry}
+        allHref={ROUTES.profile + '/' + currentProfile.url + '/communities'}
+        allLabel={t('COMMON_VIEW_ALL')}
+        entries={communityEntries}
       />
-      <HomePageEntityPreview
+      <EntityAvatarPreview
         title={t('HOME_SUGGESTED_COMMUNITIES')}
-        items={suggestions}
-        emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
+        totalItems={suggestions.length}
         isLoading={false}
         isFetching={false}
         isError={false}
-        onRetry={() => void friendsQuery.refetch()}
-        getHref={item => ROUTES.community + '/' + item.url}
-        getSecondary={item => '/community/' + item.url}
+        isEmpty={suggestions.length === 0}
+        emptyMessage={t('HOME_SUGGESTED_COMMUNITIES_EMPTY')}
+        entries={suggestedCommunityEntries}
       />
     </div>
   )

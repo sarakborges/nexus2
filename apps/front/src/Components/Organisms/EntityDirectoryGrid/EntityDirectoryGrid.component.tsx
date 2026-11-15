@@ -1,5 +1,4 @@
-import { Link } from 'react-router'
-
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import type { EntityDirectoryGridProps } from './EntityDirectoryGrid.types'
 
 import './EntityDirectoryGrid.style.scss'
@@ -12,26 +11,19 @@ export function EntityDirectoryGrid({ entries }: EntityDirectoryGridProps) {
           className="account-card__profile-entry account-card__profile-entry--card"
           key={entry.id}
         >
-          <Link
-            className="account-card__profile-entry-identity"
+          <AccountIdentityLink
             to={entry.href}
-          >
-            <span className="account-card__profile-entry-avatar">
-              {entry.picture ? (
-                <img src={entry.picture} alt="" />
-              ) : (
-                <span aria-hidden="true">
-                  {entry.name.trim().charAt(0).toUpperCase()}
-                </span>
-              )}
-            </span>
-            <span className="account-card__profile-entry-copy">
-              <span className="account-card__link">{entry.name}</span>
-              <span className="account-card__profile-entry-secondary">
-                {entry.secondaryText}
-              </span>
-            </span>
-          </Link>
+            name={entry.name}
+            picture={entry.picture}
+            secondary={entry.secondaryText}
+            className="account-card__profile-entry-identity"
+            avatarClassName="account-card__profile-entry-avatar"
+            copyClassName="account-card__profile-entry-copy"
+            nameClassName="account-card__link"
+            secondaryClassName="account-card__profile-entry-secondary"
+            title={entry.name}
+            ariaLabel={entry.name}
+          />
           {entry.actions}
         </article>
       ))}

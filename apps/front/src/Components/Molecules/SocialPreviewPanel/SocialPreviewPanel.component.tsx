@@ -1,3 +1,4 @@
+import { SocialPanel } from '@/Components/Atoms/SocialPanel'
 import type { SocialPreviewPanelProps } from './SocialPreviewPanel.types'
 
 import './SocialPreviewPanel.style.scss'
@@ -10,7 +11,7 @@ export function SocialPreviewPanel({
   className
 }: SocialPreviewPanelProps) {
   return (
-    <section className={['social-preview-panel', className].filter(Boolean).join(' ')}>
+    <SocialPanel className={['social-preview-panel', className].filter(Boolean).join(' ')}>
       <header className="social-preview-panel__header">
         <h2>
           {title}
@@ -21,6 +22,6 @@ export function SocialPreviewPanel({
         {headerActions}
       </header>
       {children}
-    </section>
+    </SocialPanel>
   )
 }

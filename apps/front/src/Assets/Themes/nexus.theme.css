@@ -93,7 +93,6 @@
 }
 
 .button {
-  min-height: 44px;
   border-width: var(--nexus-border-width);
   border-radius: var(--nexus-control-radius);
   font-size: 15px;
@@ -101,12 +100,10 @@
 }
 
 .button:not(:disabled):not([aria-disabled='true']):hover {
-  transform: translateY(1px);
   box-shadow: var(--nexus-control-shadow-hover);
 }
 
 .button:not(:disabled):not([aria-disabled='true']):active {
-  transform: translateY(2px);
   box-shadow: var(--nexus-control-shadow-pressed);
 }
 
@@ -118,6 +115,7 @@
 .button--primary:not(:disabled):hover {
   background-color: var(--color-primary);
 }
+
 .button--primary:not(:disabled):active {
   background-color: var(--color-secondary-strong);
 }
@@ -133,7 +131,6 @@
 }
 
 .input {
-  min-height: 44px;
   padding: 8px 12px;
   border: var(--nexus-border-width) solid var(--color-border);
   border-radius: 0;

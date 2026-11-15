@@ -3,7 +3,7 @@ import type { InsertImageButtonProps } from './InsertImageButton.types'
 import { useInsertImageButton } from './useInsertImageButton'
 import { FiImage } from 'react-icons/fi'
 
-import { Input } from '@/DesignSystem'
+import { Button, Input } from '@/DesignSystem'
 
 export function InsertImageButton({
   label,
@@ -25,7 +25,8 @@ export function InsertImageButton({
 
   return (
     <>
-      <button
+      <Button
+        variation="transparent"
         className="rsw-btn rich-text-editor__toolbar-button"
         type="button"
         title={label}
@@ -34,7 +35,7 @@ export function InsertImageButton({
         onMouseDown={handleMouseDown}
       >
         <FiImage aria-hidden="true" />
-      </button>
+      </Button>
       <Input
         ref={inputRef}
         className="rich-text-editor__file-input"

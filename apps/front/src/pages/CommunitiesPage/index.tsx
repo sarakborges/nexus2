@@ -1,12 +1,11 @@
-import { Pagination, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { Link } from 'react-router'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
+import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { ROUTES } from '@/Constants/routes'
 import { ButtonLink, Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -53,29 +52,35 @@ export function CommunitiesPage() {
       }
     >
       <div className="social-page__content-stack">
-        <header className="account-card__header communities-page__header">
-          <h1 className="account-card__title">{t('COMMUNITIES_TITLE')}</h1>
+        <header className="communities-page__header">
+          <h1 className="communities-page__title">{t('COMMUNITIES_TITLE')}</h1>
           <ButtonLink
-            className="account-card__action"
+            className="communities-page__create-action"
             variation="primary"
             to={ROUTES.createCommunity}
           >
             {t('COMMUNITIES_CREATE')}
           </ButtonLink>
         </header>
-        <Tabs ariaLabel={t('COMMUNITIES_TABS_LABEL')} value={communityTab} onChange={handleCommunityTabChange} options={[
-          { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
-          { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
-        ]} />
-        {(totalItems > 0 && (
+        <Tabs
+          ariaLabel={t('COMMUNITIES_TABS_LABEL')}
+          value={communityTab}
+          onChange={handleCommunityTabChange}
+          options={[
+            { value: 'all', label: t('COMMUNITIES_TAB_ALL') },
+            { value: 'managed', label: t('COMMUNITIES_TAB_MANAGED') }
+          ]}
+        />
+        {totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />))}
-        
+          />
+        )}
+
         <RequestState
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}
@@ -85,17 +90,21 @@ export function CommunitiesPage() {
           {totalItems === 0 ? (
             <div className="directory-empty-state">
               <p>{t('COMMUNITIES_EMPTY')}</p>
-              <Link to={`${ROUTES.search}?scope=communities`}>{t('COMMUNITIES_EMPTY_SEARCH')}</Link>
+              <Link to={`${ROUTES.search}?scope=communities`}>
+                {t('COMMUNITIES_EMPTY_SEARCH')}
+              </Link>
             </div>
-          ) : <EntityDirectoryGrid
-            entries={communities.map((community) => ({
-              id: community.id,
-              name: community.name,
-              picture: community.picture,
-              href: `${ROUTES.community}/${community.url}`,
-              secondaryText: `/community/${community.url}`
-            }))}
-          />}
+          ) : (
+            <EntityDirectoryGrid
+              entries={communities.map((community) => ({
+                id: community.id,
+                name: community.name,
+                picture: community.picture,
+                href: `${ROUTES.community}/${community.url}`,
+                secondaryText: `/community/${community.url}`
+              }))}
+            />
+          )}
         </RequestState>
         <Pagination
           page={page}

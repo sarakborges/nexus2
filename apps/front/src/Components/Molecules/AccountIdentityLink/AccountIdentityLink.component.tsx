@@ -1,5 +1,5 @@
 import type { AccountIdentityLinkProps } from './AccountIdentityLink.types'
-import { IdentityAvatar } from '../IdentityAvatar'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 
 import { Link } from 'react-router'
 
@@ -15,11 +15,13 @@ export function AccountIdentityLink({
   secondary,
   secondaryClassName,
   children,
+  trailing,
   title,
-  ariaLabel
+  ariaLabel,
+  onClick
 }: AccountIdentityLinkProps) {
   return (
-    <Link className={className} to={to} title={title} aria-label={ariaLabel}>
+    <Link className={className} to={to} title={title} aria-label={ariaLabel} onClick={onClick}>
       <IdentityAvatar
         name={name}
         picture={picture}
@@ -32,6 +34,7 @@ export function AccountIdentityLink({
         )}
         {children}
       </span>
+      {trailing}
     </Link>
   )
 }

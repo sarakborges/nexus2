@@ -1,12 +1,13 @@
 import type { RequestStateProps } from './RequestState.types'
 
-import { Button } from '@/DesignSystem'
+import { Button, LoadingIndicator } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 
 import './RequestState.style.scss'
 
 export function RequestState({
   isLoading = false,
+  isFetching = false,
   isError = false,
   isEmpty = false,
   emptyMessage,
@@ -20,7 +21,7 @@ export function RequestState({
   if (isLoading) {
     return (
       <div className="request-state" role="status" aria-live="polite">
-        <span className="request-state__spinner" aria-hidden="true" />
+        <LoadingIndicator />
         <span>{t('REQUEST_LOADING')}</span>
       </div>
     )
@@ -52,5 +53,15 @@ export function RequestState({
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      {isFetching && (
+        <div className="request-state request-state--inline" role="status" aria-live="polite">
+          <LoadingIndicator size="small" />
+          <span>{t('REQUEST_LOADING')}</span>
+        </div>
+      )}
+      {children}
+    </>
+  )
 }

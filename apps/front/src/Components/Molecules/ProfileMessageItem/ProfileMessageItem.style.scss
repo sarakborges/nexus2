@@ -96,7 +96,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--nexus-space-2, 8px);
-  padding-top: var(--nexus-space-2, 10px);
+  padding-top: var(--nexus-space-2, 8px);
   border-top: var(--nexus-border-width, 2px) solid var(--color-border);
 }
 
@@ -105,7 +105,7 @@
   flex-direction: row;
   gap: var(--nexus-space-2, 8px);
   min-height: 36px;
-  padding: var(--nexus-space-2, 6px) var(--nexus-space-2, 10px);
+  padding: var(--nexus-space-2, 8px) var(--nexus-space-2, 8px);
   font-size: 13px;
 }
 
@@ -128,7 +128,7 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: var(--nexus-space-2, 6px);
+  gap: var(--nexus-space-2, 8px);
   margin-left: auto;
 }
 

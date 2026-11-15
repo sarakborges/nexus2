@@ -1,4 +1,4 @@
-import { AccountIdentityLink } from '@/Components'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import { Button, RichTextContent } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'

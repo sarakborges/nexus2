@@ -1,6 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
 
-import '@/Components/Molecules/ProfileTypeNotice/ProfileTypeNotice.style.scss'
 import { ToastViewport } from '@/Components/Organisms/ToastViewport'
 import { AppRoutes } from '@/routes'
 
@@ -24,17 +23,11 @@ const ProfileSettingsModal = lazy(() =>
   }))
 )
 
-const ProfileSettingsPage = lazy(() =>
-  import('@/pages/ProfileSettingsPage').then(module => ({
-    default: module.ProfileSettingsPage
-  }))
-)
-
 export function App() {
   const { hasAuthenticatedSession, shouldInitializeAuth } =
     useAppInitialization()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [profileSettingsUrl, setProfileSettingsUrl] = useState<string | null>(null)
+  const [isProfileSettingsOpen, setIsProfileSettingsOpen] = useState(false)
 
   return (
     <>
@@ -42,7 +35,7 @@ export function App() {
         <Suspense fallback={null}>
           <FloatingNavigationBar
             onOpenSettings={() => setIsSettingsOpen(true)}
-            onOpenProfileSettings={setProfileSettingsUrl}
+            onOpenProfileSettings={() => setIsProfileSettingsOpen(true)}
           />
         </Suspense>
       )}
@@ -53,14 +46,12 @@ export function App() {
           <SettingsModal open onClose={() => setIsSettingsOpen(false)} />
         </Suspense>
       )}
-      {profileSettingsUrl && (
+      {isProfileSettingsOpen && (
         <Suspense fallback={null}>
           <ProfileSettingsModal
             open
-            onClose={() => setProfileSettingsUrl(null)}
-          >
-            <ProfileSettingsPage profileUrl={profileSettingsUrl} presentation="modal" />
-          </ProfileSettingsModal>
+            onClose={() => setIsProfileSettingsOpen(false)}
+          />
         </Suspense>
       )}
     </>

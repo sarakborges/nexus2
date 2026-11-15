@@ -1,13 +1,11 @@
-import { RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
-import {
-  CommunitySidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
+import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
-import { CommunityMemberDirectory, CommunityPendingMembersSection } from '@/Components/Organisms'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
+import { CommunityMemberDirectory } from '@/Components/Organisms/CommunityMemberDirectory'
+import { CommunityPendingMembersSection } from '@/Components/Organisms/CommunityPendingMembersSection'
 import { useCommunityMembersPage } from './useCommunityMembersPage'
 
 import './CommunityMembersPage.style.scss'
@@ -53,7 +51,7 @@ export function CommunityMembersPage() {
       : [])
   ]
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || communityMembersPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -65,7 +63,7 @@ export function CommunityMembersPage() {
       />
     )
   }
-  if (!community) return <NotFoundPage />
+  if (!community) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -78,7 +76,6 @@ export function CommunityMembersPage() {
         />
       }
     >
-      <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
         {(totalMembers > 0 && (
           <PaginatedListControls

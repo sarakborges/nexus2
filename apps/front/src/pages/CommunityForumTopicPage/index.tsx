@@ -1,15 +1,17 @@
-import { CommunityForumEntry, CommunityForumReplyComposer, CommunityForumTopicModerationActions } from '@/Components/Molecules'
-import { Pagination, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
+import { CommunityForumEntry } from '@/Components/Molecules/CommunityForumEntry'
+import { CommunityForumTopicModerationActions } from '@/Components/Molecules/CommunityForumTopicModerationActions'
+import { CommunityForumReplyComposer } from '@/Components/Organisms/CommunityForumReplyComposer'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { Button } from '@/DesignSystem'
-import {
-  CommunitySidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { useCommunityForumTopicPage } from './useCommunityForumTopicPage'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 
 import '../CommunityForumPage/CommunityForumPage.style.scss'
 
@@ -55,7 +57,7 @@ export function CommunityForumTopicPage() {
     deleteReply
   } = useCommunityForumTopicPage()
 
-  if (!normalized || !topicId) return <NotFoundPage />
+  if (!normalized || !topicId) return <NotFoundState />
   if (!isAuthInitialized || topicPageQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -67,7 +69,7 @@ export function CommunityForumTopicPage() {
       />
     )
   }
-  if (!community || !detail || !topic) return <NotFoundPage />
+  if (!community || !detail || !topic) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -80,10 +82,10 @@ export function CommunityForumTopicPage() {
         />
       }
     >
-      {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-        <p className="profile-type-notice" role="alert">
-          {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-        </p>)}
+      <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
       
       <section className="account-card community-forum community-forum__topic-detail-card">
         <header className="account-card__header">

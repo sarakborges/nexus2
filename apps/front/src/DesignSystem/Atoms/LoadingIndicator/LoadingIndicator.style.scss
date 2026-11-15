@@ -1,0 +1,23 @@
+.loading-indicator {
+  display: inline-block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border: var(--nexus-border-width, 2px) solid var(--color-border);
+  border-right-color: transparent;
+  border-radius: 50%;
+}
+
+.loading-indicator--small {
+  width: 16px;
+  height: 16px;
+}
+
+.loading-indicator--medium {
+  width: 20px;
+  height: 20px;
+}
+
+.loading-indicator--large {
+  width: 28px;
+  height: 28px;
+}

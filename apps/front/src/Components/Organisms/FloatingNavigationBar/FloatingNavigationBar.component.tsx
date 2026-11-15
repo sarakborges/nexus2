@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router'
 import { FiChevronDown, FiMenu, FiUser } from 'react-icons/fi'
 
+import { Button } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
-import { IdentityAvatar } from '@/Components/Molecules'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { useTranslations } from '@/Hooks/Language'
-import { AccountMenu } from '@/Components/Molecules/AccountMenu'
-import { NotificationsMenu } from '@/Components/Molecules/NotificationsMenu'
+import { AccountMenu } from '@/Components/Organisms/AccountMenu'
+import { NotificationsMenu } from '@/Components/Organisms/NotificationsMenu'
 import { FloatingNavigationSearch } from '@/Components/Molecules/FloatingNavigationSearch'
-import { FloatingNavigationLinks } from '@/Components/Molecules/FloatingNavigationLinks'
+import { FloatingNavigationLinks } from '@/Components/Organisms/FloatingNavigationLinks'
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 
@@ -21,11 +21,6 @@ export function FloatingNavigationBar({
 }: FloatingNavigationBarProps) {
   const { t } = useTranslations()
   const location = useLocation()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 680px)').matches
-  )
   const {
     isAuthenticated,
     navigationRef,
@@ -36,7 +31,11 @@ export function FloatingNavigationBar({
     messagesRoute,
     communitiesRoute,
     editProfileRoute,
+    isSidebarCollapsed,
     closePanels,
+    closeNavigationAfterNavigate,
+    collapseSidebar,
+    toggleSidebar,
     togglePanel,
     toggleProfileSwitcher,
     profiles,
@@ -54,25 +53,6 @@ export function FloatingNavigationBar({
     handleOpenSettings,
     handleSignOut
   } = useFloatingNavigationBar({ onOpenSettings })
-
-  const closeNavigationAfterNavigate = () => {
-    closePanels()
-    if (window.matchMedia('(max-width: 680px)').matches) {
-      setIsSidebarCollapsed(true)
-    }
-  }
-
-  useEffect(() => {
-    const root = document.documentElement
-    root.classList.add('has-global-navigation')
-    root.classList.toggle('global-navigation-collapsed', isSidebarCollapsed)
-    return () => {
-      root.classList.remove(
-        'has-global-navigation',
-        'global-navigation-collapsed'
-      )
-    }
-  }, [isSidebarCollapsed])
 
   if (!isAuthenticated) return null
 
@@ -92,7 +72,7 @@ export function FloatingNavigationBar({
             <span>NEXUS</span>
           </Link>
           <FloatingNavigationSearch
-            key={`${location.pathname}:${location.search}`}
+            key={location.pathname + ':' + location.search}
           />
           <span className="floating-navigation__spacer" />
           <div className="floating-navigation__notification-container">
@@ -102,7 +82,8 @@ export function FloatingNavigationBar({
               onClose={closePanels}
             />
           </div>
-          <button
+          <Button
+            variation="transparent"
             className="floating-navigation__account-trigger"
             type="button"
             aria-label={t('NAVIGATION_ACCOUNT_MENU')}
@@ -123,7 +104,7 @@ export function FloatingNavigationBar({
               className="floating-navigation__account-chevron"
               aria-hidden="true"
             />
-          </button>
+          </Button>
         </div>
       </header>
       {!isSidebarCollapsed && (
@@ -133,7 +114,7 @@ export function FloatingNavigationBar({
           aria-label={t('SETTINGS_CLOSE')}
           onClick={() => {
             closePanels()
-            setIsSidebarCollapsed(true)
+            collapseSidebar()
           }}
         />
       )}
@@ -150,17 +131,18 @@ export function FloatingNavigationBar({
           communitiesRoute={communitiesRoute}
           onNavigate={closeNavigationAfterNavigate}
         />
-        <button
+        <Button
+          variation="transparent"
           className="floating-navigation__sidebar-toggle"
           type="button"
           aria-label={isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}
           aria-expanded={!isSidebarCollapsed}
           aria-controls="floating-navigation-sidebar"
-          onClick={() => setIsSidebarCollapsed(value => !value)}
+          onClick={toggleSidebar}
         >
           <FiMenu aria-hidden="true" />
           <span>{isSidebarCollapsed ? t('NAVIGATION_EXPAND_MENU') : t('NAVIGATION_COLLAPSE_MENU')}</span>
-        </button>
+        </Button>
       </aside>
       {activePanel === 'account' && (
         <AccountMenu

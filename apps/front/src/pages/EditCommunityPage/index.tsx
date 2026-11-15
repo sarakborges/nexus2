@@ -1,9 +1,9 @@
-import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
+import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
-import { EntityEditPageLayout } from '@/Components/Organisms/EntityEditPageLayout'
+import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useEditCommunityPage } from './useEditCommunityPage'
 
 
@@ -39,11 +39,12 @@ export function EditCommunityPage() {
       isTypeChecking={typeCompatibility.isChecking}
       isTypeCompatible={typeCompatibility.isCompatible}
       isFormReady={Boolean(form)}
-      notFound={<NotFoundPage />}
+      notFound={<NotFoundState />}
     >
       {form && community && ownerProfileId && (
         <form className="entity-form-page__form" onSubmit={handleSubmit}>
-          <CommunityDetailsFields
+          <EntityDetailsFields
+            entity="community"
             name={form.name}
             url={form.url}
             picture={community.picture}

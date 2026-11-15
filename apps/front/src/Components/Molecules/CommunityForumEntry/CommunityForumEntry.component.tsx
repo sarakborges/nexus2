@@ -1,8 +1,10 @@
 import { Link } from 'react-router'
-
-import { ROUTES } from '@/Constants/routes'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import { RichTextContent } from '@/DesignSystem'
+import { ROUTES } from '@/Constants/routes'
 import type { CommunityForumEntryProps } from './CommunityForumEntry.types'
+
 import './CommunityForumEntry.style.scss'
 
 export function CommunityForumEntry({
@@ -17,26 +19,19 @@ export function CommunityForumEntry({
     <article className={className}>
       <aside className="community-forum-entry__author-column">
         {author ? (
-          <Link
+          <IdentityAvatarLink
             className="community-forum-entry__author-link"
             to={ROUTES.profile + '/' + author.url}
-            aria-label={author.name}
-            title={author.name}
-          >
-            <span className="community-forum-entry__author-avatar">
-              {author.picture ? (
-                <img src={author.picture} alt="" />
-              ) : (
-                <span aria-hidden="true">
-                  {author.name.trim().charAt(0).toUpperCase()}
-                </span>
-              )}
-            </span>
-          </Link>
+            name={author.name}
+            picture={author.picture}
+            avatarClassName="community-forum-entry__author-avatar"
+          />
         ) : (
-          <span className="community-forum-entry__author-avatar" aria-hidden="true">
-            ?
-          </span>
+          <IdentityAvatar
+            className="community-forum-entry__author-avatar"
+            name="?"
+            picture=""
+          />
         )}
       </aside>
       <div className="community-forum-entry__main">

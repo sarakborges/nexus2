@@ -1,7 +1,7 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
-import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
+import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
-import { EntityFormPageLayout } from '@/Components/Organisms/EntityFormPageLayout'
+import { EntityFormPageLayout } from '@/Components/Templates/EntityFormPageLayout'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import { useCreateCommunityPage } from './useCreateCommunityPage'
@@ -34,7 +34,8 @@ export function CreateCommunityPage() {
       titleId="create-community-title"
     >
       <form className="entity-form-page__form" onSubmit={handleSubmit}>
-        <CommunityDetailsFields
+        <EntityDetailsFields
+          entity="community"
           name={name}
           url={url}
           picture={picture}

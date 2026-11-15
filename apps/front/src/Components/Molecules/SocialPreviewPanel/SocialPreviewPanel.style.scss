@@ -1,26 +1,21 @@
-.social-preview-panel {
-  display: grid;
-  gap: var(--nexus-space-3, 14px);
+.social-panel.social-preview-panel {
+  gap: var(--nexus-space-3);
   min-width: 0;
-  padding: var(--nexus-space-4, 16px);
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  border-radius: var(--nexus-card-radius, 0);
-  background: var(--color-surface);
-  box-shadow: 0 10px 28px rgb(0 0 0 / 8%);
+  padding: var(--nexus-space-4);
 }
 
 .social-preview-panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
 }
 
 .social-preview-panel__header h2 {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--nexus-space-2, 6px);
+  gap: var(--nexus-space-2, 8px);
   min-width: 0;
   color: var(--text-color);
   font-size: 15px;
@@ -48,51 +43,3 @@
   text-decoration: none;
 }
 
-@media (max-width: 900px) and (min-width: 681px) {
-  .social-preview-panel {
-    padding: var(--nexus-space-4, 18px);
-  }
-}
-
-@media (max-width: 680px) {
-  .social-preview-panel {
-    padding: var(--nexus-space-4, 16px);
-  }
-}
-
-/* Shared avatar grid used by profile and community previews. */
-.social-preview-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--nexus-space-2, 10px);
-}
-
-.social-preview-link {
-  display: block;
-  min-width: 0;
-  border-radius: var(--nexus-control-radius, 0);
-  color: inherit;
-  text-decoration: none;
-}
-
-.social-preview-avatar {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  border-radius: var(--avatar-shape-radius);
-  background: var(--avatar-background);
-  color: var(--avatar-fallback-color);
-  font-size: 18px;
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
-}
-
-.social-preview-avatar img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}

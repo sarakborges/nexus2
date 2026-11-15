@@ -1,15 +1,15 @@
+import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
 import { Link } from 'react-router'
-import { Pagination, RequestState } from '@/Components'
-import { AuthenticatedPageState } from '@/Components/Organisms/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Organisms/PaginatedListControls'
-import {
-  ProfileSidebar,
-  SocialPageLayout
-} from '@/Components/Organisms/SocialPageLayout'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
+import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
+import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
+import { ProfileSidebar } from '@/Components/Organisms/ProfileSidebar'
+import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { EntityDirectoryGrid } from '@/Components/Organisms/EntityDirectoryGrid'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { NotFoundPage } from '@/pages/NotFoundPage'
+import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { useProfileCommunitiesPage } from './useProfileCommunitiesPage'
 
 
@@ -33,7 +33,7 @@ export function ProfileCommunitiesPage() {
     totalItems
   } = useProfileCommunitiesPage()
 
-  if (!normalized) return <NotFoundPage />
+  if (!normalized) return <NotFoundState />
   if (!isAuthInitialized || profileDirectoryQuery.isLoading) {
     return <AuthenticatedPageState isLoading />
   }
@@ -45,7 +45,7 @@ export function ProfileCommunitiesPage() {
       />
     )
   }
-  if (!profile) return <NotFoundPage />
+  if (!profile) return <NotFoundState />
 
   return (
     <SocialPageLayout
@@ -66,11 +66,10 @@ export function ProfileCommunitiesPage() {
             onSortChange={setSort}
           />))}
         
-        <RequestState isFetching={profileDirectoryQuery.isFetching} />
-        {!typeCompatibility.isChecking && !typeCompatibility.isCompatible && (
-          <p className="profile-type-notice" role="alert">
-            {t('PROFILE_TYPE_MISMATCH_NOTICE')}
-          </p>)}
+        <ProfileTypeNotice
+        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+      />
         
         <RequestState
           isLoading={profileDirectoryQuery.isLoading}
