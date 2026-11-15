@@ -2,7 +2,7 @@
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
   min-width: 0;
 }
 
@@ -11,7 +11,7 @@
   align-items: center;
   flex: 1 1 260px;
   min-width: min(100%, 220px);
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
 }
 
 .paginated-list-controls__search .input {
