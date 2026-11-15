@@ -73,7 +73,6 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     canInteract: isProfileOwner || !session || (isCompatible && !isChecking)
   }
   const canInteract = typeCompatibility.canInteract
-  const messages = pageData?.messages.items ?? []
   const totalItems = pageData?.messages.totalItems ?? 0
   const sendersById = useMemo(
     () =>
@@ -84,7 +83,8 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       ),
     [pageData?.senders]
   )
-  const messageItems = useMemo<ProfileMessageViewModel[]>(() => messages.map(message => {
+  const messageItems = useMemo<ProfileMessageViewModel[]>(() =>
+    (pageData?.messages.items ?? []).map(message => {
     const permissions = pageData?.messagePermissions[message.id]
     return {
       message,
@@ -93,7 +93,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       canFavorite: permissions?.canFavorite ?? false,
       canReply: permissions?.canReply ?? false
     }
-  }), [messages, sendersById, pageData?.messagePermissions])
+  }), [pageData?.messages.items, sendersById, pageData?.messagePermissions])
   const messageSenderProfileId = replyTo
     ? currentProfileId
     : currentProfileId ?? (isProfileOwner ? (profile?.id ?? null) : null)
