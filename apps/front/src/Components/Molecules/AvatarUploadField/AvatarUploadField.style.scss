@@ -52,12 +52,6 @@
   font-size: 12px;
 }
 
-.avatar-upload-field__button:disabled,
-.avatar-upload-field__remove:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
 .avatar-upload-field__remove.button {
   color: var(--color-danger, var(--text-color));
 }
