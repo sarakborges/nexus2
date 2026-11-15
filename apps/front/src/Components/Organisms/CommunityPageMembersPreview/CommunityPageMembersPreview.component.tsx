@@ -7,7 +7,6 @@ import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { IdentityAvatar } from '@/Components/Molecules/IdentityAvatar'
 import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview.types'
-import './CommunityPageMembersPreview.style.scss'
 
 export function CommunityPageMembersPreview({
   communityUrl,
