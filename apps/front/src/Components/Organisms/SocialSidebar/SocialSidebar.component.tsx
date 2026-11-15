@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import type { SocialSidebarProps } from './SocialSidebar.types'
 
 import './SocialSidebar.style.scss'
@@ -18,13 +18,14 @@ export function SocialSidebar({
   return (
     <div className="social-sidebar-card">
       <section className="social-identity">
-        <Link className="social-identity__link" to={href} aria-label={imageLabel}>
-          <IdentityAvatar
-            className={`social-identity__picture social-identity__picture--${pictureVariant}`}
-            name={name}
-            picture={picture}
-          />
-        </Link>
+        <IdentityAvatarLink
+          className="social-identity__link"
+          to={href}
+          ariaLabel={imageLabel}
+          name={name}
+          picture={picture}
+          avatarClassName={`social-identity__picture social-identity__picture--${pictureVariant}`}
+        />
         <h1 className="social-identity__name">{name}</h1>
         {metadata && <span className="social-identity__url">{metadata}</span>}
         {relationshipActions}

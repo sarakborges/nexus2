@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import { Badge } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -19,17 +20,12 @@ export function CommunityForumTopicItem({
     <article className="community-forum-topic-item">
       <div className="community-forum-topic-item__author">
         {author ? (
-          <Link
+          <IdentityAvatarLink
             to={ROUTES.profile + '/' + author.url}
-            aria-label={author.name}
-            title={author.name}
-          >
-            <IdentityAvatar
-              className="community-forum-topic-item__avatar"
-              name={author.name}
-              picture={author.picture}
-            />
-          </Link>
+            name={author.name}
+            picture={author.picture}
+            avatarClassName="community-forum-topic-item__avatar"
+          />
         ) : (
           <IdentityAvatar
             className="community-forum-topic-item__avatar"

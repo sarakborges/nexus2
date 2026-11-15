@@ -1,6 +1,5 @@
-import { Link } from 'react-router'
-
 import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
+import { IdentityAvatarLink } from '@/Components/Molecules/IdentityAvatarLink'
 import { RichTextContent } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import type { CommunityForumEntryProps } from './CommunityForumEntry.types'
@@ -19,18 +18,13 @@ export function CommunityForumEntry({
     <article className={className}>
       <aside className="community-forum-entry__author-column">
         {author ? (
-          <Link
+          <IdentityAvatarLink
             className="community-forum-entry__author-link"
             to={ROUTES.profile + '/' + author.url}
-            aria-label={author.name}
-            title={author.name}
-          >
-            <IdentityAvatar
-              className="community-forum-entry__author-avatar"
-              name={author.name}
-              picture={author.picture}
-            />
-          </Link>
+            name={author.name}
+            picture={author.picture}
+            avatarClassName="community-forum-entry__author-avatar"
+          />
         ) : (
           <IdentityAvatar
             className="community-forum-entry__author-avatar"
@@ -43,7 +37,7 @@ export function CommunityForumEntry({
         <header className="community-forum-entry__header">
           <span>
             {author ? (
-              <Link to={ROUTES.profile + '/' + author.url}>{author.name}</Link>
+              <a href={ROUTES.profile + '/' + author.url}>{author.name}</a>
             ) : (
               unknownAuthorLabel
             )}
