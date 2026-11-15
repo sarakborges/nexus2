@@ -4,8 +4,9 @@ import { FiImage } from 'react-icons/fi'
 
 import { useRef } from 'react'
 
-import './AvatarUploadField.style.scss'
+import { Button, Input } from '@/DesignSystem'
 
+import './AvatarUploadField.style.scss'
 
 export function AvatarUploadField({
   label,
@@ -48,26 +49,28 @@ export function AvatarUploadField({
         )}
       </div>
       <div className="avatar-upload-field__actions">
-        <button
+        <Button
           className="avatar-upload-field__button"
           type="button"
+          variation="secondary"
           disabled={busy}
           onClick={() => inputRef.current?.click()}
         >
           {busy ? uploadingLabel : value ? changeLabel : selectLabel}
-        </button>
+        </Button>
         {value && (
-          <button
+          <Button
             className="avatar-upload-field__remove"
             type="button"
+            variation="transparent"
             disabled={busy}
             onClick={() => void handleRemove()}
           >
             {busy ? uploadingLabel : removeLabel}
-          </button>
+          </Button>
         )}
       </div>
-      <input
+      <Input
         ref={inputRef}
         className="avatar-upload-field__input"
         type="file"
