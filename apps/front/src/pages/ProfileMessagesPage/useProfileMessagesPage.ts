@@ -1,3 +1,4 @@
+import type { Profile } from '@nexus/common'
 import { type FormEvent, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router'
@@ -33,7 +34,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()
   const [content, setContent] = useState('')
   const [requestedMessageTab, setRequestedMessageTab] = useState<'all' | 'favorites'>('all')
-  const [replyTo, setReplyTo] = useState<import('@nexus/common').Profile | null>(null)
+  const [replyTo, setReplyTo] = useState<Profile | null>(null)
 
   const profileMessagesPageQuery = useQuery({
     queryKey: queryKeys.profileMessagesPage(
@@ -132,11 +133,8 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     )
   }
 
-  const invalidateMessagePages = async () => queryClient.invalidateQueries({
-    queryKey: ['profile-messages-page', requestedUrl]
-  })
-  const deleteMessageMutation = useDeleteProfileMessageMutation()
-  const favoriteMessageMutation = useSetProfileMessageFavoriteMutation()
+  const deleteMessageMutation = useDeleteProfileMessageMutation({ profileUrl: requestedUrl })
+  const favoriteMessageMutation = useSetProfileMessageFavoriteMutation({ profileUrl: requestedUrl })
   const handleDeleteMessage = (item: ProfileMessageViewModel) => {
     if (!profile || !item.canDelete) return
     const actorProfileId = isProfileOwner ? profile.id : item.message.fromProfileId
@@ -161,7 +159,7 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
       onError: () => showToast(t('TOAST_ACTION_FAILED'), 'error')
     })
   }
-  const handleReplyMessage = (sender: import('@nexus/common').Profile) => {
+  const handleReplyMessage = (sender: Profile) => {
     setContent('')
     setReplyTo(sender)
   }
