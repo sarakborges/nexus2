@@ -1,4 +1,4 @@
-import type { IdentityAvatarGridEntry } from '@/Components/Molecules/IdentityAvatarGrid'
+import type { IdentityAvatarGridEntry } from '@/Components/Organisms/IdentityAvatarGrid'
 
 export type EntityAvatarPreviewProps = {
   title: string
