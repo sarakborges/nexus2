@@ -1,4 +1,4 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { CommunityDetailsFields } from '@/Components/Organisms/CommunityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityFormPageLayout } from '@/Components/Templates/EntityFormPageLayout'

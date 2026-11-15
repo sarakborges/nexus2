@@ -1,5 +1,5 @@
 import type { AccountIdentityLinkProps } from './AccountIdentityLink.types'
-import { IdentityAvatar } from '../IdentityAvatar'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 
 import { Link } from 'react-router'
 

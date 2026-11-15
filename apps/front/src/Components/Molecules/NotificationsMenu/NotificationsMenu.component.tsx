@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import type { RecentActivity } from '@nexus/common'
 import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { FiBell } from 'react-icons/fi'
-import { IdentityAvatar } from '@/Components/Molecules'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'

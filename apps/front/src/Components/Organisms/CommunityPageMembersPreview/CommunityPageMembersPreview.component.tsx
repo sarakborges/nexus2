@@ -5,7 +5,7 @@ import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { IdentityAvatar } from '@/Components/Molecules/IdentityAvatar'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import type { CommunityPageMembersPreviewProps } from './CommunityPageMembersPreview.types'
 
 export function CommunityPageMembersPreview({

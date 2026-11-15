@@ -1,4 +1,4 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { Link } from 'react-router'
 
 import { AuthPageLayout } from '@/Components/Templates/AuthPageLayout'

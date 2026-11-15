@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { IdentityAvatar } from '@/Components/Molecules/IdentityAvatar'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import type { SearchResultItemProps } from './SearchResultItem.types'
 
 import './SearchResultItem.style.scss'

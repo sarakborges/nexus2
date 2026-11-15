@@ -1,4 +1,4 @@
-import { FormErrorMessage } from '@/Components/Molecules/FormErrorMessage'
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { RequestState } from '@/Components'
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
 import { PreferenceSelector, ProfileDetailsFields } from '@/Components/Organisms'
