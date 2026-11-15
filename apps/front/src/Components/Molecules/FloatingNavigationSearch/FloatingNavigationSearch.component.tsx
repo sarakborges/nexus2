@@ -1,41 +1,20 @@
-import { useState, type FormEvent } from 'react'
-import { useLocation, useNavigate } from 'react-router'
 import { FiSearch } from 'react-icons/fi'
-import type { SearchScope } from '@nexus/common'
 
-import { ROUTES } from '@/Constants/routes'
 import { Button, Input, Select } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
+import { useFloatingNavigationSearch } from './useFloatingNavigationSearch'
+
 import './FloatingNavigationSearch.style.scss'
 
 export function FloatingNavigationSearch() {
   const { t } = useTranslations()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const routeKey = location.pathname + location.search
-  const routeParams = new URLSearchParams(location.search)
-  const routeQuery = location.pathname === ROUTES.search ? routeParams.get('query') ?? '' : ''
-  const requestedScope = routeParams.get('scope')
-  const routeScope: SearchScope =
-    location.pathname === ROUTES.search &&
-    (requestedScope === 'profiles' || requestedScope === 'communities')
-      ? requestedScope
-      : 'all'
-  const [searchDraft, setSearchDraft] = useState<{
-    routeKey: string
-    text: string
-    scope: SearchScope
-  } | null>(null)
-  const searchText = searchDraft?.routeKey === routeKey ? searchDraft.text : routeQuery
-  const searchScope = searchDraft?.routeKey === routeKey ? searchDraft.scope : routeScope
-
-  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const query = searchText.trim()
-    const params = new URLSearchParams({ scope: searchScope })
-    if (query) params.set('query', query)
-    navigate(`${ROUTES.search}?${params.toString()}`)
-  }
+  const {
+    searchText,
+    searchScope,
+    setSearchText,
+    setSearchScope,
+    handleSearch
+  } = useFloatingNavigationSearch()
 
   return (
     <form
@@ -49,12 +28,12 @@ export function FloatingNavigationSearch() {
         placeholder={t('SEARCH_PLACEHOLDER')}
         maxLength={120}
         value={searchText}
-        onChange={(event) => setSearchDraft({ routeKey, text: event.target.value, scope: searchScope })}
+        onChange={event => setSearchText(event.target.value)}
       />
       <Select
         aria-label={t('SEARCH_SCOPE_LABEL')}
         value={searchScope}
-        onChange={(event) => setSearchDraft({ routeKey, text: searchText, scope: event.target.value as SearchScope })}
+        onChange={event => setSearchScope(event.target.value)}
       >
         <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
         <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>

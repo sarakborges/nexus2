@@ -1,8 +1,7 @@
-import { useState, type FormEvent } from 'react'
-
 import { Button, Input } from '@/DesignSystem'
 import { ListSortSelect } from '@/Components/Molecules/ListSortSelect'
 import { useTranslations } from '@/Hooks/Language'
+import { usePaginatedListControls } from './usePaginatedListControls'
 import type { PaginatedListControlsProps } from './PaginatedListControls.types'
 
 import './PaginatedListControls.style.scss'
@@ -14,12 +13,10 @@ export function PaginatedListControls({
   onSortChange
 }: PaginatedListControlsProps) {
   const { t } = useTranslations()
-  const [value, setValue] = useState(query)
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    onQueryChange(value)
-  }
+  const { value, setValue, isUnchanged, submit } = usePaginatedListControls({
+    query,
+    onQueryChange
+  })
 
   return (
     <div className="paginated-list-controls">
@@ -34,12 +31,12 @@ export function PaginatedListControls({
           value={value}
           placeholder={t('LIST_FILTER_PLACEHOLDER')}
           aria-label={t('LIST_FILTER_PLACEHOLDER')}
-          onChange={(event) => setValue(event.target.value)}
+          onChange={event => setValue(event.target.value)}
         />
         <Button
           type="submit"
           variation="secondary"
-          disabled={value.trim() === query.trim()}
+          disabled={isUnchanged}
         >
           {t('LIST_FILTER_SUBMIT')}
         </Button>
