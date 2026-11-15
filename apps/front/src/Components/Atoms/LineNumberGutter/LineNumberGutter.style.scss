@@ -1,0 +1,26 @@
+.line-number-gutter {
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  padding: var(--nexus-space-3) var(--nexus-space-2);
+  overflow: hidden;
+  border-right: var(--nexus-border-width, 2px) solid var(--color-border);
+  color: var(--color-neutral);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: right;
+  user-select: none;
+}
+
+.line-number-gutter span {
+  display: block;
+  height: 1.6em;
+}
+
+@media (max-width: 560px) {
+  .line-number-gutter {
+    padding-inline: var(--nexus-space-1);
+    font-size: 11px;
+  }
+}

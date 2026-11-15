@@ -1,6 +1,7 @@
 import './HtmlSourceEditor.style.scss'
 import type { HtmlSourceEditorProps } from './HtmlSourceEditor.types'
 import { HtmlSyntaxHighlight } from '@/Components/Atoms/HtmlSyntaxHighlight'
+import { LineNumberGutter } from '@/Components/Atoms/LineNumberGutter'
 import { useHtmlSourceEditor } from './useHtmlSourceEditor'
 
 export function HtmlSourceEditor({
@@ -13,15 +14,7 @@ export function HtmlSourceEditor({
 
   return (
     <div className="rich-text-editor__html-editor">
-      <div
-        ref={gutterRef}
-        className="rich-text-editor__line-numbers"
-        aria-hidden="true"
-      >
-        {Array.from({ length: lineCount }, (_, index) => (
-          <span key={index}>{index + 1}</span>
-        ))}
-      </div>
+      <LineNumberGutter ref={gutterRef} lineCount={lineCount} />
       <div className="rich-text-editor__code-surface">
         <pre
           ref={highlightRef}
