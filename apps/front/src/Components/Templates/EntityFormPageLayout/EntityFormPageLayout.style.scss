@@ -49,12 +49,12 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: var(--nexus-space-2, 10px);
+  gap: var(--nexus-space-2, 8px);
 }
 
 @media (max-width: 560px) {
   .entity-form-page__card {
-    padding: var(--nexus-space-4, 18px);
+    padding: var(--nexus-space-4, 16px);
   }
 
   .entity-form-page__actions {
