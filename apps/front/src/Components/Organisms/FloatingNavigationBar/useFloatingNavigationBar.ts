@@ -33,7 +33,16 @@ export function useFloatingNavigationBar({
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
 
-  const currentProfile = session?.currentProfile ?? undefined
+  const currentProfileQuery = useQuery({
+    queryKey: queryKeys.profiles.byId(currentProfileId),
+    queryFn: async () => {
+      if (!currentProfileId) return null
+      const [profile] = await getProfilesByIds([currentProfileId])
+      return profile ?? null
+    },
+    enabled: Boolean(currentProfileId),
+    staleTime: 5 * 60 * 1000
+  })
 
   const otherProfileIds = profileIds.filter(
     (profileId) => profileId !== currentProfileId
@@ -50,10 +59,11 @@ export function useFloatingNavigationBar({
   )
   const profiles = profileIds.flatMap((profileId) => {
     const profile = profileId === currentProfileId
-      ? currentProfile
+      ? currentProfileQuery.data
       : otherProfilesById.get(profileId)
     return profile ? [profile] : []
   })
+  const currentProfile = currentProfileQuery.data ?? undefined
   const profileRoute = currentProfile
     ? ROUTES.profile + '/' + currentProfile.url
     : null
@@ -138,14 +148,16 @@ export function useFloatingNavigationBar({
     hasProfiles: profileIds.length > 0,
     currentProfileId,
     isProfileSwitcherOpen,
-    profilesLoading: Boolean(currentProfileId && !currentProfile) ||
-      (isProfileSwitcherOpen && otherProfileIds.length > 0 && profilesQuery.isLoading),
-    profilesError: profilesQuery.isError,
-    profilesSuccess: Boolean(currentProfile) || profilesQuery.isSuccess,
+    profilesLoading: profilesQuery.isLoading || currentProfileQuery.isLoading,
+    profilesError: profilesQuery.isError || currentProfileQuery.isError,
+    profilesSuccess: profilesQuery.isSuccess || currentProfileQuery.isSuccess,
     isSelectionPending: profileSelectionMutation.isPending,
     isSelectionError: profileSelectionMutation.isError,
     isSigningOut: signOutMutation.isPending,
-    retryProfiles: () => void profilesQuery.refetch(),
+    retryProfiles: () => {
+      void currentProfileQuery.refetch()
+      void profilesQuery.refetch()
+    },
     selectProfile: (profileId: string) =>
       profileSelectionMutation.mutate(profileId, {
         onSuccess: () => {

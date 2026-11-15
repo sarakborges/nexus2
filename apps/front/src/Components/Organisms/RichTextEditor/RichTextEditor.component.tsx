@@ -1,6 +1,6 @@
 import type { RichTextEditorProps } from './RichTextEditor.types'
-import { HtmlSourceEditor } from '@/Components/Molecules/HtmlSourceEditor'
-import { RichTextToolbar } from '@/Components/Molecules/RichTextToolbar'
+import { HtmlSourceEditor } from '@/Components/Organisms/HtmlSourceEditor'
+import { RichTextToolbar } from '@/Components/Organisms/RichTextToolbar'
 import { useRichTextEditor } from './useRichTextEditor'
 import Editor from 'react-simple-wysiwyg'
 import { useTranslations } from '@/Hooks/Language'

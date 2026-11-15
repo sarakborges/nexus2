@@ -9,7 +9,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from '@/Components/Organisms/AccountMenu'
 import { NotificationsMenu } from '@/Components/Organisms/NotificationsMenu'
 import { FloatingNavigationSearch } from '@/Components/Molecules/FloatingNavigationSearch'
-import { FloatingNavigationLinks } from '@/Components/Molecules/FloatingNavigationLinks'
+import { FloatingNavigationLinks } from '@/Components/Organisms/FloatingNavigationLinks'
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 import { useFloatingNavigationBar } from './useFloatingNavigationBar'
 

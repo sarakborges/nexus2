@@ -1,7 +1,7 @@
 import { RequestState } from '@/Components/Molecules/RequestState'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import { ButtonLink } from '@/DesignSystem'
-import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
-import { HomePagePreviewEntry } from '@/Components/Molecules/HomePagePreviewEntry'
+import { SocialPreviewPanel } from '@/Components/Organisms/SocialPreviewPanel'
 import type { HomePageEntityPreviewProps } from './HomePageEntityPreview.types'
 import './HomePageEntityPreview.style.scss'
 
@@ -41,12 +41,18 @@ export function HomePageEntityPreview({
       >
         <div className="home-page__preview-list">
           {items.map((item) => (
-            <HomePagePreviewEntry
+            <AccountIdentityLink
               key={item.id}
+              to={getHref(item)}
               name={item.name}
               picture={item.picture}
-              href={getHref(item)}
               secondary={getSecondary(item)}
+              title={item.name}
+              className="home-page__preview-entry account-card__profile-entry-identity"
+              avatarClassName="home-page__preview-avatar account-card__profile-entry-avatar"
+              copyClassName="home-page__preview-copy account-card__profile-entry-copy"
+              nameClassName="account-card__link"
+              secondaryClassName="account-card__profile-entry-secondary"
             />
           ))}
         </div>

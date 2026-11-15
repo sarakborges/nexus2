@@ -1,4 +1,4 @@
-import { ProfileSwitcher } from '@/Components/Molecules/ProfileSwitcher'
+import { ProfileSwitcher } from '@/Components/Organisms/ProfileSwitcher'
 import type { AccountMenuProps } from './AccountMenu.types'
 import {
   FiEdit3,
