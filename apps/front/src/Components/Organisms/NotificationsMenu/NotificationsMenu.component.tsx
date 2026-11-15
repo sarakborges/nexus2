@@ -1,22 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
-import type { RecentActivity } from '@nexus/common'
-import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { FiBell } from 'react-icons/fi'
-import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 
+import { NotificationActivityEntry } from '@/Components/Molecules/NotificationActivityEntry'
+import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getCurrentAuthSession } from '@/Services/Auth'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { useAuthStore } from '@/Stores/Auth.store'
 
-function getActivityHref(activity: RecentActivity): string {
-  if (activity.type === 'community_created' || activity.type === 'community_membership') {
-    return ROUTES.community + '/' + activity.community.url
-  }
-  return ROUTES.profile + '/' + activity.profile.url
-}
+import './NotificationsMenu.style.scss'
 
 export function NotificationsMenu({
   isOpen,
@@ -34,19 +28,6 @@ export function NotificationsMenu({
     staleTime: 30_000
   })
   const activities = activityQuery.data?.activities.slice(0, 8) ?? []
-
-  const renderActivity = (activity: RecentActivity) => {
-    switch (activity.type) {
-      case 'friend_connected':
-        return <>{activity.profile.name} {t('NOTIFICATION_FRIEND_CONNECTED')} {activity.friend.name}</>
-      case 'profile_post':
-        return <>{activity.profile.name} {t('NOTIFICATION_PROFILE_POST')}</>
-      case 'community_created':
-        return <>{activity.profile.name} {t('NOTIFICATION_COMMUNITY_CREATED')} {activity.community.name}</>
-      case 'community_membership':
-        return <>{activity.profile.name} {t('NOTIFICATION_COMMUNITY_JOINED')} {activity.community.name}</>
-    }
-  }
 
   return (
     <>
@@ -86,26 +67,11 @@ export function NotificationsMenu({
             <p className="floating-navigation__notifications-state">{t('NOTIFICATIONS_EMPTY')}</p>
           )}
           {activities.map(activity => (
-            <Link
-              className="floating-navigation__notification-item"
-              to={getActivityHref(activity)}
+            <NotificationActivityEntry
               key={activity.id}
+              activity={activity}
               onClick={onClose}
-            >
-              <IdentityAvatar
-                className="floating-navigation__notification-avatar"
-                name={activity.profile.name}
-                picture={activity.profile.picture}
-              />
-              <span className="floating-navigation__notification-copy">
-                <strong>{activity.profile.name}</strong>
-                <small>@{activity.profile.url}</small>
-                <span>{renderActivity(activity)}</span>
-                <time dateTime={new Date(activity.updatedAt).toISOString()}>
-                  {new Date(activity.updatedAt).toLocaleString()}
-                </time>
-              </span>
-            </Link>
+            />
           ))}
           <Link
             className="floating-navigation__notifications-all"

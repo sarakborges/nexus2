@@ -11,6 +11,8 @@ export { Pagination } from './Pagination'
 export { PreferenceOption } from './PreferenceOption'
 export { RelationshipActions } from './RelationshipActions'
 export { AccountIdentityLink } from './AccountIdentityLink'
+export { NotificationActivityEntry } from './NotificationActivityEntry'
+export type { NotificationActivityEntryProps } from './NotificationActivityEntry'
 
 export { HomePageActivityEntry } from './HomePageActivityEntry'
 export type { HomePageActivityEntryProps } from './HomePageActivityEntry'

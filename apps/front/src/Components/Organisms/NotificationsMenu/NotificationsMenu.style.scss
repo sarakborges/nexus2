@@ -1,6 +1,5 @@
 .floating-navigation {
   &__notification-trigger {
-
     position: relative;
     display: grid;
     place-items: center;
@@ -12,27 +11,23 @@
     background: transparent;
     color: var(--text-color);
     cursor: pointer;
-  
   }
+
   &__notification-trigger:hover {
-
     background: var(--color-background);
-  
   }
-  &__notification-trigger:focus-visible {
 
+  &__notification-trigger:focus-visible {
     outline: 2px solid var(--color-primary-strong);
     outline-offset: 2px;
-  
   }
-  &__notification-trigger svg {
 
+  &__notification-trigger svg {
     width: var(--nexus-icon-size, 20px);
     height: var(--nexus-icon-size, 20px);
-  
   }
-  &__notification-count {
 
+  &__notification-count {
     position: absolute;
     top: 1px;
     right: 1px;
@@ -46,118 +41,45 @@
     color: white;
     font-size: 10px;
     font-weight: 700;
-  
   }
-  &__notifications-heading {
 
+  &__notifications-heading {
     display: grid;
     gap: var(--nexus-space-1, 3px);
     padding: var(--nexus-space-2, 10px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
     border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-  
   }
-  &__notifications-heading span,
-  &__notification-item time {
 
+  &__notifications-heading span {
     color: var(--color-neutral);
     font-size: 11px;
-  
   }
-  &__notification-item {
 
-    display: flex;
-    align-items: flex-start;
-    gap: var(--nexus-space-2, 10px);
-    padding: 11px var(--nexus-space-3, 12px);
-    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-    color: var(--text-color);
-    font-size: 13px;
-    line-height: 1.4;
-    text-decoration: none;
-  
-  }
-  &__notification-item:hover {
-
-    background: var(--color-background);
-  
-  }
-  &__notification-avatar {
-
-    display: grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    flex: 0 0 36px;
-    overflow: hidden;
-    border: var(--nexus-border-width, 2px) solid var(--color-border);
-    background: var(--avatar-background);
-    font-size: 13px;
-  
-  }
-  &__notification-avatar img {
-
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  
-  }
-  &__notification-copy {
-
-    display: grid;
-    min-width: 0;
-    gap: var(--nexus-space-1, 3px);
-  
-  }
-  &__notification-copy strong {
-
-    overflow: hidden;
-    font-size: 13px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  
-  }
-  &__notification-copy small {
-
-    color: var(--color-neutral);
-    font-size: 11px;
-  
-  }
-  &__notification-copy > span {
-
-    overflow-wrap: anywhere;
-  
-  }
   &__notifications-state {
-
     padding: var(--nexus-space-3, 14px) var(--nexus-space-3, 12px);
     color: var(--color-neutral);
     font-size: 13px;
-  
   }
-  &__notifications-all {
 
+  &__notifications-all {
     display: block;
     padding: var(--nexus-space-3, 12px);
     color: var(--color-primary-weak);
     font-size: 13px;
     font-weight: var(--font-weight-bold);
     text-decoration: none;
-  
   }
-  &__menu--notifications {
 
+  &__menu--notifications {
     top: calc(100% + 8px);
     right: 0;
     width: min(360px, calc(100vw - 32px));
-  
   }
 }
+
 @media (max-width: 680px) {
   .floating-navigation__menu--notifications {
-
     right: 0;
     width: min(360px, calc(100vw - 16px));
-  
   }
 }
