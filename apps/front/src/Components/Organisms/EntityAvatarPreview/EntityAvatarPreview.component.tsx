@@ -1,7 +1,7 @@
 import { ButtonLink } from '@/DesignSystem'
 import { IdentityAvatarGrid } from '@/Components/Molecules/IdentityAvatarGrid'
 import { RequestState } from '@/Components/Molecules/RequestState'
-import { SocialPreviewPanel } from '@/Components/Organisms/SocialPreviewPanel'
+import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 
 import type { EntityAvatarPreviewProps } from './EntityAvatarPreview.types'
 

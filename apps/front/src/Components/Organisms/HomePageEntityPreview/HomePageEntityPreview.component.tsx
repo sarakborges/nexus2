@@ -1,7 +1,7 @@
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 import { ButtonLink } from '@/DesignSystem'
-import { SocialPreviewPanel } from '@/Components/Organisms/SocialPreviewPanel'
+import { SocialPreviewPanel } from '@/Components/Molecules/SocialPreviewPanel'
 import type { HomePageEntityPreviewProps } from './HomePageEntityPreview.types'
 import './HomePageEntityPreview.style.scss'
 
