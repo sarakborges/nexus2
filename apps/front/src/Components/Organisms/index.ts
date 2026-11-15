@@ -24,8 +24,6 @@ export { ToastViewport } from './ToastViewport'
 export { HomePageActivityFeed } from './HomePageActivityFeed'
 export type { HomePageActivityFeedProps } from './HomePageActivityFeed'
 
-export { HomePageEntityPreview } from './HomePageEntityPreview'
-export type { HomePageEntityPreviewProps } from './HomePageEntityPreview'
 export { HomePagePostComposer } from './HomePagePostComposer'
 export type { HomePagePostComposerProps } from './HomePagePostComposer'
 
