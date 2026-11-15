@@ -1,4 +1,4 @@
-import { Checkbox } from '@/DesignSystem'
+import { ProfileActivityTypeRow } from '@/Components/Molecules/ProfileActivityTypeRow'
 import { useTranslations } from '@/Hooks/Language'
 import type { TranslationKey } from '@/Types/Translation.type'
 import type { ProfileSettingsActivityMatrixProps, ProfileActivityType } from './ProfileSettingsActivityMatrix.types'
@@ -16,41 +16,30 @@ export function ProfileSettingsActivityMatrix({
   onToggle
 }: ProfileSettingsActivityMatrixProps) {
   const { t } = useTranslations()
+  const publishLabel = t('PROFILE_SETTINGS_YOUR_POSTS')
+  const friendsLabel = t('PROFILE_SETTINGS_FRIENDS_POSTS')
 
   return (
     <section className="profile-settings-activity-matrix__section" aria-labelledby="profile-feed-settings-title">
       <h2 id="profile-feed-settings-title">{t('PROFILE_SETTINGS_FEED_TITLE')}</h2>
       <p>{t('PROFILE_SETTINGS_FEED_DESCRIPTION')}</p>
       <div className="profile-settings-activity-matrix__matrix" role="table" aria-label={t('PROFILE_SETTINGS_FEED_TITLE')}>
-        <div className="profile-settings-activity-matrix__row profile-settings-activity-matrix__row--header" role="row">
+        <div className="profile-settings-activity-matrix__header" role="row">
           <span role="columnheader">{t('PROFILE_SETTINGS_ACTIVITY_TYPE')}</span>
-          <span role="columnheader">{t('PROFILE_SETTINGS_YOUR_POSTS')}</span>
-          <span role="columnheader">{t('PROFILE_SETTINGS_FRIENDS_POSTS')}</span>
+          <span role="columnheader">{publishLabel}</span>
+          <span role="columnheader">{friendsLabel}</span>
         </div>
         {ACTIVITY_TYPES.map(activity => (
-          <div className="profile-settings-activity-matrix__row" role="row" key={activity.type}>
-            <span role="cell">{t(activity.label)}</span>
-            <label
-              role="cell"
-              data-label={t('PROFILE_SETTINGS_YOUR_POSTS')}
-              aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_YOUR_POSTS')}
-            >
-              <Checkbox
-                checked={settings.publishActivityTypes.includes(activity.type)}
-                onChange={() => onToggle('publishActivityTypes', activity.type)}
-              />
-            </label>
-            <label
-              role="cell"
-              data-label={t('PROFILE_SETTINGS_FRIENDS_POSTS')}
-              aria-label={t(activity.label) + ' — ' + t('PROFILE_SETTINGS_FRIENDS_POSTS')}
-            >
-              <Checkbox
-                checked={settings.showFriendActivityTypes.includes(activity.type)}
-                onChange={() => onToggle('showFriendActivityTypes', activity.type)}
-              />
-            </label>
-          </div>
+          <ProfileActivityTypeRow
+            key={activity.type}
+            label={t(activity.label)}
+            publishLabel={publishLabel}
+            friendsLabel={friendsLabel}
+            publishChecked={settings.publishActivityTypes.includes(activity.type)}
+            friendsChecked={settings.showFriendActivityTypes.includes(activity.type)}
+            onPublishChange={() => onToggle('publishActivityTypes', activity.type)}
+            onFriendsChange={() => onToggle('showFriendActivityTypes', activity.type)}
+          />
         ))}
       </div>
     </section>
