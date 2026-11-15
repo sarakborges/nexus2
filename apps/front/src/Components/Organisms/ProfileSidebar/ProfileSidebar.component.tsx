@@ -1,6 +1,6 @@
 
 import { SocialSidebar } from '@/Components/Organisms/SocialSidebar'
-import { RelationshipActions } from '@/Components/Molecules'
+import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSidebarProps } from './ProfileSidebar.types'

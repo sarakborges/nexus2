@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 
-import { ComposerActions, RichTextComposerField } from '@/Components'
+import { ComposerActions } from '@/Components/Molecules/ComposerActions'
+import { RichTextComposerField } from '@/Components/Organisms/RichTextComposerField'
 import { ROUTES } from '@/Constants/routes'
 import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
