@@ -1,4 +1,3 @@
-import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
@@ -77,7 +76,6 @@ export function CommunityMembersPage() {
         />
       }
     >
-      <RequestState isFetching={communityMembersPageQuery.isFetching} />
       <div className="community-members-page">
         {(totalMembers > 0 && (
           <PaginatedListControls
