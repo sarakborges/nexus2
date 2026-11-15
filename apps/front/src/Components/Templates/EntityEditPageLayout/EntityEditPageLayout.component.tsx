@@ -4,14 +4,6 @@ import { useTranslations } from '@/Hooks/Language'
 
 import type { EntityEditPageLayoutProps } from './EntityEditPageLayout.types'
 
-function LoadingState() {
-  return (
-    <EntityFormPageLayout>
-      <RequestState isLoading />
-    </EntityFormPageLayout>
-  )
-}
-
 export function EntityEditPageLayout({
   title,
   description,
@@ -28,9 +20,14 @@ export function EntityEditPageLayout({
   children
 }: EntityEditPageLayoutProps) {
   const { t } = useTranslations()
+  const loadingState = (
+    <EntityFormPageLayout>
+      <RequestState isLoading />
+    </EntityFormPageLayout>
+  )
 
   if (!hasValidRequest) return notFound
-  if (isLoading) return <LoadingState />
+  if (isLoading) return loadingState
 
   if (isError) {
     return (
@@ -41,7 +38,7 @@ export function EntityEditPageLayout({
   }
 
   if (!isEntityAvailable) return notFound
-  if (isTypeChecking) return <LoadingState />
+  if (isTypeChecking) return loadingState
 
   if (!isTypeCompatible) {
     return (
@@ -53,7 +50,7 @@ export function EntityEditPageLayout({
     )
   }
 
-  if (!isFormReady) return <LoadingState />
+  if (!isFormReady) return loadingState
 
   return (
     <EntityFormPageLayout
