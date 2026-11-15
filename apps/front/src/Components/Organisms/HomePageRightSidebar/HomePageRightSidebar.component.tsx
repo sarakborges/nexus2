@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { ProfileDirectoryPageData } from '@nexus/common'
 import { HomePageEntityPreview } from '@/Components/Organisms/HomePageEntityPreview'
 import type { HomePageEntityPreviewItem } from '@/Components/Organisms/HomePageEntityPreview/HomePageEntityPreview.types'
+import { DEFAULT_PAGE_SIZE } from '@/Constants/pagination'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfileDirectoryPage } from '@/Services/Profile'
@@ -11,7 +12,7 @@ import type { HomePageRightSidebarProps } from './HomePageRightSidebar.types'
 import './HomePageRightSidebar.style.scss'
 
 
-const PREVIEW_PAGE_SIZE = 100
+const PREVIEW_PAGE_SIZE = DEFAULT_PAGE_SIZE
 const PREVIEW_ITEMS = 4
 
 function getDirectoryItems(
@@ -104,7 +105,6 @@ export function HomePageRightSidebar({
         isLoading={false}
         isFetching={false}
         isError={false}
-        onRetry={() => void friendsQuery.refetch()}
         getHref={item => ROUTES.community + '/' + item.url}
         getSecondary={item => '/community/' + item.url}
       />
