@@ -2,7 +2,7 @@
   display: grid;
   gap: var(--nexus-space-5, 20px);
   min-width: 0;
-  padding: var(--nexus-space-6, 22px);
+  padding: var(--nexus-space-6, 24px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
@@ -45,7 +45,7 @@
 
 @media (max-width: 900px) and (min-width: 681px) {
   .social-panel {
-    padding: var(--nexus-space-4, 18px);
+    padding: var(--nexus-space-4, 16px);
   }
 }
 
