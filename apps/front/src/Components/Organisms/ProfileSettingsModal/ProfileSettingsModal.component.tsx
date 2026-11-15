@@ -1,7 +1,7 @@
 import { ProfileSettingsSaveBar } from '@/Components/Molecules/ProfileSettingsSaveBar'
 import { ProfileSettingsActivityMatrix } from '@/Components/Organisms/ProfileSettingsActivityMatrix'
 import { ProfileSettingsMessageAudience } from '@/Components/Organisms/ProfileSettingsMessageAudience'
-import { Button, Modal } from '@/DesignSystem'
+import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsModalProps } from './ProfileSettingsModal.types'
 import { useProfileSettingsModal } from './useProfileSettingsModal'
