@@ -1,4 +1,5 @@
 import { FiSearch } from 'react-icons/fi'
+import type { SearchScope } from '@nexus/common'
 
 import { Button, Input, Select } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
@@ -33,7 +34,7 @@ export function FloatingNavigationSearch() {
       <Select
         aria-label={t('SEARCH_SCOPE_LABEL')}
         value={searchScope}
-        onChange={event => setSearchScope(event.target.value)}
+        onChange={event => setSearchScope(event.target.value as SearchScope)}
       >
         <option value="all">{t('SEARCH_SCOPE_ALL')}</option>
         <option value="profiles">{t('SEARCH_SCOPE_PROFILES')}</option>
