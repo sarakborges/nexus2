@@ -1,5 +1,6 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { Pagination, RequestState } from '@/Components'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { Tabs } from '@/DesignSystem'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
@@ -8,7 +9,7 @@ import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { useTranslations } from '@/Hooks/Language'
 import { NotFoundState } from '@/Components/Organisms/NotFoundState'
 import { ProfileMessageComposer } from '@/Components/Organisms/ProfileMessageComposer'
-import { ProfileMessageList } from '@/Components/Organisms'
+import { ProfileMessageList } from '@/Components/Organisms/ProfileMessageList'
 import { useProfileMessagesPage } from './useProfileMessagesPage'
 
 
