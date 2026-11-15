@@ -3,7 +3,7 @@ export type IdentityAvatarLinkProps = {
   name: string
   picture: string
   className?: string
-  avatarClassName?: string
+  avatarClassName: string
   ariaLabel?: string
   title?: string
 }
