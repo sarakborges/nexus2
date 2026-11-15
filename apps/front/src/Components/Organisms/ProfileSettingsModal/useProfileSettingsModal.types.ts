@@ -2,10 +2,9 @@ import type { ProfileSettings } from '@nexus/common'
 
 export type ProfileActivityType = ProfileSettings['publishActivityTypes'][number]
 
-export type UseProfileSettingsPageResult = {
+export type UseProfileSettingsModalResult = {
+  hasProfile: boolean
   isLoading: boolean
-  isError: boolean
-  profileName: string
   settings: ProfileSettings
   isSaving: boolean
   isDirty: boolean
@@ -17,5 +16,4 @@ export type UseProfileSettingsPageResult = {
     type: ProfileActivityType
   ) => void
   save: () => void
-  retry: () => void
 }

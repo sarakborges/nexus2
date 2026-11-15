@@ -102,7 +102,7 @@ export function AccountMenu({
           role="menuitem"
           onClick={() => {
             onClose()
-            onOpenProfileSettings(currentProfile.url)
+            onOpenProfileSettings()
           }}
         >
           <FiSliders aria-hidden="true" />
