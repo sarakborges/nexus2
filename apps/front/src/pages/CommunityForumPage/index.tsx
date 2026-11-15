@@ -4,7 +4,7 @@ import { RelationshipActions } from '@/Components/Molecules/RelationshipActions'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
 import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
-import { CommunityForumTopicList } from '@/Components/Molecules/CommunityForumTopicList'
+import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
 import { Button } from '@/DesignSystem'
@@ -68,10 +68,10 @@ export function CommunityForumPage() {
     >
       <section className="community-forum social-page__content-stack">
         <ProfileTypeNotice
-        isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
-        message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
-      />
-        
+          isVisible={!typeCompatibility.isChecking && !typeCompatibility.isCompatible}
+          message={t('PROFILE_TYPE_MISMATCH_NOTICE')}
+        />
+
         <header className="account-card__header">
           <div>
             <h1 className="account-card__title">{t('FORUM_TITLE')}</h1>
@@ -82,19 +82,20 @@ export function CommunityForumPage() {
           {canPublish && (
             <Button type="button" onClick={openCreateTopic}>
               {t('FORUM_NEW_TOPIC')}
-            </Button>)}
-          
+            </Button>
+          )}
         </header>
 
-        {((forumPageQuery.data?.topics.totalItems ?? 0) > 0 && (
+        {forumPageQuery.data?.topics.totalItems > 0 && (
           <PaginatedListControls
             key={query}
             query={query}
             sort={sort}
             onQueryChange={setQuery}
             onSortChange={setSort}
-          />))}
-        
+          />
+        )}
+
         <RequestState isFetching={forumPageQuery.isFetching} />
         {!canPublish && session && typeCompatibility.canInteract && (
           <div className="community-forum__join">
@@ -106,8 +107,8 @@ export function CommunityForumPage() {
               targetKind="community"
               relationship={viewerRelationship}
             />
-          </div>)}
-        
+          </div>
+        )}
 
         <RequestState
           isLoading={forumPageQuery.isLoading}

@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 
 import { RequestState } from '@/Components/Molecules/RequestState'
-import { CommunityForumTopicList } from '@/Components/Molecules/CommunityForumTopicList'
+import { CommunityForumTopicList } from '@/Components/Organisms/CommunityForumTopicList'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityPageForumPreviewProps } from './CommunityPageForumPreview.types'

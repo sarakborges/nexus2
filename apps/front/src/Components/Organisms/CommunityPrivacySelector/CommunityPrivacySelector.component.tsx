@@ -1,7 +1,7 @@
 import type { CommunityPrivacySelectorProps } from './CommunityPrivacySelector.types'
 
 import { PreferenceOption } from '@/Components/Molecules/PreferenceOption'
-import { PreferenceSelector } from '@/Components/Molecules/PreferenceSelector'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { useTranslations } from '@/Hooks/Language'
 
 export function CommunityPrivacySelector({

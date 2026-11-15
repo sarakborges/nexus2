@@ -1,5 +1,5 @@
 import { LanguageOption } from '@/Components/Molecules/LanguageOption'
-import { PreferenceSelector } from '@/Components/Molecules/PreferenceSelector'
+import { PreferenceSelector } from '@/Components/Organisms/PreferenceSelector'
 import { SUPPORTED_LANGUAGE_PREFERENCES } from '@/Constants/languages'
 import { useTranslations } from '@/Hooks/Language/useTranslations.hook'
 
