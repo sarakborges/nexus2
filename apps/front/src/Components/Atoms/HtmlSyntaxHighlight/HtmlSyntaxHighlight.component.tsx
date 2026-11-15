@@ -19,16 +19,6 @@ const tokenClassNames = {
   string: 'rich-text-editor__token--string'
 } as const
 
-function AttributePart({ part }: { part: HtmlSyntaxAttributePart }) {
-  if (part.type === 'text') return <>{part.value}</>
-
-  return (
-    <span className={`rich-text-editor__token ${tokenClassNames[part.type]}`}>
-      {part.value}
-    </span>
-  )
-}
-
 export function HtmlSyntaxHighlight({ source }: HtmlSyntaxHighlightProps) {
   const tokens = tokenizeHtml(source)
 
@@ -49,7 +39,16 @@ export function HtmlSyntaxHighlight({ source }: HtmlSyntaxHighlightProps) {
                 {token.name}
               </span>
               {token.attributes.map((part, partIndex) => (
-                <AttributePart key={partIndex} part={part} />
+                part.type === 'text' ? (
+                  <Fragment key={partIndex}>{part.value}</Fragment>
+                ) : (
+                  <span
+                    className={`rich-text-editor__token ${tokenClassNames[part.type]}`}
+                    key={partIndex}
+                  >
+                    {part.value}
+                  </span>
+                )
               ))}
               <span className={`rich-text-editor__token ${tokenClassNames.tag}`}>
                 {token.closing}
