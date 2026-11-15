@@ -1,5 +1,6 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { Pagination, RequestState } from '@/Components'
+import { Pagination } from '@/Components/Molecules/Pagination'
+import { RequestState } from '@/Components/Molecules/RequestState'
 import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
 import { Tabs } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'

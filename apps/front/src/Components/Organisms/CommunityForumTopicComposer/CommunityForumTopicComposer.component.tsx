@@ -1,4 +1,5 @@
-import { ComposerActions, RichTextComposerField } from '@/Components'
+import { ComposerActions } from '@/Components/Molecules/ComposerActions'
+import { RichTextComposerField } from '@/Components/Organisms/RichTextComposerField'
 import { Button, FormField } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { CommunityForumTopicComposerProps } from './CommunityForumTopicComposer.types'

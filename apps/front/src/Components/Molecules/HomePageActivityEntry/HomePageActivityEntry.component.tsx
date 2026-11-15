@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
 
-import { IdentityAvatar } from '@/Components'
+import { IdentityAvatar } from '@/Components/Atoms/IdentityAvatar'
 import { RichTextContent } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'

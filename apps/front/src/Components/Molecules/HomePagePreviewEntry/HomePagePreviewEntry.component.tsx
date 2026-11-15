@@ -2,7 +2,7 @@ import type { HomePagePreviewEntryProps } from './HomePagePreviewEntry.types'
 
 import './HomePagePreviewEntry.style.scss'
 
-import { AccountIdentityLink } from '@/Components'
+import { AccountIdentityLink } from '@/Components/Molecules/AccountIdentityLink'
 
 export function HomePagePreviewEntry({
   name,
