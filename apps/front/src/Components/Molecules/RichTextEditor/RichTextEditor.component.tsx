@@ -5,6 +5,8 @@ import { useRichTextEditor } from './useRichTextEditor'
 import Editor from 'react-simple-wysiwyg'
 import { useTranslations } from '@/Hooks/Language'
 
+import { Button } from '@/DesignSystem'
+
 import './RichTextEditor.style.scss'
 
 export function RichTextEditor({
@@ -37,13 +39,14 @@ export function RichTextEditor({
               <strong>{t('RICH_TEXT_HTML')}</strong>
               <small>{t('RICH_TEXT_SOURCE_EDITOR')}</small>
             </span>
-            <button
+            <Button
               className="rich-text-editor__visual-mode-button"
               type="button"
+              variation="secondary"
               onClick={closeHtmlMode}
             >
               Visual editor
-            </button>
+            </Button>
           </header>
           <HtmlSourceEditor
             id={id}
