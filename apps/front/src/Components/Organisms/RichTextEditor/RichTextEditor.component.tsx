@@ -45,7 +45,7 @@ export function RichTextEditor({
               variation="secondary"
               onClick={closeHtmlMode}
             >
-              Visual editor
+              {t('RICH_TEXT_VISUAL_EDITOR')}
             </Button>
           </header>
           <HtmlSourceEditor
