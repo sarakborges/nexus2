@@ -2,9 +2,14 @@
   display: flex;
   align-items: center;
   align-content: center;
-  flex-wrap: wrap;
-  gap: var(--nexus-space-1, 4px);
-  min-height: 52px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  gap: 2px;
+  min-height: 40px;
   padding: var(--nexus-space-2, 8px);
   border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   background: var(--color-surface-inset, var(--color-background));
@@ -15,10 +20,11 @@
   place-items: center;
   align-self: center;
   box-sizing: border-box;
-  width: var(--nexus-icon-button-size, 40px);
-  min-width: var(--nexus-icon-button-size, 40px);
-  height: var(--nexus-icon-button-size, 40px);
-  min-height: var(--nexus-icon-button-size, 40px);
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  flex: 0 0 32px;
   aspect-ratio: 1;
   padding: 0;
   border: var(--nexus-border-width, 2px) solid transparent;
@@ -69,7 +75,7 @@
 
 @media (max-width: 560px) {
   .rich-text-editor .rsw-toolbar {
-    gap: var(--nexus-space-1, 4px);
-    padding: var(--nexus-space-2, 8px);
+    gap: 2px;
+    padding: var(--nexus-space-1, 4px);
   }
 }

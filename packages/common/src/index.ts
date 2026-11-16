@@ -45,13 +45,14 @@ export type ProfileSettings = { messageAudience: 'friends' | 'everyone'; publish
 export type ApiErrorResponse = { statusCode: number; message: string | string[]; error?: string }
 
 export type RecentActivity =
-  | { id: string; type: 'friend_connected'; updatedAt: number; profile: Profile; friend: Profile }
-  | { id: string; type: 'profile_post'; updatedAt: number; profile: Profile; content: string }
-  | { id: string; type: 'community_created'; updatedAt: number; profile: Profile; community: Community }
+  | { id: string; type: 'friend_connected'; updatedAt: number; isRead?: boolean; profile: Profile; friend: Profile }
+  | { id: string; type: 'profile_post'; updatedAt: number; isRead?: boolean; profile: Profile; content: string }
+  | { id: string; type: 'community_created'; updatedAt: number; isRead?: boolean; profile: Profile; community: Community }
   | {
       id: string
       type: 'community_membership'
       updatedAt: number
+      isRead?: boolean
       profile: Profile
       community: Community
       role: Extract<CommunityRelationshipType, 'owner' | 'moderator' | 'connection'>

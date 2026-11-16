@@ -21,6 +21,7 @@ const controllers = [
 const expectedRoutes = [
   'GET search',
   'GET activity',
+  'POST activity/read',
   'GET profiles/by-url/:url/directory/:kind/page',
   'GET profiles/by-url/:url/edit/page',
   'GET profiles/by-url/:url/page',

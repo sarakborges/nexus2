@@ -73,12 +73,14 @@ export function CommunityMemberDirectory({
           isStaff={isStaff}
         />
       </RequestState>
-      <Pagination
-        page={page}
-        pageSize={pageSize}
-        totalItems={totalMembers}
-        onPageChange={onPageChange}
-      />
+      {totalMembers > 0 && (
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          totalItems={totalMembers}
+          onPageChange={onPageChange}
+        />
+      )}
     </section>
   )
 }

@@ -37,7 +37,7 @@ export function useProfilePage(): UseProfilePageResult {
   const friends = profilePageQuery.data?.friends.items ?? []
   const communities = profilePageQuery.data?.communities.items ?? []
 
-  const isOwner = session?.user.profiles.includes(profile?.id ?? '') ?? false
+  const isOwner = Boolean(profile && currentProfileId === profile.id)
 
   const openEditProfile = () => {
     if (profile) navigate(ROUTES.profile + '/' + profile.url + '/edit')

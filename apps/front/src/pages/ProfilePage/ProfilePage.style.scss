@@ -6,12 +6,14 @@
   gap: var(--nexus-space-2);
 }
 
-.profile-page__action {
+ .profile-page__action {
   box-sizing: border-box;
-  width: 140px;
-  min-width: 140px;
-  flex: 0 0 140px;
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
 }
+
 
 @media (max-width: 680px) {
   .profile-page__relationship-actions {
@@ -20,7 +22,8 @@
 
   .profile-page__relationship-actions .profile-page__action,
   .social-panel__header-actions > .profile-page__action {
-    width: 140px;
-    flex: 0 0 140px;
+    width: fit-content;
+    min-width: 0;
+    flex: 0 1 auto;
   }
 }

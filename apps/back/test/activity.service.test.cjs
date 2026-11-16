@@ -32,6 +32,9 @@ test('activity page reads typed feed rows with a stable keyset cursor', async ()
           content: '<p>Next page</p>', role: null
         }
       ]
+    },
+    async getActivityReadIds() {
+      return ['post:1']
     }
   }
   const service = new ActivityService(repository)
@@ -45,6 +48,7 @@ test('activity page reads typed feed rows with a stable keyset cursor', async ()
   })
   assert.equal(page.items.length, 1)
   assert.equal(page.items[0].content, '<p>First page</p>')
+  assert.equal(page.items[0].isRead, true)
   assert.deepEqual(page.nextCursor, { updatedAt: 200, id: 'post:1' })
   assert.equal(page.hasMore, true)
 })
@@ -72,6 +76,9 @@ test('activity page maps all typed feed variants', async () => {
           profile: profile('profile-1'), friend: null, community, content: null, role: 'moderator'
         }
       ]
+    },
+    async getActivityReadIds() {
+      return []
     }
   }
   const service = new ActivityService(repository)
@@ -111,4 +118,18 @@ test('getRecentActivity pages through relational feed rows without collection sn
     { userId: 'account-1', limit: 51, cursor: null },
     { userId: 'account-1', limit: 51, cursor: { updatedAt: 951, id: 'post:49' } }
   ])
+})
+
+test('markActivitiesRead deduplicates ids before persisting the read state', async () => {
+  let write
+  const repository = {
+    async markActivitiesRead(userId, activityIds, readAt) {
+      write = { userId, activityIds, readAt }
+    }
+  }
+  const service = new ActivityService(repository)
+  await service.markActivitiesRead('account-1', ['activity:1', 'activity:1', 'activity:2'])
+  assert.equal(write.userId, 'account-1')
+  assert.deepEqual(write.activityIds, ['activity:1', 'activity:2'])
+  assert.ok(Number.isFinite(write.readAt))
 })

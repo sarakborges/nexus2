@@ -6,9 +6,9 @@
     box-sizing: border-box;
     width: min(100%, 420px);
     max-width: 420px;
-    min-width: 180px;
+    min-width: 0;
     height: 44px;
-    flex: 0 1 420px;
+    flex: 1 1 420px; min-width: 0;
     margin-left: var(--nexus-space-1);
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     background: var(--color-background);
@@ -34,7 +34,7 @@
   }
   &__search-form .select {
 
-    flex: 0 0 112px;
+    flex: 0 1 112px; min-width: 84px;
     width: 112px;
   
   }
@@ -94,8 +94,8 @@
 
     width: auto;
     max-width: 360px;
-    min-width: 150px;
-    flex: 1 1 300px;
+    min-width: 0;
+    flex: 1 1 300px; min-width: 0;
   
   }
   .floating-navigation__search-form .select {
@@ -110,7 +110,7 @@
 
     width: auto;
     max-width: none;
-    min-width: 48px;
+    min-width: 0;
     flex: 1 1 80px;
     margin-left: 0;
   

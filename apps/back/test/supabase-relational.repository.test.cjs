@@ -1539,3 +1539,41 @@ test('creates accounts with their first refresh token and updates preferences th
   assert.equal(calls[1].body.p_language, null)
   assert.equal(calls[1].body.p_theme, 'dark')
 })
+
+
+test('reads and persists activity notification read states through dedicated RPCs', async t => {
+  const calls = []
+  withFetch(t, async (input, options) => {
+    const parsed = new URL(String(input))
+    const body = JSON.parse(options.body)
+    calls.push({ path: parsed.pathname, body })
+    if (parsed.pathname.endsWith('/nexus_get_activity_read_ids')) {
+      return new Response(JSON.stringify([{ activity_id: 'post:1' }]), { status: 200 })
+    }
+    if (parsed.pathname.endsWith('/nexus_mark_activities_read')) {
+      return new Response('2', { status: 200 })
+    }
+    throw new Error('Unexpected request: ' + parsed.pathname)
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  assert.deepEqual(
+    await repo.getActivityReadIds('account-1', ['post:1', 'post:2']),
+    ['post:1']
+  )
+  await repo.markActivitiesRead('account-1', ['post:1', 'post:2'], 123456)
+
+  assert.deepEqual(calls.map(call => call.path), [
+    '/rest/v1/rpc/nexus_get_activity_read_ids',
+    '/rest/v1/rpc/nexus_mark_activities_read'
+  ])
+  assert.deepEqual(calls[0].body, {
+    p_user_id: 'account-1',
+    p_activity_ids: ['post:1', 'post:2']
+  })
+  assert.deepEqual(calls[1].body, {
+    p_user_id: 'account-1',
+    p_activity_ids: ['post:1', 'post:2'],
+    p_read_at_ms: 123456
+  })
+})

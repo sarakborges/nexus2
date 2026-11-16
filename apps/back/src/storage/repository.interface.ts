@@ -424,4 +424,6 @@ export interface DataRepository {
     limit: number,
     cursor: ActivityFeedCursor | null
   ): Promise<ActivityFeedRow[]>
+  getActivityReadIds(userId: string, activityIds: readonly string[]): Promise<string[]>
+  markActivitiesRead(userId: string, activityIds: readonly string[], readAt: number): Promise<void>
 }

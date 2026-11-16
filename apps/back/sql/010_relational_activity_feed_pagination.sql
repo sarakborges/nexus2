@@ -52,31 +52,40 @@ begin
     from public.accounts a
     where a.id = p_user_id
   ),
-  owned_profiles as (
+  account_owned_profiles as (
     select p.id as profile_id, p.type
     from public.account_profiles ap
     join public.profiles p on p.id = ap.profile_id
     where ap.account_id = p_user_id
   ),
+  owned_profiles as (
+    select p.id as profile_id, p.type
+    from public.account_profiles ap
+    join public.profiles p on p.id = ap.profile_id
+    cross join account_context context
+    where ap.account_id = p_user_id
+      and ap.profile_id = context.active_profile_id
+  ),
   friend_profiles as (
     select distinct
       case
-        when owned.profile_id = relationship.profile_id then relationship.related_profile_id
+        when active_profile.id = relationship.profile_id then relationship.related_profile_id
         else relationship.profile_id
       end as profile_id
     from public.relationships relationship
-    join owned_profiles owned
-      on owned.profile_id = relationship.profile_id
-      or owned.profile_id = relationship.related_profile_id
+    cross join account_context context
+    join public.profiles active_profile
+      on active_profile.id = context.active_profile_id
     join public.profiles friend_profile
       on friend_profile.id = case
-        when owned.profile_id = relationship.profile_id then relationship.related_profile_id
+        when active_profile.id = relationship.profile_id then relationship.related_profile_id
         else relationship.profile_id
       end
     where relationship.type = 'connection'
-      and friend_profile.type = owned.type
+      and active_profile.id in (relationship.profile_id, relationship.related_profile_id)
+      and friend_profile.type = active_profile.type
       and not exists (
-        select 1 from owned_profiles already_owned
+        select 1 from account_owned_profiles already_owned
         where already_owned.profile_id = friend_profile.id
       )
   ),

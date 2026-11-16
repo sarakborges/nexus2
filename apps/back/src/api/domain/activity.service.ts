@@ -20,7 +20,10 @@ export class ActivityService {
     const rows = await this.data.getActivityFeedRows(userId, safeLimit, cursor)
     const hasMore = rows.length > safeLimit
     const pageRows = hasMore ? rows.slice(0, safeLimit) : rows
-    const items = pageRows.map(row => this.toRecentActivity(row))
+    const readIds = pageRows.length > 0
+      ? new Set(await this.data.getActivityReadIds(userId, pageRows.map(row => row.id)))
+      : new Set<string>()
+    const items = pageRows.map(row => this.toRecentActivity(row, readIds.has(row.id)))
     const lastItem = pageRows[pageRows.length - 1]
 
     return {
@@ -32,7 +35,7 @@ export class ActivityService {
     }
   }
 
-  private toRecentActivity(row: ActivityFeedRow): RecentActivity {
+  private toRecentActivity(row: ActivityFeedRow, isRead = false): RecentActivity {
     if (!Number.isFinite(row.updated_at_ms)) {
       throw new Error('Supabase relational activity feed returned an invalid timestamp.')
     }
@@ -44,6 +47,7 @@ export class ActivityService {
           id: row.id,
           type: row.type,
           updatedAt: row.updated_at_ms,
+          isRead,
           profile: row.profile,
           friend: row.friend
         }
@@ -52,6 +56,7 @@ export class ActivityService {
           id: row.id,
           type: row.type,
           updatedAt: row.updated_at_ms,
+          isRead,
           profile: row.profile,
           content: sanitizeRichText(row.content ?? '')
         }
@@ -61,6 +66,7 @@ export class ActivityService {
           id: row.id,
           type: row.type,
           updatedAt: row.updated_at_ms,
+          isRead,
           profile: row.profile,
           community: row.community
         }
@@ -72,6 +78,7 @@ export class ActivityService {
           id: row.id,
           type: row.type,
           updatedAt: row.updated_at_ms,
+          isRead,
           profile: row.profile,
           community: row.community,
           role: row.role
@@ -79,6 +86,13 @@ export class ActivityService {
     }
 
     throw new Error('Unsupported relational activity type.')
+  }
+
+  async markActivitiesRead(userId: string, activityIds: readonly string[]): Promise<void> {
+    const uniqueIds = [...new Set(activityIds.filter(id => typeof id === 'string' && id.length > 0))]
+    if (uniqueIds.length === 0) return
+    if (uniqueIds.length > 50) throw new Error('ACTIVITY_READ_BATCH_TOO_LARGE')
+    await this.data.markActivitiesRead(userId, uniqueIds, Date.now())
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {

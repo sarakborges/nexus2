@@ -28,6 +28,7 @@ type AuthStore = {
   signUp: (credentials: SignUpCredentials) => Promise<AuthenticatedUser>
   setCurrentProfile: (profileId: string) => Promise<boolean>
   setCurrentProfileSettings: (settings: ProfileSettings) => void
+  markActivitiesRead: (activityIds: readonly string[]) => void
   signOut: () => Promise<void>
 }
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -150,6 +151,20 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     } catch {
       return false
     }
+  },
+  markActivitiesRead: (activityIds) => {
+    if (activityIds.length === 0) return
+    const readIds = new Set(activityIds)
+    set((state) => state.session ? {
+      session: {
+        ...state.session,
+        activities: state.session.activities.map(activity =>
+          readIds.has(activity.id) ? { ...activity, isRead: true } : activity
+        )
+      }
+    } : state)
+    const session = get().session
+    if (session) queryClient.setQueryData(queryKeys.auth.session, session)
   },
   setCurrentProfileSettings: (settings) => {
     set((state) => state.session ? {

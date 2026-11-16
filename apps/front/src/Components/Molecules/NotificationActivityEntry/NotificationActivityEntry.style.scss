@@ -56,3 +56,12 @@
 .notification-activity-entry__copy > span {
   overflow-wrap: anywhere;
 }
+
+.notification-activity-entry.is-unread {
+  background: var(--color-surface-raised);
+  border-left: 3px solid var(--color-primary-strong);
+}
+
+.notification-activity-entry.is-read {
+  opacity: .72;
+}
