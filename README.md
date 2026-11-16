@@ -88,6 +88,13 @@ Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 0
 3. `008`–`041` add relational indexes, feed projection and triggers, targeted transactional writes, SQL-side page queries, search, pagination and integrity guards.
 4. `042_retire_json_collection_storage.sql` removes the obsolete JSONB collection table and its legacy RPCs.
 5. `043_remove_generic_relational_commit.sql` removes the compatibility RPC used by generic snapshot transactions.
+6. `044_drop_legacy_relational_synchronizer.sql` removes the obsolete JSONB-to-relational synchronizer.
+7. `045`–`048` preserve attached editor images, reconcile orphaned attachments and avatars, recover legacy cleanup claims, and prevent stale cleanup workers from deleting media still attached to live content.
+8. `049_harden_community_membership_versioning.sql` serializes community membership and ownership changes with relational collection-version locks.
+9. `050` and `057` fix ambiguous SQL column references in post/message and forum write RPCs; `051` permits empty entity-directory searches; `052` adds a short refresh-token rotation grace window for concurrent BFF requests.
+10. `053`–`054` include suggested communities in `/auth/me` and expand the home suggestions projection to the 4×4 grid (up to sixteen entries).
+11. `055_activity_notification_reads.sql` persists notification read state, and `056_active_profile_activity_feed.sql` scopes the feed to the active profile.
+12. `058_profile_account_deletion.sql` adds atomic profile/account deletion, preserves profiles shared by another account, and leaves media metadata for the normal Storage cleanup worker.
 
 The migrations leave the existing tracker tables and their migration history untouched. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
 
