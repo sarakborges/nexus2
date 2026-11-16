@@ -9,7 +9,7 @@ export function GuestRoute() {
   const authQuery = useAuthSession()
   const session = authQuery.data ?? null
   const isInitialized = authQuery.isFetched
-  const initializationError = authQuery.isError && authQuery.data === undefined
+  const initializationError = authQuery.isError && !authQuery.data
 
   if (!isInitialized) return <RouteLoadingState />
 

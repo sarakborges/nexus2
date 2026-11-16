@@ -1,5 +1,3 @@
-import type { AuthSession } from '@nexus/common'
-
 import { useAuthSession } from './useAuthSession.hook'
 import type { UseAuthSessionStateSelector } from './useAuthSessionState.types'
 
@@ -11,6 +9,6 @@ export function useAuthSessionState<T>(
   return selector({
     session: authQuery.data ?? null,
     isInitialized: authQuery.isFetched,
-    initializationError: authQuery.isError && authQuery.data === undefined
+    initializationError: authQuery.isError && !authQuery.data
   })
 }

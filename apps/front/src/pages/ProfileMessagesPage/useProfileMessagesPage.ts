@@ -27,8 +27,10 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const requestedUrl = normalizeEntityUrl(url)
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()

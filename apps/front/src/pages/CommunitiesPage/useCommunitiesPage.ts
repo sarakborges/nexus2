@@ -9,8 +9,10 @@ import { useAuthSessionState } from '@/Hooks/Auth'
 import type { UseCommunitiesPageResult } from './useCommunitiesPage.types'
 
 export function useCommunitiesPage(): UseCommunitiesPageResult {
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()

@@ -15,9 +15,11 @@ import type { UseCreateProfilePageResult } from './useCreateProfilePage.types'
 export function useCreateProfilePage(): UseCreateProfilePageResult {
   const navigate = useNavigate()
   const { t } = useTranslations()
-  const session = useAuthSessionState((state) => state.session)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const user = session?.user
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const showToast = useToastStore((state) => state.showToast)
   const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
     useEntityDetailsDraft()

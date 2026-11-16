@@ -9,10 +9,10 @@ import type { UseProfileTypeCompatibilityResult } from './useProfileTypeCompatib
 export function useProfileTypeCompatibility(
   targetType: ProfileType
 ): UseProfileTypeCompatibilityResult {
-  const hasSession = useAuthSessionState((state) => Boolean(state.session))
-  const currentProfileId = useAuthSessionState(
-    (state) => state.session?.user.currentProfile ?? null
-  )
+  const { hasSession, currentProfileId } = useAuthSessionState((state) => ({
+    hasSession: Boolean(state.session),
+    currentProfileId: state.session?.user.currentProfile ?? null
+  }))
   const currentProfileQuery = useQuery({
     queryKey: queryKeys.profiles.currentType(currentProfileId ?? ''),
     queryFn: async () =>

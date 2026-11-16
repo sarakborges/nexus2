@@ -32,8 +32,10 @@ export function useEditCommunityPage(): UseEditCommunityPageResult {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)

@@ -14,8 +14,10 @@ import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.ty
 export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null

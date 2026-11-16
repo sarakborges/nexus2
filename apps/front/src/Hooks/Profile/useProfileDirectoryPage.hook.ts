@@ -14,8 +14,10 @@ export function useProfileDirectoryPage(
 ): UseProfileDirectoryPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const pagination = useUrlPagination()

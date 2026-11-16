@@ -15,10 +15,10 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
 
   return useMutation<CreateProfileResult, unknown, CreateProfileInput>({
     mutationFn: async (input) => {
+      const result = await createUserProfile(input)
       const currentSession = queryClient.getQueryData<AuthSession | null>(
         queryKeys.auth.session
       )
-      const result = await createUserProfile(input)
 
       if (
         !currentSession ||

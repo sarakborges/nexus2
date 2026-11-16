@@ -20,8 +20,10 @@ import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicP
 export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
   const { t } = useTranslations()
-  const session = useAuthSessionState((state) => state.session)
-  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)

@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
-import { useTranslations } from '@/Hooks/Language'
 import { useAuthSession } from '@/Hooks/Auth'
+import { useTranslations } from '@/Hooks/Language'
 import { useThemePreference } from '@/Hooks/Theme'
 import type { UseAppInitializationResult } from './useAppInitialization.types'
 
@@ -11,7 +11,7 @@ export function useAppInitialization(): UseAppInitializationResult {
 
   useThemePreference()
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.lang = language
   }, [language])
 
