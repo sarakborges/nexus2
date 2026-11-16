@@ -24,6 +24,7 @@ as $function$
 declare
   v_current_profile_id uuid;
   v_next_profile_id uuid;
+  v_is_shared_profile boolean := false;
   v_now_ms bigint := floor(extract(epoch from pg_catalog.clock_timestamp()) * 1000)::bigint;
 begin
   if p_user_id is null or p_profile_id is null then
@@ -58,6 +59,14 @@ begin
     raise exception 'PROFILE_NOT_OWNED' using errcode = '42501';
   end if;
 
+  select exists (
+    select 1
+    from public.account_profiles membership
+    where membership.profile_id = p_profile_id
+      and membership.account_id <> p_user_id
+  )
+  into v_is_shared_profile;
+
   if v_current_profile_id = p_profile_id then
     select membership.profile_id
     into v_next_profile_id
@@ -72,39 +81,46 @@ begin
     where id = p_user_id;
   end if;
 
-  -- Mark the profile and owned-community avatars for normal asynchronous
-  -- object deletion. Attached editor images are reconciled after FK cascades.
-  update public.media_files file
-  set status = 'deleting',
-      deleting_at_ms = v_now_ms,
-      delete_after_ms = null
-  where file.owner_user_id = p_user_id
-    and (
-      (file.purpose = 'profile-avatar'
-        and file.resource_type = 'profile'
-        and file.resource_id = p_profile_id)
-      or
-      (file.purpose = 'community-avatar'
-        and file.resource_type = 'community'
-        and file.resource_id in (
-          select relation.community_id
-          from public.community_relationships relation
-          where relation.profile_id = p_profile_id
-            and relation.type = 'owner'
-        ))
+  if v_is_shared_profile then
+    -- Removing a profile from one account must not delete content still
+    -- owned by another account.
+    delete from public.account_profiles
+    where account_id = p_user_id and profile_id = p_profile_id;
+  else
+    -- Mark the profile and owned-community avatars for normal asynchronous
+    -- object deletion. Attached editor images are reconciled after FK cascades.
+    update public.media_files file
+    set status = 'deleting',
+        deleting_at_ms = v_now_ms,
+        delete_after_ms = null
+    where file.owner_user_id = p_user_id
+      and (
+        (file.purpose = 'profile-avatar'
+          and file.resource_type = 'profile'
+          and file.resource_id = p_profile_id)
+        or
+        (file.purpose = 'community-avatar'
+          and file.resource_type = 'community'
+          and file.resource_id in (
+            select relation.community_id
+            from public.community_relationships relation
+            where relation.profile_id = p_profile_id
+              and relation.type = 'owner'
+          ))
+      );
+
+    delete from public.communities community
+    where exists (
+      select 1
+      from public.community_relationships relation
+      where relation.community_id = community.id
+        and relation.profile_id = p_profile_id
+        and relation.type = 'owner'
     );
 
-  delete from public.communities community
-  where exists (
-    select 1
-    from public.community_relationships relation
-    where relation.community_id = community.id
-      and relation.profile_id = p_profile_id
-      and relation.type = 'owner'
-  );
-
-  delete from public.profiles
-  where id = p_profile_id;
+    delete from public.profiles
+    where id = p_profile_id;
+  end if;
 
   perform private.nexus_bump_collection_versions(array[
     'accounts','profiles','communities','relationships','community_relationships',
