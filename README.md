@@ -95,6 +95,7 @@ Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 0
 10. `053`–`054` include suggested communities in `/auth/me` and expand the home suggestions projection to the 4×4 grid (up to sixteen entries).
 11. `055_activity_notification_reads.sql` persists notification read state, and `056_active_profile_activity_feed.sql` scopes the feed to the active profile.
 12. `058_profile_account_deletion.sql` adds atomic profile/account deletion, preserves profiles shared by another account, and leaves media metadata for the normal Storage cleanup worker.
+13. `059_profile_delete_clears_current_profile.sql` clears the account's active profile when that profile is deleted, requiring an explicit selection from `/my-profiles`.
 
 The migrations leave the existing tracker tables and their migration history untouched. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
 
@@ -135,3 +136,8 @@ Paginated views keep `page` and `pageSize` in the URL. Community member moderati
 ## Existing browser data
 
 This refactor removes normal application persistence from browser storage. Existing localStorage/sessionStorage records are not automatically imported into backend storage; import should be performed as a deliberate one-time migration before removing the old browser data from any environment that contains important records.
+
+
+## Profile selection
+
+Authenticated users can open `/my-profiles` at any time to manage every profile linked to their account. The page uses the paginated owned-profile endpoint and supports selecting, duplicating and deleting profiles. Deleting the active profile clears the account's active-profile reference; opening `/home` without an active profile redirects to `/my-profiles` so the user can choose explicitly. The account dropdown and its profile switcher remain unchanged.

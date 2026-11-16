@@ -16,6 +16,7 @@ import { Link } from 'react-router'
 import { Button } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { getProfileDuplicationLocationState } from '@/Utils/profileDuplication.utils'
 import './AccountMenu.style.scss'
 
 export function AccountMenu({
@@ -42,17 +43,6 @@ export function AccountMenu({
   onClose
 }: AccountMenuProps) {
   const { t } = useTranslations()
-  const duplicateAbout = currentProfile?.about.replace(
-    /<img\b(?=[^>]*\bsrc=(["'])[^"']*\/api\/uploads\/[0-9a-f-]{36}\/content\1)[^>]*>/gi,
-    ''
-  ) ?? ''
-  const hasManagedAvatar = Boolean(
-    currentProfile?.picture.includes('/storage/v1/object/public/nexus-avatars/')
-  )
-  const duplicateMediaOmitted = Boolean(
-    currentProfile && (hasManagedAvatar || duplicateAbout !== currentProfile.about)
-  )
-
   return (
     <div
       className="floating-navigation__menu floating-navigation__menu--account"
@@ -91,16 +81,7 @@ export function AccountMenu({
           <Link
             className="floating-navigation__menu-item"
             to={ROUTES.createProfile}
-            state={{
-              duplicateProfile: {
-                name: currentProfile.name,
-                url: currentProfile.url + '-copy',
-                picture: hasManagedAvatar ? '' : currentProfile.picture,
-                about: duplicateAbout,
-                type: currentProfile.type
-              },
-              duplicateMediaOmitted
-            }}
+            state={getProfileDuplicationLocationState(currentProfile)}
             role="menuitem"
             onClick={onClose}
           >

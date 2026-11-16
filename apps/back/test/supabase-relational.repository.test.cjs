@@ -1577,3 +1577,26 @@ test('reads and persists activity notification read states through dedicated RPC
     p_read_at_ms: 123456
   })
 })
+
+
+test('deleteProfile delegates to the atomic account-scoped deletion RPC', async t => {
+  let request
+  withFetch(t, async (input, options) => {
+    const requestUrl = new URL(String(input))
+    request = {
+      path: requestUrl.pathname,
+      method: options.method,
+      body: JSON.parse(options.body)
+    }
+    return new Response(null, { status: 204 })
+  })
+
+  const repo = new SupabaseRelationalRepository(url, key, secret)
+  await repo.deleteProfile('account-1', 'profile-1')
+
+  assert.deepEqual(request, {
+    path: '/rest/v1/rpc/nexus_delete_profile',
+    method: 'POST',
+    body: { p_user_id: 'account-1', p_profile_id: 'profile-1' }
+  })
+})

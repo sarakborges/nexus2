@@ -41,6 +41,7 @@ A page aggregate covers the initial view, not every possible interaction. The pe
 - `GET /profiles/by-url/:url/messages/page`: profile, viewer-visible paginated messages and sender profiles for the current page.
 - `GET /profiles/by-url/:url/directory/:kind/page`: profile plus a paginated friends or public-community directory, projected from one snapshot.
 - `GET /communities/page`: authenticated current-profile projection and paginated public-community directory.
+- `GET /profiles/owned`: authenticated paginated profile inventory for `/my-profiles`; this route remains available when the account has no active profile.
 - `GET /communities/by-url/:url/forum/composer-page`: community and eligible author profile for the new-topic form.
 - `GET /communities/by-url/:url/edit/page`: community, owner profile and active-profile type for the edit form.
 - `GET /profiles/by-url/:url/edit/page`: target profile and active-profile type for the edit form.

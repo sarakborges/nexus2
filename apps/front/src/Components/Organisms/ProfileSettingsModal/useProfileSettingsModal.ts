@@ -132,11 +132,11 @@ export function useProfileSettingsModal(onClose: () => void): UseProfileSettings
     confirmDeleteProfile: () => {
       if (!profileId || deleteProfileMutation.isPending || saveMutation.isPending) return
       deleteProfileMutation.mutate(profileId, {
-        onSuccess: session => {
+        onSuccess: () => {
           setIsDeleteConfirmationOpen(false)
           showToast(t('PROFILE_DELETE_SUCCESS'))
           onClose()
-          navigate(session?.user.profiles.length ? ROUTES.home : ROUTES.gettingStarted, { replace: true })
+          navigate(ROUTES.myProfiles, { replace: true })
         },
         onError: () => showToast(t('PROFILE_DELETE_ERROR'), 'error')
       })

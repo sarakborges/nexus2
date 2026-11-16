@@ -6,6 +6,7 @@ export const ROUTES = {
   createProfile: '/create-profile',
   createCommunity: '/create-community',
   home: '/home',
+  myProfiles: '/my-profiles',
   profile: '/profile',
   community: '/community',
   communityForum: '/forum',
