@@ -29,7 +29,7 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
         throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
       }
 
-      queryClient.setQueryData<AuthSession | null>(queryKeys.auth.session, {
+      const nextSession: AuthSession = {
         ...currentSession,
         user: result.user,
         currentProfile: null,
@@ -37,7 +37,11 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
         activities: [],
         activityCursor: null,
         hasMoreActivities: false
-      })
+      }
+      queryClient.setQueryData<AuthSession | null>(
+        queryKeys.auth.session,
+        () => nextSession
+      )
 
       const refreshedSession = await getCurrentAuthSession()
       if (

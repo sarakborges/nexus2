@@ -52,10 +52,10 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
       )
       if (currentSession?.currentProfile?.id !== variables.profileId) return
 
-      queryClient.setQueryData<AuthSession | null>(queryKeys.auth.session, {
-        ...currentSession,
-        currentProfileSettings: saved
-      })
+      queryClient.setQueryData<AuthSession | null>(
+        queryKeys.auth.session,
+        () => ({ ...currentSession, currentProfileSettings: saved })
+      )
       setDraft({ profileId: variables.profileId, value: saved })
       setSaveSuccessProfileId(variables.profileId)
     }

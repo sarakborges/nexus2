@@ -19,7 +19,7 @@ export function useSetCurrentProfileMutation(): UseSetCurrentProfileMutationResu
         throw new Error('CURRENT_PROFILE_UPDATE_FAILED')
       }
 
-      queryClient.setQueryData<AuthSession | null>(queryKeys.auth.session, {
+      const nextSession: AuthSession = {
         ...currentSession,
         user,
         currentProfile: null,
@@ -27,7 +27,11 @@ export function useSetCurrentProfileMutation(): UseSetCurrentProfileMutationResu
         activities: [],
         activityCursor: null,
         hasMoreActivities: false
-      })
+      }
+      queryClient.setQueryData<AuthSession | null>(
+        queryKeys.auth.session,
+        () => nextSession
+      )
 
       const refreshedSession = await getCurrentAuthSession()
       if (
