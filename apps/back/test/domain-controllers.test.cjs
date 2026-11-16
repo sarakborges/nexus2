@@ -30,6 +30,7 @@ const expectedRoutes = [
   'GET profiles/by-url/:url',
   'GET profiles/ids',
   'POST profiles',
+  'DELETE profiles/:profileId',
   'PUT profiles/:profileId',
   'GET profiles/by-url/:url/messages/page',
   'GET profiles/:profileId/messages',
