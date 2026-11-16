@@ -62,7 +62,7 @@ export function NotificationActivityEntry({
       name={activity.profile.name}
       picture={activity.profile.picture}
       secondary={`@${activity.profile.url}`}
-      className="notification-activity-entry"
+      className={['notification-activity-entry', activity.isRead ? 'is-read' : 'is-unread'].join(' ')}
       avatarClassName="notification-activity-entry__avatar"
       copyClassName="notification-activity-entry__copy"
       nameClassName="notification-activity-entry__name"

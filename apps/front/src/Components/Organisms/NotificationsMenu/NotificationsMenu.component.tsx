@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link } from 'react-router'
 import { FiBell } from 'react-icons/fi'
 
@@ -7,6 +8,7 @@ import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { useAuthStore } from '@/Stores/Auth.store'
+import { useMarkActivityNotificationsReadMutation } from '@/Hooks/Activity'
 
 import './NotificationsMenu.style.scss'
 
@@ -21,6 +23,17 @@ export function NotificationsMenu({
   // new snapshot on every read and can trigger an infinite render loop.
   const sessionActivities = useAuthStore(state => state.session?.activities)
   const activities = sessionActivities?.slice(0, 8) ?? []
+  const unreadCount = activities.filter(activity => !activity.isRead).length
+  const { mutate: markNotificationsRead } = useMarkActivityNotificationsReadMutation()
+
+  useEffect(() => {
+    if (!isOpen) return
+    const unreadIds = (sessionActivities ?? [])
+      .slice(0, 8)
+      .filter(activity => !activity.isRead)
+      .map(activity => activity.id)
+    if (unreadIds.length > 0) markNotificationsRead(unreadIds)
+  }, [isOpen, sessionActivities, markNotificationsRead])
 
   return (
     <>
@@ -34,9 +47,9 @@ export function NotificationsMenu({
         onClick={onToggle}
       >
         <FiBell aria-hidden="true" />
-        {activities.length > 0 && (
+        {unreadCount > 0 && (
           <span className="floating-navigation__notification-count">
-            {activities.length > 9 ? '9+' : activities.length}
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </Button>
