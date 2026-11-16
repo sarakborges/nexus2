@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 
 import type { Profile } from '@nexus/common'
@@ -22,11 +22,6 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
   } | null
   const duplicateProfile = locationState?.duplicateProfile
   const duplicateMediaOmitted = Boolean(locationState?.duplicateMediaOmitted)
-  const duplicateName = duplicateProfile?.name ?? ''
-  const duplicateUrl = duplicateProfile?.url ?? ''
-  const duplicatePicture = duplicateProfile?.picture ?? ''
-  const duplicateAbout = duplicateProfile?.about ?? ''
-  const duplicateType = duplicateProfile?.type ?? 'social'
   const { t } = useTranslations()
   const { session, isAuthInitialized } = useAuthSessionState((state) => ({
     session: state.session,
@@ -36,31 +31,9 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
   const showToast = useToastStore((state) => state.showToast)
   const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
     useEntityDetailsDraft(duplicateProfile)
-  const [type, setType] = useState<ProfileType>(duplicateType)
+  const [type, setType] = useState<ProfileType>(duplicateProfile?.type ?? 'social')
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useCreateProfileMutation()
-
-  useEffect(() => {
-    // Routes may reuse this page instance when duplicating from the account menu
-    // while already on /create-profile. Re-seed the form for each navigation.
-    setName(duplicateName)
-    setUrl(duplicateUrl)
-    setPicture(duplicatePicture)
-    setAbout(duplicateAbout)
-    setType(duplicateType)
-    setErrorMessage('')
-  }, [
-    location.key,
-    duplicateName,
-    duplicateUrl,
-    duplicatePicture,
-    duplicateAbout,
-    duplicateType,
-    setName,
-    setUrl,
-    setPicture,
-    setAbout
-  ])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
