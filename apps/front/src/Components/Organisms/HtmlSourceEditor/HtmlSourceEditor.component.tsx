@@ -6,6 +6,7 @@ import { useHtmlSourceEditor } from './useHtmlSourceEditor'
 
 export function HtmlSourceEditor({
   id,
+  ariaLabel,
   value,
   onChange,
   disabled
@@ -26,7 +27,7 @@ export function HtmlSourceEditor({
         <textarea
           id={id + '-html-source'}
           className="rich-text-editor__html-source"
-          aria-label="HTML source editor"
+          aria-label={ariaLabel}
           spellCheck={false}
           autoCapitalize="off"
           autoComplete="off"
