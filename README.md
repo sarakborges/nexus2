@@ -24,7 +24,7 @@ npm run dev
 - BFF: http://localhost:3001
 - Back: http://localhost:3002
 
-The default Vite development server proxies `/api` to the local BFF. Without Supabase variables, the backend uses the JSON file adapter locally.
+The default Vite development server proxies `/api` to the local BFF. The backend requires `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_API_SECRET` in every environment and fails fast when they are missing. Local development uses the same relational Supabase repository as deployment; there is no JSON-file fallback. Configure `SUPABASE_STORAGE_SECRET_KEY` as well when testing uploads or forum-topic publishing.
 
 ### Use the production BFF with the local frontend
 
