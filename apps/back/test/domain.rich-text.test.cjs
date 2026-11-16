@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 
 function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTransaction, beforeCreateMessage) {
   if (!collections.has('accounts')) {
@@ -85,7 +85,7 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
       throw new Error('Profile message flows must not perform separate auth reads')
     }
   }
-  return new DomainService(data, auth, uploads)
+  return createDomainService(data, auth, uploads)
 }
 
 test('sanitizes HTML before persisting profile messages', async () => {
