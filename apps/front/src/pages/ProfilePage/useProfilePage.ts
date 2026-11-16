@@ -6,14 +6,14 @@ import { getProfilePage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { ROUTES } from '@/Constants/routes'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import type { UseProfilePageResult } from './useProfilePage.types'
 
 export function useProfilePage(): UseProfilePageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const session = useAuthSessionState((state) => state.session)
+  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)

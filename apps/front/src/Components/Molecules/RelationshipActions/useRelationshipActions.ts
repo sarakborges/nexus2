@@ -13,7 +13,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { getCommunityRelationships } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { getRelationships } from '@/Services/Relationship'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useRelationshipActions({
@@ -22,7 +22,7 @@ export function useRelationshipActions({
   relationship: providedRelationship
 }: UseRelationshipActionsOptions): RelationshipActionsController {
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
+  const session = useAuthSessionState((state) => state.session)
   const sourceId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const isCommunity = targetKind === 'community'

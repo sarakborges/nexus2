@@ -7,7 +7,7 @@ import { Button } from '@/DesignSystem'
 import type { NotificationsMenuProps } from './NotificationsMenu.types'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useMarkActivityNotificationsReadMutation } from '@/Hooks/Activity'
 
 import './NotificationsMenu.style.scss'
@@ -18,10 +18,7 @@ export function NotificationsMenu({
   onClose
 }: NotificationsMenuProps) {
   const { t } = useTranslations()
-  // Select the stable store array; derive the limited view after the hook.
-  // Returning slice() or a fallback [] from a Zustand v5 selector creates a
-  // new snapshot on every read and can trigger an infinite render loop.
-  const sessionActivities = useAuthStore(state => state.session?.activities)
+  const sessionActivities = useAuthSessionState(state => state.session?.activities)
   const activities = sessionActivities?.slice(0, 8) ?? []
   const unreadCount = activities.filter(activity => !activity.isRead).length
   const { mutate: markNotificationsRead } = useMarkActivityNotificationsReadMutation()

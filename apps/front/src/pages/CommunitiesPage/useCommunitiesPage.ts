@@ -5,12 +5,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunitiesPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import type { UseCommunitiesPageResult } from './useCommunitiesPage.types'
 
 export function useCommunitiesPage(): UseCommunitiesPageResult {
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const session = useAuthSessionState((state) => state.session)
+  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const userId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()

@@ -7,15 +7,15 @@ import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityMembersPage } from '@/Services/CommunityRelationship'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import type { MemberTab } from './CommunityMembersPage.types'
 import type { UseCommunityMembersPageResult } from './useCommunityMembersPage.types'
 
 export function useCommunityMembersPage(): UseCommunityMembersPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const session = useAuthSessionState((state) => state.session)
+  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null

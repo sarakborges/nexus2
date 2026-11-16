@@ -5,15 +5,15 @@ import { useNavigate, useParams } from 'react-router'
 import { ROUTES } from '@/Constants/routes'
 import { getCommunityPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import type { UseCommunityPageResult } from './useCommunityPage.types'
 
 export function useCommunityPage(): UseCommunityPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const session = useAuthSessionState((state) => state.session)
+  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const requestedUrl = normalizeEntityUrl(url)

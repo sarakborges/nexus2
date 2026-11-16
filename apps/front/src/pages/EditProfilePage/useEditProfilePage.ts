@@ -14,7 +14,7 @@ import { uploadEditorImage } from '@/Services/Uploads'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { getProfileEditPage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { ProfileForm } from './EditProfilePage.types'
 import type { UseEditProfilePageResult } from './useEditProfilePage.types'
@@ -28,8 +28,8 @@ export function useEditProfilePage(): UseEditProfilePageResult {
   const { t } = useTranslations()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const session = useAuthSessionState((state) => state.session)
+  const isAuthInitialized = useAuthSessionState((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
