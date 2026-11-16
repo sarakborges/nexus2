@@ -7,6 +7,7 @@ export function Button({
   className,
   disabled = false,
   variation = 'primary',
+  type = 'button',
   ...props
 }: ButtonProps) {
   const classNames = ['button', `button--${variation}`, className]
@@ -14,7 +15,12 @@ export function Button({
     .join(' ')
 
   return (
-    <button className={classNames} disabled={disabled} {...props}>
+    <button
+      className={classNames}
+      type={type}
+      disabled={disabled}
+      {...props}
+    >
       {children}
     </button>
   )
