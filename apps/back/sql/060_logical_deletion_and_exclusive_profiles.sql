@@ -22,7 +22,8 @@ declare
     'community_forum_topics',
     'community_forum_replies',
     'refresh_tokens',
-    'media_files'
+    'media_files',
+    'activity_notification_reads'
   ];
 begin
   foreach v_table in array v_tables loop
@@ -65,6 +66,16 @@ create unique index if not exists profiles_active_url_uidx
 create unique index if not exists communities_active_url_uidx
   on public.communities(url)
   where deleted_at_ms is null;
+
+-- Notification read state is private server-owned account data. Grant only
+-- the backend role access, protected by the same internal request header.
+grant select, update on public.activity_notification_reads to anon;
+drop policy if exists nexus_server_access on public.activity_notification_reads;
+create policy nexus_server_access
+  on public.activity_notification_reads
+  for all to anon
+  using (private.nexus_server_request_authorized())
+  with check (private.nexus_server_request_authorized());
 
 create or replace function private.nexus_soft_delete_row()
 returns trigger
@@ -167,6 +178,11 @@ begin
     set deleted_at_ms = v_deleted_at_ms
     where token.user_id = new.id
       and token.deleted_at_ms is null;
+
+    update public.activity_notification_reads as read_state
+    set deleted_at_ms = v_deleted_at_ms
+    where read_state.account_id = new.id
+      and read_state.deleted_at_ms is null;
 
     update public.media_files as file
     set status = 'deleting',
@@ -759,7 +775,8 @@ begin
   select read_state.activity_id
   from public.activity_notification_reads as read_state
   where read_state.account_id = p_user_id
-    and read_state.activity_id = any(p_activity_ids);
+    and read_state.activity_id = any(p_activity_ids)
+    and read_state.deleted_at_ms is null;
 end;
 $function$;
 
@@ -806,7 +823,9 @@ begin
       from public.nexus_get_activity_feed_page(p_user_id, 50, null, null) as visible
       where visible.id = activity.id
     )
-  on conflict (account_id, activity_id) do nothing;
+  on conflict (account_id, activity_id) do update
+    set read_at_ms = excluded.read_at_ms,
+        deleted_at_ms = null;
 
   get diagnostics v_count = row_count;
   return v_count;
