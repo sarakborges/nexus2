@@ -50,6 +50,7 @@ export function RichTextEditor({
           </header>
           <HtmlSourceEditor
             id={id}
+            ariaLabel={t('RICH_TEXT_SOURCE_EDITOR')}
             value={value}
             onChange={handleChange}
             disabled={isImageUploading}
