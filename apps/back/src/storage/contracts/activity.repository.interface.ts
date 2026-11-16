@@ -9,4 +9,3 @@ export interface ActivityRepository {
   getActivityReadIds(userId: string, activityIds: readonly string[]): Promise<string[]>
   markActivitiesRead(userId: string, activityIds: readonly string[], readAt: number): Promise<void>
 }
-}

@@ -196,4 +196,3 @@ export class SupabaseRepositoryClient {
     throw new Error('Supabase relational request failed (' + response.status + '): ' + details)
   }
 }
-}

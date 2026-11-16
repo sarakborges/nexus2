@@ -1,5 +1,6 @@
 import type { CommunitiesPageData, Community, CommunityCreateWrite, CommunityEditPageData, CommunityForumComposerPageData, CommunityMembersPageData, CommunityPageData, CommunityUpdateWrite, ListSort, PaginatedResult } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
+import type { DatabaseRow } from '../supabase-repository.client'
 import type { CommunitiesRepository } from '../contracts/communities.repository.interface'
 
 export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient implements CommunitiesRepository {

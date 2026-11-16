@@ -1,5 +1,6 @@
 import type { CommunityAvatarWrite, EditorImageReadRequest, MediaFileRecord, MediaUploadCleanupRequest, MediaUploadCompletion, MediaUploadCreateWrite, MediaUploadDeletionClaim, MediaUploadDeletionRequest, MediaUploadDeletionSchedule, PreviousAvatarDeletionSchedule, ProfileAvatarWrite } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
+import type { DatabaseRow } from '../supabase-repository.client'
 import type { MediaRepository } from '../contracts/media.repository.interface'
 
 export class SupabaseMediaRepository extends SupabaseRepositoryClient implements MediaRepository {

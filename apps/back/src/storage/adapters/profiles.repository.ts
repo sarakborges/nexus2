@@ -1,5 +1,6 @@
 import type { AuthenticatedUser, ListSort, PaginatedResult, Profile, ProfileCreateWrite, ProfileDirectoryPageData, ProfileEditPageData, ProfilePageData, ProfilePost, ProfileSettings, ProfileUpdateWrite } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
+import type { DatabaseRow } from '../supabase-repository.client'
 import type { ProfilesRepository } from '../contracts/profiles.repository.interface'
 
 export class SupabaseProfilesRepository extends SupabaseRepositoryClient implements ProfilesRepository {
