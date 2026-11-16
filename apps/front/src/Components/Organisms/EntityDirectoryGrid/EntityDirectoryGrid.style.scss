@@ -5,11 +5,6 @@
   justify-content: space-between;
   gap: var(--nexus-space-3, 12px);
   padding: var(--nexus-space-3, 12px) 0;
-  border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-}
-
-.account-card__profile-entry:last-child {
-  border-bottom: 0;
 }
 
 .account-card__profile-entry--card {

@@ -104,11 +104,6 @@
 
   &--reply {
     padding: var(--nexus-space-3) 0;
-    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
-  }
-
-  &--reply:last-child {
-    border-bottom: 0;
   }
 }
 
