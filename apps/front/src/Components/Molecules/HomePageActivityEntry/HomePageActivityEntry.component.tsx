@@ -43,25 +43,21 @@ export function HomePageActivityEntry({
         />
       ) : activity.type === 'friend_connected' ? (
         <p className="home-page__activity-description">
-          <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
-          <Link to={profileHref}>{activity.profile.name} (@{activity.profile.url})</Link>
-          <span> {t('HOME_ACTIVITY_FRIEND_CONNECTOR')} </span>
+          <span>{t('HOME_ACTIVITY_FRIEND_CONNECTOR')} </span>
           <Link to={`${ROUTES.profile}/${activity.friend.url}`}>
             {activity.friend.name}
           </Link>
         </p>
       ) : activity.type === 'community_created' ? (
         <p className="home-page__activity-description">
-          <Link to={profileHref}>{activity.profile.name} (@{activity.profile.url})</Link>
-          {' '}{t('HOME_ACTIVITY_CREATED_COMMUNITY')}{' '}
-          <Link to={`${ROUTES.community}/${activity.community.url}`}>{activity.community.name}</Link>.
+          <span>{t('HOME_ACTIVITY_CREATED_COMMUNITY')} </span>
+          <Link to={`${ROUTES.community}/${activity.community.url}`}>
+            {activity.community.name}
+          </Link>.
         </p>
       ) : (
         <p className="home-page__activity-description">
-          <span>{t('HOME_ACTIVITY_PROFILE_PREFIX')} </span>
-          <Link to={profileHref}>{activity.profile.name}</Link>
           <span>
-            {' '}
             {t(
               activity.role === 'owner'
                 ? 'HOME_ACTIVITY_COMMUNITY_OWNER'
