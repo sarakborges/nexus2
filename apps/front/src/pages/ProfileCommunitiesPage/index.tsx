@@ -94,12 +94,14 @@ export function ProfileCommunitiesPage() {
             }))}
           />
         </RequestState>
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-        />
+        {totalItems > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </SocialPageLayout>
   )

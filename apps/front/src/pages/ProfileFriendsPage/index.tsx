@@ -76,14 +76,16 @@ export function ProfileFriendsPage() {
           isLoading={profileDirectoryQuery.isLoading}
           isFetching={profileDirectoryQuery.isFetching}
           isError={profileDirectoryQuery.isError}
+          isEmpty={profileDirectoryQuery.isSuccess && totalItems === 0}
+          emptyMessage={t('RELATIONSHIP_FRIENDS_EMPTY')}
+          emptyAction={
+            <Link to={`${ROUTES.search}?scope=profiles`}>
+              {t('RELATIONSHIP_FRIENDS_EMPTY_SEARCH')}
+            </Link>
+          }
           onRetry={() => void profileDirectoryQuery.refetch()}
         >
-          {totalItems === 0 ? (
-            <div className="directory-empty-state">
-              <p>{t('RELATIONSHIP_FRIENDS_EMPTY')}</p>
-              <Link to={`${ROUTES.search}?scope=profiles`}>{t('RELATIONSHIP_FRIENDS_EMPTY_SEARCH')}</Link>
-            </div>
-          ) : <EntityDirectoryGrid
+          <EntityDirectoryGrid
             entries={friends.map((friend) => ({
               id: friend.id,
               name: friend.name,
@@ -97,14 +99,16 @@ export function ProfileFriendsPage() {
                 />
               ) : undefined
             }))}
-          />}
+          />
         </RequestState>
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-        />
+        {totalItems > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </SocialPageLayout>
   )

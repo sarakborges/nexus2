@@ -85,17 +85,16 @@ export function CommunitiesPage() {
           isLoading={communitiesPageQuery.isLoading}
           isFetching={communitiesPageQuery.isFetching}
           isError={communitiesPageQuery.isError}
+          isEmpty={communitiesPageQuery.isSuccess && totalItems === 0}
+          emptyMessage={t('COMMUNITIES_EMPTY')}
+          emptyAction={
+            <Link to={`${ROUTES.search}?scope=communities`}>
+              {t('COMMUNITIES_EMPTY_SEARCH')}
+            </Link>
+          }
           onRetry={() => void communitiesPageQuery.refetch()}
         >
-          {totalItems === 0 ? (
-            <div className="directory-empty-state">
-              <p>{t('COMMUNITIES_EMPTY')}</p>
-              <Link to={`${ROUTES.search}?scope=communities`}>
-                {t('COMMUNITIES_EMPTY_SEARCH')}
-              </Link>
-            </div>
-          ) : (
-            <EntityDirectoryGrid
+          <EntityDirectoryGrid
               entries={communities.map((community) => ({
                 id: community.id,
                 name: community.name,
@@ -103,15 +102,16 @@ export function CommunitiesPage() {
                 href: `${ROUTES.community}/${community.url}`,
                 secondaryText: `/community/${community.url}`
               }))}
-            />
-          )}
+          />
         </RequestState>
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          totalItems={totalItems}
-          onPageChange={setPage}
-        />
+        {totalItems > 0 && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            totalItems={totalItems}
+            onPageChange={setPage}
+          />
+        )}
       </div>
     </SocialPageLayout>
   )
