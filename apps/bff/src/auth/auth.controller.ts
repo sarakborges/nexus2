@@ -35,12 +35,24 @@ export class AuthController {
   @HttpCode(200)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
     const token = getCookie(req, REFRESH_COOKIE)
-    if (!token) { clearAuthCookies(res); throw new UnauthorizedException('REFRESH_TOKEN_MISSING') }
+    if (!token) {
+      clearAuthCookies(res)
+      throw new UnauthorizedException('REFRESH_TOKEN_MISSING')
+    }
+
     try {
       const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/refresh`, { refreshToken: token })
       writeAuthCookies(res, data.accessToken, data.refreshToken)
       return { user: data.user, authenticated: true }
-    } catch { clearAuthCookies(res); throw new UnauthorizedException('REFRESH_TOKEN_INVALID') }
+    } catch (error) {
+      // Only a definitive rejected refresh token should end the browser session.
+      // A backend outage must preserve cookies so the user can retry later.
+      if (error instanceof HttpException && [HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN].includes(error.getStatus())) {
+        clearAuthCookies(res)
+        throw new UnauthorizedException('REFRESH_TOKEN_INVALID')
+      }
+      throw error
+    }
   }
   @Post('sign-out')
   @HttpCode(200)
