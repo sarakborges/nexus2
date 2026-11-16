@@ -1782,6 +1782,42 @@ export class SupabaseRelationalRepository implements DataRepository {
     return rows as ActivityFeedRow[]
   }
 
+  async getActivityReadIds(userId: string, activityIds: readonly string[]): Promise<string[]> {
+    if (activityIds.length === 0) return []
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_read_ids', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_activity_ids: [...activityIds] })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.some(row =>
+      typeof row !== 'object' || row === null ||
+      typeof (row as Record<string, unknown>).activity_id !== 'string'
+    )) {
+      throw new Error('Supabase activity read state returned an invalid result.')
+    }
+    return rows.map(row => (row as Record<string, string>).activity_id)
+  }
+
+  async markActivitiesRead(userId: string, activityIds: readonly string[], readAt: number): Promise<void> {
+    if (activityIds.length === 0) return
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_mark_activities_read', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_user_id: userId,
+        p_activity_ids: [...activityIds],
+        p_read_at_ms: readAt
+      })
+    })
+    await this.assertSuccess(response)
+    const result: unknown = await response.json()
+    if (!Number.isSafeInteger(Number(result)) || Number(result) < 0) {
+      throw new Error('Supabase activity read state write returned an invalid result.')
+    }
+  }
+
   private async readAccounts(rows: DatabaseRow[]): Promise<unknown[]> {
     if (rows.length === 0) return []
     const accountIds = rows.map(row => this.string(row.id))

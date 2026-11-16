@@ -183,6 +183,10 @@ export class DomainService {
     return this.communities.transferOwnership(userId, communityId, newOwnerId, actorId)
   }
 
+  markActivitiesRead(userId: string, activityIds: readonly string[]): Promise<void> {
+    return this.activity.markActivitiesRead(userId, activityIds)
+  }
+
   getRecentActivity(userId: string): Promise<RecentActivity[]> {
     return this.activity.getRecentActivity(userId)
   }
