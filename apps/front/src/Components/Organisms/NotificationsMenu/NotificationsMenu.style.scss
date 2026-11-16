@@ -48,7 +48,6 @@
     display: grid;
     gap: var(--nexus-space-1, 4px);
     padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
-    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
   }
 
   &__notifications-heading span {

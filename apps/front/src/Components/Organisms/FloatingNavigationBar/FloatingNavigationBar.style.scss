@@ -10,7 +10,6 @@
     align-items: center;
     width: 100%;
     min-height: 64px;
-    border-bottom: var(--nexus-border-width, 2px) solid var(--color-border);
     background: color-mix(in srgb, var(--color-surface) 97%, transparent);
     box-shadow: 0 8px 28px rgb(0 0 0 / 12%);
     backdrop-filter: blur(18px);

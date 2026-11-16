@@ -46,92 +46,100 @@ export function AccountMenu({
       role="menu"
       aria-label={t('NAVIGATION_ACCOUNT_MENU')}
     >
-      <ProfileSwitcher
-        profiles={profiles}
-        hasProfiles={hasProfiles}
-        currentProfileId={currentProfileId}
-        isOpen={isProfileSwitcherOpen}
-        isSelectionPending={isSelectionPending}
-        isSelectionError={isSelectionError}
-        profilesLoading={profilesLoading}
-        profilesError={profilesError}
-        profilesSuccess={profilesSuccess}
-        onToggle={onToggleProfileSwitcher}
-        onRetry={onRetryProfiles}
-        onSelect={onSelectProfile}
-      />
+      <div className="floating-navigation__menu-group">
+        <ProfileSwitcher
+          profiles={profiles}
+          hasProfiles={hasProfiles}
+          currentProfileId={currentProfileId}
+          isOpen={isProfileSwitcherOpen}
+          isSelectionPending={isSelectionPending}
+          isSelectionError={isSelectionError}
+          profilesLoading={profilesLoading}
+          profilesError={profilesError}
+          profilesSuccess={profilesSuccess}
+          onToggle={onToggleProfileSwitcher}
+          onRetry={onRetryProfiles}
+          onSelect={onSelectProfile}
+        />
 
-      {editProfileRoute && (
+        {editProfileRoute && (
+          <Link
+            className="floating-navigation__menu-item"
+            to={editProfileRoute}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiEdit3 aria-hidden="true" />
+            <span>{t('PROFILE_EDIT')}</span>
+          </Link>
+        )}
+      </div>
+
+      <div className="floating-navigation__menu-group">
         <Link
           className="floating-navigation__menu-item"
-          to={editProfileRoute}
+          to={ROUTES.createProfile}
           role="menuitem"
           onClick={onClose}
         >
-          <FiEdit3 aria-hidden="true" />
-          <span>{t('PROFILE_EDIT')}</span>
+          <FiUserPlus aria-hidden="true" />
+          <span>{t('HOME_CREATE_PROFILE')}</span>
         </Link>
-      )}
+        <Link
+          className="floating-navigation__menu-item"
+          to={ROUTES.createCommunity}
+          role="menuitem"
+          onClick={onClose}
+        >
+          <FiPlusCircle aria-hidden="true" />
+          <span>{t('COMMUNITIES_CREATE')}</span>
+        </Link>
+      </div>
 
-      <div className="floating-navigation__menu-divider" />
-
-      <Link
-        className="floating-navigation__menu-item"
-        to={ROUTES.createProfile}
-        role="menuitem"
-        onClick={onClose}
-      >
-        <FiUserPlus aria-hidden="true" />
-        <span>{t('HOME_CREATE_PROFILE')}</span>
-      </Link>
-      <Link
-        className="floating-navigation__menu-item"
-        to={ROUTES.createCommunity}
-        role="menuitem"
-        onClick={onClose}
-      >
-        <FiPlusCircle aria-hidden="true" />
-        <span>{t('COMMUNITIES_CREATE')}</span>
-      </Link>
-
-      <div className="floating-navigation__menu-divider" />
-
-      {currentProfile && (
-        <Button variation="transparent"
+      <div className="floating-navigation__menu-group">
+        {currentProfile && (
+          <Button
+            variation="transparent"
+            className="floating-navigation__menu-item"
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onClose()
+              onOpenProfileSettings()
+            }}
+          >
+            <FiSliders aria-hidden="true" />
+            <span>{t('PROFILE_SETTINGS_TITLE')}</span>
+          </Button>
+        )}
+        <Button
+          variation="transparent"
           className="floating-navigation__menu-item"
           type="button"
           role="menuitem"
           onClick={() => {
             onClose()
-            onOpenProfileSettings()
+            onOpenSettings()
           }}
         >
-          <FiSliders aria-hidden="true" />
-          <span>{t('PROFILE_SETTINGS_TITLE')}</span>
+          <FiSettings aria-hidden="true" />
+          <span>{t('DISPLAY_SETTINGS_TITLE')}</span>
         </Button>
-      )}
-      <Button variation="transparent"
-        className="floating-navigation__menu-item"
-        type="button"
-        role="menuitem"
-        onClick={onOpenSettings}
-      >
-        <FiSettings aria-hidden="true" />
-        <span>{t('DISPLAY_SETTINGS_TITLE')}</span>
-      </Button>
+      </div>
 
-      <div className="floating-navigation__menu-divider" />
-
-      <Button variation="transparent"
-        className="floating-navigation__menu-item floating-navigation__menu-item--danger"
-        type="button"
-        role="menuitem"
-        disabled={isSigningOut}
-        onClick={onSignOut}
-      >
-        <FiLogOut aria-hidden="true" />
-        <span>{isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
-      </Button>
+      <div className="floating-navigation__menu-group">
+        <Button
+          variation="transparent"
+          className="floating-navigation__menu-item floating-navigation__menu-item--danger"
+          type="button"
+          role="menuitem"
+          disabled={isSigningOut}
+          onClick={onSignOut}
+        >
+          <FiLogOut aria-hidden="true" />
+          <span>{isSigningOut ? t('NAVIGATION_SIGNING_OUT') : t('AUTH_SIGN_OUT')}</span>
+        </Button>
+      </div>
     </div>
   )
 }

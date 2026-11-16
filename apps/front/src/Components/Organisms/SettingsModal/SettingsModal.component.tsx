@@ -11,13 +11,7 @@ import './SettingsModal.style.scss'
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
   const { t } = useTranslations()
-  const {
-    updateError,
-    isLoading,
-    isFetching,
-    isError,
-    retry
-  } = useSettingsModal({ open })
+  const { updateError } = useSettingsModal()
 
   return (
     <Modal
@@ -29,17 +23,10 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
     >
       <p className="settings-modal__description">{t('SETTINGS_DESCRIPTION')}</p>
       {updateError && <RequestState isError />}
-      <RequestState
-        isLoading={isLoading}
-        isFetching={isFetching}
-        isError={isError}
-        onRetry={retry}
-      >
-        <div className="settings-modal__preferences">
-          <LanguageSelector />
-          <ThemeSelector />
-        </div>
-      </RequestState>
+      <div className="settings-modal__preferences">
+        <LanguageSelector />
+        <ThemeSelector />
+      </div>
     </Modal>
   )
 }

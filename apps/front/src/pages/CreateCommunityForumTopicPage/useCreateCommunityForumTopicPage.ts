@@ -12,6 +12,7 @@ import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { useAuthStore } from '@/Stores/Auth.store'
 import { useToastStore } from '@/Stores/Toast.store'
+import { getApiErrorCode } from '@/Services/Http/api'
 import type { UseCreateCommunityForumTopicPageResult } from './useCreateCommunityForumTopicPage.types'
 
 export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopicPageResult {
@@ -75,8 +76,14 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
       navigate(ROUTES.community + '/' + community.url + '/forum/' + topic.id, {
         replace: true
       })
-    } catch {
-      showToast(t('TOAST_ACTION_FAILED'), 'error')
+    } catch (error) {
+      const errorCode = getApiErrorCode(error)
+      showToast(
+        errorCode === 'REQUEST_FAILED'
+          ? t('TOAST_ACTION_FAILED')
+          : `${t('TOAST_ACTION_FAILED')}: ${errorCode}`,
+        'error'
+      )
     }
   }
 
