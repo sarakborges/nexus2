@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import type {
   ActivityFeedCursor,
   ActivityFeedPage,
@@ -23,48 +23,25 @@ import type {
 } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { CommunityMemberProfile, ForumTopicModerationChanges } from './domain.types'
-import { AuthService } from '../auth/auth.service'
 import { PaginationDto } from '../pagination/pagination.dto'
 import { filterAndSortList } from '../pagination/list-query.helper'
 import { getRichTextPlainText } from './rich-text-sanitizer'
-import { UploadsService } from '../uploads/uploads.service'
 import { ActivityService } from './activity.service'
 import { CommunityForumService } from './community-forum.service'
 import { CommunityService } from './community.service'
-import { DomainAccessService } from './domain-access.service'
 import { ProfileMessageService } from './profile-message.service'
 import { ProfileService } from './profile.service'
 
 @Injectable()
 export class DomainService {
-  private readonly profiles: ProfileService
-  private readonly communities: CommunityService
-  private readonly forum: CommunityForumService
-  private readonly messages: ProfileMessageService
-  private readonly activity: ActivityService
-  private readonly data: DataRepository
-  private readonly access: DomainAccessService
-
   constructor(
-    @Inject(DATA_REPOSITORY) data: DataRepository,
-    auth: AuthService,
-    @Optional() uploads?: UploadsService,
-    @Optional() access?: DomainAccessService,
-    @Optional() profiles?: ProfileService,
-    @Optional() communities?: CommunityService,
-    @Optional() forum?: CommunityForumService,
-    @Optional() messages?: ProfileMessageService,
-    @Optional() activity?: ActivityService
-  ) {
-    this.data = data
-    const domainAccess = access ?? new DomainAccessService(data)
-    this.access = domainAccess
-    this.profiles = profiles ?? new ProfileService(data, auth, domainAccess, uploads)
-    this.communities = communities ?? new CommunityService(data, auth, domainAccess, uploads)
-    this.forum = forum ?? new CommunityForumService(data, uploads)
-    this.messages = messages ?? new ProfileMessageService(data, uploads)
-    this.activity = activity ?? new ActivityService(data)
-  }
+    @Inject(DATA_REPOSITORY) private readonly data: DataRepository,
+    private readonly profiles: ProfileService,
+    private readonly communities: CommunityService,
+    private readonly forum: CommunityForumService,
+    private readonly messages: ProfileMessageService,
+    private readonly activity: ActivityService
+  ) {}
 
   async searchEntities(
     query: string,
