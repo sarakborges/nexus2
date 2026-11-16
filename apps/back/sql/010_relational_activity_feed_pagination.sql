@@ -52,11 +52,19 @@ begin
     from public.accounts a
     where a.id = p_user_id
   ),
-  owned_profiles as (
+  account_owned_profiles as (
     select p.id as profile_id, p.type
     from public.account_profiles ap
     join public.profiles p on p.id = ap.profile_id
     where ap.account_id = p_user_id
+  ),
+  owned_profiles as (
+    select p.id as profile_id, p.type
+    from public.account_profiles ap
+    join public.profiles p on p.id = ap.profile_id
+    cross join account_context context
+    where ap.account_id = p_user_id
+      and ap.profile_id = context.active_profile_id
   ),
   friend_profiles as (
     select distinct
@@ -77,7 +85,7 @@ begin
       and active_profile.id in (relationship.profile_id, relationship.related_profile_id)
       and friend_profile.type = active_profile.type
       and not exists (
-        select 1 from owned_profiles already_owned
+        select 1 from account_owned_profiles already_owned
         where already_owned.profile_id = friend_profile.id
       )
   ),
