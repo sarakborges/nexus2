@@ -71,7 +71,9 @@ const REQUIRED_RELATIONAL_METHODS = [
   'moderateCommunityForumTopic',
   'deleteCommunityForumTopic',
   'deleteCommunityForumReply',
-  'getActivityFeedRows'
+  'getActivityFeedRows',
+  'getActivityReadIds',
+  'markActivitiesRead'
 ] as const
 
 @Global()
