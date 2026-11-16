@@ -16,7 +16,11 @@ export function NotificationsMenu({
   onClose
 }: NotificationsMenuProps) {
   const { t } = useTranslations()
-  const activities = useAuthStore(state => state.session?.activities.slice(0, 8) ?? [])
+  // Select the stable store array; derive the limited view after the hook.
+  // Returning slice() or a fallback [] from a Zustand v5 selector creates a
+  // new snapshot on every read and can trigger an infinite render loop.
+  const sessionActivities = useAuthStore(state => state.session?.activities)
+  const activities = sessionActivities?.slice(0, 8) ?? []
 
   return (
     <>
