@@ -21,6 +21,10 @@ security definer
 set search_path = ''
 as $function$
 begin
+  if not private.nexus_server_request_authorized() then
+    raise exception 'SERVER_REQUEST_UNAUTHORIZED' using errcode = '42501';
+  end if;
+
   if p_user_id is null then
     raise exception 'ACTIVITY_READ_USER_REQUIRED' using errcode = '22023';
   end if;
@@ -54,6 +58,10 @@ as $function$
 declare
   v_count integer := 0;
 begin
+  if not private.nexus_server_request_authorized() then
+    raise exception 'SERVER_REQUEST_UNAUTHORIZED' using errcode = '42501';
+  end if;
+
   if p_user_id is null or p_read_at_ms is null
      or coalesce(cardinality(p_activity_ids), 0) > 50 then
     raise exception 'ACTIVITY_READ_INPUT_INVALID' using errcode = '22023';
