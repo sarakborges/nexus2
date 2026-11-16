@@ -13,6 +13,8 @@ export type AccountMenuProps = {
   isSelectionPending: boolean
   isSelectionError: boolean
   isSigningOut: boolean
+  isDeletingAccount: boolean
+  onRequestDeleteAccount: () => void
   onToggleProfileSwitcher: () => void
   onRetryProfiles: () => void
   onSelectProfile: (profileId: string) => void

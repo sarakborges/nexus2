@@ -23,7 +23,7 @@ export type UploadResourceReference = {
 
 export type UploadedFileRecord = {
   id: string
-  ownerUserId: string
+  ownerUserId: string | null
   purpose: UploadPurpose
   bucket: string
   path: string

@@ -98,6 +98,10 @@ export class DomainService {
     return this.profiles.updateProfile(userId, profileId, input)
   }
 
+  deleteProfile(userId: string, profileId: string): Promise<void> {
+    return this.profiles.deleteProfile(userId, profileId)
+  }
+
   listCommunities(q: PaginationDto): Promise<PaginatedResult<Community>> {
     return this.communities.listCommunities(q)
   }

@@ -1,3 +1,5 @@
+export { useDeleteProfileMutation } from './useDeleteProfileMutation.hook'
+export type { UseDeleteProfileMutationResult } from './useDeleteProfileMutation.types'
 export { useCreateProfileMutation } from './useCreateProfileMutation.hook'
 export { useUpdateProfileMutation } from './useUpdateProfileMutation.hook'
 

@@ -100,6 +100,15 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     await this.assertSuccess(response)
   }
 
+  async deleteAccount(userId: string, now: number): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_account', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_now_ms: now })
+    })
+    await this.assertSuccess(response)
+  }
+
   async changeAccountProfile(change: AccountProfileChange): Promise<void> {
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
       method: 'POST',

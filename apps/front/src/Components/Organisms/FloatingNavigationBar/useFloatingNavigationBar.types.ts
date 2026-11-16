@@ -39,8 +39,13 @@ export type UseFloatingNavigationBarResult = {
   isSelectionPending: boolean
   isSelectionError: boolean
   isSigningOut: boolean
+  isDeletingAccount: boolean
+  isDeleteAccountConfirmationOpen: boolean
   retryProfiles: () => void
   selectProfile: (profileId: string) => void
   handleOpenSettings: () => void
   handleSignOut: () => void
+  requestDeleteAccount: () => void
+  cancelDeleteAccount: () => void
+  confirmDeleteAccount: () => void
 }

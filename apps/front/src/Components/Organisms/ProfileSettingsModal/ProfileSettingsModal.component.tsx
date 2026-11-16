@@ -1,7 +1,8 @@
+import { ActionConfirmationModal } from '@/Components/Molecules/ActionConfirmationModal'
+import { Button, Modal } from '@/DesignSystem'
 import { ProfileSettingsSaveBar } from '@/Components/Molecules/ProfileSettingsSaveBar'
 import { ProfileSettingsActivityMatrix } from '@/Components/Organisms/ProfileSettingsActivityMatrix'
 import { ProfileSettingsMessageAudience } from '@/Components/Organisms/ProfileSettingsMessageAudience'
-import { Modal } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileSettingsModalProps } from './ProfileSettingsModal.types'
 import { useProfileSettingsModal } from './useProfileSettingsModal'
@@ -20,10 +21,16 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
     saveSuccess,
     setMessageAudience,
     toggleActivityType,
-    save
-  } = useProfileSettingsModal()
+    save,
+    isDeleteConfirmationOpen,
+    isDeletingProfile,
+    requestDeleteProfile,
+    cancelDeleteProfile,
+    confirmDeleteProfile
+  } = useProfileSettingsModal(onClose)
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
@@ -54,6 +61,21 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
               onToggle={toggleActivityType}
             />
 
+            <section className="profile-settings-modal__danger-zone">
+              <div className="profile-settings-modal__danger-copy">
+                <h3>{t('PROFILE_DELETE')}</h3>
+                <p>{t('PROFILE_DELETE_DESCRIPTION')}</p>
+              </div>
+              <Button
+                variation="cancel"
+                type="button"
+                disabled={isSaving || isDeletingProfile}
+                onClick={requestDeleteProfile}
+              >
+                {t('PROFILE_DELETE')}
+              </Button>
+            </section>
+
             <ProfileSettingsSaveBar
               isDirty={isDirty}
               isSaving={isSaving}
@@ -65,5 +87,17 @@ export function ProfileSettingsModal({ open, onClose }: ProfileSettingsModalProp
         )}
       </div>
     </Modal>
+    <ActionConfirmationModal
+      open={isDeleteConfirmationOpen}
+      title={t('PROFILE_DELETE_CONFIRM_TITLE')}
+      description={t('PROFILE_DELETE_CONFIRM_DESCRIPTION')}
+      confirmLabel={t('PROFILE_DELETE_CONFIRM_ACTION')}
+      cancelLabel={t('ACTION_CANCEL')}
+      closeLabel={t('SETTINGS_CLOSE')}
+      isConfirming={isDeletingProfile}
+      onConfirm={confirmDeleteProfile}
+      onClose={cancelDeleteProfile}
+    />
+    </>
   )
 }

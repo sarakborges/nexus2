@@ -45,3 +45,44 @@
     gap: var(--nexus-space-5, 20px);
   }
 }
+
+.profile-settings-modal__danger-zone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--nexus-space-4, 16px);
+}
+
+.profile-settings-modal__danger-copy {
+  display: grid;
+  min-width: 0;
+  gap: var(--nexus-space-1, 4px);
+}
+
+.profile-settings-modal__danger-copy h3,
+.profile-settings-modal__danger-copy p {
+  margin: 0;
+}
+
+.profile-settings-modal__danger-copy h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-settings-modal__danger-copy p {
+  max-width: 52ch;
+  color: var(--color-neutral);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .profile-settings-modal__danger-zone {
+    align-items: stretch;
+  }
+
+  .profile-settings-modal__danger-zone > .button {
+    width: 100%;
+  }
+}

@@ -1,9 +1,14 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AuthSession, ProfileSettings } from '@nexus/common'
 
 import { useAuthSessionState } from '@/Hooks/Auth'
+import { useDeleteProfileMutation } from '@/Hooks/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
+import { ROUTES } from '@/Constants/routes'
+import { useTranslations } from '@/Hooks/Language'
+import { useToastStore } from '@/Stores/Toast.store'
 import { saveProfileSettings } from '@/Services/ProfileSettings'
 import { areProfileSettingsEquivalent } from './profileSettings.utils'
 import type {
@@ -29,8 +34,13 @@ const DEFAULT_SETTINGS: ProfileSettings = {
   ]
 }
 
-export function useProfileSettingsModal(): UseProfileSettingsModalResult {
+export function useProfileSettingsModal(onClose: () => void): UseProfileSettingsModalResult {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { t } = useTranslations()
+  const showToast = useToastStore(state => state.showToast)
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+  const deleteProfileMutation = useDeleteProfileMutation()
   const session = useAuthSessionState(state => state.session)
   const profile = session?.currentProfile ?? null
   const profileId = profile?.id ?? null
@@ -110,6 +120,26 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
     save: () => {
       if (!profileId || !isDirty || saveMutation.isPending) return
       saveMutation.mutate({ profileId, settings })
+    },
+    isDeleteConfirmationOpen,
+    isDeletingProfile: deleteProfileMutation.isPending,
+    requestDeleteProfile: () => {
+      if (profileId && !deleteProfileMutation.isPending) setIsDeleteConfirmationOpen(true)
+    },
+    cancelDeleteProfile: () => {
+      if (!deleteProfileMutation.isPending) setIsDeleteConfirmationOpen(false)
+    },
+    confirmDeleteProfile: () => {
+      if (!profileId || deleteProfileMutation.isPending || saveMutation.isPending) return
+      deleteProfileMutation.mutate(profileId, {
+        onSuccess: session => {
+          setIsDeleteConfirmationOpen(false)
+          showToast(t('PROFILE_DELETE_SUCCESS'))
+          onClose()
+          navigate(session?.user.profiles.length ? ROUTES.home : ROUTES.gettingStarted, { replace: true })
+        },
+        onError: () => showToast(t('PROFILE_DELETE_ERROR'), 'error')
+      })
     }
   }
 }

@@ -9,6 +9,7 @@ export type UseCreateProfilePageResult = UseEntityDetailsDraftResult & {
   setType: Dispatch<SetStateAction<ProfileType>>
   errorMessage: string
   isSubmitting: boolean
+  duplicateMediaOmitted: boolean
   handleSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   handleCancel: () => void
   uploadEditorImage: typeof uploadEditorImage

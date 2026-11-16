@@ -36,6 +36,12 @@ function createAccountService(accounts) {
           : account.profiles[0] ?? null
       }
     },
+    async deleteAccount(userId, now) {
+      calls.push({ method: 'deleteAccount', userId, now })
+      const index = accounts.findIndex(account => account.id === userId)
+      if (index < 0) throw new Error('ACCOUNT_NOT_FOUND')
+      accounts.splice(index, 1)
+    },
     async updateAccountPreferences(userId, preferences) {
       calls.push({ method: 'updateAccountPreferences', userId, preferences: structuredClone(preferences) })
       const account = accounts.find(item => item.id === userId)
@@ -198,5 +204,22 @@ test('selecting a profile not owned by the account is rejected', async () => {
   await assert.rejects(
     service.updateCurrentProfile('user-1', 'foreign-profile'),
     error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
+  )
+})
+
+test('deleteAccount delegates permanent deletion to the repository', async () => {
+  const { service, calls } = createAccountService([account()])
+  await service.deleteAccount('user-1')
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].method, 'deleteAccount')
+  assert.equal(calls[0].userId, 'user-1')
+  assert.equal(Number.isFinite(calls[0].now), true)
+})
+
+test('deleteAccount preserves the missing-account error', async () => {
+  const { service } = createAccountService([])
+  await assert.rejects(
+    service.deleteAccount('missing-user'),
+    error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
   )
 })

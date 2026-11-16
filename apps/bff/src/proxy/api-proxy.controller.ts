@@ -2,7 +2,7 @@ import { All, Controller, HttpStatus, Logger, Req, Res } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
 import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import type { Request, Response } from 'express'
-import { ACCESS_COOKIE, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
+import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
@@ -67,6 +67,14 @@ export class ApiProxyController {
           const value = result.headers[header]
           if (typeof value === 'string') res.setHeader(header, value)
         }
+      }
+      if (
+        req.method === 'DELETE' &&
+        req.path === '/api/auth/account' &&
+        result.status >= 200 &&
+        result.status < 300
+      ) {
+        clearAuthCookies(res)
       }
       res.status(result.status).send(result.data)
     } catch (error) {

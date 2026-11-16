@@ -12,4 +12,5 @@ export interface AccountRepository {
   ): Promise<void>
   deleteRefreshTokenByHash(tokenHash: string): Promise<void>
   changeAccountProfile(change: AccountProfileChange): Promise<void>
+  deleteAccount(userId: string, now: number): Promise<void>
 }

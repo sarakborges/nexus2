@@ -12,6 +12,8 @@ export type { UseSignInMutationResult } from './useSignInMutation.types'
 export { useSignUpMutation } from './useSignUpMutation.hook'
 export type { UseSignUpMutationResult } from './useSignUpMutation.types'
 
+export { useDeleteAccountMutation } from './useDeleteAccountMutation.hook'
+export type { UseDeleteAccountMutationResult } from './useDeleteAccountMutation.types'
 export { useSignOutMutation } from './useSignOutMutation.hook'
 export type { UseSignOutMutationResult } from './useSignOutMutation.types'
 export { useSetCurrentProfileMutation } from './useSetCurrentProfileMutation.hook'

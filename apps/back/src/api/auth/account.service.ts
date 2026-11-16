@@ -58,6 +58,18 @@ export class AccountService {
     })
   }
 
+  async deleteAccount(userId: string): Promise<void> {
+    try {
+      await this.repository.deleteAccount(userId, Date.now())
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('ACCOUNT_NOT_FOUND')) {
+        throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      }
+      throw error
+    }
+  }
+
   async getPreferences(userId: string): Promise<UserPreferences> {
     const account = await this.readAccount(userId)
     if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')

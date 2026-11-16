@@ -156,6 +156,9 @@ export async function setCurrentProfile(
     throw new AuthError('NETWORK_ERROR')
   }
 }
+export async function deleteCurrentAccount(): Promise<void> {
+  await api.delete('/auth/account')
+}
 export async function signOutUser(): Promise<void> {
   try {
     await api.post('/auth/sign-out')

@@ -1,11 +1,13 @@
 import { ProfileSwitcher } from '@/Components/Organisms/ProfileSwitcher'
 import type { AccountMenuProps } from './AccountMenu.types'
 import {
+  FiCopy,
   FiEdit3,
   FiLogOut,
   FiPlusCircle,
   FiSettings,
   FiSliders,
+  FiTrash2,
   FiUserPlus
 } from 'react-icons/fi'
 
@@ -29,6 +31,8 @@ export function AccountMenu({
   isSelectionPending,
   isSelectionError,
   isSigningOut,
+  isDeletingAccount,
+  onRequestDeleteAccount,
   onToggleProfileSwitcher,
   onRetryProfiles,
   onSelectProfile,
@@ -38,6 +42,16 @@ export function AccountMenu({
   onClose
 }: AccountMenuProps) {
   const { t } = useTranslations()
+  const duplicateAbout = currentProfile?.about.replace(
+    /<img\b(?=[^>]*\bsrc=(["'])[^"']*\/api\/uploads\/[0-9a-f-]{36}\/content\1)[^>]*>/gi,
+    ''
+  ) ?? ''
+  const hasManagedAvatar = Boolean(
+    currentProfile?.picture.includes('/storage/v1/object/public/nexus-avatars/')
+  )
+  const duplicateMediaOmitted = Boolean(
+    currentProfile && (hasManagedAvatar || duplicateAbout !== currentProfile.about)
+  )
 
   return (
     <div
@@ -71,6 +85,27 @@ export function AccountMenu({
           >
             <FiEdit3 aria-hidden="true" />
             <span>{t('PROFILE_EDIT')}</span>
+          </Link>
+        )}
+        {currentProfile && (
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.createProfile}
+            state={{
+              duplicateProfile: {
+                name: currentProfile.name,
+                url: currentProfile.url + '-copy',
+                picture: hasManagedAvatar ? '' : currentProfile.picture,
+                about: duplicateAbout,
+                type: currentProfile.type
+              },
+              duplicateMediaOmitted
+            }}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiCopy aria-hidden="true" />
+            <span>{t('PROFILE_DUPLICATE')}</span>
           </Link>
         )}
       </div>
@@ -128,6 +163,17 @@ export function AccountMenu({
       </div>
 
       <div className="floating-navigation__menu-group">
+        <Button
+          variation="transparent"
+          className="floating-navigation__menu-item floating-navigation__menu-item--danger"
+          type="button"
+          role="menuitem"
+          disabled={isDeletingAccount}
+          onClick={onRequestDeleteAccount}
+        >
+          <FiTrash2 aria-hidden="true" />
+          <span>{t('ACCOUNT_DELETE')}</span>
+        </Button>
         <Button
           variation="transparent"
           className="floating-navigation__menu-item floating-navigation__menu-item--danger"

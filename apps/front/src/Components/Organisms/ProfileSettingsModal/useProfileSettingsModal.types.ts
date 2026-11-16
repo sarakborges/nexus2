@@ -26,4 +26,9 @@ export type UseProfileSettingsModalResult = {
     type: ProfileActivityType
   ) => void
   save: () => void
+  isDeleteConfirmationOpen: boolean
+  isDeletingProfile: boolean
+  requestDeleteProfile: () => void
+  cancelDeleteProfile: () => void
+  confirmDeleteProfile: () => void
 }
