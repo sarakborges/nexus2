@@ -1,4 +1,3 @@
-import { useProfileStore } from './Profile.store'
 import { queryClient } from '@/Services/Query/queryClient'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import type {
@@ -38,11 +37,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   setSession: (session, initializationError = false) => {
     const previousUserId = get().session?.user.id ?? null
     const nextUserId = session?.user.id ?? null
-    const currentProfileId = get().session?.user.currentProfile ?? null
     if (previousUserId && previousUserId !== nextUserId) queryClient.clear()
-    if (currentProfileId !== (session?.user.currentProfile ?? null)) {
-      useProfileStore.getState().clearProfile()
-    }
     set({ session, isInitialized: true, initializationError })
     if (session) queryClient.setQueryData(queryKeys.auth.session, session)
     else queryClient.removeQueries({ queryKey: queryKeys.auth.session })
@@ -74,7 +69,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           authenticatedAt: Date.now()
         }
     queryClient.clear()
-    useProfileStore.getState().clearProfile()
     set({
       session,
       isInitialized: true,
@@ -102,7 +96,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           authenticatedAt: Date.now()
         }
     queryClient.clear()
-    useProfileStore.getState().clearProfile()
     set({
       session,
       isInitialized: true,
@@ -118,7 +111,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (!get().session) return false
     try {
       const user = await updateCurrentProfile(profileId)
-      useProfileStore.getState().clearProfile()
 
       // Clear the previous profile snapshot immediately. Keeping it beside the
       // new user.currentProfile makes pages resolve different acting identities.
@@ -176,7 +168,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: async () => {
     await signOutUser()
     queryClient.clear()
-    useProfileStore.getState().clearProfile()
     set({ session: null, isInitialized: true, initializationError: false })
     queryClient.removeQueries({ queryKey: queryKeys.auth.session })
   }
