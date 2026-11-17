@@ -66,11 +66,9 @@ export const queryKeys = {
     page: number,
     pageSize: number,
     viewerUserId: string | null,
-    currentProfileId: string | null,
-    query: string,
-    sort: string
+    currentProfileId: string | null
   ) =>
-    ['community-forum-topic-page', url, topicId, page, pageSize, viewerUserId, currentProfileId, query, sort] as const,
+    ['community-forum-topic-page', url, topicId, page, pageSize, viewerUserId, currentProfileId] as const,
   communityMembersPage: (
     url: string,
     tab: string,
