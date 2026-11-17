@@ -120,8 +120,8 @@ create policy nexus_server_access
   using (private.nexus_server_request_authorized())
   with check (private.nexus_server_request_authorized());
 
-alter table public.activity_notification_reads
-  drop constraint if exists activity_notification_reads_activity_id_fkey;
+-- Preserve the activity_id FK: feed rows remain as tombstones, so read history
+-- retains referential integrity without cascading physical deletion.
 
 create or replace function private.nexus_soft_delete_row()
 returns trigger
