@@ -27,16 +27,10 @@ export function useRelationshipActions({
   const showToast = useToastStore((state) => state.showToast)
   const isCommunity = targetKind === 'community'
   const hasProvidedRelationship = providedRelationship !== undefined
-  const canQuery = Boolean(
-    session &&
-    sourceId &&
-    (isCommunity || !session.user.profiles.includes(targetId))
-  )
-  const canInteract = Boolean(
-    sourceId &&
-    sourceId !== targetId &&
-    (isCommunity || !session?.user.profiles.includes(targetId))
-  )
+  // The active profile may interact with every other profile owned by the
+  // account. Only the active profile itself is excluded as a target.
+  const canQuery = Boolean(session && sourceId)
+  const canInteract = Boolean(sourceId && sourceId !== targetId)
 
   const relationshipsQuery = useQuery({
     queryKey: isCommunity
