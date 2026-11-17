@@ -22,7 +22,9 @@ export class AuthMeService {
 
     const [profiles, activityPage, currentProfileSettings, suggestedCommunities] = await Promise.all([
       currentProfileId ? this.access.readProfilesByIds([currentProfileId]) : Promise.resolve([]),
-      this.activity.getRecentActivityPage(userId, 10),
+      currentProfileId
+        ? this.activity.getRecentActivityPage(userId, 10)
+        : Promise.resolve({ items: [], nextCursor: null, hasMore: false }),
       currentProfileId
         ? this.profileSettings.getSettings(userId, currentProfileId)
         : Promise.resolve(null),

@@ -93,9 +93,8 @@ test('me does not silently select a profile when the account has no active selec
     { async getUser() { calls.push(['user']); return user }, async updateCurrentProfile() {
       assert.fail('The session must not choose a profile automatically')
     } },
-    { async getRecentActivityPage(userId, limit) {
-      calls.push(['feed', userId, limit])
-      return feedPage
+    { async getRecentActivityPage() {
+      assert.fail('The profile-scoped feed must not be fetched without an active profile')
     } },
     { async readProfilesByIds() {
       assert.fail('No profile should be resolved without an explicit selection')
@@ -118,7 +117,7 @@ test('me does not silently select a profile when the account has no active selec
     activityCursor: null,
     hasMoreActivities: false
   })
-  assert.deepEqual(calls, [['user'], ['feed', 'account-2', 10]])
+  assert.deepEqual(calls, [['user']])
 })
 
 test('me also refuses a stale current-profile id that is not owned by the account', async () => {

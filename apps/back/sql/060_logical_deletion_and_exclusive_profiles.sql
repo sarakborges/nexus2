@@ -23,7 +23,8 @@ declare
     'community_forum_replies',
     'refresh_tokens',
     'media_files',
-    'activity_notification_reads'
+    'activity_notification_reads',
+    'feed_activities'
   ];
 begin
   foreach v_table in array v_tables loop
@@ -51,21 +52,50 @@ $migration$;
 create unique index if not exists account_profiles_single_owner_uidx
   on public.account_profiles(profile_id);
 
--- Allow a new active record to reuse an address previously held by a deleted
--- account/profile/community, without erasing the old record.
-alter table public.accounts drop constraint if exists accounts_email_key;
-alter table public.profiles drop constraint if exists profiles_url_key;
-alter table public.communities drop constraint if exists communities_url_key;
+-- Existing unique constraints for account email and public profile/community
+-- URLs are intentionally retained. Tombstones continue reserving those values.
+-- Account deletion marks the account itself. The cascade trigger retains all
+-- dependent domain records and clears the current-profile selection.
+create or replace function public.nexus_delete_account(
+  p_user_id uuid,
+  p_now_ms bigint
+)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+declare
+  v_deleted_count integer;
+begin
+  if p_user_id is null or p_now_ms is null then
+    raise exception 'INVALID_ACCOUNT_DELETE' using errcode = '22023';
+  end if;
 
-create unique index if not exists accounts_active_email_uidx
-  on public.accounts(email)
-  where deleted_at_ms is null;
-create unique index if not exists profiles_active_url_uidx
-  on public.profiles(url)
-  where deleted_at_ms is null;
-create unique index if not exists communities_active_url_uidx
-  on public.communities(url)
-  where deleted_at_ms is null;
+  perform private.nexus_lock_collection_versions(array[
+    'accounts','profiles','communities','relationships','community_relationships',
+    'profile_posts','profile_settings','profile_messages','community_forum_topics',
+    'community_forum_replies','refresh_tokens','media_files'
+  ]::text[]);
+
+  update public.accounts as account
+  set current_profile_id = null,
+      deleted_at_ms = p_now_ms
+  where account.id = p_user_id
+    and account.deleted_at_ms is null;
+
+  get diagnostics v_deleted_count = row_count;
+  if v_deleted_count <> 1 then
+    raise exception 'ACCOUNT_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  perform private.nexus_bump_collection_versions(array[
+    'accounts','profiles','communities','relationships','community_relationships',
+    'profile_posts','profile_settings','profile_messages','community_forum_topics',
+    'community_forum_replies','refresh_tokens','media_files'
+  ]::text[]);
+end;
+$function$;
 
 -- Notification read state is private server-owned account data. Grant only
 -- the backend role access, protected by the same internal request header.
@@ -76,6 +106,9 @@ create policy nexus_server_access
   for all to anon
   using (private.nexus_server_request_authorized())
   with check (private.nexus_server_request_authorized());
+
+alter table public.activity_notification_reads
+  drop constraint if exists activity_notification_reads_activity_id_fkey;
 
 create or replace function private.nexus_soft_delete_row()
 returns trigger
@@ -98,6 +131,13 @@ begin
     where file.id = old.id
       and file.deleted_at_ms is null;
     return null;
+  end if;
+
+  if tg_table_name = 'feed_activities' then
+    update public.activity_notification_reads as read_state
+    set deleted_at_ms = coalesce(read_state.deleted_at_ms, v_deleted_at_ms)
+    where read_state.activity_id = old.id
+      and read_state.deleted_at_ms is null;
   end if;
 
   select pg_catalog.string_agg(
@@ -184,14 +224,26 @@ begin
     where read_state.account_id = new.id
       and read_state.deleted_at_ms is null;
 
+    -- Profile-owned files have already been detached by the profile cascade.
+    -- Retain media attached to surviving community resources, even when the
+    -- deleting account originally uploaded the object.
     update public.media_files as file
-    set status = 'deleting',
-        deleting_at_ms = coalesce(file.deleting_at_ms, v_now_ms),
-        delete_after_ms = null,
-        resource_type = null,
-        resource_id = null,
-        message_from_profile_id = null,
-        message_to_profile_id = null
+    set owner_user_id = null,
+        status = case
+          when file.resource_type is null or file.resource_id is null
+            then 'deleting'
+          else file.status
+        end,
+        deleting_at_ms = case
+          when file.resource_type is null or file.resource_id is null
+            then coalesce(file.deleting_at_ms, v_now_ms)
+          else file.deleting_at_ms
+        end,
+        delete_after_ms = case
+          when file.resource_type is null or file.resource_id is null
+            then null
+          else file.delete_after_ms
+        end
     where file.owner_user_id = new.id
       and file.deleted_at_ms is null;
 
@@ -381,7 +433,9 @@ declare
     'community_forum_topics',
     'community_forum_replies',
     'refresh_tokens',
-    'media_files'
+    'media_files',
+    'activity_notification_reads',
+    'feed_activities'
   ];
 begin
   foreach v_table in array v_tables loop
@@ -466,6 +520,41 @@ create trigger zz_nexus_soft_delete_feed_cleanup
   for each row
   when (old.deleted_at_ms is null and new.deleted_at_ms is not null)
   execute function private.nexus_remove_deleted_feed_projection();
+
+create or replace function private.nexus_restore_soft_deleted_feed_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+begin
+  if not private.nexus_server_request_authorized() then
+    raise exception 'SERVER_REQUEST_UNAUTHORIZED' using errcode = '42501';
+  end if;
+
+  update public.feed_activities as activity
+  set type = new.type,
+      actor_profile_id = new.actor_profile_id,
+      target_profile_id = new.target_profile_id,
+      profile_post_id = new.profile_post_id,
+      community_id = new.community_id,
+      role = new.role,
+      updated_at_ms = new.updated_at_ms,
+      deleted_at_ms = null
+  where activity.id = new.id
+    and activity.deleted_at_ms is not null;
+
+  if found then
+    return null;
+  end if;
+  return new;
+end;
+$function$;
+
+drop trigger if exists nexus_restore_soft_deleted_feed_activity on public.feed_activities;
+create trigger nexus_restore_soft_deleted_feed_activity
+  before insert on public.feed_activities
+  for each row execute function private.nexus_restore_soft_deleted_feed_activity();
 
 -- Revive a relationship tombstone instead of trying to insert a duplicate
 -- primary key when two profiles reconnect or a community member rejoins.
@@ -602,9 +691,14 @@ begin
     where membership.account_id = p_account_id
       and membership.deleted_at_ms is null;
 
-    insert into public.account_profiles (account_id, profile_id, position)
-    values (p_account_id, p_profile_id, v_next_position)
-    on conflict (account_id, profile_id) do nothing;
+    begin
+      insert into public.account_profiles (account_id, profile_id, position)
+      values (p_account_id, p_profile_id, v_next_position)
+      on conflict (account_id, profile_id) do nothing;
+    exception
+      when unique_violation then
+        raise exception 'PROFILE_NOT_OWNED' using errcode = '42501';
+    end;
 
     if p_make_current or v_current_profile_id is null then
       update public.accounts
@@ -745,6 +839,262 @@ $function$;
 
 -- Authenticated sessions can linger until token expiry, so the security-definer
 -- notification functions must independently reject logically deleted accounts.
+create or replace function public.nexus_get_activity_feed_page(
+  p_user_id uuid,
+  p_limit integer default 10,
+  p_cursor_updated_at_ms bigint default null,
+  p_cursor_id text default null
+)
+returns table (
+  id text,
+  type text,
+  updated_at_ms bigint,
+  profile jsonb,
+  friend jsonb,
+  community jsonb,
+  content text,
+  role text
+)
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+begin
+  if p_user_id is null then
+    raise exception 'ACTIVITY_FEED_USER_REQUIRED' using errcode = '22023';
+  end if;
+
+  if (p_cursor_updated_at_ms is null) <> (p_cursor_id is null) then
+    raise exception 'ACTIVITY_FEED_CURSOR_INVALID' using errcode = '22023';
+  end if;
+
+  if not exists (select 1 from public.accounts a where a.id = p_user_id and a.deleted_at_ms is null) then
+    raise exception 'ACCOUNT_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  return query
+  with account_context as (
+    select
+      a.id as account_id,
+      case when exists (
+        select 1 from public.account_profiles active_membership
+        where active_membership.account_id = a.id
+          and active_membership.profile_id = a.current_profile_id
+          and active_membership.deleted_at_ms is null
+      ) then a.current_profile_id end as active_profile_id
+    from public.accounts a
+    where a.id = p_user_id
+      and a.deleted_at_ms is null
+  ),
+  account_owned_profiles as (
+    select p.id as profile_id, p.type
+    from public.account_profiles ap
+    join public.profiles p on p.id = ap.profile_id
+    where ap.account_id = p_user_id
+      and ap.deleted_at_ms is null
+      and p.deleted_at_ms is null
+  ),
+  owned_profiles as (
+    select p.id as profile_id, p.type
+    from public.account_profiles ap
+    join public.profiles p on p.id = ap.profile_id
+    cross join account_context context
+    where ap.account_id = p_user_id
+      and ap.profile_id = context.active_profile_id
+      and ap.deleted_at_ms is null
+      and p.deleted_at_ms is null
+  ),
+  friend_profiles as (
+    select distinct
+      case
+        when active_profile.id = relationship.profile_id then relationship.related_profile_id
+        else relationship.profile_id
+      end as profile_id
+    from public.relationships relationship
+    cross join account_context context
+    join public.profiles active_profile
+      on active_profile.id = context.active_profile_id
+    join public.profiles friend_profile
+      on friend_profile.id = case
+        when active_profile.id = relationship.profile_id then relationship.related_profile_id
+        else relationship.profile_id
+      end
+    where relationship.type = 'connection'
+      and active_profile.id in (relationship.profile_id, relationship.related_profile_id)
+      and friend_profile.type = active_profile.type
+      and not exists (
+        select 1 from account_owned_profiles already_owned
+        where already_owned.profile_id = friend_profile.id
+      )
+  ),
+  visible_profiles as (
+    select profile_id from owned_profiles
+    union
+    select profile_id from friend_profiles
+  ),
+  feed_events as (
+    select
+      activity.*,
+      case
+        when activity.type = 'friend_connected'
+          and exists (
+            select 1 from owned_profiles owned
+            where owned.profile_id = activity.actor_profile_id
+          )
+          then activity.actor_profile_id
+        when activity.type = 'friend_connected'
+          then activity.target_profile_id
+        else activity.actor_profile_id
+      end as viewer_profile_id,
+      case
+        when activity.type = 'friend_connected'
+          and exists (
+            select 1 from owned_profiles owned
+            where owned.profile_id = activity.actor_profile_id
+          )
+          then activity.target_profile_id
+        when activity.type = 'friend_connected'
+          then activity.actor_profile_id
+        else null
+      end as friend_profile_id
+    from public.feed_activities activity
+    where activity.deleted_at_ms is null
+  )
+  select
+    event.id,
+    event.type,
+    event.updated_at_ms,
+    jsonb_build_object(
+      'id', actor.id,
+      'name', actor.name,
+      'url', actor.url,
+      'picture', actor.picture,
+      'about', actor.about,
+      'type', actor.type,
+      'createdAt', actor.created_at_ms,
+      'lastActivity', actor.last_activity_ms
+    ) as profile,
+    case when friend.id is null then null else jsonb_build_object(
+      'id', friend.id,
+      'name', friend.name,
+      'url', friend.url,
+      'picture', friend.picture,
+      'about', friend.about,
+      'type', friend.type,
+      'createdAt', friend.created_at_ms,
+      'lastActivity', friend.last_activity_ms
+    ) end as friend,
+    case when community.id is null then null else jsonb_build_object(
+      'id', community.id,
+      'name', community.name,
+      'url', community.url,
+      'picture', community.picture,
+      'about', community.about,
+      'type', community.type,
+      'privacy', community.privacy,
+      'createdAt', community.created_at_ms,
+      'lastActivity', community.last_activity_ms
+    ) end as community,
+    post.content,
+    event.role
+  from feed_events event
+  cross join account_context context
+  join public.profiles actor on actor.id = event.viewer_profile_id
+  left join public.profiles friend on friend.id = event.friend_profile_id
+  left join public.communities community on community.id = event.community_id
+  left join public.profile_posts post
+    on post.id = event.profile_post_id
+   and post.profile_id = actor.id
+  where
+    (
+      (
+        event.type = 'friend_connected'
+        and exists (
+          select 1 from owned_profiles owned
+          where owned.profile_id = event.viewer_profile_id
+        )
+        and not exists (
+          select 1 from owned_profiles owned
+          where owned.profile_id = event.friend_profile_id
+        )
+        and friend.id is not null
+        and friend.type = actor.type
+      )
+      or
+      (
+        event.type <> 'friend_connected'
+        and exists (
+          select 1 from visible_profiles visible
+          where visible.profile_id = actor.id
+        )
+      )
+    )
+    and (
+      not exists (
+        select 1 from public.profile_settings publisher_settings
+        where publisher_settings.profile_id = actor.id
+      )
+      or exists (
+        select 1
+        from public.profile_activity_preferences publisher_preference
+        where publisher_preference.profile_id = actor.id
+          and publisher_preference.activity_type = event.type
+          and publisher_preference.publish_activity = true
+      )
+    )
+    and (
+      (
+        event.type <> 'friend_connected'
+        and exists (
+          select 1 from owned_profiles owned
+          where owned.profile_id = actor.id
+        )
+      )
+      or not exists (
+        select 1
+        from public.profile_settings viewer_settings
+        where viewer_settings.profile_id = context.active_profile_id
+      )
+      or exists (
+        select 1
+        from public.profile_activity_preferences viewer_preference
+        where viewer_preference.profile_id = context.active_profile_id
+          and viewer_preference.activity_type = event.type
+          and viewer_preference.show_friend_activity = true
+      )
+    )
+    and (
+      event.type not in ('community_created', 'community_membership')
+      or (
+        community.id is not null
+        and community.type = actor.type
+        and (
+          exists (
+            select 1 from owned_profiles owned
+            where owned.profile_id = actor.id
+          )
+          or community.privacy = 'public'
+        )
+      )
+    )
+    and (
+      event.type <> 'profile_post'
+      or post.id is not null
+    )
+    and (
+      p_cursor_updated_at_ms is null
+      or event.updated_at_ms < p_cursor_updated_at_ms
+      or (
+        event.updated_at_ms = p_cursor_updated_at_ms
+        and event.id > p_cursor_id
+      )
+    )
+  order by event.updated_at_ms desc, event.id asc
+  limit least(greatest(coalesce(p_limit, 10), 1), 50) + 1;
+end;
+$function$;
+
+
 create or replace function public.nexus_get_activity_read_ids(
   p_user_id uuid,
   p_activity_ids text[]
@@ -1007,13 +1357,16 @@ revoke all on function private.nexus_soft_delete_row() from public, authenticate
 revoke all on function private.nexus_propagate_soft_delete() from public, authenticated;
 revoke all on function private.nexus_remove_deleted_feed_projection() from public, authenticated;
 revoke all on function private.nexus_restore_soft_deleted_relationship() from public, authenticated;
+revoke all on function private.nexus_restore_soft_deleted_feed_activity() from public, authenticated;
 grant execute on function private.nexus_soft_delete_row() to anon;
 grant execute on function private.nexus_propagate_soft_delete() to anon;
 grant execute on function private.nexus_remove_deleted_feed_projection() to anon;
 grant execute on function private.nexus_restore_soft_deleted_relationship() to anon;
+grant execute on function private.nexus_restore_soft_deleted_feed_activity() to anon;
 
 revoke all on function public.nexus_change_account_profile(uuid, uuid, text, boolean, uuid) from public, authenticated;
 revoke all on function public.nexus_delete_profile(uuid, uuid) from public, authenticated;
+revoke all on function public.nexus_delete_account(uuid, bigint) from public, authenticated;
 revoke all on function public.nexus_get_activity_read_ids(uuid, text[]) from public, authenticated;
 revoke all on function public.nexus_mark_activities_read(uuid, text[], bigint) from public, authenticated;
 revoke all on function public.nexus_claim_expired_uploads(bigint, bigint, bigint, bigint, integer) from public, authenticated;
@@ -1022,6 +1375,7 @@ revoke all on function public.nexus_delete_pending_upload(uuid, uuid) from publi
 
 grant execute on function public.nexus_change_account_profile(uuid, uuid, text, boolean, uuid) to anon;
 grant execute on function public.nexus_delete_profile(uuid, uuid) to anon;
+grant execute on function public.nexus_delete_account(uuid, bigint) to anon;
 grant execute on function public.nexus_get_activity_read_ids(uuid, text[]) to anon;
 grant execute on function public.nexus_mark_activities_read(uuid, text[], bigint) to anon;
 grant execute on function public.nexus_claim_expired_uploads(bigint, bigint, bigint, bigint, integer) to anon;
