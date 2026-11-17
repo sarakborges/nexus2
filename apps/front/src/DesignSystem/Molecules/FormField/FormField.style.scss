@@ -3,3 +3,10 @@
 .form-field {
   @include fieldLayout.base;
 }
+
+.form-field__description {
+  margin: 0;
+  color: var(--color-neutral);
+  font-size: 13px;
+  line-height: 1.5;
+}
