@@ -1,10 +1,10 @@
 import { Navigate, Outlet } from 'react-router'
 
 import { ROUTES } from '@/Constants/routes'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 
 export function ProfileRequiredRoute() {
-  const session = useAuthStore((state) => state.session)
+  const session = useAuthSessionState((state) => state.session)
 
   return (session?.user.profiles.length ?? 0) > 0 ? (
     <Outlet />

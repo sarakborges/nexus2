@@ -8,14 +8,14 @@ import { useCreateCommunityMutation } from '@/Hooks/Community'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateCommunityPageResult } from './useCreateCommunityPage.types'
 
 export function useCreateCommunityPage(): UseCreateCommunityPageResult {
   const navigate = useNavigate()
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
+  const session = useAuthSessionState((state) => state.session)
   const ownerProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =

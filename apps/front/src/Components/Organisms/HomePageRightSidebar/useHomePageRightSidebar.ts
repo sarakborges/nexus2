@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { getProfilePage } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import type { HomePagePreviewItem } from './HomePageRightSidebar.types'
 import type {
   UseHomePageRightSidebarOptions,
@@ -15,7 +15,7 @@ export function useHomePageRightSidebar({
   currentProfile,
   suggestedCommunities
 }: UseHomePageRightSidebarOptions): UseHomePageRightSidebarResult {
-  const userId = useAuthStore(state => state.session?.user.id ?? null)
+  const userId = useAuthSessionState(state => state.session?.user.id ?? null)
   const profilePageQuery = useQuery({
     queryKey: queryKeys.profilePage(currentProfile.url, userId, currentProfile.id),
     queryFn: () => getProfilePage(currentProfile.url),

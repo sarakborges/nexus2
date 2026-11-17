@@ -8,7 +8,7 @@ import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { useCreateCommunityForumReplyMutation } from '@/Hooks/CommunityForum'
 import { getCommunityForumTopicPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import { uploadEditorImage } from '@/Services/Uploads'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
@@ -20,8 +20,10 @@ import type { UseCommunityForumTopicPageResult } from './useCommunityForumTopicP
 export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const { url, topicId } = useParams<{ url: string; topicId: string }>()
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)

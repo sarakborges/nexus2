@@ -8,16 +8,18 @@ import { useCreateProfileMutation } from '@/Hooks/Profile'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateProfilePageResult } from './useCreateProfilePage.types'
 
 export function useCreateProfilePage(): UseCreateProfilePageResult {
   const navigate = useNavigate()
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const user = session?.user
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const showToast = useToastStore((state) => state.showToast)
   const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
     useEntityDetailsDraft()

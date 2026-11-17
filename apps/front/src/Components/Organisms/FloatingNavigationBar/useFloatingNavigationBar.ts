@@ -13,7 +13,7 @@ import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useFloatingNavigationBar({
@@ -32,7 +32,7 @@ export function useFloatingNavigationBar({
   )
   const activePanel =
     openPanel?.pathname === location.pathname ? openPanel.panel : null
-  const session = useAuthStore((state) => state.session)
+  const session = useAuthSessionState((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null

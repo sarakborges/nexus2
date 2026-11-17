@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import type { ProfileSettings } from '@nexus/common'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { AuthSession, ProfileSettings } from '@nexus/common'
 
+import { useAuthSessionState } from '@/Hooks/Auth'
+import { queryKeys } from '@/Services/Query/queryKeys'
 import { saveProfileSettings } from '@/Services/ProfileSettings'
 import { areProfileSettingsEquivalent } from './profileSettings.utils'
-import { useAuthStore } from '@/Stores/Auth.store'
 import type {
   ProfileActivityType,
   ProfileSettingsDraft,
@@ -29,10 +30,8 @@ const DEFAULT_SETTINGS: ProfileSettings = {
 }
 
 export function useProfileSettingsModal(): UseProfileSettingsModalResult {
-  const session = useAuthStore(state => state.session)
-  const setCurrentProfileSettings = useAuthStore(
-    state => state.setCurrentProfileSettings
-  )
+  const queryClient = useQueryClient()
+  const session = useAuthSessionState(state => state.session)
   const profile = session?.currentProfile ?? null
   const profileId = profile?.id ?? null
   const persistedSettings = session?.currentProfileSettings ?? DEFAULT_SETTINGS
@@ -48,10 +47,15 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
       saveProfileSettings(profileId, settings),
     onMutate: () => setSaveSuccessProfileId(null),
     onSuccess: (saved, variables) => {
-      const currentProfileId = useAuthStore.getState().session?.currentProfile?.id
-      if (currentProfileId !== variables.profileId) return
+      const currentSession = queryClient.getQueryData<AuthSession | null>(
+        queryKeys.auth.session
+      )
+      if (currentSession?.currentProfile?.id !== variables.profileId) return
 
-      setCurrentProfileSettings(saved)
+      queryClient.setQueryData<AuthSession | null>(
+        queryKeys.auth.session,
+        () => ({ ...currentSession, currentProfileSettings: saved })
+      )
       setDraft({ profileId: variables.profileId, value: saved })
       setSaveSuccessProfileId(variables.profileId)
     }

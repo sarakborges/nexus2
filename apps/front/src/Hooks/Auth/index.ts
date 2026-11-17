@@ -1,3 +1,11 @@
+export { useAuthSession } from './useAuthSession.hook'
+export type { UseAuthSessionResult } from './useAuthSession.types'
+export { useAuthSessionState } from './useAuthSessionState.hook'
+export type {
+  AuthSessionState,
+  UseAuthSessionStateSelector
+} from './useAuthSessionState.types'
+
 export { useSignInMutation } from './useSignInMutation.hook'
 export type { UseSignInMutationResult } from './useSignInMutation.types'
 

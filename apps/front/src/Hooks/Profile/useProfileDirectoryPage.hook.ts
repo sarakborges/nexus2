@@ -6,7 +6,7 @@ import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import { getProfileDirectoryPage, type ProfileDirectoryKind } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import type { UseProfileDirectoryPageResult } from './useProfileDirectoryPage.types'
 
 export function useProfileDirectoryPage(
@@ -14,8 +14,10 @@ export function useProfileDirectoryPage(
 ): UseProfileDirectoryPageResult {
   const { url } = useParams<{ url: string }>()
   const normalized = normalizeEntityUrl(url)
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const pagination = useUrlPagination()

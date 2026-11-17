@@ -10,7 +10,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { getCommunityForumComposerPage } from '@/Services/Community'
 import { queryKeys } from '@/Services/Query/queryKeys'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import { getApiErrorCode } from '@/Services/Http/api'
 import type { UseCreateCommunityForumTopicPageResult } from './useCreateCommunityForumTopicPage.types'
@@ -19,9 +19,11 @@ export function useCreateCommunityForumTopicPage(): UseCreateCommunityForumTopic
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const currentProfileId = session?.user.currentProfile ?? null
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const viewerUserId = session?.user.id ?? null
   const showToast = useToastStore((state) => state.showToast)
   const normalized = normalizeEntityUrl(url)
