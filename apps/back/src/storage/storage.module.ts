@@ -6,6 +6,7 @@ import { SupabaseRelationalRepository } from './supabase-relational.repository'
 
 const REQUIRED_RELATIONAL_METHODS = [
   'getAccountById',
+  'getSuggestedCommunities',
   'findAccountByEmail',
   'getProfilesByIds',
   'getCommunitiesByIds',
