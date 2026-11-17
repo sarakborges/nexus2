@@ -1,5 +1,3 @@
-import { isUniqueConstraintError } from './entity-url.utils.internal'
-
 export function getEntityUrlCandidate(baseUrl: string, attempt: number): string {
   return attempt <= 1 ? baseUrl : `${baseUrl}-${attempt}`
 }
@@ -16,7 +14,5 @@ export function isEntityUrlAlreadyInUse(
     ? 'profiles_url_key'
     : 'communities_url_key'
 
-  return message.includes(domainCode)
-    || message.includes(constraintName)
-    || isUniqueConstraintError(error)
+  return message.includes(domainCode) || message.includes(constraintName)
 }
