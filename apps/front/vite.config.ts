@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, appDirectory, '')
   const defaultProxyTarget =
     mode === 'production-bff'
-      ? 'https://nexus2-yoggsaras-projects.vercel.app'
+      // Use the verified project domain instead of a generated team alias.
+      ? 'https://nexus-hope.vercel.app'
       : 'http://localhost:3001'
   const proxyTarget = env.BFF_PROXY_TARGET || defaultProxyTarget
 
