@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 
 const communityId = 'community-1'
 const community = {
@@ -443,7 +443,7 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       return (userProfiles[userId] ?? []).includes(profileId)
     }
   }
-  return { service: new DomainService(data, auth), collections }
+  return { service: createDomainService(data, auth), collections }
 }
 
 

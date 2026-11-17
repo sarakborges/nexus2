@@ -23,6 +23,15 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
     }))
   }
 
+  async deleteProfile(userId: string, profileId: string): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: userId, p_profile_id: profileId })
+    })
+    await this.assertSuccess(response)
+  }
+
   async createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser> {
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_profile', {
       method: 'POST',

@@ -153,6 +153,14 @@ export class ProfileService {
     return result.profile
   }
 
+  async deleteProfile(userId: string, profileId: string): Promise<void> {
+    try {
+      await this.data.deleteProfile(userId, profileId)
+    } catch (error) {
+      this.throwRelationalWriteError(error)
+    }
+  }
+
   getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
     return this.relationships.getProfileRelationships(userId, profileId)
   }

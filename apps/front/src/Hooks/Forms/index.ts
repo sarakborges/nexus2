@@ -1,5 +1,5 @@
 export { useEntityDetailsDraft } from './useEntityDetailsDraft.hook'
-export type { UseEntityDetailsDraftResult } from './useEntityDetailsDraft.types'
+export type { EntityDetailsDraftInitialValues, UseEntityDetailsDraftResult } from './useEntityDetailsDraft.types'
 export { useEntityEditPageState } from './useEntityEditPageState.hook'
 export type {
   EntityEditTypeCompatibility,

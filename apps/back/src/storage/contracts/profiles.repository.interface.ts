@@ -6,6 +6,7 @@ export interface ProfilesRepository {
   updateProfile(
     change: ProfileUpdateWrite
   ): Promise<{ profile: Profile; previousPicture: string | null }>
+  deleteProfile(userId: string, profileId: string): Promise<void>
   createProfilePost(
     userId: string,
     post: ProfilePost,

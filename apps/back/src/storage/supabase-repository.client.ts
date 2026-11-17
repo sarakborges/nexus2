@@ -106,7 +106,7 @@ export class SupabaseRepositoryClient {
 
   protected mapMediaFile(row: DatabaseRow): MediaFileRecord {
     if (
-      typeof row.id !== 'string' || typeof row.owner_user_id !== 'string' ||
+      typeof row.id !== 'string' || (row.owner_user_id !== null && typeof row.owner_user_id !== 'string') ||
       typeof row.purpose !== 'string' || typeof row.bucket !== 'string' ||
       typeof row.path !== 'string' || typeof row.content_type !== 'string' ||
       !Number.isFinite(Number(row.expected_size)) ||
@@ -114,7 +114,7 @@ export class SupabaseRepositoryClient {
       !['pending','ready','deleting'].includes(String(row.status))
     ) throw new Error('Supabase returned an invalid media file row.')
     return {
-      id: row.id, ownerUserId: row.owner_user_id,
+      id: row.id, ownerUserId: typeof row.owner_user_id === 'string' ? row.owner_user_id : null,
       purpose: row.purpose as MediaFileRecord['purpose'],
       bucket: row.bucket, path: row.path, contentType: row.content_type,
       expectedSize: Number(row.expected_size),

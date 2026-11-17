@@ -189,7 +189,7 @@ export type CommunityUpdateWrite = {
 
 export type MediaFileRecord = {
   id: string
-  ownerUserId: string
+  ownerUserId: string | null
   purpose: 'profile-avatar' | 'community-avatar' | 'editor-image'
   bucket: string
   path: string

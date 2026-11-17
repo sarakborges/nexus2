@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common'
 import type { AuthTokenPair } from '@nexus/common'
 import { AuthService } from './auth.service'
 import type { AuthenticatedUserContext } from './auth.types'
@@ -27,6 +27,11 @@ export class AuthController {
   @Get('me') @UseGuards(JwtAccessGuard)
   me(@CurrentUser() user: AuthenticatedUserContext) {
     return this.meService.getMe(user.id)
+  }
+  @Delete('account') @UseGuards(JwtAccessGuard)
+  async deleteAccount(@CurrentUser() user: AuthenticatedUserContext): Promise<{ success: true }> {
+    await this.auth.deleteAccount(user.id)
+    return { success: true }
   }
   @Get('preferences') @UseGuards(JwtAccessGuard) async getPreferences(@CurrentUser() user: AuthenticatedUserContext) { return this.auth.getPreferences(user.id) }
   @Post('preferences') @UseGuards(JwtAccessGuard) async updatePreferences(@CurrentUser() user: AuthenticatedUserContext, @Body() body: PreferencesDto) { return this.auth.updatePreferences(user.id, body) }

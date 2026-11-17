@@ -48,6 +48,9 @@ export async function createUserProfile(
   const { data } = await api.post<CreateProfileResult>('/profiles', input)
   return data
 }
+export async function deleteUserProfile(profileId: string): Promise<void> {
+  await api.delete(`/profiles/${encodeURIComponent(profileId)}`)
+}
 export async function updateUserProfile(
   profileId: string,
   input: Omit<CreateProfileInput, 'type'>

@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 
 test('search delegates normalized query, scope, pagination and sort to the relational repository', async () => {
   const expected = {
@@ -11,7 +11,7 @@ test('search delegates normalized query, scope, pagination and sort to the relat
     totalPages: 2
   }
   const calls = []
-  const service = new DomainService({
+  const service = createDomainService({
     async searchEntities(query, scope, page, sort) {
       calls.push({ query, scope, page, sort })
       return expected
@@ -19,7 +19,7 @@ test('search delegates normalized query, scope, pagination and sort to the relat
     async transaction() {
       throw new Error('Entity search must not load collection snapshots.')
     }
-  }, {})
+  })
 
   const result = await service.searchEntities(
     ' Target ', 'profiles', { page: 2, sort: 'name-asc' }
@@ -43,7 +43,7 @@ test('empty and whitespace-only queries reach relational search as an empty list
     totalItems: 35,
     totalPages: 2
   }
-  const service = new DomainService({
+  const service = createDomainService({
     async searchEntities(query, scope, page, sort) {
       calls.push({ query, scope, page, sort })
       return expected
@@ -66,7 +66,7 @@ test('empty and whitespace-only queries reach relational search as an empty list
 
 test('empty search preserves the requested scope and pagination', async () => {
   const calls = []
-  const service = new DomainService({
+  const service = createDomainService({
     async searchEntities(query, scope, page, sort) {
       calls.push({ query, scope, page, sort })
       return { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
@@ -84,7 +84,7 @@ test('empty search preserves the requested scope and pagination', async () => {
 })
 
 test('search propagates relational repository errors', async () => {
-  const service = new DomainService({
+  const service = createDomainService({
     async searchEntities() {
       throw new Error('SEARCH_QUERY_FAILED')
     }

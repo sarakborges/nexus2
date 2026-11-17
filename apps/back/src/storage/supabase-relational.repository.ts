@@ -44,6 +44,10 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.accounts.findAccountByEmail(...args)
   }
 
+  deleteAccount(...args: Parameters<DataRepository['deleteAccount']>): ReturnType<DataRepository['deleteAccount']> {
+    return this.accounts.deleteAccount(...args)
+  }
+
   createAccountWithRefreshToken(...args: Parameters<DataRepository['createAccountWithRefreshToken']>): ReturnType<DataRepository['createAccountWithRefreshToken']> {
     return this.accounts.createAccountWithRefreshToken(...args)
   }
@@ -118,6 +122,10 @@ export class SupabaseRelationalRepository implements DataRepository {
 
   getProfilesByIds(...args: Parameters<DataRepository['getProfilesByIds']>): ReturnType<DataRepository['getProfilesByIds']> {
     return this.profiles.getProfilesByIds(...args)
+  }
+
+  deleteProfile(...args: Parameters<DataRepository['deleteProfile']>): ReturnType<DataRepository['deleteProfile']> {
+    return this.profiles.deleteProfile(...args)
   }
 
   createProfile(...args: Parameters<DataRepository['createProfile']>): ReturnType<DataRepository['createProfile']> {

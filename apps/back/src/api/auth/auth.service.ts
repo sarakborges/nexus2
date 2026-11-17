@@ -109,6 +109,10 @@ export class AuthService {
     return this.accounts.removeProfile(userId, profileId, previousCurrentProfileId)
   }
 
+  deleteAccount(userId: string): Promise<void> {
+    return this.accounts.deleteAccount(userId)
+  }
+
   getPreferences(userId: string): Promise<UserPreferences> {
     return this.accounts.getPreferences(userId)
   }

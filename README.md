@@ -24,7 +24,7 @@ npm run dev
 - BFF: http://localhost:3001
 - Back: http://localhost:3002
 
-The default Vite development server proxies `/api` to the local BFF. Without Supabase variables, the backend uses the JSON file adapter locally.
+The default Vite development server proxies `/api` to the local BFF. The backend requires `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_API_SECRET` in every environment and fails fast when they are missing. Local development uses the same relational Supabase repository as deployment; there is no JSON-file fallback. Configure `SUPABASE_STORAGE_SECRET_KEY` as well when testing uploads or forum-topic publishing.
 
 ### Use the production BFF with the local frontend
 
@@ -88,8 +88,15 @@ Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 0
 3. `008`–`041` add relational indexes, feed projection and triggers, targeted transactional writes, SQL-side page queries, search, pagination and integrity guards.
 4. `042_retire_json_collection_storage.sql` removes the obsolete JSONB collection table and its legacy RPCs.
 5. `043_remove_generic_relational_commit.sql` removes the compatibility RPC used by generic snapshot transactions.
+6. `044_drop_legacy_relational_synchronizer.sql` removes the obsolete JSONB-to-relational synchronizer.
+7. `045`–`048` preserve attached editor images, reconcile orphaned attachments and avatars, recover legacy cleanup claims, and prevent stale cleanup workers from deleting media still attached to live content.
+8. `049_harden_community_membership_versioning.sql` serializes community membership and ownership changes with relational collection-version locks.
+9. `050` and `057` fix ambiguous SQL column references in post/message and forum write RPCs; `051` permits empty entity-directory searches; `052` adds a short refresh-token rotation grace window for concurrent BFF requests.
+10. `053`–`054` include suggested communities in `/auth/me` and expand the home suggestions projection to the 4×4 grid (up to sixteen entries).
+11. `055_activity_notification_reads.sql` persists notification read state, and `056_active_profile_activity_feed.sql` scopes the feed to the active profile.
+12. `058_logical_deletion_and_exclusive_profiles.sql` applies the complete profile/account lifecycle atomically: exclusive profile ownership, logical deletion and cascades, explicit active-profile clearing, feed/read-state tombstones, and retained media metadata for asynchronous Storage cleanup.
 
-The migrations leave the existing tracker tables and their migration history untouched. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
+The migrations leave the existing tracker tables and their migration history untouched. User-facing data deletion is logical: records and dependent content receive `deleted_at_ms`, remain available as retained history, and are excluded from normal reads. Profiles have exactly one account owner; there is no profile-sharing or unlink-only ownership state. Relationships, forum/message content, account/profile settings, notification read states and feed projection rows also retain tombstones. Storage objects are removed asynchronously after being marked for deletion, while their database metadata remains as a tombstone. The feed remains a derived projection, but removing a feed item does not erase its stored deletion history. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
 
 Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_API_SECRET`, and `SUPABASE_STORAGE_SECRET_KEY` on the backend service in Vercel. Configure `CRON_SECRET` on both the BFF and backend. The publishable key identifies the Supabase project; both API secrets, the cron secret, and the JWT secrets must remain sensitive environment variables and must never be bundled into the frontend.
 
@@ -97,7 +104,7 @@ Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_API_SECRET`, and
 
 The Supabase Storage setup uses two buckets: `nexus-avatars` is public and stores profile/community avatars permanently (up to 5 MB per image); `nexus-editor-images` is private and stores editor images (up to 10 MB). Both accept JPEG, PNG, WebP, GIF and AVIF. The backend issues short-lived signed upload URLs, and the browser uploads directly to Storage. No Storage secret is sent to the browser.
 
-Editor image references are stored in sanitized HTML as Nexus upload routes. Access to message images is checked against the sender/recipient profiles; images attached to public profile/community About content are publicly readable through the backend. Access is denied at exactly 24 hours after upload. A daily Vercel Cron removes expired objects and abandoned avatar uploads. The scheduled cleanup runs at 04:00 UTC; physical deletion may happen after the access deadline, but expired images are already inaccessible.
+Editor image references are stored in sanitized HTML as Nexus upload routes. Unattached editor images expire after 24 hours. When an image is attached to content, its upload expiry is suspended; if the attachment is removed, a new 24-hour orphan-cleanup window starts. Access to message images is checked against the sender/recipient profiles; images attached to public profile/community About content are publicly readable through the backend, while private-community content follows membership permissions. A daily Vercel Cron removes expired objects and abandoned avatar uploads. The scheduled cleanup runs at 04:00 UTC; physical deletion may happen after the access deadline, but expired unattached images are already inaccessible.
 
 `SUPABASE_STORAGE_SECRET_KEY` is separate from `SUPABASE_API_SECRET`: the latter authenticates internal relational database RPCs. Never expose either secret in frontend environment variables or send it from the browser.
 
@@ -128,3 +135,8 @@ Paginated views keep `page` and `pageSize` in the URL. Community member moderati
 ## Existing browser data
 
 This refactor removes normal application persistence from browser storage. Existing localStorage/sessionStorage records are not automatically imported into backend storage; import should be performed as a deliberate one-time migration before removing the old browser data from any environment that contains important records.
+
+
+## Profile selection
+
+Authenticated users can open `/my-profiles` at any time to manage only the profiles owned by their account. The page uses the paginated owned-profile endpoint and supports selecting, duplicating and logically deleting profiles. Deleting the active profile clears the account's active-profile reference; opening `/home` without an active profile redirects to `/my-profiles`. A session with profiles but no explicitly selected current profile remains unselected until the user chooses one. The account dropdown and its profile switcher remain unchanged.

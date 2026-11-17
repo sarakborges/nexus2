@@ -6,9 +6,9 @@ import { useAuthSessionState } from '@/Hooks/Auth'
 export function ProfileRequiredRoute() {
   const session = useAuthSessionState((state) => state.session)
 
-  return (session?.user.profiles.length ?? 0) > 0 ? (
+  return session?.currentProfile?.id ? (
     <Outlet />
   ) : (
-    <Navigate to={ROUTES.gettingStarted} replace />
+    <Navigate to={ROUTES.myProfiles} replace />
   )
 }
