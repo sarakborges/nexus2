@@ -4,6 +4,19 @@
 
 begin;
 
+-- Retain upload metadata when the owning account is logically deleted.
+alter table public.media_files
+  alter column owner_user_id drop not null;
+
+alter table public.media_files
+  drop constraint if exists media_files_owner_user_id_fkey;
+
+alter table public.media_files
+  add constraint media_files_owner_user_id_fkey
+  foreign key (owner_user_id) references public.accounts(id)
+  on delete set null deferrable initially deferred;
+
+
 do $migration$
 declare
   v_table text;
@@ -247,6 +260,14 @@ begin
     where file.owner_user_id = new.id
       and file.deleted_at_ms is null;
 
+  elsif tg_table_name = 'account_profiles' then
+    -- A membership cannot be removed independently: the profile has one
+    -- permanent account owner, so deleting its ownership row deletes the profile too.
+    update public.profiles as profile
+    set deleted_at_ms = v_deleted_at_ms
+    where profile.id = new.profile_id
+      and profile.deleted_at_ms is null;
+
   elsif tg_table_name = 'profiles' then
     update public.accounts as account
     set current_profile_id = null
@@ -266,14 +287,31 @@ begin
       );
 
     update public.relationships as relation
-    set deleted_at_ms = v_deleted_at_ms
+    set deleted_at_ms = v_deleted_at_ms,
+        requested_by = case when relation.requested_by = new.id then null else relation.requested_by end,
+        blocked_by = case when relation.blocked_by = new.id then null else relation.blocked_by end
     where relation.deleted_at_ms is null
       and (relation.profile_id = new.id or relation.related_profile_id = new.id);
 
+    update public.relationships as relation
+    set requested_by = null,
+        blocked_by = null
+    where relation.deleted_at_ms is null
+      and (relation.requested_by = new.id or relation.blocked_by = new.id);
+
     update public.community_relationships as relation
-    set deleted_at_ms = v_deleted_at_ms
+    set deleted_at_ms = v_deleted_at_ms,
+        requested_by = case when relation.requested_by = new.id then null else relation.requested_by end,
+        blocked_by = case when relation.blocked_by = new.id then null else relation.blocked_by end
     where relation.profile_id = new.id
       and relation.deleted_at_ms is null;
+
+    update public.community_relationships as relation
+    set requested_by = null,
+        blocked_by = null
+    where relation.deleted_at_ms is null
+      and relation.profile_id <> new.id
+      and (relation.requested_by = new.id or relation.blocked_by = new.id);
 
     update public.profile_posts as post
     set deleted_at_ms = v_deleted_at_ms
