@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 
+import type { Profile } from '@nexus/common'
 import type { ProfileType } from '@/Models/Profile.model'
 import { ROUTES } from '@/Constants/routes'
 import { useEntityDetailsDraft } from '@/Hooks/Forms'
@@ -8,20 +9,29 @@ import { useCreateProfileMutation } from '@/Hooks/Profile'
 import { useTranslations } from '@/Hooks/Language'
 import { getApiErrorCode } from '@/Services/Http/api'
 import { uploadEditorImage } from '@/Services/Uploads'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { UseCreateProfilePageResult } from './useCreateProfilePage.types'
 
 export function useCreateProfilePage(): UseCreateProfilePageResult {
   const navigate = useNavigate()
+  const location = useLocation()
+  const locationState = location.state as {
+    duplicateProfile?: Pick<Profile, 'name' | 'url' | 'picture' | 'about' | 'type'>
+    duplicateMediaOmitted?: boolean
+  } | null
+  const duplicateProfile = locationState?.duplicateProfile
+  const duplicateMediaOmitted = Boolean(locationState?.duplicateMediaOmitted)
   const { t } = useTranslations()
-  const session = useAuthStore((state) => state.session)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const user = session?.user
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
   const showToast = useToastStore((state) => state.showToast)
   const { name, setName, url, setUrl, picture, setPicture, about, setAbout } =
-    useEntityDetailsDraft()
-  const [type, setType] = useState<ProfileType>('social')
+    useEntityDetailsDraft(duplicateProfile)
+  const [type, setType] = useState<ProfileType>(duplicateProfile?.type ?? 'social')
   const [errorMessage, setErrorMessage] = useState('')
   const createProfileMutation = useCreateProfileMutation()
 
@@ -63,6 +73,7 @@ export function useCreateProfilePage(): UseCreateProfilePageResult {
 
   return {
     isAuthInitialized,
+    duplicateMediaOmitted,
     name,
     setName,
     url,

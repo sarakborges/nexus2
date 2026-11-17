@@ -18,7 +18,7 @@ import {
   getProfileMessagesPage
 } from '@/Services/ProfileMessage'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 import type { ProfileMessageViewModel } from '@/Components/Organisms/ProfileMessageList/ProfileMessageList.types'
 import type { UseProfileMessagesPageResult } from './useProfileMessagesPage.types'
@@ -27,8 +27,10 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
   const { t } = useTranslations()
   const { url } = useParams<{ url: string }>()
   const requestedUrl = normalizeEntityUrl(url)
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination()

@@ -6,6 +6,7 @@ import { SupabaseRelationalRepository } from './supabase-relational.repository'
 
 const REQUIRED_RELATIONAL_METHODS = [
   'getAccountById',
+  'getSuggestedCommunities',
   'findAccountByEmail',
   'getProfilesByIds',
   'getCommunitiesByIds',
@@ -25,6 +26,7 @@ const REQUIRED_RELATIONAL_METHODS = [
   'setProfileAvatar',
   'setCommunityAvatar',
   'createProfile',
+  'deleteProfile',
   'updateProfile',
   'createCommunity',
   'updateCommunity',
@@ -32,6 +34,7 @@ const REQUIRED_RELATIONAL_METHODS = [
   'issueRefreshToken',
   'deleteRefreshTokenByHash',
   'changeAccountProfile',
+  'deleteAccount',
   'upsertProfileRelationship',
   'removeProfileRelationship',
   'changeCommunityRelationship',

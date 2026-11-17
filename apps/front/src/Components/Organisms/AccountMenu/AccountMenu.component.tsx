@@ -1,11 +1,13 @@
 import { ProfileSwitcher } from '@/Components/Organisms/ProfileSwitcher'
 import type { AccountMenuProps } from './AccountMenu.types'
 import {
+  FiCopy,
   FiEdit3,
   FiLogOut,
   FiPlusCircle,
   FiSettings,
   FiSliders,
+  FiTrash2,
   FiUserPlus
 } from 'react-icons/fi'
 
@@ -14,6 +16,7 @@ import { Link } from 'react-router'
 import { Button } from '@/DesignSystem'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
+import { getProfileDuplicationLocationState } from '@/Utils/profileDuplication.utils'
 import './AccountMenu.style.scss'
 
 export function AccountMenu({
@@ -29,6 +32,8 @@ export function AccountMenu({
   isSelectionPending,
   isSelectionError,
   isSigningOut,
+  isDeletingAccount,
+  onRequestDeleteAccount,
   onToggleProfileSwitcher,
   onRetryProfiles,
   onSelectProfile,
@@ -38,7 +43,6 @@ export function AccountMenu({
   onClose
 }: AccountMenuProps) {
   const { t } = useTranslations()
-
   return (
     <div
       className="floating-navigation__menu floating-navigation__menu--account"
@@ -71,6 +75,18 @@ export function AccountMenu({
           >
             <FiEdit3 aria-hidden="true" />
             <span>{t('PROFILE_EDIT')}</span>
+          </Link>
+        )}
+        {currentProfile && (
+          <Link
+            className="floating-navigation__menu-item"
+            to={ROUTES.createProfile}
+            state={getProfileDuplicationLocationState(currentProfile)}
+            role="menuitem"
+            onClick={onClose}
+          >
+            <FiCopy aria-hidden="true" />
+            <span>{t('PROFILE_DUPLICATE')}</span>
           </Link>
         )}
       </div>
@@ -128,6 +144,17 @@ export function AccountMenu({
       </div>
 
       <div className="floating-navigation__menu-group">
+        <Button
+          variation="transparent"
+          className="floating-navigation__menu-item floating-navigation__menu-item--danger"
+          type="button"
+          role="menuitem"
+          disabled={isDeletingAccount}
+          onClick={onRequestDeleteAccount}
+        >
+          <FiTrash2 aria-hidden="true" />
+          <span>{t('ACCOUNT_DELETE')}</span>
+        </Button>
         <Button
           variation="transparent"
           className="floating-navigation__menu-item floating-navigation__menu-item--danger"

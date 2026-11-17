@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
@@ -100,6 +100,15 @@ export class ProfilesController {
     @Body() body: CreateProfileDto
   ) {
     return this.domain.createProfile(user.id, body)
+  }
+
+  @Delete('profiles/:profileId')
+  @UseGuards(JwtAccessGuard)
+  deleteProfile(
+    @CurrentUser() user: AuthenticatedUserContext,
+    @Param('profileId') profileId: string
+  ) {
+    return this.domain.deleteProfile(user.id, profileId)
   }
 
   @Put('profiles/:profileId')

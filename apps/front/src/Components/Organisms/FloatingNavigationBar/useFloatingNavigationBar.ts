@@ -8,12 +8,12 @@ import type {
   UseFloatingNavigationBarOptions,
   UseFloatingNavigationBarResult
 } from './useFloatingNavigationBar.types'
-import { useSetCurrentProfileMutation, useSignOutMutation } from '@/Hooks/Auth'
+import { useDeleteAccountMutation, useSetCurrentProfileMutation, useSignOutMutation } from '@/Hooks/Auth'
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
 import { getProfilesByIds } from '@/Services/Profile'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { useToastStore } from '@/Stores/Toast.store'
 
 export function useFloatingNavigationBar({
@@ -25,6 +25,7 @@ export function useFloatingNavigationBar({
   const navigationRef = useRef<HTMLDivElement>(null)
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null)
   const [isProfileSwitcherOpen, setIsProfileSwitcherOpen] = useState(false)
+  const [isDeleteAccountConfirmationOpen, setIsDeleteAccountConfirmationOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () =>
       typeof window !== 'undefined' &&
@@ -32,7 +33,7 @@ export function useFloatingNavigationBar({
   )
   const activePanel =
     openPanel?.pathname === location.pathname ? openPanel.panel : null
-  const session = useAuthStore((state) => state.session)
+  const session = useAuthSessionState((state) => state.session)
   const showToast = useToastStore((state) => state.showToast)
   const profileIds = session?.user.profiles ?? []
   const currentProfileId = session?.user.currentProfile ?? null
@@ -86,6 +87,7 @@ export function useFloatingNavigationBar({
 
   const signOutMutation = useSignOutMutation()
   const profileSelectionMutation = useSetCurrentProfileMutation()
+  const deleteAccountMutation = useDeleteAccountMutation()
 
   useEffect(() => {
     const root = document.documentElement
@@ -126,6 +128,27 @@ export function useFloatingNavigationBar({
   const handleOpenSettings = () => {
     closePanels()
     onOpenSettings()
+  }
+
+  const requestDeleteAccount = () => {
+    closePanels()
+    setIsDeleteAccountConfirmationOpen(true)
+  }
+
+  const cancelDeleteAccount = () => {
+    if (!deleteAccountMutation.isPending) setIsDeleteAccountConfirmationOpen(false)
+  }
+
+  const confirmDeleteAccount = () => {
+    if (deleteAccountMutation.isPending) return
+    deleteAccountMutation.mutate(undefined, {
+      onSuccess: () => {
+        setIsDeleteAccountConfirmationOpen(false)
+        showToast(t('ACCOUNT_DELETE_SUCCESS'))
+        navigate(ROUTES.signIn, { replace: true })
+      },
+      onError: () => showToast(t('ACCOUNT_DELETE_ERROR'), 'error')
+    })
   }
 
   const handleSignOut = () => {
@@ -169,6 +192,8 @@ export function useFloatingNavigationBar({
     isSelectionPending: profileSelectionMutation.isPending,
     isSelectionError: profileSelectionMutation.isError,
     isSigningOut: signOutMutation.isPending,
+    isDeletingAccount: deleteAccountMutation.isPending,
+    isDeleteAccountConfirmationOpen,
     retryProfiles: () => void profilesQuery.refetch(),
     selectProfile: (profileId: string) =>
       profileSelectionMutation.mutate(profileId, {
@@ -178,6 +203,9 @@ export function useFloatingNavigationBar({
         }
       }),
     handleOpenSettings,
-    handleSignOut
+    handleSignOut,
+    requestDeleteAccount,
+    cancelDeleteAccount,
+    confirmDeleteAccount
   }
 }

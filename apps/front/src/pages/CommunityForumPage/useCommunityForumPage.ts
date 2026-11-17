@@ -6,15 +6,17 @@ import { ROUTES } from '@/Constants/routes'
 import { useUrlPagination } from '@/Hooks/useUrlPagination'
 import { getCommunityForumPage } from '@/Services/CommunityForum'
 import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSessionState } from '@/Hooks/Auth'
 import { normalizeEntityUrl } from '@/Utils/entityUrl.utils'
 import type { UseCommunityForumPageResult } from './useCommunityForumPage.types'
 
 export function useCommunityForumPage(): UseCommunityForumPageResult {
   const { url } = useParams<{ url: string }>()
   const navigate = useNavigate()
-  const session = useAuthStore((state) => state.session)
-  const isAuthInitialized = useAuthStore((state) => state.isInitialized)
+  const { session, isAuthInitialized } = useAuthSessionState((state) => ({
+    session: state.session,
+    isAuthInitialized: state.isInitialized
+  }))
   const viewerUserId = session?.user.id ?? null
   const currentProfileId = session?.user.currentProfile ?? null
   const normalized = normalizeEntityUrl(url)

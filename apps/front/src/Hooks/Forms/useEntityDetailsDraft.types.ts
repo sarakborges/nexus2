@@ -1,5 +1,12 @@
 import type { Dispatch, SetStateAction } from 'react'
 
+export type EntityDetailsDraftInitialValues = Partial<{
+  name: string
+  url: string
+  picture: string
+  about: string
+}>
+
 export type UseEntityDetailsDraftResult = {
   name: string
   setName: Dispatch<SetStateAction<string>>

@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 
 function profile(id) {
   return {
@@ -68,7 +68,7 @@ test('DomainService retrieves recent activity only from relational feed rows', a
       throw new Error('DomainService activity must not load collection snapshots.')
     }
   }
-  const service = new DomainService(repository, {})
+  const service = createDomainService(repository)
 
   const activity = await service.getRecentActivity('user')
 
@@ -96,6 +96,6 @@ test('DomainService preserves an empty result from the relational feed query', a
       throw new Error('Empty activity must not load collection snapshots.')
     }
   }
-  const service = new DomainService(repository, {})
+  const service = createDomainService(repository)
   assert.deepEqual(await service.getRecentActivity('user-without-profiles'), [])
 })

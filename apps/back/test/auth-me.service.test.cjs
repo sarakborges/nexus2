@@ -80,69 +80,72 @@ test('me response includes the active owned profile, settings and first relation
   ])
 })
 
-test('me persists its first owned profile as current when the account has no valid selection', async () => {
-  let selectedProfileId = null
+test('me does not silently select a profile when the account has no active selection', async () => {
   const user = {
     id: 'account-2',
     email: 'another@example.com',
     profiles: ['profile-first', 'profile-second'],
     currentProfile: null
   }
-  const selectedUser = { ...user, currentProfile: 'profile-first' }
-  const profile = { id: 'profile-first', name: 'First' }
+  const feedPage = { items: [], nextCursor: null, hasMore: false }
+  const calls = []
   const service = new AuthMeService(
-    { async getUser() { return user }, async updateCurrentProfile(userId, profileId) {
-      assert.equal(userId, 'account-2')
-      selectedProfileId = profileId
-      return selectedUser
+    { async getUser() { calls.push(['user']); return user }, async updateCurrentProfile() {
+      assert.fail('The session must not choose a profile automatically')
     } },
     { async getRecentActivityPage() {
-      return { items: [], nextCursor: null, hasMore: false }
+      assert.fail('The profile-scoped feed must not be fetched without an active profile')
     } },
-    { async readProfilesByIds(ids) {
-      assert.deepEqual(ids, ['profile-first'])
-      return [profile]
-    }, async readSuggestedCommunities(profileId) {
-      assert.equal(profileId, 'profile-first')
-      return []
+    { async readProfilesByIds() {
+      assert.fail('No profile should be resolved without an explicit selection')
+    }, async readSuggestedCommunities() {
+      assert.fail('Suggestions should not be fetched without an active profile')
     } },
-    { async getSettings(userId, profileId) {
-      assert.equal(profileId, 'profile-first')
-      return defaultProfileSettings
+    { async getSettings() {
+      assert.fail('Settings should not be fetched without an active profile')
     } }
   )
 
   const result = await service.getMe('account-2')
-  assert.equal(selectedProfileId, 'profile-first')
-  assert.equal(result.user.currentProfile, 'profile-first')
-  assert.deepEqual(result.currentProfile, profile)
-  assert.deepEqual(result.currentProfileSettings, defaultProfileSettings)
+
+  assert.deepEqual(result, {
+    user,
+    currentProfile: null,
+    currentProfileSettings: null,
+    suggestedCommunities: [],
+    activities: [],
+    activityCursor: null,
+    hasMoreActivities: false
+  })
+  assert.deepEqual(calls, [['user']])
 })
 
-test('me returns no current profile settings when the account owns no profiles', async () => {
+test('me also refuses a stale current-profile id that is not owned by the account', async () => {
+  const user = {
+    id: 'account-3',
+    email: 'stale@example.com',
+    profiles: ['profile-owned'],
+    currentProfile: 'profile-not-owned'
+  }
   const service = new AuthMeService(
-    { async getUser() {
-      return {
-        id: 'account-3',
-        email: 'empty@example.com',
-        profiles: [],
-        currentProfile: null
-      }
+    { async getUser() { return user }, async updateCurrentProfile() {
+      assert.fail('A stale selection must not be replaced automatically')
     } },
     { async getRecentActivityPage() {
       return { items: [], nextCursor: null, hasMore: false }
     } },
     { async readProfilesByIds() {
-      assert.fail('No profile should be fetched')
+      assert.fail('A stale profile must not be loaded')
     }, async readSuggestedCommunities() {
-      assert.fail('Suggestions should not be fetched without a profile')
+      assert.fail('Suggestions require a selected owned profile')
     } },
     { async getSettings() {
-      assert.fail('Settings should not be fetched without a profile')
+      assert.fail('Settings require a selected owned profile')
     } }
   )
 
   const result = await service.getMe('account-3')
+  assert.equal(result.user.currentProfile, 'profile-not-owned')
   assert.equal(result.currentProfile, null)
   assert.equal(result.currentProfileSettings, null)
   assert.deepEqual(result.suggestedCommunities, [])

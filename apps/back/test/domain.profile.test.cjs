@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 
 function createHarness({ uploads, failTransaction = false, beforeTransaction } = {}) {
   const account = {
@@ -368,7 +368,7 @@ function createHarness({ uploads, failTransaction = false, beforeTransaction } =
       )
     }
   }
-  return { service: new DomainService(data, auth, uploads), collections, account }
+  return { service: createDomainService(data, auth, uploads), collections, account }
 }
 
 const input = {
@@ -942,7 +942,7 @@ test('public profile lists and URL lookups use targeted repository queries witho
     },
     async transaction() { throw new Error('Profile reads must not load collection snapshots.') }
   }
-  const service = new DomainService(data, {})
+  const service = createDomainService(data)
   const page = await service.listProfiles({ page: 1 })
   const found = await service.getProfile('@PROFILE')
   assert.deepEqual(calls,[['list',1],['url','profile']])

@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { FiGlobe, FiHome, FiMessageCircle, FiUser, FiUserCheck } from 'react-icons/fi'
+import { FiGlobe, FiHome, FiMessageCircle, FiUser, FiUserCheck, FiUsers } from 'react-icons/fi'
 
 import { ROUTES } from '@/Constants/routes'
 import { useTranslations } from '@/Hooks/Language'
@@ -22,6 +22,17 @@ export function FloatingNavigationLinks({
       className="floating-navigation__sidebar-links"
       aria-label={t('NAVIGATION_LABEL')}
     >
+      <Link
+        className="floating-navigation__sidebar-link"
+        to={ROUTES.myProfiles}
+        aria-label={t('NAVIGATION_MY_PROFILES')}
+        title={t('NAVIGATION_MY_PROFILES')}
+        aria-current={pathname === ROUTES.myProfiles ? 'page' : undefined}
+        onClick={onNavigate}
+      >
+        <FiUsers aria-hidden="true" />
+        <span>{t('NAVIGATION_MY_PROFILES')}</span>
+      </Link>
       {hasCurrentProfile && (
         <>
           <Link

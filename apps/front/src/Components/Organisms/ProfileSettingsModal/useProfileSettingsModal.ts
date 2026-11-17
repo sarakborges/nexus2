@@ -1,10 +1,16 @@
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import type { ProfileSettings } from '@nexus/common'
+import { useNavigate } from 'react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { AuthSession, ProfileSettings } from '@nexus/common'
 
+import { useAuthSessionState } from '@/Hooks/Auth'
+import { useDeleteProfileMutation } from '@/Hooks/Profile'
+import { queryKeys } from '@/Services/Query/queryKeys'
+import { ROUTES } from '@/Constants/routes'
+import { useTranslations } from '@/Hooks/Language'
+import { useToastStore } from '@/Stores/Toast.store'
 import { saveProfileSettings } from '@/Services/ProfileSettings'
 import { areProfileSettingsEquivalent } from './profileSettings.utils'
-import { useAuthStore } from '@/Stores/Auth.store'
 import type {
   ProfileActivityType,
   ProfileSettingsDraft,
@@ -28,11 +34,14 @@ const DEFAULT_SETTINGS: ProfileSettings = {
   ]
 }
 
-export function useProfileSettingsModal(): UseProfileSettingsModalResult {
-  const session = useAuthStore(state => state.session)
-  const setCurrentProfileSettings = useAuthStore(
-    state => state.setCurrentProfileSettings
-  )
+export function useProfileSettingsModal(onClose: () => void): UseProfileSettingsModalResult {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const { t } = useTranslations()
+  const showToast = useToastStore(state => state.showToast)
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false)
+  const deleteProfileMutation = useDeleteProfileMutation()
+  const session = useAuthSessionState(state => state.session)
   const profile = session?.currentProfile ?? null
   const profileId = profile?.id ?? null
   const persistedSettings = session?.currentProfileSettings ?? DEFAULT_SETTINGS
@@ -48,10 +57,15 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
       saveProfileSettings(profileId, settings),
     onMutate: () => setSaveSuccessProfileId(null),
     onSuccess: (saved, variables) => {
-      const currentProfileId = useAuthStore.getState().session?.currentProfile?.id
-      if (currentProfileId !== variables.profileId) return
+      const currentSession = queryClient.getQueryData<AuthSession | null>(
+        queryKeys.auth.session
+      )
+      if (currentSession?.currentProfile?.id !== variables.profileId) return
 
-      setCurrentProfileSettings(saved)
+      queryClient.setQueryData<AuthSession | null>(
+        queryKeys.auth.session,
+        () => ({ ...currentSession, currentProfileSettings: saved })
+      )
       setDraft({ profileId: variables.profileId, value: saved })
       setSaveSuccessProfileId(variables.profileId)
     }
@@ -106,6 +120,26 @@ export function useProfileSettingsModal(): UseProfileSettingsModalResult {
     save: () => {
       if (!profileId || !isDirty || saveMutation.isPending) return
       saveMutation.mutate({ profileId, settings })
+    },
+    isDeleteConfirmationOpen,
+    isDeletingProfile: deleteProfileMutation.isPending,
+    requestDeleteProfile: () => {
+      if (profileId && !deleteProfileMutation.isPending) setIsDeleteConfirmationOpen(true)
+    },
+    cancelDeleteProfile: () => {
+      if (!deleteProfileMutation.isPending) setIsDeleteConfirmationOpen(false)
+    },
+    confirmDeleteProfile: () => {
+      if (!profileId || deleteProfileMutation.isPending || saveMutation.isPending) return
+      deleteProfileMutation.mutate(profileId, {
+        onSuccess: () => {
+          setIsDeleteConfirmationOpen(false)
+          showToast(t('PROFILE_DELETE_SUCCESS'))
+          onClose()
+          navigate(ROUTES.myProfiles, { replace: true })
+        },
+        onError: () => showToast(t('PROFILE_DELETE_ERROR'), 'error')
+      })
     }
   }
 }

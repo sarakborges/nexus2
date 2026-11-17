@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 
-import { Navigate, Route, Routes } from 'react-router'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 
 import { AuthenticatedRoute } from './AuthenticatedRoute.component'
 import { GuestRoute } from './GuestRoute.component'
@@ -46,6 +46,9 @@ const GettingStartedPage = lazy(() =>
 const HomePage = lazy(() =>
   import('@/pages/HomePage').then(module => ({ default: module.HomePage }))
 )
+const MyProfilesPage = lazy(() =>
+  import('@/pages/MyProfilesPage').then(module => ({ default: module.MyProfilesPage }))
+)
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFoundPage').then(module => ({ default: module.NotFoundPage }))
 )
@@ -72,6 +75,8 @@ const SignUpPage = lazy(() =>
 )
 
 export function AppRoutes() {
+  const location = useLocation()
+
   return (
     <Suspense fallback={<RouteLoadingState />}>
       <Routes>
@@ -98,7 +103,11 @@ export function AppRoutes() {
               element={<GettingStartedPage />}
             />
           </Route>
-          <Route path={ROUTES.createProfile} element={<CreateProfilePage />} />
+          <Route path={ROUTES.myProfiles} element={<MyProfilesPage />} />
+          <Route
+            path={ROUTES.createProfile}
+            element={<CreateProfilePage key={location.key} />}
+          />
           <Route
             path={ROUTES.createCommunity}
             element={<CreateCommunityPage />}

@@ -1,0 +1,31 @@
+.action-confirmation-modal {
+  &__content {
+    display: grid;
+    gap: var(--nexus-space-5, 20px);
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--nexus-space-3, 12px);
+  }
+}
+
+@media (max-width: 420px) {
+  .action-confirmation-modal__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .action-confirmation-modal__actions .button {
+    width: 100%;
+  }
+}

@@ -20,6 +20,7 @@ export function CreateProfilePage() {
     setPicture,
     about,
     setAbout,
+    duplicateMediaOmitted,
     type,
     setType,
     errorMessage,
@@ -44,6 +45,9 @@ export function CreateProfilePage() {
       titleId="create-profile-title"
     >
       <form className="entity-form-page__form" onSubmit={handleSubmit}>
+        {duplicateMediaOmitted && (
+          <p role="status">{t('PROFILE_DUPLICATE_MEDIA_NOTE')}</p>
+        )}
         <EntityDetailsFields
           entity="profile"
           name={name}

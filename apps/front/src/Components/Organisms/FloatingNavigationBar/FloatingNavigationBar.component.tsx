@@ -9,6 +9,7 @@ import { useTranslations } from '@/Hooks/Language'
 import { AccountMenu } from '@/Components/Organisms/AccountMenu'
 import { NotificationsMenu } from '@/Components/Organisms/NotificationsMenu'
 import { FloatingNavigationSearch } from '@/Components/Molecules/FloatingNavigationSearch'
+import { ActionConfirmationModal } from '@/Components/Molecules/ActionConfirmationModal'
 import { FloatingNavigationLinks } from '@/Components/Organisms/FloatingNavigationLinks'
 import type { FloatingNavigationBarProps } from './FloatingNavigationBar.types'
 import { useFloatingNavigationBar } from './useFloatingNavigationBar'
@@ -48,6 +49,11 @@ export function FloatingNavigationBar({
     isSelectionPending,
     isSelectionError,
     isSigningOut,
+    isDeletingAccount,
+    isDeleteAccountConfirmationOpen,
+    requestDeleteAccount,
+    cancelDeleteAccount,
+    confirmDeleteAccount,
     retryProfiles,
     selectProfile,
     handleOpenSettings,
@@ -158,6 +164,8 @@ export function FloatingNavigationBar({
           isSelectionPending={isSelectionPending}
           isSelectionError={isSelectionError}
           isSigningOut={isSigningOut}
+          isDeletingAccount={isDeletingAccount}
+          onRequestDeleteAccount={requestDeleteAccount}
           onToggleProfileSwitcher={toggleProfileSwitcher}
           onRetryProfiles={retryProfiles}
           onSelectProfile={selectProfile}
@@ -167,6 +175,17 @@ export function FloatingNavigationBar({
           onClose={closePanels}
         />
       )}
+      <ActionConfirmationModal
+        open={isDeleteAccountConfirmationOpen}
+        title={t('ACCOUNT_DELETE_CONFIRM_TITLE')}
+        description={t('ACCOUNT_DELETE_CONFIRM_DESCRIPTION')}
+        confirmLabel={t('ACCOUNT_DELETE_CONFIRM_ACTION')}
+        cancelLabel={t('ACTION_CANCEL')}
+        closeLabel={t('SETTINGS_CLOSE')}
+        isConfirming={isDeletingAccount}
+        onConfirm={confirmDeleteAccount}
+        onClose={cancelDeleteAccount}
+      />
     </div>,
     document.body
   )

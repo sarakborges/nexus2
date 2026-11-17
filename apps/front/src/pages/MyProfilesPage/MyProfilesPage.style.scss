@@ -1,0 +1,32 @@
+.my-profiles-page {
+  display: grid;
+  align-content: start;
+  gap: var(--nexus-space-5, 20px);
+}
+
+.my-profiles-page__notice {
+  margin: 0;
+  padding: var(--nexus-space-3, 12px);
+  background: var(--color-background);
+  color: var(--color-neutral);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.my-profiles-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nexus-space-2, 8px);
+}
+
+@media (max-width: 680px) {
+  .my-profiles-page__actions {
+    width: 100%;
+  }
+
+  .my-profiles-page__actions > .button {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+}

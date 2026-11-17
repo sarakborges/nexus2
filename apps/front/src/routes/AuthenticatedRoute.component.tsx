@@ -1,19 +1,16 @@
-import { useQueryClient } from '@tanstack/react-query'
-
 import { Navigate, Outlet } from 'react-router'
 
 import { RequestState } from '@/Components'
 import { ROUTES } from '@/Constants/routes'
-import { queryKeys } from '@/Services/Query/queryKeys'
-import { useAuthStore } from '@/Stores/Auth.store'
+import { useAuthSession } from '@/Hooks/Auth'
 
 import { RouteLoadingState } from './RouteLoadingState.component'
 
 export function AuthenticatedRoute() {
-  const queryClient = useQueryClient()
-  const session = useAuthStore((state) => state.session)
-  const isInitialized = useAuthStore((state) => state.isInitialized)
-  const initializationError = useAuthStore((state) => state.initializationError)
+  const authQuery = useAuthSession()
+  const session = authQuery.data ?? null
+  const isInitialized = authQuery.isFetched
+  const initializationError = authQuery.isError && !authQuery.data
 
   if (!isInitialized) return <RouteLoadingState />
 
@@ -23,11 +20,7 @@ export function AuthenticatedRoute() {
         <section className="account-card">
           <RequestState
             isError
-            onRetry={() =>
-              void queryClient.refetchQueries({
-                queryKey: queryKeys.auth.session
-              })
-            }
+            onRetry={() => void authQuery.refetch()}
           />
         </section>
       </main>

@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { DomainService } = require('../dist/api/domain/domain.service.js')
+const { createDomainService } = require('./domain-service.factory.cjs')
 const { DomainAccessService } = require('../dist/api/domain/domain-access.service.js')
 
 const communityId = 'community-1'
@@ -470,7 +470,7 @@ function harness(owned = {}, uploads = null, beforeTransaction) {
     async ownsProfile(id, profileId) { return (owned[id] ?? []).includes(profileId) },
     async addProfile() {}
   }
-  return { service: new DomainService(data, auth, uploads), collections }
+  return { service: createDomainService(data, auth, uploads), collections }
 }
 
 test('forum members can publish and read topics with paginated replies', async () => {
