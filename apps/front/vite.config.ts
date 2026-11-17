@@ -9,7 +9,34 @@ export default defineConfig(({ mode }) => {
     mode === 'production-bff'
       ? 'https://nexus2-yoggsaras-projects.vercel.app'
       : 'http://localhost:3001'
-  const proxyTarget = env.BFF_PROXY_TARGET || defaultProxyTarget
+  const configuredProxyTarget = env.BFF_PROXY_TARGET?.trim()
+  const isLoopbackProxyTarget = (target: string): boolean => {
+    try {
+      const hostname = new URL(target).hostname.toLowerCase()
+      return (
+        hostname === 'localhost' ||
+        hostname.endsWith('.localhost') ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '[::1]'
+      )
+    } catch {
+      return false
+    }
+  }
+  const useProductionFallback =
+    mode === 'production-bff' &&
+    configuredProxyTarget !== undefined &&
+    isLoopbackProxyTarget(configuredProxyTarget)
+  const proxyTarget = useProductionFallback
+    ? defaultProxyTarget
+    : configuredProxyTarget || defaultProxyTarget
+
+  if (useProductionFallback) {
+    console.warn(
+      '[vite] Ignoring a loopback BFF_PROXY_TARGET in production-bff mode; using the production BFF.'
+    )
+  }
 
   return {
     plugins: [react()],
