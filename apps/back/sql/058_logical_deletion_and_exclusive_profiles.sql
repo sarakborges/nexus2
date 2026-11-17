@@ -875,6 +875,227 @@ begin
 end;
 $function$;
 
+
+-- Let the logical-deletion cascade mark attached editor images for asynchronous
+-- cleanup. These RPCs must not detach files before the row tombstone triggers run.
+create or replace function public.nexus_delete_community_forum_reply(
+  p_user_id uuid,
+  p_community_id uuid,
+  p_reply_id uuid,
+  p_actor_profile_id uuid,
+  p_updated_at_ms bigint
+)
+returns uuid
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+declare
+  v_actor_role text;
+  v_author_profile_id uuid;
+  v_topic_id uuid;
+begin
+  perform private.nexus_lock_collection_versions(
+    array[
+      'community_forum_replies', 'community_forum_topics',
+      'communities', 'media_files', 'profiles'
+    ]::text[]
+  );
+
+  if p_updated_at_ms is null then
+    raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
+  end if;
+
+  v_actor_role := private.nexus_forum_actor_role(
+    p_user_id, p_community_id, p_actor_profile_id, false, false
+  );
+
+  select reply.topic_id, reply.profile_id
+  into v_topic_id, v_author_profile_id
+  from public.community_forum_replies reply
+  where reply.id = p_reply_id
+    and reply.community_id = p_community_id
+  for update;
+
+  if not found then
+    raise exception 'FORUM_REPLY_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  perform topic.id
+  from public.community_forum_topics topic
+  where topic.id = v_topic_id
+    and topic.community_id = p_community_id
+  for update;
+
+  if not found then
+    raise exception 'FORUM_TOPIC_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  if v_author_profile_id <> p_actor_profile_id
+     and coalesce(v_actor_role, '') not in ('owner', 'moderator') then
+    raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
+  end if;
+
+  delete from public.community_forum_replies
+  where id = p_reply_id
+    and community_id = p_community_id;
+
+  update public.community_forum_topics
+  set updated_at_ms = p_updated_at_ms
+  where id = v_topic_id
+    and community_id = p_community_id;
+
+  update public.profiles
+  set last_activity_ms = greatest(last_activity_ms, p_updated_at_ms)
+  where id = p_actor_profile_id;
+
+  update public.communities
+  set last_activity_ms = greatest(last_activity_ms, p_updated_at_ms)
+  where id = p_community_id;
+
+  perform private.nexus_bump_collection_versions(
+    array[
+      'community_forum_replies', 'community_forum_topics',
+      'communities', 'media_files', 'profiles'
+    ]::text[]
+  );
+
+  return v_topic_id;
+end;
+$function$;
+
+create or replace function public.nexus_delete_community_forum_topic(
+  p_user_id uuid,
+  p_community_id uuid,
+  p_topic_id uuid,
+  p_actor_profile_id uuid,
+  p_updated_at_ms bigint
+)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+declare
+  v_actor_role text;
+  v_author_profile_id uuid;
+begin
+  perform private.nexus_lock_collection_versions(
+    array[
+      'community_forum_replies', 'community_forum_topics',
+      'communities', 'media_files', 'profiles'
+    ]::text[]
+  );
+
+  if p_updated_at_ms is null then
+    raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
+  end if;
+
+  v_actor_role := private.nexus_forum_actor_role(
+    p_user_id, p_community_id, p_actor_profile_id, false, false
+  );
+
+  select topic.profile_id
+  into v_author_profile_id
+  from public.community_forum_topics topic
+  where topic.id = p_topic_id
+    and topic.community_id = p_community_id
+  for update;
+
+  if not found then
+    raise exception 'FORUM_TOPIC_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  if v_author_profile_id <> p_actor_profile_id
+     and coalesce(v_actor_role, '') not in ('owner', 'moderator') then
+    raise exception 'FORUM_DELETE_NOT_ALLOWED' using errcode = '42501';
+  end if;
+
+  delete from public.community_forum_topics topic
+  where topic.id = p_topic_id
+    and topic.community_id = p_community_id;
+
+  update public.profiles
+  set last_activity_ms = greatest(last_activity_ms, p_updated_at_ms)
+  where id = p_actor_profile_id;
+
+  update public.communities
+  set last_activity_ms = greatest(last_activity_ms, p_updated_at_ms)
+  where id = p_community_id;
+
+  perform private.nexus_bump_collection_versions(
+    array[
+      'community_forum_replies', 'community_forum_topics',
+      'communities', 'media_files', 'profiles'
+    ]::text[]
+  );
+end;
+$function$;
+
+create or replace function public.nexus_delete_profile_message(
+  p_user_id uuid,
+  p_recipient_profile_id uuid,
+  p_message_id uuid,
+  p_actor_profile_id uuid
+)
+returns void
+language plpgsql
+security invoker
+set search_path = ''
+as $function$
+declare
+  v_from_profile_id uuid;
+  v_to_profile_id uuid;
+begin
+  perform private.nexus_lock_collection_versions(
+    array['media_files', 'profile_messages']::text[]
+  );
+
+  if p_user_id is null or p_recipient_profile_id is null
+     or p_message_id is null or p_actor_profile_id is null then
+    raise exception 'PROFILE_MESSAGE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  if not exists (
+    select 1 from public.accounts account where account.id = p_user_id
+  ) then
+    raise exception 'ACCOUNT_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  select message.from_profile_id, message.to_profile_id
+  into v_from_profile_id, v_to_profile_id
+  from public.profile_messages message
+  where message.id = p_message_id
+    and message.to_profile_id = p_recipient_profile_id
+  for update;
+
+  if not found then
+    raise exception 'PROFILE_MESSAGE_NOT_FOUND' using errcode = 'P0002';
+  end if;
+
+  if not exists (
+    select 1 from public.account_profiles membership
+    where membership.account_id = p_user_id
+      and membership.profile_id = p_actor_profile_id
+  ) then
+    raise exception 'PROFILE_NOT_OWNED' using errcode = '42501';
+  end if;
+
+  if p_actor_profile_id <> v_from_profile_id
+     and p_actor_profile_id <> v_to_profile_id then
+    raise exception 'PROFILE_MESSAGE_DELETE_NOT_ALLOWED' using errcode = '42501';
+  end if;
+
+  delete from public.profile_messages
+  where id = p_message_id
+    and to_profile_id = p_recipient_profile_id;
+
+  perform private.nexus_bump_collection_versions(
+    array['media_files', 'profile_messages']::text[]
+  );
+end;
+$function$;
+
 -- Authenticated sessions can linger until token expiry, so the security-definer
 -- notification functions must independently reject logically deleted accounts.
 create or replace function public.nexus_get_activity_feed_page(
