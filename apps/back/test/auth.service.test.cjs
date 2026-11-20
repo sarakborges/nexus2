@@ -349,3 +349,49 @@ test('account profile changes use targeted relational writes instead of account 
   assert.equal(finalUser.currentProfile, 'profile-1')
   assert.deepEqual(changes.map(change => change.action), ['add', 'add', 'select', 'remove'])
 })
+
+
+test('auth attempts use separate shared fixed-window policies and hashed client identifiers', async () => {
+  const { service, repository } = createAuthHarness()
+  const requests = []
+  let allowed = true
+  repository.consumeAuthRateLimit = async (keyHash, windowMs, maxRequests) => {
+    requests.push({ keyHash, windowMs, maxRequests })
+    return allowed
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', '203.0.113.10')
+  await service.assertAuthAttemptAllowed('sign-up', '203.0.113.10')
+
+  assert.equal(requests.length, 2)
+  assert.match(requests[0].keyHash, /^[0-9a-f]{64}$/)
+  assert.match(requests[1].keyHash, /^[0-9a-f]{64}$/)
+  assert.notEqual(requests[0].keyHash, requests[1].keyHash)
+  assert.deepEqual(
+    requests.map(({ windowMs, maxRequests }) => ({ windowMs, maxRequests })),
+    [
+      { windowMs: 15 * 60 * 1000, maxRequests: 15 },
+      { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+    ]
+  )
+
+  allowed = false
+  await assert.rejects(
+    service.assertAuthAttemptAllowed('sign-in', '203.0.113.10'),
+    error => error.getStatus() === 429 && error.message === 'AUTH_RATE_LIMIT_EXCEEDED'
+  )
+})
+
+test('invalid client addresses share a safe fallback bucket', async () => {
+  const { service, repository } = createAuthHarness()
+  let capturedKey
+  repository.consumeAuthRateLimit = async keyHash => {
+    capturedKey = keyHash
+    return true
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', 'not-an-ip')
+  const firstKey = capturedKey
+  await service.assertAuthAttemptAllowed('sign-in', 'unknown')
+  assert.equal(capturedKey, firstKey)
+})
