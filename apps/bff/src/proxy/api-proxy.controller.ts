@@ -111,11 +111,7 @@ export class ApiProxyController {
     }
 
     const tokens = await refresh
-    if (tokens) {
-      writeAuthCookies(res, tokens.accessToken, tokens.refreshToken)
-    } else {
-      clearAuthCookies(res)
-    }
+    if (tokens) writeAuthCookies(res, tokens.accessToken, tokens.refreshToken)
     return tokens
   }
 }
