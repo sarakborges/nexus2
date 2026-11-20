@@ -273,6 +273,9 @@ test('empty profile messages are rejected before the relational write', async ()
 test('private inbox reads use the paginated relational query instead of collection snapshots', async () => {
   const calls = []
   const repository = {
+    async getAccountById() {
+      return { profiles: [] }
+    },
     async getProfileMessages(profileId, userId, page) {
       calls.push({ profileId, userId, page })
       return {
