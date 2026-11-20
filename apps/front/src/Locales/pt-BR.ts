@@ -176,6 +176,7 @@ COMMON_VIEW_ALL: 'Ver todos',
   AUTH_ERROR_EMAIL_EXISTS:
     'Já existe uma conta com este e-mail neste navegador.',
   AUTH_ERROR_INVALID_CREDENTIALS: 'O e-mail ou a senha estão incorretos.',
+  AUTH_ERROR_RATE_LIMIT: 'Muitas tentativas. Aguarde antes de tentar novamente.',
   AUTH_ERROR_STORAGE:
     'O armazenamento do navegador está indisponível. Verifique as configurações e tente novamente.',
   AUTH_ERROR_CRYPTO:
