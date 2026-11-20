@@ -609,6 +609,72 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   assert.equal(saved.expiresAt - saved.completedAt, 24 * 60 * 60 * 1000)
 })
 
+test('completion rejects a full Storage response instead of buffering the whole object', async t => {
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/full-response.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_RANGE_UNSUPPORTED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
+test('completion bounds a malformed partial response to 64 bytes', async t => {
+  const file = {
+    id: '143e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-range.png',
+    contentType: 'image/png',
+    expectedSize: 80,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const oversizedBody = new Uint8Array(65)
+  pngHeader.copy(oversizedBody)
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedBody, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-63/80',
+      'content-length': String(oversizedBody.byteLength)
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_RANGE_INVALID'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
 test('ready editor completion does not return a URL after the 24-hour deadline', async t => {
   const file = {
     id: 'b23e4567-e89b-42d3-a456-426614174000',
