@@ -9,7 +9,7 @@ const profiles = [
   { id: 'member', name: 'Member', url: 'member', picture: '', about: '', type: 'rp' },
   { id: 'other', name: 'Other', url: 'other', picture: '', about: '', type: 'social' }
 ]
-const community = { id: communityId, name: 'Forum', url: 'forum', picture: '', about: '', type: 'rp' }
+const community = { id: communityId, name: 'Forum', url: 'forum', picture: '', about: '', type: 'rp', privacy: 'public' }
 const page = { page: 1, pageSize: 20 }
 const relationship = (id, type) => ({ profiles: [id, communityId], type, requestedBy: null, blockedBy: null, updatedAt: 1 })
 
