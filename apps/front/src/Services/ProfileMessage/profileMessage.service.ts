@@ -7,6 +7,7 @@ import type {
 
 export type ProfileMessageErrorCode =
   | 'INVALID_MESSAGE'
+  | 'ACCOUNT_NOT_FOUND'
   | 'PROFILE_MESSAGE_FRIENDS_ONLY'
   | 'PROFILE_TYPE_MISMATCH'
   | 'PROFILE_NOT_OWNED'
@@ -47,6 +48,7 @@ export async function createProfileMessage(
     const code = getApiErrorCode(error, 'STORAGE_UNAVAILABLE')
     const knownCodes = new Set<ProfileMessageErrorCode>([
       'INVALID_MESSAGE',
+      'ACCOUNT_NOT_FOUND',
       'PROFILE_MESSAGE_FRIENDS_ONLY',
       'PROFILE_TYPE_MISMATCH',
       'PROFILE_NOT_OWNED',
