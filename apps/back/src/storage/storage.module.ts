@@ -8,6 +8,7 @@ const REQUIRED_RELATIONAL_METHODS = [
   'getAccountById',
   'getSuggestedCommunities',
   'findAccountByEmail',
+  'consumeAuthRateLimit',
   'getProfilesByIds',
   'getCommunitiesByIds',
   'createAccountWithRefreshToken',
