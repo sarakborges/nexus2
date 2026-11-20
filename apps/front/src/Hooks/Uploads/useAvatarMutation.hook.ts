@@ -50,8 +50,13 @@ async function runAvatarMutation(
     )
 
     if (targetId) {
-      const updated = await updateAvatar(variables, uploaded.id)
-      return { picture: updated.picture, pendingUploadId: null }
+      try {
+        const updated = await updateAvatar(variables, uploaded.id)
+        return { picture: updated.picture, pendingUploadId: null }
+      } catch (error) {
+        await deleteUploadedFile(uploaded.id).catch(() => undefined)
+        throw error
+      }
     }
 
     if (pendingUploadId) await deleteUploadedFile(pendingUploadId)
