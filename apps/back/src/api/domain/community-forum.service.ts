@@ -4,7 +4,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  Optional
+  Optional,
+  UnauthorizedException
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -130,7 +131,7 @@ export class CommunityForumService {
 
   private throwRelationalWriteError(error: unknown): never {
     const message = error instanceof Error ? error.message : String(error)
-    if (message.includes('ACCOUNT_NOT_FOUND')) throw new NotFoundException('ACCOUNT_NOT_FOUND')
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     if (message.includes('PROFILE_NOT_OWNED')) throw new ForbiddenException('PROFILE_NOT_OWNED')
     if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
     if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')

@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { ConflictException, BadRequestException } = require('@nestjs/common')
+const { ConflictException, BadRequestException, UnauthorizedException } = require('@nestjs/common')
 const { CommunityForumService } = require('../dist/api/domain/community-forum.service.js')
 
 function createService() {
@@ -115,4 +115,21 @@ test('legacy forum list and topic reads use targeted relational queries without 
     ['topics','community-1','account-1',2],
     ['topic','community-1','topic-1',null,3]
   ])
+})
+
+
+test('missing accounts in forum RPCs map to an authentication error', async () => {
+  const repository = {
+    async listCommunityForumTopics() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  }
+  const service = new CommunityForumService(repository)
+
+  await assert.rejects(
+    service.listCommunityForumTopics('community-1', { page: 1 }),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
 })
