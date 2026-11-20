@@ -802,7 +802,9 @@ test('private forum topic listing uses the targeted relational query and checks 
     beforeTransaction(_names, current) {
       transactionCount += 1
       current.set('profiles', current.get('profiles').map(profile =>
-        profile.id === 'owner-1' ? { ...profile, type: 'business' } : profile
+        ['owner-1', 'member-1'].includes(profile.id)
+          ? { ...profile, type: 'business' }
+          : profile
       ))
     }
   })
