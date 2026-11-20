@@ -11,6 +11,7 @@ const { ProfilePageService } = require('../dist/api/domain/profile-page.service.
 const { ProfileDirectoryPageService } = require('../dist/api/domain/profile-directory-page.service.js')
 const { ProfileEditPageService } = require('../dist/api/domain/profile-edit-page.service.js')
 const { ProfileSettingsService } = require('../dist/api/domain/profile-settings.service.js')
+const { JwtAccessGuard, OptionalJwtAccessGuard } = require('../dist/api/auth/jwt-access.guard.js')
 
 async function createHttpApp(domain) {
   class ControllersHttpTestModule {}
@@ -22,7 +23,9 @@ async function createHttpApp(domain) {
       { provide: ProfilePageService, useValue: {} },
       { provide: ProfileDirectoryPageService, useValue: {} },
       { provide: ProfileEditPageService, useValue: {} },
-      { provide: ProfileSettingsService, useValue: {} }
+      { provide: ProfileSettingsService, useValue: {} },
+      { provide: JwtAccessGuard, useValue: { canActivate: () => true } },
+      { provide: OptionalJwtAccessGuard, useValue: { canActivate: () => true } }
     ]
   })(ControllersHttpTestModule)
 
