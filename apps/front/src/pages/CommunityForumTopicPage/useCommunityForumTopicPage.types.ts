@@ -11,7 +11,6 @@ import type {
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { Dispatch, FormEvent, SetStateAction } from 'react'
 
-import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
 
 export type CommunityForumReplyViewModel = {
@@ -27,11 +26,7 @@ export type UseCommunityForumTopicPageResult = {
   normalized: string
   page: number
   pageSize: number
-  query: string
-  sort: ReturnType<typeof useUrlPagination>['sort']
-  setQuery: ReturnType<typeof useUrlPagination>['setQuery']
-  setSort: ReturnType<typeof useUrlPagination>['setSort']
-  setPage: ReturnType<typeof useUrlPagination>['setPage']
+  setPage: (page: number) => void
   replyContent: string
   setReplyContent: Dispatch<SetStateAction<string>>
   topicPageQuery: UseQueryResult<CommunityForumTopicPageData>

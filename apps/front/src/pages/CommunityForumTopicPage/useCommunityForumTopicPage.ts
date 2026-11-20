@@ -28,7 +28,7 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
   const currentProfileId = session?.user.currentProfile ?? null
   const showToast = useToastStore((state) => state.showToast)
   const normalized = normalizeEntityUrl(url)
-  const { page, pageSize, setPage, query, sort, setQuery, setSort } = useUrlPagination('page', 'activity-asc')
+  const { page, pageSize, setPage } = useUrlPagination('page')
   const [replyContent, setReplyContent] = useState('')
 
   const topicPageQuery = useQuery({
@@ -38,12 +38,10 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
       page,
       pageSize,
       viewerUserId,
-      currentProfileId,
-      query,
-      sort
+      currentProfileId
     ),
     queryFn: () =>
-      getCommunityForumTopicPage(normalized, topicId!, { page, pageSize, query, sort }),
+      getCommunityForumTopicPage(normalized, topicId!, { page, pageSize }),
     enabled: Boolean(normalized && topicId && isAuthInitialized),
     staleTime: 30 * 1000
   })
@@ -154,10 +152,6 @@ export function useCommunityForumTopicPage(): UseCommunityForumTopicPageResult {
     page,
     pageSize,
     setPage,
-    query,
-    sort,
-    setQuery,
-    setSort,
     replyContent,
     setReplyContent,
     topicPageQuery,

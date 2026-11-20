@@ -81,13 +81,13 @@ export function EntityDetailsFields({
         <FormField
           id={`${entity}-url`}
           label={t(config.urlLabel)}
+          description={t(config.urlHelp)}
           type="text"
           placeholder={t(config.urlPlaceholder)}
           value={url}
           onChange={(event) => onUrlChange(event.target.value)}
           autoComplete="off"
         />
-        <p className="account-card__description">{t(config.urlHelp)}</p>
         <RichTextComposerField
           id={`${entity}-about`}
           label={t(config.aboutLabel)}

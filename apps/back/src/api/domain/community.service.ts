@@ -25,6 +25,7 @@ import { UploadsService } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import { CommunityMembershipService } from './community-membership.service'
 import { normalizeEntityUrl } from './domain.utils'
+import { getEntityUrlCandidate, isEntityUrlAlreadyInUse } from './entity-url.utils'
 
 @Injectable()
 export class CommunityService {
@@ -109,23 +110,33 @@ export class CommunityService {
     const privacy = input.privacy ?? 'public'
     const createdAt = Date.now()
     const communityId = randomUUID()
-    try {
-      return await this.data.createCommunity({
-        userId,
-        ownerProfileId,
-        id: communityId,
-        name,
-        url,
-        picture,
-        about,
-        privacy,
-        createdAt,
-        avatarPath: this.uploads?.getAvatarPath?.(picture) ?? null,
-        editorImageIds: this.uploads?.getEditorImageIds?.(about) ?? []
-      })
-    } catch (error) {
-      this.throwRelationalWriteError(error)
+    const avatarPath = this.uploads?.getAvatarPath?.(picture) ?? null
+    const editorImageIds = this.uploads?.getEditorImageIds?.(about) ?? []
+
+    for (let attempt = 1; attempt <= 1000; attempt += 1) {
+      const candidateUrl = getEntityUrlCandidate(url, attempt)
+
+      try {
+        return await this.data.createCommunity({
+          userId,
+          ownerProfileId,
+          id: communityId,
+          name,
+          url: candidateUrl,
+          picture,
+          about,
+          privacy,
+          createdAt,
+          avatarPath,
+          editorImageIds
+        })
+      } catch (error) {
+        if (isEntityUrlAlreadyInUse(error, 'community')) continue
+        this.throwRelationalWriteError(error)
+      }
     }
+
+    throw new ConflictException('COMMUNITY_URL_ALREADY_IN_USE')
   }
 
   async updateCommunity(

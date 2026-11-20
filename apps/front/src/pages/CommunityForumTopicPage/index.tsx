@@ -5,7 +5,6 @@ import { CommunityForumReplyComposer } from '@/Components/Organisms/CommunityFor
 import { Pagination } from '@/Components/Molecules/Pagination'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { AuthenticatedPageState } from '@/Components/Templates/AuthenticatedPageState'
-import { PaginatedListControls } from '@/Components/Molecules/PaginatedListControls'
 import { Button } from '@/DesignSystem'
 import { CommunitySidebar } from '@/Components/Organisms/CommunitySidebar'
 import { SocialPageLayout } from '@/Components/Templates/SocialPageLayout'
@@ -25,10 +24,6 @@ export function CommunityForumTopicPage() {
     page,
     pageSize,
     setPage,
-    query,
-    sort,
-    setQuery,
-    setSort,
     replyContent,
     setReplyContent,
     topicPageQuery,
@@ -124,15 +119,7 @@ export function CommunityForumTopicPage() {
           <h2>
             {t('FORUM_REPLIES')} ({detail.replies.totalItems})
           </h2>
-          {(detail.replies.totalItems > 0 && (
-            <PaginatedListControls
-              key={query}
-              query={query}
-              sort={sort}
-              onQueryChange={setQuery}
-              onSortChange={setSort}
-            />))}
-          
+
           <RequestState
             isLoading={!isAuthInitialized}
             isFetching={topicPageQuery.isFetching}

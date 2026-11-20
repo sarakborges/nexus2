@@ -25,6 +25,7 @@ import { UploadsService } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import { ProfileRelationshipService } from './profile-relationship.service'
 import { normalizeEntityUrl } from './domain.utils'
+import { getEntityUrlCandidate, isEntityUrlAlreadyInUse } from './entity-url.utils'
 
 @Injectable()
 export class ProfileService {
@@ -108,17 +109,30 @@ export class ProfileService {
       createdAt,
       lastActivity: createdAt
     }
-    try {
-      const user = await this.data.createProfile({
-        userId,
-        profile,
-        avatarPath: this.uploads?.getAvatarPath?.(picture) ?? null,
-        editorImageIds: this.uploads?.getEditorImageIds?.(about) ?? []
-      })
-      return { profile, user }
-    } catch (error) {
-      this.throwRelationalWriteError(error)
+    const avatarPath = this.uploads?.getAvatarPath?.(picture) ?? null
+    const editorImageIds = this.uploads?.getEditorImageIds?.(about) ?? []
+
+    for (let attempt = 1; attempt <= 1000; attempt += 1) {
+      const candidateProfile = {
+        ...profile,
+        url: getEntityUrlCandidate(url, attempt)
+      }
+
+      try {
+        const user = await this.data.createProfile({
+          userId,
+          profile: candidateProfile,
+          avatarPath,
+          editorImageIds
+        })
+        return { profile: candidateProfile, user }
+      } catch (error) {
+        if (isEntityUrlAlreadyInUse(error, 'profile')) continue
+        this.throwRelationalWriteError(error)
+      }
     }
+
+    throw new ConflictException('PROFILE_URL_ALREADY_IN_USE')
   }
 
   async updateProfile(
