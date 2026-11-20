@@ -435,3 +435,21 @@ test('sign-in fails closed when the account is deleted between credential verifi
     error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
   )
 })
+
+
+test('sign-in performs a dummy password hash when the email does not exist', async () => {
+  const { service } = createAuthHarness()
+  const salts = []
+  service.hashPassword = async (_password, salt) => {
+    salts.push(Buffer.from(salt))
+    return Buffer.alloc(32)
+  }
+
+  await assert.rejects(
+    service.signIn({ email: 'missing@example.com', password: 'wrong-password' }),
+    error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
+  )
+
+  assert.equal(salts.length, 1)
+  assert.deepEqual(salts[0], Buffer.alloc(16))
+})

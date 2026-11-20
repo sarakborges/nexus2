@@ -6,6 +6,8 @@ import { createHash, createHmac, randomBytes, randomUUID, pbkdf2, timingSafeEqua
 import { isIP } from 'node:net'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+const DUMMY_PASSWORD_SALT = Buffer.alloc(16)
+
 import type {
   AccountRecord,
   JwtPayload,
@@ -68,7 +70,12 @@ export class AuthService {
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
     const account = await this.repository.findAccountByEmail(email)
-    if (!account || !(await this.verifyPassword(credentials.password, account))) {
+    // Keep the missing-account path close to the wrong-password path so login
+    // timing does not reveal whether an email address is registered.
+    const passwordMatches = account
+      ? await this.verifyPassword(credentials.password, account)
+      : (await this.hashPassword(credentials.password, DUMMY_PASSWORD_SALT), false)
+    if (!account || !passwordMatches) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
     return this.issueTokens(account, { kind: 'sign-in' })
