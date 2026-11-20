@@ -12,9 +12,9 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
-    async getAccountById(userId) {
+    async accountOwnsProfile(userId, profileId) {
       const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
-      return account ? structuredClone(account) : null
+      return Boolean(account?.profiles.includes(profileId))
     },
     async getProfileByUrl(url) {
       const profile = (collections.get('profiles') ?? []).find(item => item.url === url)

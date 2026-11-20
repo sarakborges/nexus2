@@ -273,9 +273,7 @@ test('empty profile messages are rejected before the relational write', async ()
 test('private inbox reads use the paginated relational query instead of collection snapshots', async () => {
   const calls = []
   const repository = {
-    async getAccountById() {
-      return { profiles: [] }
-    },
+    async accountOwnsProfile() { return false },
     async getProfileMessages(profileId, userId, page) {
       calls.push({ profileId, userId, page })
       return {
@@ -319,9 +317,7 @@ test('legacy message reads hide recipient-only favorite state from senders', asy
     async getProfileMessages() {
       return { items: [message], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }
     },
-    async getAccountById() {
-      return { id: 'sender-user', profiles: ['sender-1'] }
-    }
+    async accountOwnsProfile() { return false }
   }
   const service = new ProfileMessageService(repository)
   const page = await service.getMessages('recipient-1', 'sender-user', { page: 1 })
@@ -342,9 +338,7 @@ test('legacy message reads preserve favorite state for the inbox owner', async (
     async getProfileMessages() {
       return { items: [message], page: 1, pageSize: 20, totalItems: 1, totalPages: 1 }
     },
-    async getAccountById() {
-      return { id: 'recipient-user', profiles: ['recipient-1'] }
-    }
+    async accountOwnsProfile() { return true }
   }
   const service = new ProfileMessageService(repository)
   const page = await service.getMessages('recipient-1', 'recipient-user', { page: 1 })

@@ -16,8 +16,9 @@ export class ProfileMessageService {
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
     try {
       const page = await this.data.getProfileMessages(profileId, userId, q.page)
-      const account = userId ? await this.data.getAccountById(userId) : null
-      const isProfileOwner = Boolean(account?.profiles.includes(profileId))
+      const isProfileOwner = userId
+        ? await this.data.accountOwnsProfile(userId, profileId)
+        : false
       return {
         ...page,
         items: page.items.map(message => ({

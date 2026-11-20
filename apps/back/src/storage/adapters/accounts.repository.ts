@@ -13,6 +13,24 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
+  async accountOwnsProfile(userId: string, profileId: string): Promise<boolean> {
+    const url = new URL(this.baseUrl + '/rest/v1/account_profiles')
+    url.searchParams.set('select', 'profile_id')
+    url.searchParams.set('account_id', 'eq.' + userId)
+    url.searchParams.set('profile_id', 'eq.' + profileId)
+    url.searchParams.set('limit', '1')
+    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase account profile ownership lookup returned an invalid result.')
+    }
+    return rows.some(row =>
+      typeof row === 'object' && row !== null &&
+      (row as Record<string, unknown>).profile_id === profileId
+    )
+  }
+
   async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
     const [account] = await this.readAccounts(rows)

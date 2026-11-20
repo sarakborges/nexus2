@@ -40,6 +40,10 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.accounts.getAccountById(...args)
   }
 
+  accountOwnsProfile(...args: Parameters<DataRepository['accountOwnsProfile']>): ReturnType<DataRepository['accountOwnsProfile']> {
+    return this.accounts.accountOwnsProfile(...args)
+  }
+
   findAccountByEmail(...args: Parameters<DataRepository['findAccountByEmail']>): ReturnType<DataRepository['findAccountByEmail']> {
     return this.accounts.findAccountByEmail(...args)
   }
