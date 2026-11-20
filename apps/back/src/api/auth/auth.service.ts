@@ -1,4 +1,4 @@
-import { ConflictException, Inject, Injectable, Optional, TooManyRequestsException, UnauthorizedException } from '@nestjs/common'
+import { ConflictException, HttpException, HttpStatus, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AccountService } from './account.service'
 import { JwtService } from '@nestjs/jwt'
@@ -47,7 +47,7 @@ export class AuthService {
       policy.windowMs,
       policy.maxRequests
     )
-    if (!allowed) throw new TooManyRequestsException('AUTH_RATE_LIMIT_EXCEEDED')
+    if (!allowed) throw new HttpException('AUTH_RATE_LIMIT_EXCEEDED', HttpStatus.TOO_MANY_REQUESTS)
   }
 
   async signUp(credentials: SignUpCredentials): Promise<AuthTokenPair> {
