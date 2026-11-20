@@ -29,6 +29,6 @@ export class UpdateAvatarDto {
   uploadId?: string | null
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   actorProfileId?: string
 }
