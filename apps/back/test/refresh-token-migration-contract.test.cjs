@@ -18,7 +18,7 @@ test('refresh-token issuance cleans expired token rows before locking the accoun
   const issueFunction = migration.slice(functionStart)
   const validationIndex = issueFunction.indexOf('p_now_ms is null')
   const previousTokenLockIndex = issueFunction.indexOf('for update')
-  const rotationBranchEnd = issueFunction.indexOf('end if;', previousTokenLockIndex)
+  const rotationBranchEnd = issueFunction.indexOf('\\n  end if;', previousTokenLockIndex)
   const cleanupIndex = issueFunction.indexOf('delete from public.refresh_tokens')
   const accountLockIndex = issueFunction.indexOf('for share')
 
