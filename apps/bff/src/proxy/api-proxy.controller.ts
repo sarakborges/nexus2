@@ -4,6 +4,7 @@ import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import type { Request, Response } from 'express'
 import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
+import { assertSameOrigin } from '../origin.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
 
@@ -16,6 +17,7 @@ export class ApiProxyController {
 
   @All('{*path}')
   async proxy(@Req() req: Request, @Res() res: Response): Promise<void> {
+    assertSameOrigin(req)
     let accessToken = getCookie(req, ACCESS_COOKIE)
     const refreshToken = getCookie(req, REFRESH_COOKIE)
     try {

@@ -43,7 +43,7 @@ test('successful account deletion clears both browser authentication cookies', a
   await controller.proxy({
     path: '/api/auth/account',
     method: 'DELETE',
-    headers: { cookie: 'nexus_access=access-token; nexus_refresh=refresh-token' },
+    headers: { cookie: 'nexus_access=access-token; nexus_refresh=refresh-token', origin: 'http://localhost:5173', host: 'localhost:5173', 'x-forwarded-proto': 'http' },
     query: {},
     body: undefined
   }, response)
@@ -68,7 +68,7 @@ test('failed account deletion does not clear the current session', async () => {
   await controller.proxy({
     path: '/api/auth/account',
     method: 'DELETE',
-    headers: { cookie: 'nexus_access=access-token; nexus_refresh=refresh-token' },
+    headers: { cookie: 'nexus_access=access-token; nexus_refresh=refresh-token', origin: 'http://localhost:5173', host: 'localhost:5173', 'x-forwarded-proto': 'http' },
     query: {},
     body: undefined
   }, response)

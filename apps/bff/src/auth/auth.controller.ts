@@ -7,6 +7,7 @@ import type { Request, Response } from 'express'
 import type { AuthTokenPair } from '@nexus/common'
 import { clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from './cookie.util'
 import { getBackendUrl } from '../backend-url.util'
+import { assertSameOrigin } from '../origin.util'
 
 class CredentialsDto {
   @IsEmail() @MaxLength(254) email!: string
@@ -25,16 +26,19 @@ export class AuthController {
 
   @Post('sign-up')
   async signUp(@Body() body: SignUpDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
     return this.authenticate('sign-up', body, req, res)
   }
   @Post('sign-in')
   @HttpCode(200)
   async signIn(@Body() body: CredentialsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
     return this.authenticate('sign-in', body, req, res)
   }
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
     const token = getCookie(req, REFRESH_COOKIE)
     if (!token) {
       clearAuthCookies(res)
@@ -58,6 +62,7 @@ export class AuthController {
   @Post('sign-out')
   @HttpCode(200)
   async signOut(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<{ success: true }> {
+    assertSameOrigin(req)
     const token = getCookie(req, REFRESH_COOKIE)
     try { if (token) await this.http.axiosRef.post(`${this.backUrl}/auth/sign-out`, { refreshToken: token }) }
     finally { clearAuthCookies(res) }
