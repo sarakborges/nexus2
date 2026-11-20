@@ -1,4 +1,4 @@
-import { IsEmail, IsIn, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator'
+import { IsEmail, IsIn, IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator'
 
 import type { UserPreferences } from '@nexus/common'
 
@@ -30,7 +30,7 @@ export class RefreshDto {
 }
 
 export class CurrentProfileDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 }
 
