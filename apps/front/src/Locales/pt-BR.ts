@@ -401,6 +401,16 @@ COMMON_VIEW_ALL: 'Ver todos',
   PROFILE_MESSAGES_SEND: 'Enviar mensagem',
   PROFILE_MESSAGES_ERROR_INVALID:
     'Escreva uma mensagem com até 8.000 caracteres HTML.',
+  PROFILE_MESSAGES_ERROR_FRIENDS_ONLY:
+    'Este perfil aceita mensagens apenas de perfis conectados.',
+  PROFILE_MESSAGES_ERROR_PROFILE_TYPE:
+    'Seu perfil ativo não é compatível com este perfil.',
+  PROFILE_MESSAGES_ERROR_PROFILE_ACCESS:
+    'O perfil selecionado não pertence mais à sua conta. Atualize a sessão e tente novamente.',
+  PROFILE_MESSAGES_ERROR_PROFILE_NOT_FOUND:
+    'Este perfil não está mais disponível.',
+  PROFILE_MESSAGES_ERROR_IMAGE:
+    'Uma das imagens anexadas expirou ou já está vinculada a outro conteúdo. Remova e envie novamente.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'Não foi possível salvar a mensagem.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Selecione um dos seus perfis para enviar uma mensagem.',
