@@ -414,3 +414,24 @@ test('invalid client addresses share a safe fallback bucket', async () => {
   await service.assertAuthAttemptAllowed('sign-in', 'unknown')
   assert.equal(capturedKey, firstKey)
 })
+
+
+test('sign-in fails closed when the account is deleted between credential verification and refresh-token issue', async () => {
+  const { service, repository } = createAuthHarness()
+  await service.signUp({
+    email: 'deleted-during-login@example.com',
+    password: 'a-secure-password'
+  })
+
+  repository.issueRefreshToken = async () => {
+    throw new Error('Supabase relational request failed (404): {"message":"ACCOUNT_NOT_FOUND"}')
+  }
+
+  await assert.rejects(
+    service.signIn({
+      email: 'deleted-during-login@example.com',
+      password: 'a-secure-password'
+    }),
+    error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})

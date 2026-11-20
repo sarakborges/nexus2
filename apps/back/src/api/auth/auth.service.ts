@@ -193,6 +193,9 @@ export class AuthService {
         if (message.includes('REFRESH_TOKEN_REVOKED')) {
           throw new UnauthorizedException('REFRESH_TOKEN_REVOKED')
         }
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
         throw error
       }
     }
