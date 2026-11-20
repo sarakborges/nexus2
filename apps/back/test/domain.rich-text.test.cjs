@@ -12,6 +12,10 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
+    async getAccountById(userId) {
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      return account ? structuredClone(account) : null
+    },
     async getProfileByUrl(url) {
       const profile = (collections.get('profiles') ?? []).find(item => item.url === url)
       if (!profile) throw new Error('PROFILE_NOT_FOUND')
