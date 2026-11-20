@@ -104,6 +104,24 @@ test('a backend network failure becomes 502 without clearing cookies', async () 
   assert.equal(response.headers['set-cookie'], undefined)
 })
 
+test('a malformed refresh cookie is treated as missing and clears stale cookies', async () => {
+  let requestCount = 0
+  const controller = createController(async () => {
+    requestCount += 1
+    return { data: {} }
+  })
+  const response = createResponse()
+
+  await assert.rejects(
+    controller.refresh(createRequest('nexus_refresh=%E0%A4%A'), response),
+    error => error.getStatus?.() === 401 && error.message === 'REFRESH_TOKEN_MISSING'
+  )
+
+  assert.equal(requestCount, 0)
+  assert.match(response.headers['set-cookie'][0], /Max-Age=0/)
+  assert.match(response.headers['set-cookie'][1], /Max-Age=0/)
+})
+
 test('a missing refresh cookie clears stale auth cookies and returns 401', async () => {
   let requestCount = 0
   const controller = createController(async () => {
