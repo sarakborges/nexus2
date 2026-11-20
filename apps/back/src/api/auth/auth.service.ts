@@ -1,8 +1,9 @@
-import { ConflictException, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Optional, TooManyRequestsException, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AccountService } from './account.service'
 import { JwtService } from '@nestjs/jwt'
-import { createHash, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
+import { isIP } from 'node:net'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type {
@@ -28,6 +29,25 @@ export class AuthService {
     this.accounts = accounts ?? new AccountService(repository)
     this.accessTtl = Number(config.get('JWT_ACCESS_TTL_SECONDS') ?? 900)
     this.refreshTtl = Number(config.get('JWT_REFRESH_TTL_SECONDS') ?? 2592000)
+  }
+
+  async assertAuthAttemptAllowed(action: 'sign-in' | 'sign-up', clientAddress: string): Promise<void> {
+    const address = isIP(clientAddress) ? clientAddress : 'unknown'
+    const policy = action === 'sign-in'
+      ? { windowMs: 15 * 60 * 1000, maxRequests: 15 }
+      : { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+    const secret = this.config.get<string>('AUTH_RATE_LIMIT_SECRET')
+      ?? this.config.getOrThrow<string>('JWT_REFRESH_SECRET')
+    const keyHash = createHmac('sha256', secret)
+      .update('nexus:auth:' + action + ':' + address)
+      .digest('hex')
+
+    const allowed = await this.repository.consumeAuthRateLimit(
+      keyHash,
+      policy.windowMs,
+      policy.maxRequests
+    )
+    if (!allowed) throw new TooManyRequestsException('AUTH_RATE_LIMIT_EXCEEDED')
   }
 
   async signUp(credentials: SignUpCredentials): Promise<AuthTokenPair> {
