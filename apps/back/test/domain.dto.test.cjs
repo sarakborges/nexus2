@@ -34,7 +34,7 @@ const community = about => ({
   picture: '',
   about,
   privacy: 'public',
-  ownerProfileId: 'profile-1'
+  ownerProfileId: '550e8400-e29b-41d4-a716-446655440000'
 })
 const updateProfile = about => ({
   name: 'Profile',
@@ -47,13 +47,13 @@ const updateCommunity = about => ({
   about,
   privacy: 'public'
 })
-const message = content => ({ fromProfileId: 'profile-1', content })
+const message = content => ({ fromProfileId: '550e8400-e29b-41d4-a716-446655440000', content })
 const topic = content => ({
-  profileId: 'profile-1',
+  profileId: '550e8400-e29b-41d4-a716-446655440000',
   title: 'Topic',
   content
 })
-const reply = content => ({ profileId: 'profile-1', content })
+const reply = content => ({ profileId: '550e8400-e29b-41d4-a716-446655440000', content })
 
 const cases = [
   ['profile about', CreateProfileDto, profile, 'about'],
@@ -88,8 +88,8 @@ test('community page tabs accept all and managed only', () => {
 })
 
 test('message favorite requires a boolean state', () => {
-  assert.equal(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: 'profile-1', isFavorite: true })).length, 0)
-  assert.ok(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: 'profile-1', isFavorite: 'yes' })).length > 0)
+  assert.equal(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: '550e8400-e29b-41d4-a716-446655440000', isFavorite: true })).length, 0)
+  assert.ok(validateSync(Object.assign(new ProfileMessageFavoriteDto(), { actorProfileId: '550e8400-e29b-41d4-a716-446655440000', isFavorite: 'yes' })).length > 0)
 })
 
 test('profile posts accept 8000 characters and reject 8001', () => {
