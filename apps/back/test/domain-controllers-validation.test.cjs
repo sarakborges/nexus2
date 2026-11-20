@@ -3,13 +3,37 @@ require('reflect-metadata')
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { BadRequestException, ParseUUIDPipe, ValidationPipe } = require('@nestjs/common')
-const { ROUTE_ARGS_METADATA } = require('@nestjs/common/constants')
+const { ROUTE_ARGS_METADATA, METHOD_METADATA, GUARDS_METADATA } = require('@nestjs/common/constants')
+const { RequestMethod } = require('@nestjs/common')
+const { JwtAccessGuard } = require('../dist/api/auth/jwt-access.guard.js')
+const { DomainController } = require('../dist/api/domain/domain.controller.js')
+const { CommunitiesController } = require('../dist/api/domain/communities.controller.js')
+const { ProfileMessagesController } = require('../dist/api/domain/profile-messages.controller.js')
+const { UploadsController } = require('../dist/api/uploads/uploads.controller.js')
 const { ProfilesController } = require('../dist/api/domain/profiles.controller.js')
 const { RelationshipsController } = require('../dist/api/domain/relationships.controller.js')
 const { IdsQueryDto } = require('../dist/api/domain/domain.dto.js')
 
 const validId = '550e8400-e29b-41d4-a716-446655440000'
 const secondId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
+
+const uuidParameterNames = new Set([
+  'profileId',
+  'communityId',
+  'topicId',
+  'replyId',
+  'messageId',
+  'actorProfileId',
+  'id'
+])
+const protectedControllers = [
+  DomainController,
+  ProfilesController,
+  CommunitiesController,
+  ProfileMessagesController,
+  RelationshipsController,
+  UploadsController
+]
 
 function routeArguments(controller, methodName) {
   return Reflect.getMetadata(
@@ -92,4 +116,44 @@ test('profiles IDs route binds IdsQueryDto and validates query values before cal
   const omitted = await validationPipe.transform({}, metadata)
   await controller.getProfiles(omitted)
   assert.deepEqual(calls[2], [])
+})
+
+
+test('every UUID route and query parameter is protected by ParseUUIDPipe', () => {
+  for (const ControllerClass of protectedControllers) {
+    for (const methodName of Object.getOwnPropertyNames(ControllerClass.prototype)) {
+      const args = routeArguments(ControllerClass, methodName)
+      for (const argument of Object.values(args)) {
+        if (!uuidParameterNames.has(argument.data)) continue
+        assert.ok(
+          argument.pipes?.some(pipe => pipe instanceof ParseUUIDPipe),
+          ControllerClass.name + '.' + methodName + ' must validate ' + argument.data
+        )
+      }
+    }
+  }
+})
+
+test('every state-changing domain and upload route requires an access-token guard', () => {
+  const stateChangingMethods = new Set([
+    RequestMethod.POST,
+    RequestMethod.PUT,
+    RequestMethod.PATCH,
+    RequestMethod.DELETE
+  ])
+
+  for (const ControllerClass of protectedControllers) {
+    for (const methodName of Object.getOwnPropertyNames(ControllerClass.prototype)) {
+      const handler = ControllerClass.prototype[methodName]
+      if (typeof handler !== 'function') continue
+      const method = Reflect.getMetadata(METHOD_METADATA, handler)
+      if (!stateChangingMethods.has(method)) continue
+
+      const guards = Reflect.getMetadata(GUARDS_METADATA, handler) ?? []
+      assert.ok(
+        guards.includes(JwtAccessGuard),
+        ControllerClass.name + '.' + methodName + ' must require JwtAccessGuard'
+      )
+    }
+  }
 })
