@@ -146,7 +146,7 @@ export class UploadsService {
     }
 
     const contentRange = response.headers.get('content-range')
-    const rangeMatch = contentRange?.match(/^bytes 0-(\\d+)\\/(\\d+)$/i)
+    const rangeMatch = contentRange?.match(/^bytes 0-(\d+)\/(\d+)$/i)
     const rangeEnd = rangeMatch ? Number(rangeMatch[1]) : Number.NaN
     const totalSize = rangeMatch ? Number(rangeMatch[2]) : Number.NaN
     if (
