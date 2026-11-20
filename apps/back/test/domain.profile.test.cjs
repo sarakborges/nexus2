@@ -500,6 +500,65 @@ test('community creation and update sanitize explicit URLs and regenerate blank 
 })
 
 
+
+test('profile and community writes reject non-HTTP picture URLs before the repository transaction', async () => {
+  let writes = 0
+  const { service, account } = createHarness({
+    beforeTransaction() { writes += 1 }
+  })
+
+  await assert.rejects(
+    service.createProfile(account.id, { ...input, picture: 'javascript:alert(1)' }),
+    error => error.getStatus() === 400 && error.message === 'INVALID_PROFILE'
+  )
+  assert.equal(writes, 0)
+
+  const profile = await service.createProfile(account.id, input)
+  writes = 0
+  await assert.rejects(
+    service.updateProfile(account.id, profile.profile.id, {
+      name: 'Updated Profile',
+      url: 'updated-profile',
+      picture: 'data:image/svg+xml,<svg/>',
+      about: ''
+    }),
+    error => error.getStatus() === 400 && error.message === 'INVALID_PROFILE'
+  )
+  assert.equal(writes, 0)
+
+  await assert.rejects(
+    service.createCommunity(account.id, profile.profile.id, {
+      name: 'Rejected Community',
+      url: 'rejected-community',
+      picture: 'javascript:alert(1)',
+      about: '',
+      privacy: 'public'
+    }),
+    error => error.getStatus() === 400 && error.message === 'INVALID_COMMUNITY'
+  )
+  assert.equal(writes, 0)
+
+  const community = await service.createCommunity(account.id, profile.profile.id, {
+    name: 'Valid Community',
+    url: 'valid-community',
+    picture: '',
+    about: '',
+    privacy: 'public'
+  })
+  writes = 0
+  await assert.rejects(
+    service.updateCommunity(account.id, community.id, {
+      name: 'Updated Community',
+      url: 'updated-community',
+      picture: 'data:image/svg+xml,<svg/>',
+      about: '',
+      privacy: 'public'
+    }),
+    error => error.getStatus() === 400 && error.message === 'INVALID_COMMUNITY'
+  )
+  assert.equal(writes, 0)
+})
+
 test('community, owner membership and media metadata remain unchanged when attachment validation fails', async () => {
   const uploads = {
     attachAvatarUrlToRecords(records) { return records },
