@@ -22,6 +22,7 @@ const {
   ForumActorDto
 } = require('../dist/api/domain/domain.dto.js')
 const { CreateUploadDto, UpdateAvatarDto } = require('../dist/api/uploads/uploads.dto.js')
+const { PaginationDto } = require('../dist/api/pagination/pagination.dto.js')
 
 test('authentication DTOs reject oversized email and password values', async () => {
   const credentials = Object.assign(new CredentialsDto(), {
@@ -88,6 +89,7 @@ test('all profile and community write DTOs bound URL and picture strings', async
 test('UUID-backed write DTO fields reject malformed identifiers', async () => {
   const cases = [
     [CurrentProfileDto, 'profileId'],
+    [PaginationDto, 'actorProfileId'],
     [CreateCommunityDto, 'ownerProfileId'],
     [ProfileRelationDto, 'sourceProfileId'],
     [CommunityRelationDto, 'actorProfileId'],
@@ -117,6 +119,7 @@ test('UUID-backed write DTO fields accept valid UUID identifiers', async () => {
   const validId = '550e8400-e29b-41d4-a716-446655440000'
   const cases = [
     [CurrentProfileDto, 'profileId'],
+    [PaginationDto, 'actorProfileId'],
     [CreateCommunityDto, 'ownerProfileId'],
     [ProfileRelationDto, 'sourceProfileId'],
     [CommunityRelationDto, 'actorProfileId'],
