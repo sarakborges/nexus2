@@ -53,6 +53,7 @@ function apiFailure(code) {
 test('createProfileMessage preserves known domain and attachment errors', async () => {
   const codes = [
     'INVALID_MESSAGE',
+    'ACCOUNT_NOT_FOUND',
     'PROFILE_MESSAGE_FRIENDS_ONLY',
     'PROFILE_TYPE_MISMATCH',
     'PROFILE_NOT_OWNED',
