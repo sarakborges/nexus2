@@ -3,6 +3,7 @@ import {
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength
 } from 'class-validator'
@@ -89,7 +90,7 @@ export class CreateCommunityDto implements CreateCommunityInput {
   @IsIn(['public', 'private', 'unlisted'])
   privacy!: CommunityPrivacy
 
-  @IsString()
+  @IsUUID()
   ownerProfileId!: string
 }
 
@@ -116,10 +117,10 @@ export class UpdateCommunityDto implements CreateCommunityInput {
 }
 
 export class ProfileRelationDto {
-  @IsString()
+  @IsUUID()
   sourceProfileId!: string
 
-  @IsString()
+  @IsUUID()
   targetProfileId!: string
 
   @IsIn(['connection', 'requested', 'blocked'])
@@ -127,7 +128,7 @@ export class ProfileRelationDto {
 }
 
 export class CommunityRelationDto {
-  @IsString()
+  @IsUUID()
   actorProfileId!: string
 
   @IsIn(['connection', 'requested', 'blocked', 'moderator'])
@@ -140,12 +141,12 @@ export class ActorDto {
 }
 
 export class OwnershipDto extends ActorDto {
-  @IsString()
+  @IsUUID()
   newOwnerProfileId!: string
 }
 
 export class MessageDto {
-  @IsString()
+  @IsUUID()
   fromProfileId!: string
 
   @IsString()
@@ -155,7 +156,7 @@ export class MessageDto {
 }
 
 export class CreateForumTopicDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 
   @IsString()
