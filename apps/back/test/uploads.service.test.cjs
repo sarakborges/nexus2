@@ -2217,3 +2217,54 @@ test('expired pending upload metadata is recovered when Storage signing rollback
   assert.equal(cleanup.deleted, 1)
   assert.deepEqual(collections.get('media_files'), [])
 })
+
+
+test('upload creation maps a missing relational account to an authentication error', async () => {
+  const service = new UploadsService(
+    {
+      async createUpload() {
+        throw new Error('ACCOUNT_NOT_FOUND')
+      }
+    },
+    { assertConfigured() {} },
+    {},
+    {},
+    {}
+  )
+
+  await assert.rejects(
+    service.createUpload('deleted-user', {
+      purpose: 'editor-image',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})
+
+test('avatar RPCs map a missing relational account to an authentication error', async () => {
+  const repository = {
+    async setProfileAvatar() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    },
+    async setCommunityAvatar() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  }
+  const avatars = new UploadsAvatarService(repository, {}, {})
+
+  await assert.rejects(
+    avatars.setProfileAvatar('deleted-user', 'profile-1', null),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+  await assert.rejects(
+    avatars.setCommunityAvatar('deleted-user', 'community-1', 'profile-1', null),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})

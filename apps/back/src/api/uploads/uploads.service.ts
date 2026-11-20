@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
@@ -334,7 +335,7 @@ export class UploadsService {
     if (message.includes('PROFILE_TYPE_MISMATCH')) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
     if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
     if (message.includes('COMMUNITY_STAFF_REQUIRED')) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-    if (message.includes('ACCOUNT_NOT_FOUND')) throw new NotFoundException('ACCOUNT_NOT_FOUND')
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     throw error
   }
 
