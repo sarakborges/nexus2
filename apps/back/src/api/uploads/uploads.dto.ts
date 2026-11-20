@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator'
 
 import type { UploadPurpose } from './uploads.types'
 
@@ -15,17 +15,17 @@ export class CreateUploadDto {
   size!: number
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   targetId?: string
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   actorProfileId?: string
 }
 
 export class UpdateAvatarDto {
   @IsOptional()
-  @IsString()
+  @IsUUID()
   uploadId?: string | null
 
   @IsOptional()
