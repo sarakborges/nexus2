@@ -179,3 +179,38 @@ test('a transient refresh service failure returns 502 instead of a false 401 log
   assert.equal(response.body.message, 'BACKEND_UNAVAILABLE')
   assert.equal(response.headers['set-cookie'], undefined)
 })
+
+
+test('proxy failure logs do not expose authorization headers or refresh-token payloads', async () => {
+  const sensitiveToken = 'secret-token-that-must-not-be-logged'
+  const upstreamError = Object.assign(new Error('upstream request failed'), {
+    isAxiosError: true,
+    response: { status: 503 },
+    config: {
+      headers: { Authorization: 'Bearer ' + sensitiveToken },
+      data: JSON.stringify({ refreshToken: sensitiveToken })
+    }
+  })
+  const controller = new ApiProxyController({
+    axiosRef: {
+      async request() { throw upstreamError }
+    }
+  })
+  let loggedArgs
+  controller.logger.error = (...args) => { loggedArgs = args }
+  const response = createResponse()
+
+  await controller.proxy({
+    path: '/api/profile-page',
+    method: 'GET',
+    headers: { cookie: 'nexus_access=' + sensitiveToken },
+    query: {},
+    body: undefined
+  }, response)
+
+  assert.equal(response.statusCode, 502)
+  assert.equal(loggedArgs.length, 1)
+  assert.equal(typeof loggedArgs[0], 'string')
+  assert.match(loggedArgs[0], /upstream status: 503/)
+  assert.equal(JSON.stringify(loggedArgs).includes(sensitiveToken), false)
+})
