@@ -136,7 +136,7 @@ export class CommunityRelationDto {
 }
 
 export class ActorDto {
-  @IsString()
+  @IsUUID()
   actorProfileId!: string
 }
 
@@ -171,7 +171,7 @@ export class CreateForumTopicDto {
 }
 
 export class CreateForumReplyDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 
   @IsString()
@@ -181,7 +181,7 @@ export class CreateForumReplyDto {
 }
 
 export class ForumActorDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 }
 
