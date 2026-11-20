@@ -36,8 +36,8 @@ export class AuthService {
     const policy = action === 'sign-in'
       ? { windowMs: 15 * 60 * 1000, maxRequests: 15 }
       : { windowMs: 60 * 60 * 1000, maxRequests: 5 }
-    const secret = this.config.get<string>('AUTH_RATE_LIMIT_SECRET')
-      ?? this.config.getOrThrow<string>('JWT_REFRESH_SECRET')
+    const secret = this.config.get<string>('AUTH_RATE_LIMIT_SECRET')?.trim()
+      || this.config.getOrThrow<string>('JWT_REFRESH_SECRET')
     const keyHash = createHmac('sha256', secret)
       .update('nexus:auth:' + action + ':' + address)
       .digest('hex')
