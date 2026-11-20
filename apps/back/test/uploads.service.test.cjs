@@ -39,7 +39,7 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
     resourceType === 'community-forum-topic' ||
     resourceType === 'community-forum-reply'
   ) {
-    collections.push('accounts', 'communities', 'community_relationships')
+    collections.push('accounts', 'profiles', 'communities', 'community_relationships')
     if (resourceType === 'community-forum-topic') collections.push('community_forum_topics')
     if (resourceType === 'community-forum-reply') collections.push('community_forum_replies')
   }
