@@ -1,8 +1,9 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
+const { createHmac } = require('node:crypto')
 const { AuthService } = require('../dist/api/auth/auth.service.js')
 
-function createAuthHarness({ failTransaction = false } = {}) {
+function createAuthHarness({ failTransaction = false, authRateLimitSecret } = {}) {
   const collections = new Map([
     ['accounts', []],
     ['refresh_tokens', []]
@@ -96,7 +97,9 @@ function createAuthHarness({ failTransaction = false } = {}) {
     }
   }
   const config = {
-    get() { return undefined },
+    get(key) {
+      return key === 'AUTH_RATE_LIMIT_SECRET' ? authRateLimitSecret : undefined
+    },
     getOrThrow(key) { return `test-secret-${key}` }
   }
   return {
@@ -380,6 +383,22 @@ test('auth attempts use separate shared fixed-window policies and hashed client 
     service.assertAuthAttemptAllowed('sign-in', '203.0.113.10'),
     error => error.getStatus() === 429 && error.message === 'AUTH_RATE_LIMIT_EXCEEDED'
   )
+})
+
+test('empty dedicated rate-limit secrets fall back to the refresh secret', async () => {
+  const { service, repository } = createAuthHarness({ authRateLimitSecret: '   ' })
+  let capturedKey
+  repository.consumeAuthRateLimit = async keyHash => {
+    capturedKey = keyHash
+    return true
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', '203.0.113.11')
+
+  const expected = createHmac('sha256', 'test-secret-JWT_REFRESH_SECRET')
+    .update('nexus:auth:sign-in:203.0.113.11')
+    .digest('hex')
+  assert.equal(capturedKey, expected)
 })
 
 test('invalid client addresses share a safe fallback bucket', async () => {
