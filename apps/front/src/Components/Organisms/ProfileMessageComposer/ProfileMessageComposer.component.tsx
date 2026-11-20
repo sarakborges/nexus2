@@ -7,10 +7,11 @@ import { Button } from '@/DesignSystem'
 import { useTranslations } from '@/Hooks/Language'
 import type { ProfileMessageComposerProps } from './ProfileMessageComposer.types'
 import type { ProfileMessageErrorCode } from '@/Services/ProfileMessage'
+import type { TranslationKey } from '@/Types/Translation.type'
 
 import './ProfileMessageComposer.style.scss'
 
-const ERROR_TRANSLATIONS: Record<ProfileMessageErrorCode, string> = {
+const ERROR_TRANSLATIONS = {
   INVALID_MESSAGE: 'PROFILE_MESSAGES_ERROR_INVALID',
   ACCOUNT_NOT_FOUND: 'PROFILE_MESSAGES_ERROR_ACCOUNT',
   PROFILE_MESSAGE_FRIENDS_ONLY: 'PROFILE_MESSAGES_ERROR_FRIENDS_ONLY',
@@ -20,7 +21,7 @@ const ERROR_TRANSLATIONS: Record<ProfileMessageErrorCode, string> = {
   INVALID_EDITOR_IMAGE: 'PROFILE_MESSAGES_ERROR_IMAGE',
   EDITOR_IMAGE_ALREADY_ATTACHED: 'PROFILE_MESSAGES_ERROR_IMAGE',
   STORAGE_UNAVAILABLE: 'PROFILE_MESSAGES_ERROR_STORAGE'
-}
+} as const satisfies Record<ProfileMessageErrorCode, TranslationKey>
 
 export function ProfileMessageComposer({
   hasSession,
