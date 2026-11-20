@@ -11,7 +11,7 @@ const user = {
 }
 
 function createRequest(cookie = 'nexus_refresh=valid-refresh') {
-  return { headers: { cookie, origin: 'http://localhost:5173', host: 'localhost:5173', 'x-forwarded-proto': 'http' } }
+  return { method: 'POST', protocol: 'http', headers: { cookie, origin: 'http://localhost:5173', host: 'localhost:5173', 'x-forwarded-proto': 'http' } }
 }
 
 function createResponse() {
