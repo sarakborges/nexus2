@@ -11,7 +11,14 @@ type RealtimeMessage = {
   payload?: {
     status?: string
     event?: string
+    changedAt?: number
+    signature?: string
   }
+}
+
+type SignedTopicChange = {
+  changedAt: number
+  signature: string
 }
 
 async function getRealtimeConfig(): Promise<RealtimeConfig> {
@@ -19,18 +26,52 @@ async function getRealtimeConfig(): Promise<RealtimeConfig> {
   return data
 }
 
+async function verifyTopicChange(
+  topicId: string,
+  change: SignedTopicChange
+): Promise<boolean> {
+  try {
+    const { data } = await api.post<{ valid: boolean }>('/realtime/verify', {
+      topicId,
+      ...change
+    })
+    return data.valid === true
+  } catch {
+    return false
+  }
+}
+
 export function subscribeToCommunityForumTopic(
   topicId: string,
   onTopicChanged: () => void
 ): () => void {
   const channel = `realtime:nexus-forum-topic-${topicId}`
-  const topicRefresh = createThrottledTopicRefresh(onTopicChanged)
   let socket: WebSocket | null = null
   let heartbeatTimer: number | undefined
   let reconnectTimer: number | undefined
   let reconnectAttempt = 0
   let messageRef = 0
   let stopped = false
+  let pendingTopicChange: SignedTopicChange | null = null
+  let lastAcceptedChangedAt = 0
+
+  const topicRefresh = createThrottledTopicRefresh(onTopicChanged)
+  const topicChangeVerification = createThrottledTopicRefresh(() => {
+    const candidate = pendingTopicChange
+    pendingTopicChange = null
+    if (!candidate || candidate.changedAt <= lastAcceptedChangedAt) return
+
+    void verifyTopicChange(topicId, candidate).then(valid => {
+      if (
+        stopped ||
+        !valid ||
+        candidate.changedAt <= lastAcceptedChangedAt
+      ) return
+
+      lastAcceptedChangedAt = candidate.changedAt
+      topicRefresh.notify()
+    })
+  })
 
   const clearHeartbeat = () => {
     if (heartbeatTimer !== undefined) {
@@ -121,7 +162,17 @@ export function subscribeToCommunityForumTopic(
           payload.event === 'broadcast' &&
           payload.payload?.event === 'topic_changed'
         ) {
-          topicRefresh.notify()
+          const changedAt = payload.payload.changedAt
+          const signature = payload.payload.signature
+          if (
+            Number.isSafeInteger(changedAt) &&
+            typeof changedAt === 'number' &&
+            typeof signature === 'string' &&
+            changedAt > lastAcceptedChangedAt
+          ) {
+            pendingTopicChange = { changedAt, signature }
+            topicChangeVerification.notify()
+          }
         }
 
         if (payload.event === 'phx_error' || payload.event === 'phx_close') {
@@ -145,7 +196,9 @@ export function subscribeToCommunityForumTopic(
 
   return () => {
     stopped = true
+    topicChangeVerification.cancel()
     topicRefresh.cancel()
+    pendingTopicChange = null
     clearHeartbeat()
     if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
     reconnectTimer = undefined

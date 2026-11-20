@@ -11,8 +11,7 @@ const browserScheduler: TimeoutScheduler = {
 }
 
 /**
- * Coalesce bursty topic notifications so one public channel cannot force an
- * unbounded number of page refetches per client.
+ * Coalesce bursty notifications so one topic callback runs per client per interval.
  */
 export function createThrottledTopicRefresh(
   callback: () => void,
