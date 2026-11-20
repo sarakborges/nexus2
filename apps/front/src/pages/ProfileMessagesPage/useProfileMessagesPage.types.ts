@@ -9,6 +9,7 @@ import type { Dispatch, SetStateAction, FormEvent } from 'react'
 
 import type { useUrlPagination } from '@/Hooks/useUrlPagination'
 import type { uploadEditorImage } from '@/Services/Uploads'
+import type { ProfileMessageErrorCode } from '@/Services/ProfileMessage'
 import type { ProfileMessageViewModel } from '@/Components/Organisms/ProfileMessageList/ProfileMessageList.types'
 
 export type UseProfileMessagesPageResult = {
@@ -47,7 +48,7 @@ export type UseProfileMessagesPageResult = {
   canSubmitMessage: boolean
   isSendingMessage: boolean
   hasSendMessageError: boolean
-  isInvalidMessageError: boolean
+  sendMessageErrorCode: ProfileMessageErrorCode | null
   handleSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>
   uploadEditorImage: typeof uploadEditorImage
 }
