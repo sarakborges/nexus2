@@ -42,7 +42,7 @@ export function ProfileMessageItem({
         ) : (
           <span>{t('PROFILE_MESSAGES_UNKNOWN_SENDER')}</span>
         )}
-        {message.isFavorite && (
+        {item.canFavorite && message.isFavorite && (
           <span
             className="profile-message__favorite-indicator"
             role="img"

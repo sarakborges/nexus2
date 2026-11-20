@@ -16,11 +16,14 @@ export class ProfileMessageService {
   async getMessages(profileId: string, userId: string | null, q: PaginationDto): Promise<PaginatedResult<ProfileMessage>> {
     try {
       const page = await this.data.getProfileMessages(profileId, userId, q.page)
+      const account = userId ? await this.data.getAccountById(userId) : null
+      const isProfileOwner = Boolean(account?.profiles.includes(profileId))
       return {
         ...page,
         items: page.items.map(message => ({
           ...message,
-          content: sanitizeRichText(message.content ?? '')
+          content: sanitizeRichText(message.content ?? ''),
+          isFavorite: isProfileOwner && message.isFavorite === true
         }))
       }
     } catch (error) {
