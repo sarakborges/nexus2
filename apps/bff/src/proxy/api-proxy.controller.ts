@@ -17,7 +17,20 @@ export class ApiProxyController {
 
   @All('{*path}')
   async proxy(@Req() req: Request, @Res() res: Response): Promise<void> {
-    assertSameOrigin(req)
+    // Vercel Cron is a server-to-server request and does not carry a browser
+    // Origin. Keep it outside the browser CSRF check, but authenticate it
+    // before allowing it to reach the backend.
+    const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
+    const cleanupCronSecret = isCleanupCron ? process.env.CRON_SECRET : undefined
+    if (isCleanupCron) {
+      if (!cleanupCronSecret || req.headers.authorization !== 'Bearer ' + cleanupCronSecret) {
+        res.status(HttpStatus.UNAUTHORIZED).json({ statusCode: HttpStatus.UNAUTHORIZED, message: 'CRON_UNAUTHORIZED' })
+        return
+      }
+    } else {
+      assertSameOrigin(req)
+    }
+
     let accessToken = getCookie(req, ACCESS_COOKIE)
     const refreshToken = getCookie(req, REFRESH_COOKIE)
     try {
@@ -28,22 +41,16 @@ export class ApiProxyController {
       }
 
       const headers: Record<string, string> = {}
-      const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
-      const isBinaryImage = /^\/api\/uploads\/[0-9a-f-]{36}\/content$/i.test(req.path)
+      const isBinaryImage = /^\\/api\\/uploads\\/[0-9a-f-]{36}\\/content$/i.test(req.path)
 
-      if (isCleanupCron) {
-        const cronSecret = process.env.CRON_SECRET
-        if (!cronSecret || req.headers.authorization !== 'Bearer ' + cronSecret) {
-          res.status(HttpStatus.UNAUTHORIZED).json({ statusCode: HttpStatus.UNAUTHORIZED, message: 'CRON_UNAUTHORIZED' })
-          return
-        }
-        headers['x-nexus-cron-secret'] = cronSecret
+      if (isCleanupCron && cleanupCronSecret) {
+        headers['x-nexus-cron-secret'] = cleanupCronSecret
       } else if (accessToken) {
         headers.Authorization = 'Bearer ' + accessToken
       }
       // Vercel forwards the original /api path to this service. BACKEND_URL
       // already contains /api, so only the path after that prefix is appended.
-      const backendPath = req.path.replace(/^\/api(?=\/|$)/, '')
+      const backendPath = req.path.replace(/^\\/api(?=\\/|$)/, '')
       const config: AxiosRequestConfig = {
         url: `${this.backUrl}${backendPath}`,
         method: req.method as Method,
