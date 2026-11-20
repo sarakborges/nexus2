@@ -203,9 +203,10 @@ export function useProfileMessagesPage(): UseProfileMessagesPageResult {
     canSubmitMessage: hasRichTextContent(content) && content.length <= 8000,
     isSendingMessage: sendMessageMutation.isPending,
     hasSendMessageError: sendMessageMutation.isError,
-    isInvalidMessageError:
-      sendMessageMutation.error instanceof ProfileMessageError &&
-      sendMessageMutation.error.code === 'INVALID_MESSAGE',
+    sendMessageErrorCode:
+      sendMessageMutation.error instanceof ProfileMessageError
+        ? sendMessageMutation.error.code
+        : null,
     handleSubmit,
     uploadEditorImage
   }
