@@ -26,6 +26,8 @@ export class SignUpDto {
 
 export class RefreshDto {
   @IsString()
+  @MinLength(1)
+  @MaxLength(2048)
   refreshToken!: string
 }
 

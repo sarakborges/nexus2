@@ -7,6 +7,7 @@ const { validate } = require('class-validator')
 const {
   CredentialsDto,
   SignUpDto,
+  RefreshDto,
   CurrentProfileDto
 } = require('../dist/api/auth/auth.dto.js')
 const {
@@ -181,4 +182,31 @@ test('UUID route parameter pipe accepts UUIDs and rejects malformed identifiers'
   const validId = '550e8400-e29b-41d4-a716-446655440000'
   assert.equal(await pipe.transform(validId, metadata), validId)
   await assert.rejects(pipe.transform('not-a-uuid', metadata))
+})
+
+
+test('refresh tokens and upload content types have explicit length bounds', async () => {
+  const oversizedRefresh = Object.assign(new RefreshDto(), {
+    refreshToken: 't'.repeat(2049)
+  })
+  const refreshErrors = await validate(oversizedRefresh)
+  assert.ok(refreshErrors.some(error =>
+    error.property === 'refreshToken' && error.constraints?.maxLength
+  ))
+
+  const emptyRefresh = Object.assign(new RefreshDto(), { refreshToken: '' })
+  const emptyRefreshErrors = await validate(emptyRefresh)
+  assert.ok(emptyRefreshErrors.some(error =>
+    error.property === 'refreshToken' && error.constraints?.minLength
+  ))
+
+  const oversizedContentType = Object.assign(new CreateUploadDto(), {
+    purpose: 'editor-image',
+    contentType: 'm'.repeat(101),
+    size: 1
+  })
+  const contentTypeErrors = await validate(oversizedContentType)
+  assert.ok(contentTypeErrors.some(error =>
+    error.property === 'contentType' && error.constraints?.maxLength
+  ))
 })

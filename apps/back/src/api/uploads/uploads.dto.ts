@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator'
 
 import type { UploadPurpose } from './uploads.types'
 
@@ -7,6 +7,8 @@ export class CreateUploadDto {
   purpose!: UploadPurpose
 
   @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   contentType!: string
 
   @IsInt()

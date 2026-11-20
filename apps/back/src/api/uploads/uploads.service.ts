@@ -50,7 +50,9 @@ export class UploadsService {
 
   async createUpload(userId: string, input: CreateUploadInput): Promise<{ id: string; uploadUrl: string }> {
     this.storage.assertConfigured()
-    const extension = MIME_EXTENSIONS[input.contentType]
+    const extension = Object.hasOwn(MIME_EXTENSIONS, input.contentType)
+      ? MIME_EXTENSIONS[input.contentType]
+      : undefined
     const maxSize = input.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
     if (!extension || !Number.isSafeInteger(input.size) || input.size < 1 || input.size > maxSize) {
       throw new BadRequestException('INVALID_UPLOAD')

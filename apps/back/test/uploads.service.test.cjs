@@ -2268,3 +2268,31 @@ test('avatar RPCs map a missing relational account to an authentication error', 
       error.message === 'ACCOUNT_NOT_FOUND'
   )
 })
+
+
+test('rejects inherited object-property names as MIME types before writing or signing', async t => {
+  const { service, collections } = createHarness()
+  let storageRequests = 0
+  withFetch(t, async () => {
+    storageRequests += 1
+    return new Response(JSON.stringify({ url: '/object/upload/sign/fake' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    })
+  })
+
+  for (const contentType of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    await assert.rejects(
+      service.createUpload('user-1', {
+        purpose: 'editor-image',
+        contentType,
+        size: pngHeader.length
+      }),
+      error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD',
+      contentType + ' must not be treated as a registered MIME type'
+    )
+  }
+
+  assert.equal(storageRequests, 0)
+  assert.deepEqual(collections.get('media_files') ?? [], [])
+})
