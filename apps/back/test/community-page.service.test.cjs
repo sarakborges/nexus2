@@ -17,7 +17,10 @@ test('community page uses the relational page query and sanitizes member and for
       items: [{ id: 'member-1', about: '<p>Member</p><script>unsafe()</script>' }],
       page: 1, pageSize: 20, totalItems: 1, totalPages: 1
     },
-    forumTopics: { items: [], page: 1, pageSize: 20, totalItems: 0, totalPages: 1 },
+    forumTopics: {
+      items: [{ id: 'topic-1', content: '<p>Topic</p><script>unsafe()</script>' }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
     forumAuthors: [{ id: 'author-1', about: '<p>Author</p><script>unsafe()</script>' }]
   }
   const service = new CommunityPageService({
@@ -29,6 +32,8 @@ test('community page uses the relational page query and sanitizes member and for
   const page = await service.getCommunityPage('@COMMUNITY', 'user-1')
   assert.deepEqual(calls, [['community', 'user-1']])
   assert.equal(page.members.items[0].about.includes('<script>'), false)
+  assert.equal(page.forumTopics.items[0].content.includes('<script>'), false)
+  assert.doesNotMatch(page.forumTopics.items[0].content, /unsafe\(\)/)
   assert.equal(page.forumAuthors[0].about.includes('<script>'), false)
 })
 

@@ -8,8 +8,11 @@ test('forum topic page delegates pagination to the relational query and sanitize
   const result = {
     community: { id: 'community-1' },
     detail: {
-      topic: { id: 'topic-1', replyCount: 1 },
-      replies: { items: [], page: 3, pageSize: 20, totalItems: 0, totalPages: 1 }
+      topic: { id: 'topic-1', replyCount: 1, content: '<p>Topic</p><script>unsafeTopic()</script>' },
+      replies: {
+        items: [{ id: 'reply-1', content: '<p>Reply</p><img src="x" onerror="unsafeReply()">' }],
+        page: 3, pageSize: 20, totalItems: 1, totalPages: 1
+      }
     },
     forumProfileId: 'profile-1',
     viewerRelationship: null,
@@ -41,6 +44,10 @@ test('forum topic page delegates pagination to the relational query and sanitize
     'community', 'topic-1', 'account-1', 3, 'text', 'name-desc'
   ]])
   assert.equal(page.authors[0].about.includes('<script>'), false)
+  assert.equal(page.detail.topic.content.includes('<script>'), false)
+  assert.doesNotMatch(page.detail.topic.content, /unsafeTopic\(\)/)
+  assert.equal(page.detail.replies.items[0].content.includes('onerror='), false)
+  assert.doesNotMatch(page.detail.replies.items[0].content, /unsafeReply\(\)/)
   assert.equal(page.detail.replies.pageSize, 20)
 })
 
