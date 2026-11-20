@@ -24,14 +24,13 @@ export class CommunityForumRealtimeService {
   }
 
   async publishTopicChanged(topicId: string): Promise<void> {
-    const config = this.getPublicConfig()
-    const secretKey = this.config.get<string>('SUPABASE_STORAGE_SECRET_KEY')
-    if (!config.enabled || !secretKey) return
-
-    const topic = `nexus-forum-topic-${topicId}`
-    const endpoint = new URL('/realtime/v1/api/broadcast', config.supabaseUrl)
-
     try {
+      const config = this.getPublicConfig()
+      const secretKey = this.config.get<string>('SUPABASE_STORAGE_SECRET_KEY')
+      if (!config.enabled || !secretKey) return
+
+      const topic = `nexus-forum-topic-${topicId}`
+      const endpoint = new URL('/realtime/v1/api/broadcast', config.supabaseUrl)
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {

@@ -57,3 +57,16 @@ test('does not publish when Supabase Realtime server credentials are unavailable
   await service.publishTopicChanged('topic-123')
   assert.equal(called, false)
 })
+
+
+test('does not let malformed Supabase URL configuration fail the forum mutation', async () => {
+  const service = new CommunityForumRealtimeService({
+    get: key => ({
+      SUPABASE_URL: 'not-a-valid-url',
+      SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_public',
+      SUPABASE_STORAGE_SECRET_KEY: 'sb_secret_server_only'
+    })[key]
+  })
+
+  await assert.doesNotReject(service.publishTopicChanged('topic-123'))
+})
