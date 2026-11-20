@@ -401,6 +401,8 @@ COMMON_VIEW_ALL: 'Ver todos',
   PROFILE_MESSAGES_SEND: 'Enviar mensagem',
   PROFILE_MESSAGES_ERROR_INVALID:
     'Escreva uma mensagem com até 8.000 caracteres HTML.',
+  PROFILE_MESSAGES_ERROR_ACCOUNT:
+    'Sua sessão não está mais válida. Entre novamente para enviar a mensagem.',
   PROFILE_MESSAGES_ERROR_FRIENDS_ONLY:
     'Este perfil aceita mensagens apenas de perfis conectados.',
   PROFILE_MESSAGES_ERROR_PROFILE_TYPE:
