@@ -17,7 +17,7 @@ import {
   MIME_EXTENSIONS,
   PENDING_MAX_AGE,
 } from './uploads.constants'
-import { detectMime, getTotalSize } from './uploads.utils'
+import { detectMime } from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
@@ -141,16 +141,29 @@ export class UploadsService {
     if (response.status === 404) {
       throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
     }
-    if (!response.ok) {
-      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    if (response.status !== 206) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_UNSUPPORTED')
     }
 
-    const bytes = Buffer.from(await response.arrayBuffer())
-    const totalSize = getTotalSize(
-      response.headers.get('content-range'),
-      response.headers.get('content-length'),
-      bytes.length
-    )
+    const contentRange = response.headers.get('content-range')
+    const rangeMatch = contentRange?.match(/^bytes 0-(\\d+)\\/(\\d+)$/i)
+    const rangeEnd = rangeMatch ? Number(rangeMatch[1]) : Number.NaN
+    const totalSize = rangeMatch ? Number(rangeMatch[2]) : Number.NaN
+    if (
+      !Number.isSafeInteger(rangeEnd) ||
+      rangeEnd < 0 ||
+      rangeEnd > 63 ||
+      !Number.isSafeInteger(totalSize) ||
+      totalSize < 1 ||
+      rangeEnd >= totalSize
+    ) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+    }
+
+    const bytes = await this.readBoundedRange(response, rangeEnd + 1)
+    if (bytes.length !== rangeEnd + 1) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+    }
     const detectedMime = detectMime(bytes)
     const maxSize = record.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
 
@@ -281,6 +294,29 @@ export class UploadsService {
 
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
     await this.cleanup.deletePreviousAvatar(previousUrl, keepId)
+  }
+
+  private async readBoundedRange(response: Response, maxBytes: number): Promise<Buffer> {
+    const reader = response.body?.getReader()
+    if (!reader) throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+
+    const chunks: Buffer[] = []
+    let size = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        size += value.byteLength
+        if (size > maxBytes) {
+          await reader.cancel()
+          throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+        }
+        chunks.push(Buffer.from(value))
+      }
+    } finally {
+      reader.releaseLock()
+    }
+    return Buffer.concat(chunks, size)
   }
 
   private getUploadUrl(record: UploadedFileRecord): string {
