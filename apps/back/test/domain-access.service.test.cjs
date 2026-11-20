@@ -29,3 +29,45 @@ test('readSuggestedCommunities requests sixteen entries for the home 4x4 preview
   assert.equal(result[0].id, 'community-0')
   assert.equal(result[15].id, 'community-15')
 })
+
+
+test('unknown community privacy fails closed instead of becoming public', async () => {
+  const community = {
+    id: 'community-unknown-privacy',
+    name: 'Unknown privacy',
+    url: 'unknown-privacy',
+    picture: '',
+    about: '',
+    type: 'social',
+    privacy: 'unrecognized',
+    createdAt: 1,
+    lastActivity: 1
+  }
+  const service = new DomainAccessService({
+    async getCommunitiesByIds() { return [community] }
+  })
+
+  await assert.rejects(
+    service.readCommunitiesByIds([community.id]),
+    error => error instanceof Error && error.message === 'INVALID_COMMUNITY_PRIVACY'
+  )
+})
+
+test('unknown community privacy is not readable through access checks', () => {
+  const service = new DomainAccessService({})
+  const community = {
+    id: 'community-unknown-privacy',
+    privacy: 'unrecognized'
+  }
+
+  assert.throws(
+    () => service.assertCommunityReadableInRecords(
+      community.id,
+      null,
+      [],
+      [community],
+      []
+    ),
+    error => typeof error.getStatus === 'function' && error.getStatus() === 404
+  )
+})
