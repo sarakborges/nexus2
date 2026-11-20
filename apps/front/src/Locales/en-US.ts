@@ -174,6 +174,7 @@ COMMON_VIEW_ALL: 'View all',
   AUTH_ERROR_EMAIL_EXISTS:
     'An account with this email already exists in this browser.',
   AUTH_ERROR_INVALID_CREDENTIALS: 'The email or password is incorrect.',
+  AUTH_ERROR_RATE_LIMIT: 'Too many attempts. Wait before trying again.',
   AUTH_ERROR_STORAGE:
     'Browser storage is unavailable. Check your browser settings and try again.',
   AUTH_ERROR_CRYPTO:
