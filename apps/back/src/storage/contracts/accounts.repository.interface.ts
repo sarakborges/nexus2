@@ -3,6 +3,7 @@ import type { AccountProfileChange, AccountRepositoryRecord, CreateAccountWithRe
 export interface AccountRepository {
   getAccountById(id: string): Promise<AccountRepositoryRecord | null>
   findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null>
+  consumeAuthRateLimit(keyHash: string, windowMs: number, maxRequests: number): Promise<boolean>
   createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void>
   updateAccountPreferences(userId: string, preferences: Partial<UserPreferences>): Promise<UserPreferences>
   issueRefreshToken(
