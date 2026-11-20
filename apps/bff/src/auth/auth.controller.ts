@@ -90,7 +90,7 @@ export class AuthController {
   }
 
   private clientIp(req: Request): string {
-    const forwarded = req.headers['x-forwarded-for']
+    const forwarded = req.headers['x-vercel-forwarded-for'] ?? req.headers['x-forwarded-for']
     const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded
     const candidate = forwardedValue?.split(',')[0]?.trim()
       || req.ip
