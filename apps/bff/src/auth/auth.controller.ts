@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
+import { isIP } from 'node:net'
 import { HttpService } from '@nestjs/axios'
 import axios from 'axios'
 import { IsEmail, IsString, MinLength } from 'class-validator'
@@ -23,13 +24,13 @@ export class AuthController {
   constructor(private readonly http: HttpService) {}
 
   @Post('sign-up')
-  async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
-    return this.authenticate('sign-up', body, res)
+  async signUp(@Body() body: SignUpDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    return this.authenticate('sign-up', body, req, res)
   }
   @Post('sign-in')
   @HttpCode(200)
-  async signIn(@Body() body: CredentialsDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
-    return this.authenticate('sign-in', body, res)
+  async signIn(@Body() body: CredentialsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    return this.authenticate('sign-in', body, req, res)
   }
   @Post('refresh')
   @HttpCode(200)
@@ -62,8 +63,8 @@ export class AuthController {
     finally { clearAuthCookies(res) }
     return { success: true }
   }
-  private async request<T>(url: string, body: unknown): Promise<{ data: T }> {
-    try { return await this.http.axiosRef.post<T>(url, body) }
+  private async request<T>(url: string, body: unknown, headers: Record<string, string> = {}): Promise<{ data: T }> {
+    try { return await this.http.axiosRef.post<T>(url, body, { headers }) }
     catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status ?? HttpStatus.BAD_GATEWAY
@@ -73,9 +74,28 @@ export class AuthController {
       throw error
     }
   }
-  private async authenticate(route: 'sign-in' | 'sign-up', body: CredentialsDto | SignUpDto, res: Response): Promise<AuthResponse> {
-    const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/${route}`, body)
+  private async authenticate(
+    route: 'sign-in' | 'sign-up',
+    body: CredentialsDto | SignUpDto,
+    req: Request,
+    res: Response
+  ): Promise<AuthResponse> {
+    const { data } = await this.request<AuthTokenPair>(
+      `${this.backUrl}/auth/${route}`,
+      body,
+      { 'x-nexus-client-ip': this.clientIp(req) }
+    )
     writeAuthCookies(res, data.accessToken, data.refreshToken)
     return { user: data.user, authenticated: true }
+  }
+
+  private clientIp(req: Request): string {
+    const forwarded = req.headers['x-forwarded-for']
+    const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded
+    const candidate = forwardedValue?.split(',')[0]?.trim()
+      || req.ip
+      || req.socket.remoteAddress
+      || ''
+    return isIP(candidate) ? candidate : 'unknown'
   }
 }
