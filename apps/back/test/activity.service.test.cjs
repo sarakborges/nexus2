@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { ActivityService } = require('../dist/api/domain/activity.service.js')
+const { BadRequestException, UnauthorizedException } = require('@nestjs/common')
 
 function profile(id) {
   return {
@@ -132,4 +133,63 @@ test('markActivitiesRead deduplicates ids before persisting the read state', asy
   assert.equal(write.userId, 'account-1')
   assert.deepEqual(write.activityIds, ['activity:1', 'activity:2'])
   assert.ok(Number.isFinite(write.readAt))
+})
+
+
+test('activity feed maps missing accounts and invalid cursors to HTTP errors', async () => {
+  const missingAccountService = new ActivityService({
+    async getActivityFeedRows() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  })
+  await assert.rejects(
+    missingAccountService.getRecentActivityPage('deleted-user'),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+
+  const invalidCursorService = new ActivityService({
+    async getActivityFeedRows() {
+      throw new Error('ACTIVITY_FEED_CURSOR_INVALID')
+    }
+  })
+  await assert.rejects(
+    invalidCursorService.getRecentActivityPage('account-1', 10, { updatedAt: 100, id: '' }),
+    error => error instanceof BadRequestException &&
+      error.getStatus() === 400 &&
+      error.message === 'ACTIVITY_FEED_CURSOR_INVALID'
+  )
+})
+
+test('activity read writes map stale accounts and invalid RPC input to HTTP errors', async () => {
+  const missingAccountService = new ActivityService({
+    async markActivitiesRead() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  })
+  await assert.rejects(
+    missingAccountService.markActivitiesRead('deleted-user', ['activity:1']),
+    error => error instanceof UnauthorizedException && error.getStatus() === 401
+  )
+
+  const invalidInputService = new ActivityService({
+    async markActivitiesRead() {
+      throw new Error('ACTIVITY_READ_INPUT_INVALID')
+    }
+  })
+  await assert.rejects(
+    invalidInputService.markActivitiesRead('account-1', ['activity:1']),
+    error => error instanceof BadRequestException && error.getStatus() === 400
+  )
+})
+
+test('oversized activity read batches return a client error instead of an internal error', async () => {
+  const service = new ActivityService({})
+  await assert.rejects(
+    service.markActivitiesRead('account-1', Array.from({ length: 51 }, (_, index) => 'activity:' + index)),
+    error => error instanceof BadRequestException &&
+      error.getStatus() === 400 &&
+      error.message === 'ACTIVITY_READ_BATCH_TOO_LARGE'
+  )
 })
