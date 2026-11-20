@@ -1,4 +1,5 @@
 import { api } from '@/Services/Http/api'
+import { createThrottledTopicRefresh } from './realtime-refresh.utils'
 
 type RealtimeConfig =
   | { enabled: false }
@@ -23,6 +24,7 @@ export function subscribeToCommunityForumTopic(
   onTopicChanged: () => void
 ): () => void {
   const channel = `realtime:nexus-forum-topic-${topicId}`
+  const topicRefresh = createThrottledTopicRefresh(onTopicChanged)
   let socket: WebSocket | null = null
   let heartbeatTimer: number | undefined
   let reconnectTimer: number | undefined
@@ -108,7 +110,7 @@ export function subscribeToCommunityForumTopic(
           if (payload.payload?.status === 'ok') {
             reconnectAttempt = 0
             // Re-read once after joining to cover changes made during connection setup.
-            onTopicChanged()
+            topicRefresh.notify()
           } else if (payload.payload?.status === 'error') {
             currentSocket.close()
           }
@@ -119,7 +121,7 @@ export function subscribeToCommunityForumTopic(
           payload.event === 'broadcast' &&
           payload.payload?.event === 'topic_changed'
         ) {
-          onTopicChanged()
+          topicRefresh.notify()
         }
 
         if (payload.event === 'phx_error' || payload.event === 'phx_close') {
@@ -143,6 +145,7 @@ export function subscribeToCommunityForumTopic(
 
   return () => {
     stopped = true
+    topicRefresh.cancel()
     clearHeartbeat()
     if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
     reconnectTimer = undefined
