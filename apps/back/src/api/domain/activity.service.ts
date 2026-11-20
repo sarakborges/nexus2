@@ -100,13 +100,19 @@ export class ActivityService {
     try {
       return await operation()
     } catch (error) {
-      const code = error instanceof Error ? error.message : String(error)
-      if (code === 'ACCOUNT_NOT_FOUND' || code === 'ACTIVITY_FEED_USER_REQUIRED' || code === 'ACTIVITY_READ_USER_REQUIRED') {
-        throw new UnauthorizedException(code)
-      }
-      if (code === 'ACTIVITY_FEED_CURSOR_INVALID' || code === 'ACTIVITY_READ_INPUT_INVALID') {
-        throw new BadRequestException(code)
-      }
+      const message = error instanceof Error ? error.message : String(error)
+      const authenticationCode = [
+        'ACCOUNT_NOT_FOUND',
+        'ACTIVITY_FEED_USER_REQUIRED',
+        'ACTIVITY_READ_USER_REQUIRED'
+      ].find(code => message.includes(code))
+      if (authenticationCode) throw new UnauthorizedException(authenticationCode)
+
+      const inputCode = [
+        'ACTIVITY_FEED_CURSOR_INVALID',
+        'ACTIVITY_READ_INPUT_INVALID'
+      ].find(code => message.includes(code))
+      if (inputCode) throw new BadRequestException(inputCode)
       throw error
     }
   }

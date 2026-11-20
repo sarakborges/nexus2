@@ -139,7 +139,7 @@ test('markActivitiesRead deduplicates ids before persisting the read state', asy
 test('activity feed maps missing accounts and invalid cursors to HTTP errors', async () => {
   const missingAccountService = new ActivityService({
     async getActivityFeedRows() {
-      throw new Error('ACCOUNT_NOT_FOUND')
+      throw new Error('Supabase relational request failed (404): {"message":"ACCOUNT_NOT_FOUND"}')
     }
   })
   await assert.rejects(
@@ -151,7 +151,7 @@ test('activity feed maps missing accounts and invalid cursors to HTTP errors', a
 
   const invalidCursorService = new ActivityService({
     async getActivityFeedRows() {
-      throw new Error('ACTIVITY_FEED_CURSOR_INVALID')
+      throw new Error('Supabase relational request failed (400): {"message":"ACTIVITY_FEED_CURSOR_INVALID"}')
     }
   })
   await assert.rejects(
@@ -175,7 +175,7 @@ test('activity read writes map stale accounts and invalid RPC input to HTTP erro
 
   const invalidInputService = new ActivityService({
     async markActivitiesRead() {
-      throw new Error('ACTIVITY_READ_INPUT_INVALID')
+      throw new Error('Supabase relational request failed (400): {"message":"ACTIVITY_READ_INPUT_INVALID"}')
     }
   })
   await assert.rejects(
