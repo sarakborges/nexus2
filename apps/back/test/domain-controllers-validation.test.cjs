@@ -14,7 +14,7 @@ const secondId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
 function routeArguments(controller, methodName) {
   return Reflect.getMetadata(
     ROUTE_ARGS_METADATA,
-    controller.prototype,
+    controller,
     methodName
   ) ?? {}
 }
