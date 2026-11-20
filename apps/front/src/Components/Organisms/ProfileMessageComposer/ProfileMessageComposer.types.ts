@@ -1,6 +1,7 @@
 import type { FormEvent } from 'react'
 
 import type { uploadEditorImage } from '@/Services/Uploads'
+import type { ProfileMessageErrorCode } from '@/Services/ProfileMessage'
 
 export type ProfileMessageComposerProps = {
   hasSession: boolean
@@ -11,7 +12,7 @@ export type ProfileMessageComposerProps = {
   canSubmitMessage: boolean
   isSendingMessage: boolean
   hasSendMessageError: boolean
-  isInvalidMessageError: boolean
+  sendMessageErrorCode: ProfileMessageErrorCode | null
   onUploadImage: typeof uploadEditorImage
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>
   replyToName?: string
