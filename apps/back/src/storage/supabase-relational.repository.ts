@@ -44,6 +44,10 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.accounts.findAccountByEmail(...args)
   }
 
+  consumeAuthRateLimit(...args: Parameters<DataRepository['consumeAuthRateLimit']>): ReturnType<DataRepository['consumeAuthRateLimit']> {
+    return this.accounts.consumeAuthRateLimit(...args)
+  }
+
   deleteAccount(...args: Parameters<DataRepository['deleteAccount']>): ReturnType<DataRepository['deleteAccount']> {
     return this.accounts.deleteAccount(...args)
   }
