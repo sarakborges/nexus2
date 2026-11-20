@@ -82,11 +82,18 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       if (userId && !account) throw new Error('ACCOUNT_NOT_FOUND')
       const owned = new Set(account?.profiles ?? [])
       const relationships = collections.get('community_relationships') ?? []
+      const profiles = collections.get('profiles') ?? []
+      const ownerProfileId = relationships.find(item =>
+        item.profiles[1] === communityId && item.type === 'owner'
+      )?.profiles[0]
+      const ownerProfile = profiles.find(profile => profile.id === ownerProfileId)
+      const communityType = ownerProfile?.type ?? communityRecord.type
       if (
         communityRecord.privacy === 'private' &&
         !relationships.some(item =>
           item.profiles[1] === communityId &&
           owned.has(item.profiles[0]) &&
+          profiles.some(profile => profile.id === item.profiles[0] && profile.type === communityType) &&
           ['owner', 'moderator', 'connection'].includes(item.type)
         )
       ) {
@@ -146,6 +153,7 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
         !relationships.some(item =>
           item.profiles[1] === communityId &&
           owned.has(item.profiles[0]) &&
+          profiles.some(profile => profile.id === item.profiles[0] && profile.type === communityType) &&
           ['owner', 'moderator', 'connection'].includes(item.type)
         )
       ) {
@@ -425,6 +433,7 @@ function createDomainHarness({ userProfiles = {}, relationships = [], privacy = 
       const canRead = relationships.some(item =>
         item.profiles[1] === current.id &&
         owned.has(item.profiles[0]) &&
+        profiles.some(profile => profile.id === item.profiles[0] && profile.type === result.type) &&
         ['owner', 'moderator', 'connection'].includes(item.type)
       )
       if (!canRead) {
@@ -494,6 +503,33 @@ test('private community members can access the full community and member list', 
 
   assert.equal(visible.about, 'Community details')
   assert.deepEqual(members.items.map(item => item.id).sort(), ['member-1', 'owner-1'])
+})
+
+
+test('cross-type memberships do not grant private community reads', async () => {
+  const { service, collections } = createDomainHarness({
+    privacy: 'private',
+    userProfiles: { wrongTypeUser: ['member-1'] },
+    relationships: [
+      relationship('owner-1', 'owner'),
+      relationship('member-1', 'connection')
+    ]
+  })
+  collections.set('profiles', collections.get('profiles').map(profile =>
+    profile.id === 'member-1' ? { ...profile, type: 'business' } : profile
+  ))
+
+  const preview = await service.getCommunity('test-community', 'wrongTypeUser')
+  assert.equal(preview.picture, '')
+  assert.equal(preview.about, '')
+  await assert.rejects(
+    service.listCommunityMembers(communityId, 'all', page, 'wrongTypeUser'),
+    error => error.getStatus() === 404 && error.message === 'COMMUNITY_NOT_FOUND'
+  )
+  await assert.rejects(
+    service.listCommunityForumTopics(communityId, page, 'wrongTypeUser'),
+    error => error.getStatus() === 404 && error.message === 'COMMUNITY_NOT_FOUND'
+  )
 })
 
 test('anonymous callers never receive private community relationship records', async () => {
