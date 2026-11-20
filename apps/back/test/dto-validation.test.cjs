@@ -27,6 +27,7 @@ const {
 } = require('../dist/api/domain/domain.dto.js')
 const { CreateUploadDto, UpdateAvatarDto } = require('../dist/api/uploads/uploads.dto.js')
 const { PaginationDto } = require('../dist/api/pagination/pagination.dto.js')
+const { CommunityMembersPageDto } = require('../dist/api/domain/community-members-page.dto.js')
 
 test('authentication DTOs reject oversized email and password values', async () => {
   const credentials = Object.assign(new CredentialsDto(), {
@@ -208,5 +209,32 @@ test('refresh tokens and upload content types have explicit length bounds', asyn
   const contentTypeErrors = await validate(oversizedContentType)
   assert.ok(contentTypeErrors.some(error =>
     error.property === 'contentType' && error.constraints?.maxLength
+  ))
+})
+
+
+test('pagination page numbers stay within the PostgreSQL integer range', async () => {
+  const maxPage = 2_147_483_647
+  const validPage = plainToInstance(PaginationDto, { page: maxPage })
+  const validPendingPage = plainToInstance(CommunityMembersPageDto, {
+    page: maxPage,
+    pendingPage: maxPage
+  })
+  assert.equal((await validate(validPage)).length, 0)
+  assert.equal((await validate(validPendingPage)).length, 0)
+
+  const oversizedPage = plainToInstance(PaginationDto, { page: maxPage + 1 })
+  const oversizedPendingPage = plainToInstance(CommunityMembersPageDto, {
+    page: 1,
+    pendingPage: maxPage + 1
+  })
+  const pageErrors = await validate(oversizedPage)
+  const pendingPageErrors = await validate(oversizedPendingPage)
+
+  assert.ok(pageErrors.some(error =>
+    error.property === 'page' && error.constraints?.max
+  ))
+  assert.ok(pendingPageErrors.some(error =>
+    error.property === 'pendingPage' && error.constraints?.max
   ))
 })

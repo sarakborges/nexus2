@@ -1,12 +1,13 @@
 import { Transform, Type } from 'class-transformer'
-import { Equals, IsIn, IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator'
+import { Equals, IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator'
 
-import { FIXED_PAGE_SIZE } from './pagination.constants'
+import { FIXED_PAGE_SIZE, MAX_PAGE_NUMBER } from './pagination.constants'
 
 export class PaginationDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_PAGE_NUMBER)
   page = 1
 
   @Transform(() => FIXED_PAGE_SIZE)
