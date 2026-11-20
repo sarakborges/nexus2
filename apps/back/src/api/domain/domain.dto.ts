@@ -34,9 +34,11 @@ export class CreateProfileDto implements CreateProfileInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -54,9 +56,11 @@ export class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -71,9 +75,11 @@ export class CreateCommunityDto implements CreateCommunityInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -94,9 +100,11 @@ export class UpdateCommunityDto implements CreateCommunityInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
