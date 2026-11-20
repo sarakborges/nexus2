@@ -141,6 +141,9 @@ export class UploadsService {
     if (response.status === 404) {
       throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
     }
+    if (!response.ok) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    }
     if (response.status !== 206) {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_UNSUPPORTED')
     }
