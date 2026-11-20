@@ -19,6 +19,24 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
+  async consumeAuthRateLimit(keyHash: string, windowMs: number, maxRequests: number): Promise<boolean> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_consume_auth_rate_limit', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_key_hash: keyHash,
+        p_window_ms: windowMs,
+        p_max_requests: maxRequests
+      })
+    })
+    await this.assertSuccess(response)
+    const allowed: unknown = await response.json()
+    if (typeof allowed !== 'boolean') {
+      throw new Error('Supabase auth rate-limit RPC returned an invalid result.')
+    }
+    return allowed
+  }
+
   async createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void> {
     const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
       method: 'POST',
