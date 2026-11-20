@@ -2,19 +2,19 @@ import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, Res, 
 import { isIP } from 'node:net'
 import { HttpService } from '@nestjs/axios'
 import axios from 'axios'
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
 import type { Request, Response } from 'express'
 import type { AuthTokenPair } from '@nexus/common'
 import { clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from './cookie.util'
 import { getBackendUrl } from '../backend-url.util'
 
 class CredentialsDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(1) password!: string
+  @IsEmail() @MaxLength(254) email!: string
+  @IsString() @MinLength(1) @MaxLength(128) password!: string
 }
 class SignUpDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(8) password!: string
+  @IsEmail() @MaxLength(254) email!: string
+  @IsString() @MinLength(8) @MaxLength(128) password!: string
 }
 type AuthResponse = { user: AuthTokenPair['user']; authenticated: true }
 
