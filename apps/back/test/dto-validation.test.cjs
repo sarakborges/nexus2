@@ -27,6 +27,7 @@ const {
 } = require('../dist/api/domain/domain.dto.js')
 const { CreateUploadDto, UpdateAvatarDto } = require('../dist/api/uploads/uploads.dto.js')
 const { PaginationDto } = require('../dist/api/pagination/pagination.dto.js')
+const { VerifyRealtimeEventDto } = require('../dist/api/realtime.dto.js')
 const { CommunityMembersPageDto } = require('../dist/api/domain/community-members-page.dto.js')
 
 test('authentication DTOs reject oversized email and password values', async () => {
@@ -237,4 +238,24 @@ test('pagination page numbers stay within the PostgreSQL integer range', async (
   assert.ok(pendingPageErrors.some(error =>
     error.property === 'pendingPage' && error.constraints?.max
   ))
+})
+
+
+test('Realtime event verification validates UUID, timestamp and fixed-length signatures', async () => {
+  const valid = plainToInstance(VerifyRealtimeEventDto, {
+    topicId: '550e8400-e29b-41d4-a716-446655440000',
+    changedAt: Date.now(),
+    signature: 'A'.repeat(43)
+  })
+  assert.equal((await validate(valid)).length, 0)
+
+  const invalid = plainToInstance(VerifyRealtimeEventDto, {
+    topicId: 'not-a-uuid',
+    changedAt: 'not-a-number',
+    signature: 'unsigned'
+  })
+  const errors = await validate(invalid)
+  assert.ok(errors.some(error => error.property === 'topicId' && error.constraints?.isUuid))
+  assert.ok(errors.some(error => error.property === 'changedAt'))
+  assert.ok(errors.some(error => error.property === 'signature' && error.constraints?.matches))
 })
