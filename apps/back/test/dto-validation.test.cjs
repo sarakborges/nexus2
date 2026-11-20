@@ -1,4 +1,6 @@
 require('reflect-metadata')
+const { plainToInstance } = require('class-transformer')
+const { ParseUUIDPipe } = require('@nestjs/common')
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { validate } = require('class-validator')
@@ -9,6 +11,7 @@ const {
 } = require('../dist/api/auth/auth.dto.js')
 const {
   CreateProfileDto,
+  IdsQueryDto,
   UpdateProfileDto,
   CreateCommunityDto,
   UpdateCommunityDto,
@@ -143,4 +146,39 @@ test('UUID-backed write DTO fields accept valid UUID identifiers', async () => {
       DtoType.name + '.' + property + ' must accept a valid UUID'
     )
   }
+})
+
+
+test('ID-list query accepts scalar and repeated UUIDs, defaults to empty, and rejects invalid or oversized lists', async () => {
+  const validId = '550e8400-e29b-41d4-a716-446655440000'
+  const empty = plainToInstance(IdsQueryDto, {})
+  assert.deepEqual(empty.ids, [])
+  assert.equal((await validate(empty)).length, 0)
+
+  const scalar = plainToInstance(IdsQueryDto, { ids: validId })
+  assert.deepEqual(scalar.ids, [validId])
+  assert.equal((await validate(scalar)).length, 0)
+
+  const repeated = plainToInstance(IdsQueryDto, {
+    ids: [validId, '6ba7b810-9dad-11d1-80b4-00c04fd430c8']
+  })
+  assert.equal((await validate(repeated)).length, 0)
+
+  const malformed = plainToInstance(IdsQueryDto, { ids: [validId, 'not-a-uuid'] })
+  const malformedErrors = await validate(malformed)
+  assert.ok(malformedErrors.some(error => error.property === 'ids' && error.constraints?.isUuid))
+
+  const oversized = plainToInstance(IdsQueryDto, {
+    ids: Array.from({ length: 101 }, () => validId)
+  })
+  const oversizedErrors = await validate(oversized)
+  assert.ok(oversizedErrors.some(error => error.property === 'ids' && error.constraints?.arrayMaxSize))
+})
+
+test('UUID route parameter pipe accepts UUIDs and rejects malformed identifiers', async () => {
+  const pipe = new ParseUUIDPipe()
+  const metadata = { type: 'param', data: 'profileId', metatype: String }
+  const validId = '550e8400-e29b-41d4-a716-446655440000'
+  assert.equal(await pipe.transform(validId, metadata), validId)
+  await assert.rejects(pipe.transform('not-a-uuid', metadata))
 })

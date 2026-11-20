@@ -1,4 +1,7 @@
+import { Transform } from 'class-transformer'
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsIn,
   IsOptional,
@@ -17,6 +20,14 @@ import type {
   RelationshipType,
   SearchScope
 } from '@nexus/common'
+
+export class IdsQueryDto {
+  @Transform(({ value }) => value === undefined ? [] : Array.isArray(value) ? value : [value])
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsUUID(undefined, { each: true })
+  ids: string[] = []
+}
 
 export class SearchDto extends PaginationDto {
   @IsString()

@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards
+} from '@nestjs/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
@@ -35,7 +46,7 @@ export class ProfileMessagesController {
   @Get('profiles/:profileId/messages')
   @UseGuards(OptionalJwtAccessGuard)
   messages(
-    @Param('profileId') id: string,
+    @Param('profileId', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUserContext | undefined,
     @Query() query: PaginationDto
   ) {
@@ -46,7 +57,7 @@ export class ProfileMessagesController {
   @UseGuards(JwtAccessGuard)
   sendMessage(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') id: string,
+    @Param('profileId', new ParseUUIDPipe()) id: string,
     @Body() body: MessageDto
   ) {
     return this.domain.sendMessage(user.id, body.fromProfileId, id, body.content)
@@ -56,8 +67,8 @@ export class ProfileMessagesController {
   @UseGuards(JwtAccessGuard)
   async deleteProfileMessage(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string,
-    @Param('messageId') messageId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
+    @Param('messageId', new ParseUUIDPipe()) messageId: string,
     @Body() body: ActorDto
   ) {
     await this.domain.deleteProfileMessage(user.id, profileId, messageId, body.actorProfileId)
@@ -68,8 +79,8 @@ export class ProfileMessagesController {
   @UseGuards(JwtAccessGuard)
   setProfileMessageFavorite(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string,
-    @Param('messageId') messageId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
+    @Param('messageId', new ParseUUIDPipe()) messageId: string,
     @Body() body: ProfileMessageFavoriteDto
   ) {
     return this.domain.setProfileMessageFavorite(
@@ -85,7 +96,7 @@ export class ProfileMessagesController {
   @UseGuards(JwtAccessGuard)
   createProfilePost(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: ProfilePostDto
   ) {
     return this.profilePosts.createProfilePost(user.id, profileId, body.content)
