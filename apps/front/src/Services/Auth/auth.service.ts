@@ -12,6 +12,7 @@ import axios from 'axios'
 export type AuthErrorCode =
   | 'EMAIL_ALREADY_EXISTS'
   | 'INVALID_CREDENTIALS'
+  | 'AUTH_RATE_LIMIT_EXCEEDED'
   | 'STORAGE_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'
   | 'NETWORK_ERROR'
@@ -31,6 +32,7 @@ const toSession = (response: AuthMeResponse): AuthSession => ({
 const AUTH_CODES = [
   'EMAIL_ALREADY_EXISTS',
   'INVALID_CREDENTIALS',
+  'AUTH_RATE_LIMIT_EXCEEDED',
   'STORAGE_UNAVAILABLE',
   'CRYPTO_UNAVAILABLE',
   'NETWORK_ERROR'
