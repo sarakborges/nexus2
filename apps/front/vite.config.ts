@@ -10,7 +10,47 @@ export default defineConfig(({ mode }) => {
       // Use the verified project domain instead of a generated team alias.
       ? 'https://nexus-hope.vercel.app'
       : 'http://localhost:3001'
-  const proxyTarget = env.BFF_PROXY_TARGET || defaultProxyTarget
+
+  // Shell environment variables take precedence over mode-specific .env files.
+  // The fallback to loadEnv keeps support for .env configuration.
+  const configuredProxyTarget = (
+    process.env.BFF_PROXY_TARGET ??
+    env.BFF_PROXY_TARGET
+  )?.trim()
+
+  const isLoopbackProxyTarget = (target: string): boolean => {
+    try {
+      const hostname = new URL(target).hostname.toLowerCase()
+      return (
+        hostname === 'localhost' ||
+        hostname.endsWith('.localhost') ||
+        hostname === '127.0.0.1' ||
+        hostname === '0.0.0.0' ||
+        hostname === '[::1]'
+      )
+    } catch {
+      return false
+    }
+  }
+
+  const useProductionFallback =
+    mode === 'production-bff' &&
+    configuredProxyTarget !== undefined &&
+    isLoopbackProxyTarget(configuredProxyTarget)
+
+  const proxyTarget = useProductionFallback
+    ? defaultProxyTarget
+    : configuredProxyTarget || defaultProxyTarget
+
+  if (useProductionFallback) {
+    console.warn(
+      '[vite] Ignoring a loopback BFF_PROXY_TARGET in production-bff mode; using the production BFF.'
+    )
+  }
+
+  // Browser requests intentionally stay same-origin (localhost:5173) so the
+  // local browser session uses local cookies; Vite forwards /api to this target.
+  console.info(`[vite] /api proxy target: ${proxyTarget}`)
 
   return {
     plugins: [react()],
