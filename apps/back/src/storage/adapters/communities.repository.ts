@@ -50,9 +50,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
       const createdAt = Number.isFinite(Number(row.created_at_ms))
         ? Number(row.created_at_ms)
         : 0
-      const privacy = ['public', 'private', 'unlisted'].includes(String(row.privacy))
-        ? String(row.privacy)
-        : 'public'
+      const privacy = row.privacy
       const lastActivity = Number.isFinite(Number(row.last_activity_ms))
         ? Number(row.last_activity_ms)
         : createdAt
