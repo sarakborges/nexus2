@@ -102,11 +102,15 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
         const account = current.accounts.find(item => item.id === userId)
         if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
         const ownedProfiles = new Set(account.profiles)
-        const canRead = current.community_relationships.some(relationship =>
-          relationship.profiles[1] === communityId &&
-          ownedProfiles.has(relationship.profiles[0]) &&
-          ['owner', 'moderator', 'connection'].includes(relationship.type)
-        )
+        const canRead = current.community_relationships.some(relationship => {
+          const memberProfile = current.profiles.find(profile =>
+            profile.id === relationship.profiles[0]
+          )
+          return relationship.profiles[1] === communityId &&
+            ownedProfiles.has(relationship.profiles[0]) &&
+            memberProfile?.type === community.type &&
+            ['owner', 'moderator', 'connection'].includes(relationship.type)
+        })
         if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
       }
       return { records: current, result: latest }
@@ -786,7 +790,8 @@ test('private community images are readable only by members', async t => {
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ]
@@ -803,6 +808,43 @@ test('private community images are readable only by members', async t => {
   )
   const memberImage = await service.getEditorImage('community-member-user', file.id)
   assert.deepEqual(memberImage.body, pngHeader)
+})
+
+test('private community images reject memberships with a mismatched profile type', async t => {
+  const file = {
+    id: '333e4567-e89b-42d3-a456-426614174099',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/wrong-profile-type.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community',
+    resourceId: 'private-community',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    profiles: [{ id: 'community-member-profile', type: 'business' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    community_relationships: [
+      { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
+    ]
+  })
+  withFetch(t, async () => {
+    throw new Error('Mismatched profile types must not fetch private storage objects')
+  })
+
+  await assert.rejects(
+    service.getEditorImage('community-member-user', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
+  )
 })
 
 test('forum topic images inherit their community privacy rules', async t => {
@@ -826,7 +868,8 @@ test('forum topic images inherit their community privacy rules', async t => {
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ],
@@ -1470,7 +1513,8 @@ test('private community image access rechecks membership from the storage-read s
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ]
