@@ -2,13 +2,26 @@ require('reflect-metadata')
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { validate } = require('class-validator')
-const { CredentialsDto, SignUpDto } = require('../dist/api/auth/auth.dto.js')
+const {
+  CredentialsDto,
+  SignUpDto,
+  CurrentProfileDto
+} = require('../dist/api/auth/auth.dto.js')
 const {
   CreateProfileDto,
   UpdateProfileDto,
   CreateCommunityDto,
-  UpdateCommunityDto
+  UpdateCommunityDto,
+  ProfileRelationDto,
+  CommunityRelationDto,
+  ActorDto,
+  OwnershipDto,
+  MessageDto,
+  CreateForumTopicDto,
+  CreateForumReplyDto,
+  ForumActorDto
 } = require('../dist/api/domain/domain.dto.js')
+const { CreateUploadDto, UpdateAvatarDto } = require('../dist/api/uploads/uploads.dto.js')
 
 test('authentication DTOs reject oversized email and password values', async () => {
   const credentials = Object.assign(new CredentialsDto(), {
@@ -67,6 +80,64 @@ test('all profile and community write DTOs bound URL and picture strings', async
     assert.ok(
       pictureErrors.some(error => error.property === 'picture' && error.constraints?.maxLength),
       DtoType.name + ' must reject oversized pictures'
+    )
+  }
+})
+
+
+test('UUID-backed write DTO fields reject malformed identifiers', async () => {
+  const cases = [
+    [CurrentProfileDto, 'profileId'],
+    [CreateCommunityDto, 'ownerProfileId'],
+    [ProfileRelationDto, 'sourceProfileId'],
+    [CommunityRelationDto, 'actorProfileId'],
+    [ActorDto, 'actorProfileId'],
+    [OwnershipDto, 'newOwnerProfileId'],
+    [MessageDto, 'fromProfileId'],
+    [CreateForumTopicDto, 'profileId'],
+    [CreateForumReplyDto, 'profileId'],
+    [ForumActorDto, 'profileId'],
+    [CreateUploadDto, 'targetId'],
+    [CreateUploadDto, 'actorProfileId'],
+    [UpdateAvatarDto, 'uploadId'],
+    [UpdateAvatarDto, 'actorProfileId']
+  ]
+
+  for (const [DtoType, property] of cases) {
+    const instance = Object.assign(new DtoType(), { [property]: 'not-a-uuid' })
+    const errors = await validate(instance)
+    assert.ok(
+      errors.some(error => error.property === property && error.constraints?.isUuid),
+      DtoType.name + '.' + property + ' must reject malformed UUIDs'
+    )
+  }
+})
+
+test('UUID-backed write DTO fields accept valid UUID identifiers', async () => {
+  const validId = '550e8400-e29b-41d4-a716-446655440000'
+  const cases = [
+    [CurrentProfileDto, 'profileId'],
+    [CreateCommunityDto, 'ownerProfileId'],
+    [ProfileRelationDto, 'sourceProfileId'],
+    [CommunityRelationDto, 'actorProfileId'],
+    [ActorDto, 'actorProfileId'],
+    [OwnershipDto, 'newOwnerProfileId'],
+    [MessageDto, 'fromProfileId'],
+    [CreateForumTopicDto, 'profileId'],
+    [CreateForumReplyDto, 'profileId'],
+    [ForumActorDto, 'profileId'],
+    [CreateUploadDto, 'targetId'],
+    [CreateUploadDto, 'actorProfileId'],
+    [UpdateAvatarDto, 'uploadId'],
+    [UpdateAvatarDto, 'actorProfileId']
+  ]
+
+  for (const [DtoType, property] of cases) {
+    const instance = Object.assign(new DtoType(), { [property]: validId })
+    const errors = await validate(instance)
+    assert.ok(
+      !errors.some(error => error.property === property && error.constraints?.isUuid),
+      DtoType.name + '.' + property + ' must accept a valid UUID'
     )
   }
 })
