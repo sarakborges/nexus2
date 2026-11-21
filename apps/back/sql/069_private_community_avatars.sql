@@ -179,6 +179,9 @@ begin
   end if;
 
   if p_upload_id is not null then
+    if p_picture is distinct from '/api/uploads/community-avatars/'||p_upload_id::text||'/content' then
+      raise exception 'INVALID_AVATAR_UPLOAD' using errcode='22023';
+    end if;
     perform file.id from public.media_files file
     where file.id=p_upload_id and file.owner_user_id=p_user_id
       and file.purpose='community-avatar' and file.bucket='nexus-community-avatars'
@@ -189,6 +192,8 @@ begin
     if nullif(p_picture,'') is null then raise exception 'INVALID_AVATAR_UPLOAD' using errcode='22023'; end if;
     update public.media_files set resource_type='community',resource_id=p_community_id
     where public.media_files.id=p_upload_id;
+  elsif coalesce(p_picture,'') <> '' then
+    raise exception 'INVALID_AVATAR_UPLOAD' using errcode='22023';
   end if;
 
   update public.communities set picture=coalesce(p_picture,'')
@@ -261,6 +266,7 @@ begin
     perform file.id from public.media_files file
     where file.owner_user_id=p_user_id and file.purpose='community-avatar'
       and file.bucket='nexus-community-avatars' and file.path=p_avatar_path
+      and file.id=substring(p_picture from '/api/uploads/community-avatars/([0-9a-f-]{36})/content$')::uuid
       and file.status='ready' and file.resource_type is null and file.resource_id is null
       and coalesce(file.completed_at_ms,file.created_at_ms)>p_created_at_ms-86400000
     for update;
@@ -277,8 +283,7 @@ begin
   where public.profiles.id=p_owner_profile_id;
   if p_avatar_path is not null then
     update public.media_files set resource_type='community',resource_id=p_community_id
-    where owner_user_id=p_user_id and purpose='community-avatar'
-      and bucket='nexus-avatars' and path=p_avatar_path;
+    where public.media_files.id=substring(p_picture from '/api/uploads/community-avatars/([0-9a-f-]{36})/content$')::uuid;
   end if;
   update public.media_files set resource_type='community',resource_id=p_community_id,
     message_from_profile_id=null,message_to_profile_id=null where public.media_files.id=any(v_image_ids);
@@ -346,6 +351,7 @@ begin
     perform file.id from public.media_files file
     where file.owner_user_id=p_user_id and file.purpose='community-avatar'
       and file.bucket='nexus-community-avatars' and file.path=p_avatar_path
+      and file.id=substring(p_picture from '/api/uploads/community-avatars/([0-9a-f-]{36})/content$')::uuid
       and file.status='ready' and file.resource_type is null and file.resource_id is null
       and coalesce(file.completed_at_ms,file.created_at_ms)>p_last_activity_ms-86400000
     for update;
@@ -386,8 +392,7 @@ begin
   returning public.communities.* into v_community;
   if v_picture_changed and p_avatar_path is not null then
     update public.media_files set resource_type='community',resource_id=p_community_id
-    where owner_user_id=p_user_id and purpose='community-avatar'
-      and bucket='nexus-avatars' and path=p_avatar_path;
+    where public.media_files.id=substring(p_picture from '/api/uploads/community-avatars/([0-9a-f-]{36})/content$')::uuid;
   end if;
   update public.media_files set resource_type='community',resource_id=p_community_id,
     message_from_profile_id=null,message_to_profile_id=null where public.media_files.id=any(v_image_ids);

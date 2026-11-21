@@ -128,6 +128,17 @@ test('migration defines a non-public dedicated bucket while keeping profile avat
   assert.match(sqlFunction('nexus_create_upload'), /p_purpose='community-avatar'[\s\S]*?p_bucket<>'nexus-community-avatars'/i)
 })
 
+test('community avatar write RPCs bind the image URL to the exact owned upload ID', () => {
+  const setAvatar = sqlFunction('nexus_set_community_avatar')
+  const createSql = sqlFunction('nexus_create_community')
+  const updateSql = sqlFunction('nexus_update_community')
+  assert.match(setAvatar, /p_picture is distinct from .*p_upload_id::text/i)
+  assert.match(createSql, /file\.id=substring\(p_picture from/i)
+  assert.match(updateSql, /file\.id=substring\(p_picture from/i)
+  assert.match(createSql, /where public\.media_files\.id=substring\(p_picture from/i)
+  assert.match(updateSql, /where public\.media_files\.id=substring\(p_picture from/i)
+})
+
 test('private community avatar reads require effective-type matching membership', () => {
   const sql = sqlFunction('nexus_get_community_avatar')
   assert.match(sql, /v_privacy='private'/i)
