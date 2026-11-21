@@ -8,7 +8,11 @@ import {
 } from '@nestjs/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { UploadsStorageService } from './uploads.storage.service'
-import { detectMime } from './uploads.utils'
+import {
+  detectMime,
+  getImageDimensions,
+  isImageDimensionsWithinLimits
+} from './uploads.utils'
 import { AVATAR_MAX_SIZE, EDITOR_MAX_SIZE } from './uploads.constants'
 import type { CommunityAvatarReadRequest } from '../../storage/repository.types'
 import type { UploadedFileRecord } from './uploads.types'
@@ -72,7 +76,12 @@ export class UploadsContentService {
     }
 
     const body = await this.readBoundedBody(response, record.size)
-    if (body.length !== record.size || detectMime(body) !== record.contentType) {
+    const dimensions = getImageDimensions(body, record.contentType)
+    if (
+      body.length !== record.size ||
+      detectMime(body) !== record.contentType ||
+      !isImageDimensionsWithinLimits(dimensions)
+    ) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
     return { body, contentType: record.contentType }
