@@ -1,4 +1,8 @@
-import { ORPHAN_AVATAR_RETENTION_MS } from './uploads.constants'
+import {
+  IMAGE_MAX_DIMENSION,
+  IMAGE_MAX_PIXELS,
+  ORPHAN_AVATAR_RETENTION_MS
+} from './uploads.constants'
 import type { UploadedFileRecord } from './uploads.types'
 
 export function isWithinAvatarDraftRetention(
@@ -247,8 +251,8 @@ export function isImageDimensionsWithinLimits(
     Number.isSafeInteger(dimensions.height) &&
     dimensions.width > 0 &&
     dimensions.height > 0 &&
-    dimensions.width <= 8192 &&
-    dimensions.height <= 8192 &&
-    dimensions.width * dimensions.height <= 16 * 1024 * 1024
+    dimensions.width <= IMAGE_MAX_DIMENSION &&
+    dimensions.height <= IMAGE_MAX_DIMENSION &&
+    dimensions.width * dimensions.height <= IMAGE_MAX_PIXELS
   )
 }
