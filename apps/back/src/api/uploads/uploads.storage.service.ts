@@ -33,11 +33,31 @@ export class UploadsStorageService {
 
     try {
       const signal = init.signal ?? AbortSignal.timeout(STORAGE_REQUEST_TIMEOUT_MS)
-      return await fetch(this.supabaseUrl + '/storage/v1' + path, {
+      const response = await fetch(this.supabaseUrl + '/storage/v1' + path, {
         ...init,
         headers,
         signal
       })
+      return new Proxy(response, {
+        get: (target, property) => {
+          const value = Reflect.get(target, property, target)
+          if (
+            (property === 'json' || property === 'text' ||
+              property === 'arrayBuffer' || property === 'blob' ||
+              property === 'formData') &&
+            typeof value === 'function'
+          ) {
+            return async (...args: unknown[]) => {
+              try {
+                return await value.apply(target, args)
+              } catch {
+                throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+              }
+            }
+          }
+          return typeof value === 'function' ? value.bind(target) : value
+        }
+      }) as Response
     } catch {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     }
