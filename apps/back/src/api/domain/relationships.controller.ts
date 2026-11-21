@@ -14,7 +14,7 @@ import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
-import { ActorDto, CommunityRelationDto, OwnershipDto, ProfileRelationDto } from './domain.dto'
+import { ActorDto, CommunityRelationDto, OwnershipDto, ProfileRelationDto, RemoveProfileRelationDto } from './domain.dto'
 import { DomainService } from './domain.service'
 
 @Controller()
@@ -53,7 +53,7 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   async removeRelationship(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Body() body: Omit<ProfileRelationDto, 'type'>
+    @Body() body: RemoveProfileRelationDto
   ) {
     await this.domain.removeProfileRelationship(user.id, body.sourceProfileId, body.targetProfileId)
     return { success: true }
