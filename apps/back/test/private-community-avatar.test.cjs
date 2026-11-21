@@ -296,7 +296,7 @@ test('private avatar RPCs remain behind the server-secret RLS gate', () => {
   const cleanupRpc = sqlFunction('nexus_schedule_previous_community_avatar_deletion')
 
   for (const sql of [readRpc, cleanupRpc]) {
-    assert.match(sql, /language plpgsql\\s+security invoker/i)
+    assert.match(sql, /language plpgsql\s+security invoker/i)
     assert.doesNotMatch(sql, /security definer/i)
   }
 
