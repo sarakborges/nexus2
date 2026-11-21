@@ -1,8 +1,10 @@
 import type { Community, Profile } from '@nexus/common'
+import { ServiceUnavailableException } from '@nestjs/common'
 import type { AccountRepositoryRecord, MediaFileRecord } from './repository.types'
 
 export type DatabaseRow = Record<string, unknown>
 const MAX_FILTERED_ROWS = 1000
+const SUPABASE_REQUEST_TIMEOUT_MS = 25 * 1000
 
 export class SupabaseRepositoryClient {
   protected readonly baseUrl: string
@@ -64,7 +66,7 @@ export class SupabaseRepositoryClient {
       url.searchParams.set(filterColumn, expression)
     }
     url.searchParams.set('limit', String(Math.max(values.length * 10, MAX_FILTERED_ROWS)))
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows = await response.json() as DatabaseRow[]
     if (!Array.isArray(rows)) {
@@ -82,7 +84,7 @@ export class SupabaseRepositoryClient {
     url.searchParams.set('select', '*')
     url.searchParams.set(column, expression)
     url.searchParams.set('limit', '2')
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows = await response.json() as DatabaseRow[]
     if (!Array.isArray(rows)) {
@@ -161,6 +163,22 @@ export class SupabaseRepositoryClient {
       about: row.about, type: row.type as Community['type'],
       privacy: row.privacy as Community['privacy'],
       createdAt: Number(row.created_at_ms), lastActivity: Number(row.last_activity_ms)
+    }
+  }
+
+  protected async fetchWithTimeout(
+    input: string | URL,
+    init: RequestInit
+  ): Promise<Response> {
+    const usesDefaultSignal = !init.signal
+    const signal = init.signal ?? AbortSignal.timeout(SUPABASE_REQUEST_TIMEOUT_MS)
+    try {
+      return await this.fetchWithTimeout(input, { ...init, signal })
+    } catch (error) {
+      if (usesDefaultSignal && signal.aborted) {
+        throw new ServiceUnavailableException('SUPABASE_REQUEST_TIMEOUT')
+      }
+      throw error
     }
   }
 
