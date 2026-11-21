@@ -95,7 +95,10 @@ test('Supabase response body timeouts become service unavailable after headers a
   const controller = new AbortController()
   AbortSignal.timeout = () => controller.signal
   global.fetch = async () => new Response(new ReadableStream({
-    start() {
+    start(streamController) {
+      controller.signal.addEventListener('abort', () => {
+        streamController.error(new DOMException('aborted', 'AbortError'))
+      })
       controller.abort(new Error('simulated response body timeout'))
     }
   }), { status: 200 })
