@@ -18,8 +18,13 @@ import {
   EDITOR_RETENTION_MS,
   MIME_EXTENSIONS,
   PENDING_MAX_AGE,
+  IMAGE_HEADER_MAX_SIZE,
 } from './uploads.constants'
-import { detectMime } from './uploads.utils'
+import {
+  detectMime,
+  getImageDimensions,
+  isImageDimensionsWithinLimits
+} from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
@@ -142,7 +147,7 @@ export class UploadsService {
 
     const response = await this.storage.request(
       '/object/' + record.bucket + '/' + this.storage.encodePath(record.path),
-      { method: 'GET', headers: { Range: 'bytes=0-63' } }
+      { method: 'GET', headers: { Range: 'bytes=0-' + (IMAGE_HEADER_MAX_SIZE - 1) } }
     )
     if (response.status === 404) {
       throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
@@ -161,7 +166,7 @@ export class UploadsService {
     if (
       !Number.isSafeInteger(rangeEnd) ||
       rangeEnd < 0 ||
-      rangeEnd > 63 ||
+      rangeEnd >= IMAGE_HEADER_MAX_SIZE ||
       !Number.isSafeInteger(totalSize) ||
       totalSize < 1 ||
       rangeEnd >= totalSize
@@ -174,13 +179,15 @@ export class UploadsService {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
     }
     const detectedMime = detectMime(bytes)
+    const dimensions = getImageDimensions(bytes, record.contentType)
     const maxSize = record.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
 
     if (
       totalSize < 1 ||
       totalSize > maxSize ||
       totalSize !== record.expectedSize ||
-      detectedMime !== record.contentType
+      detectedMime !== record.contentType ||
+      !isImageDimensionsWithinLimits(dimensions)
     ) {
       await this.cleanup.scheduleUploadDeletion(id, userId)
       throw new BadRequestException('INVALID_UPLOAD_CONTENT')
