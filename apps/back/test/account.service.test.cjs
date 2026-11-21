@@ -223,3 +223,17 @@ test('deleteAccount preserves the missing-account error', async () => {
     error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
   )
 })
+
+
+test('selecting a nonexistent profile returns not found rather than an authentication error', async () => {
+  const service = new AccountService({
+    async changeAccountProfile() {
+      throw new Error('PROFILE_NOT_FOUND')
+    }
+  })
+
+  await assert.rejects(
+    service.updateCurrentProfile('user-1', 'missing-profile'),
+    error => error.getStatus() === 404 && error.message === 'PROFILE_NOT_FOUND'
+  )
+})
