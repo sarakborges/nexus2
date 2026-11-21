@@ -331,11 +331,14 @@ export class UploadsService {
         if (done) break
         size += value.byteLength
         if (size > maxBytes) {
-          await reader.cancel()
+          await reader.cancel().catch(() => undefined)
           throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
         }
         chunks.push(Buffer.from(value))
       }
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     } finally {
       reader.releaseLock()
     }
