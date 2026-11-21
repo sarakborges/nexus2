@@ -613,6 +613,44 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   assert.equal(saved.expiresAt - saved.completedAt, 24 * 60 * 60 * 1000)
 })
 
+test('completion rejects images above the pixel budget before making them ready', async t => {
+  const oversizedImage = Buffer.from(pngHeader)
+  oversizedImage.writeUInt32BE(8192, 16)
+  oversizedImage.writeUInt32BE(2049, 20)
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-image.png',
+    contentType: 'image/png',
+    expectedSize: oversizedImage.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedImage, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-23/24',
+      'content-length': '24'
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD_CONTENT'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'deleting')
+})
+
 test('completion rejects a full Storage response instead of buffering the whole object', async t => {
   const file = {
     id: '133e4567-e89b-42d3-a456-426614174000',
@@ -743,6 +781,37 @@ test('ready editor completion does not return a URL after the 24-hour deadline',
   await assert.rejects(
     service.completeUpload('user-1', file.id),
     error => error.getStatus() === 404 && error.message === 'UPLOAD_EXPIRED'
+  )
+})
+
+test('stored image dimensions are revalidated before content is served', async t => {
+  const oversizedImage = Buffer.from(pngHeader)
+  oversizedImage.writeUInt32BE(8192, 16)
+  oversizedImage.writeUInt32BE(2049, 20)
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174009',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-stored-image.png',
+    contentType: 'image/png',
+    expectedSize: oversizedImage.length,
+    size: oversizedImage.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedImage, { status: 200 }))
+
+  await assert.rejects(
+    service.getEditorImage('user-1', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
   )
 })
 
