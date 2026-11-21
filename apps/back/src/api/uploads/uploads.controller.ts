@@ -56,6 +56,21 @@ export class UploadsController {
     response.send(file.body)
   }
 
+  @Get('community-avatars/:id/content')
+  @UseGuards(OptionalJwtAccessGuard)
+  async getCommunityAvatarContent(
+    @CurrentUser() user: { id: string } | undefined,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() response: Response
+  ) {
+    const file = await this.uploads.getCommunityAvatar(user?.id ?? null, id)
+    response.setHeader('Content-Type', file.contentType)
+    response.setHeader('Content-Length', String(file.body.byteLength))
+    response.setHeader('Cache-Control', 'private, no-store, max-age=0')
+    response.setHeader('X-Content-Type-Options', 'nosniff')
+    response.send(file.body)
+  }
+
   @Patch('profiles/:profileId/avatar')
   @UseGuards(JwtAccessGuard)
   setProfileAvatar(

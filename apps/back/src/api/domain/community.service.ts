@@ -110,12 +110,12 @@ export class CommunityService {
     const privacy = input.privacy ?? 'public'
     if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      !isValidPictureUrl(picture)) {
+      ((!isValidPictureUrl(picture) && !this.uploads?.isCommunityAvatarUrl(picture)) && !this.uploads?.isCommunityAvatarUrl(picture))) {
       throw new BadRequestException('INVALID_COMMUNITY')
     }
     const createdAt = Date.now()
     const communityId = randomUUID()
-    const avatarPath = this.uploads?.getAvatarPath?.(picture) ?? null
+    const avatarPath = await this.uploads?.getCommunityAvatarPath(userId, picture) ?? null
     const editorImageIds = this.uploads?.getEditorImageIds?.(about) ?? []
 
     for (let attempt = 1; attempt <= 1000; attempt += 1) {
@@ -171,7 +171,7 @@ export class CommunityService {
         about,
         privacy: input.privacy ?? null,
         lastActivity,
-        avatarPath: this.uploads?.getAvatarPath?.(picture) ?? null,
+        avatarPath: await this.uploads?.getCommunityAvatarPath(userId, picture) ?? null,
         editorImageIds: this.uploads?.getEditorImageIds?.(about) ?? []
       })
     } catch (error) {

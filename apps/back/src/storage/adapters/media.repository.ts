@@ -1,4 +1,4 @@
-import type { CommunityAvatarWrite, EditorImageReadRequest, MediaFileRecord, MediaUploadCleanupRequest, MediaUploadCompletion, MediaUploadCreateWrite, MediaUploadDeletionClaim, MediaUploadDeletionRequest, MediaUploadDeletionSchedule, PreviousAvatarDeletionSchedule, ProfileAvatarWrite } from '../repository.types'
+import type { CommunityAvatarReadRequest, CommunityAvatarWrite, EditorImageReadRequest, MediaFileRecord, MediaUploadCleanupRequest, MediaUploadCompletion, MediaUploadCreateWrite, MediaUploadDeletionClaim, MediaUploadDeletionRequest, MediaUploadDeletionSchedule, PreviousAvatarDeletionSchedule, PreviousCommunityAvatarDeletionSchedule, ProfileAvatarWrite } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
 import type { DatabaseRow } from '../supabase-repository.client'
 import type { MediaRepository } from '../contracts/media.repository.interface'
@@ -140,6 +140,32 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
       })
     })
     await this.assertSuccess(response)
+  }
+
+  async schedulePreviousCommunityAvatarDeletion(change: PreviousCommunityAvatarDeletionSchedule): Promise<void> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_community_avatar_deletion', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_id: change.id, p_keep_id: change.keepId, p_deleting_at_ms: change.deletingAt,
+        p_safe_age_ms: change.safeAge, p_lease_ms: change.leaseMs
+      })
+    })
+    await this.assertSuccess(response)
+  }
+
+  async getCommunityAvatarRecord(change: CommunityAvatarReadRequest): Promise<MediaFileRecord> {
+    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_avatar', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_user_id: change.userId, p_id: change.id })
+    })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows) || rows.length !== 1) {
+      throw new Error('Supabase community avatar authorization returned an invalid result.')
+    }
+    return this.mapMediaFile(rows[0] as DatabaseRow)
   }
 
   async getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord> {

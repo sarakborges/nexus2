@@ -9,6 +9,7 @@ import { timingSafeEqual } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import {
   AVATAR_BUCKET,
+  COMMUNITY_AVATAR_BUCKET,
   DELETE_CLAIM_LEASE_MS,
   EDITOR_BUCKET,
   ORPHAN_AVATAR_RETENTION_MS,
@@ -54,7 +55,7 @@ export class UploadsCleanupService {
     let deleted = 0
     let hasFailures = false
 
-    for (const bucket of [AVATAR_BUCKET, EDITOR_BUCKET]) {
+    for (const bucket of [AVATAR_BUCKET, COMMUNITY_AVATAR_BUCKET, EDITOR_BUCKET]) {
       const bucketClaims = expired.filter(item => item.bucket === bucket)
       if (!bucketClaims.length) continue
 
@@ -93,9 +94,17 @@ export class UploadsCleanupService {
   }
 
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
+    const deletingAt = Date.now()
+    const communityAvatarId = this.storage.getCommunityAvatarId(previousUrl)
+    if (communityAvatarId) {
+      await this.data.schedulePreviousCommunityAvatarDeletion({
+        id: communityAvatarId, keepId: keepId ?? null, deletingAt,
+        safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
+      })
+      return
+    }
     const path = this.storage.getAvatarPath(previousUrl)
     if (!path) return
-    const deletingAt = Date.now()
     await this.data.schedulePreviousAvatarDeletion({
       path, keepId: keepId ?? null, deletingAt,
       safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
