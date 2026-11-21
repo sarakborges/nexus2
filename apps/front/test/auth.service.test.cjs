@@ -26,7 +26,7 @@ function loadAuthService(api) {
   loaded.paths = Module._nodeModulePaths(path.dirname(filename))
   const originalLoad = Module._load
   Module._load = function (request, parent, isMain) {
-    if (request === '@/Services/Http/api') {
+    if (request === '../Http/api') {
       return {
         api,
         getApiErrorCode(error, fallback) {
