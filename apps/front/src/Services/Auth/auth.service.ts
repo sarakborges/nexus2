@@ -38,11 +38,6 @@ const AUTH_CODES = [
   'NETWORK_ERROR'
 ] as const
 function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
-  const code = getApiErrorCode(error, fallback)
-  if (AUTH_CODES.includes(code as (typeof AUTH_CODES)[number])) {
-    return new AuthError(code as AuthErrorCode)
-  }
-
   if (
     axios.isAxiosError(error) &&
     (!error.response || error.response.status >= 500)
@@ -50,7 +45,12 @@ function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
     return new AuthError('NETWORK_ERROR')
   }
 
-  return new AuthError(fallback)
+  const code = getApiErrorCode(error, fallback)
+  return new AuthError(
+    AUTH_CODES.includes(code as (typeof AUTH_CODES)[number])
+      ? (code as AuthErrorCode)
+      : fallback
+  )
 }
 const PROFILE_ACTIVITY_TYPES = new Set([
   'friend_connected',
