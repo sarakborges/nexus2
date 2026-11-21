@@ -675,6 +675,43 @@ test('completion bounds a malformed partial response to 64 bytes', async t => {
   assert.equal(collections.get('media_files')[0].status, 'pending')
 })
 
+test('completion normalizes partial Storage stream failures as retryable unavailability', async t => {
+  const file = {
+    id: '153e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/interrupted-range.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.error(new Error('simulated Storage stream interruption'))
+    }
+  }), {
+    status: 206,
+    headers: { 'content-range': 'bytes 0-7/8' }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 &&
+      error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
 test('ready editor completion does not return a URL after the 24-hour deadline', async t => {
   const file = {
     id: 'b23e4567-e89b-42d3-a456-426614174000',
