@@ -9,6 +9,7 @@ export type PublicRealtimeConfig =
 const TOPIC_CHANGE_SIGNATURE_CONTEXT = 'nexus:forum-topic-changed:v1'
 const TOPIC_CHANGE_MAX_AGE_MS = 2 * 60 * 1000
 const TOPIC_CHANGE_FUTURE_SKEW_MS = 30 * 1000
+const TOPIC_CHANGE_PUBLISH_TIMEOUT_MS = 5 * 1000
 const SIGNATURE_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 @Injectable()
@@ -68,6 +69,7 @@ export class CommunityForumRealtimeService {
           apikey: storageSecret,
           'Content-Type': 'application/json'
         },
+        signal: AbortSignal.timeout(TOPIC_CHANGE_PUBLISH_TIMEOUT_MS),
         body: JSON.stringify({
           messages: [{
             topic,
