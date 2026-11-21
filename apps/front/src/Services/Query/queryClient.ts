@@ -10,7 +10,12 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       refetchInterval: false,
       retry: (failureCount, error) => {
-        if (failureCount >= 1 || !axios.isAxiosError(error)) return false
+        if (
+          failureCount >= 1 ||
+          !axios.isAxiosError(error) ||
+          axios.isCancel(error) ||
+          error.code === 'ERR_CANCELED'
+        ) return false
         const status = error.response?.status
         return status === undefined || status === 408 || status >= 500
       }
