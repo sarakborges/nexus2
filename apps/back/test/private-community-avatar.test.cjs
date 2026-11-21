@@ -11,6 +11,8 @@ const { join } = require('node:path')
 
 const image = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0])
 const migration = readFileSync(join(__dirname, '../sql/069_private_community_avatars.sql'), 'utf8')
+const serverAuth = readFileSync(join(__dirname, '../sql/002_nexus_collection_private_rls.sql'), 'utf8')
+const relationalSchema = readFileSync(join(__dirname, '../sql/007_relational_social_schema.sql'), 'utf8')
 
 function storage() {
   return new UploadsStorageService({
@@ -286,4 +288,29 @@ test('expired community avatar objects are removed from the private bucket and t
     id: file.id,
     deletingAt: file.deletingAt
   }])
+})
+
+
+test('private avatar RPCs remain behind the server-secret RLS gate', () => {
+  const readRpc = sqlFunction('nexus_get_community_avatar')
+  const cleanupRpc = sqlFunction('nexus_schedule_previous_community_avatar_deletion')
+
+  for (const sql of [readRpc, cleanupRpc]) {
+    assert.match(sql, /language plpgsql\\s+security invoker/i)
+    assert.doesNotMatch(sql, /security definer/i)
+  }
+
+  assert.match(
+    serverAuth,
+    /presented_secret := request_headers ->> 'x-nexus-api-secret'/i
+  )
+  assert.match(
+    relationalSchema,
+    /'refresh_tokens',\s*'media_files',\s*'feed_activities'/i
+  )
+  assert.match(relationalSchema, /alter table public\.%I enable row level security/i)
+  assert.match(
+    relationalSchema,
+    /create policy nexus_server_access on public\.%I for all to anon using \(private\.nexus_server_request_authorized\(\)\) with check \(private\.nexus_server_request_authorized\(\)\)/i
+  )
 })
