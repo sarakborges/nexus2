@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt'
 import { createHash, createHmac, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
 import { isIP } from 'node:net'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
-import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import { DATA_REPOSITORY, type AccountCredentialsRecord, type DataRepository } from '../../storage/repository.interface'
 const DUMMY_PASSWORD_SALT = Buffer.alloc(16)
 
 import type {
@@ -252,7 +252,7 @@ export class AuthService {
     })
   }
 
-  private async verifyPassword(password: string, account: AccountRecord): Promise<boolean> {
+  private async verifyPassword(password: string, account: AccountCredentialsRecord): Promise<boolean> {
     try {
       const actual = await this.hashPassword(password, Buffer.from(account.password.salt, 'base64'))
       const expected = Buffer.from(account.password.hash, 'base64')
