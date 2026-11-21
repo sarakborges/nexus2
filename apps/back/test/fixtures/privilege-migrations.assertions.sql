@@ -58,6 +58,8 @@ declare
   ];
   has_public_execute boolean;
   has_public_elevated_table_privilege boolean;
+  has_public_table_privilege boolean;
+  has_public_sequence_privilege boolean;
 begin
   -- Migration 073: RPC is SECURITY INVOKER and has only the intended callers.
   if (select prosecdef
@@ -99,8 +101,14 @@ begin
        or has_table_privilege('anon', format('public.%I', worker_table), 'INSERT')
        or has_table_privilege('authenticated', format('public.%I', worker_table), 'SELECT')
        or has_table_privilege('authenticated', format('public.%I', worker_table), 'INSERT')
-       or has_table_privilege('public', format('public.%I', worker_table), 'SELECT') then
-      raise exception 'client/PUBLIC access remains on worker table %', worker_table;
+      select exists (
+      select 1 from pg_class c
+      cross join lateral aclexplode(c.relacl) acl
+      where c.oid = to_regclass(format('public.%I', worker_table))
+        and acl.grantee = 0
+    ) into has_public_table_privilege;
+    if has_public_table_privilege then
+      raise exception 'PUBLIC access remains on worker table %', worker_table;
     end if;
     if not has_table_privilege('service_role', format('public.%I', worker_table), 'SELECT')
        or not has_table_privilege('service_role', format('public.%I', worker_table), 'INSERT')
@@ -112,9 +120,16 @@ begin
 
   foreach worker_function in array worker_functions
   loop
+    select exists (
+      select 1 from pg_proc p
+      cross join lateral aclexplode(p.proacl) acl
+      where p.oid = worker_function::regprocedure
+        and acl.grantee = 0
+        and acl.privilege_type = 'EXECUTE'
+    ) into has_public_execute;
     if has_function_privilege('anon', worker_function, 'EXECUTE')
        or has_function_privilege('authenticated', worker_function, 'EXECUTE')
-       or has_function_privilege('public', worker_function, 'EXECUTE')
+       or has_public_execute
        or not has_function_privilege('service_role', worker_function, 'EXECUTE') then
       raise exception 'worker function EXECUTE grants are incorrect: %', worker_function;
     end if;
@@ -164,10 +179,16 @@ begin
      or has_sequence_privilege('authenticated', 'public.automation_reports_id_seq', 'USAGE') then
     raise exception 'authenticated retains a public-schema privilege';
   end if;
+  select exists (
+    select 1 from pg_class c
+    cross join lateral aclexplode(c.relacl) acl
+    where c.oid = 'public.automation_reports_id_seq'::regclass
+      and acl.grantee = 0
+  ) into has_public_sequence_privilege;
   if has_sequence_privilege('anon', 'public.automation_reports_id_seq', 'USAGE')
      or has_sequence_privilege('anon', 'public.automation_reports_id_seq', 'SELECT')
      or has_sequence_privilege('anon', 'public.automation_reports_id_seq', 'UPDATE')
-     or has_sequence_privilege('public', 'public.automation_reports_id_seq', 'USAGE')
+     or has_public_sequence_privilege
      or not has_sequence_privilege('service_role', 'public.automation_reports_id_seq', 'USAGE') then
     raise exception 'worker automation sequence grants are incorrect';
   end if;
@@ -176,19 +197,23 @@ begin
   -- service_role grant in public. The global PUBLIC function default is gone.
   if has_table_privilege('anon', 'public.future_default_table', 'SELECT')
      or has_table_privilege('authenticated', 'public.future_default_table', 'SELECT')
-     or has_table_privilege('public', 'public.future_default_table', 'SELECT')
      or not has_table_privilege('service_role', 'public.future_default_table', 'SELECT') then
     raise exception 'future public table default privileges are incorrect';
   end if;
+  select exists (
+    select 1 from pg_class c
+    cross join lateral aclexplode(c.relacl) acl
+    where c.oid = 'public.future_default_sequence'::regclass
+      and acl.grantee = 0
+  ) into has_public_sequence_privilege;
   if has_sequence_privilege('anon', 'public.future_default_sequence', 'USAGE')
      or has_sequence_privilege('authenticated', 'public.future_default_sequence', 'USAGE')
-     or has_sequence_privilege('public', 'public.future_default_sequence', 'USAGE')
+     or has_public_sequence_privilege
      or not has_sequence_privilege('service_role', 'public.future_default_sequence', 'USAGE') then
     raise exception 'future public sequence default privileges are incorrect';
   end if;
   if has_function_privilege('anon', 'public.future_default_function()', 'EXECUTE')
      or has_function_privilege('authenticated', 'public.future_default_function()', 'EXECUTE')
-     or has_function_privilege('public', 'public.future_default_function()', 'EXECUTE')
      or not has_function_privilege('service_role', 'public.future_default_function()', 'EXECUTE') then
     raise exception 'future public function default privileges are incorrect';
   end if;
@@ -196,7 +221,10 @@ begin
     select 1
     from pg_proc p
     cross join lateral aclexplode(p.proacl) acl
-    where p.oid = 'private_future_test.future_private_function()'::regprocedure
+    where p.oid in (
+      'public.future_default_function()'::regprocedure,
+      'private_future_test.future_private_function()'::regprocedure
+    )
       and acl.grantee = 0
       and acl.privilege_type = 'EXECUTE'
   ) into has_public_execute;
