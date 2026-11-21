@@ -9,6 +9,7 @@ import {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { UploadsStorageService } from './uploads.storage.service'
 import { detectMime } from './uploads.utils'
+import { AVATAR_MAX_SIZE, EDITOR_MAX_SIZE } from './uploads.constants'
 import type { CommunityAvatarReadRequest } from '../../storage/repository.types'
 import type { UploadedFileRecord } from './uploads.types'
 
@@ -57,10 +58,46 @@ export class UploadsContentService {
     )
     if (response.status === 404) throw new NotFoundException('UPLOAD_NOT_FOUND')
     if (!response.ok) throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
-    const body = Buffer.from(await response.arrayBuffer())
+    const maxSize = record.purpose === 'editor-image'
+      ? EDITOR_MAX_SIZE
+      : AVATAR_MAX_SIZE
+    if (
+      !Number.isSafeInteger(record.size) ||
+      record.size === null ||
+      record.size < 1 ||
+      record.size > maxSize
+    ) {
+      await response.body?.cancel().catch(() => undefined)
+      throw new NotFoundException('UPLOAD_NOT_FOUND')
+    }
+
+    const body = await this.readBoundedBody(response, record.size)
     if (body.length !== record.size || detectMime(body) !== record.contentType) {
       throw new NotFoundException('UPLOAD_NOT_FOUND')
     }
     return { body, contentType: record.contentType }
+  }
+
+  private async readBoundedBody(response: Response, maxBytes: number): Promise<Buffer> {
+    const reader = response.body?.getReader()
+    if (!reader) throw new NotFoundException('UPLOAD_NOT_FOUND')
+
+    const chunks: Buffer[] = []
+    let size = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        size += value.byteLength
+        if (size > maxBytes) {
+          await reader.cancel().catch(() => undefined)
+          throw new NotFoundException('UPLOAD_NOT_FOUND')
+        }
+        chunks.push(Buffer.from(value))
+      }
+    } finally {
+      reader.releaseLock()
+    }
+    return Buffer.concat(chunks, size)
   }
 }
