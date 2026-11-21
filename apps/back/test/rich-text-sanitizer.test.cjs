@@ -2,17 +2,18 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const { getRichTextPlainText, sanitizeRichText } = require('../dist/api/domain/rich-text-sanitizer.js')
 
-test('keeps rich text formatting and safe HTTP images', () => {
+test('keeps rich text formatting and managed upload images', () => {
+  const imageReference = '/api/uploads/123e4567-e89b-42d3-a456-426614174000/content'
   const clean = sanitizeRichText(
     '<p class="external" style="color:#123;font-weight:bold;text-align:center">' +
       '<strong>Hello</strong> <a href="https://example.com" title="Example">world</a>' +
-      '<img src="https://images.example.test/avatar.png" alt="Avatar" onerror="alert(1)">' +
+      '<img src="' + imageReference + '" alt="Avatar" onerror="alert(1)">' +
     '</p>'
   )
 
   assert.match(clean, /<strong>Hello<\/strong>/)
   assert.match(clean, /href="https:\/\/example\.com"/)
-  assert.match(clean, /<img[^>]+src="https:\/\/images\.example\.test\/avatar\.png"/)
+  assert.ok(clean.includes('src="' + imageReference + '"'))
   assert.match(clean, /alt="Avatar"/)
   assert.match(clean, /style="[^"]*color:#123/)
   assert.match(clean, /font-weight:bold/)
