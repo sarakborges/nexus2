@@ -743,7 +743,7 @@ test('completion normalizes partial Storage stream failures as retryable unavail
     }
   }), {
     status: 206,
-    headers: { 'content-range': 'bytes 0-7/8' }
+    headers: { 'content-range': 'bytes 0-23/24' }
   }))
 
   await assert.rejects(
