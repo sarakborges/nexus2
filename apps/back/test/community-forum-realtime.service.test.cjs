@@ -168,3 +168,21 @@ test('bounds realtime notification latency and keeps timeout failures non-fatal'
   await assert.doesNotReject(service.publishTopicChanged('topic-123'))
   assert.equal(timeoutMs, 5000)
 })
+
+
+test('public realtime config fails closed on malformed or unsafe Supabase URLs', () => {
+  for (const configuredUrl of [
+    'not-a-valid-url',
+    'javascript:alert(1)',
+    'file:///etc/passwd'
+  ]) {
+    const service = new CommunityForumRealtimeService({
+      get: key => ({
+        SUPABASE_URL: configuredUrl,
+        SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_public'
+      })[key]
+    })
+
+    assert.deepEqual(service.getPublicConfig(), { enabled: false })
+  }
+})
