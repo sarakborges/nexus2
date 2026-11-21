@@ -1,39 +1,24 @@
-# Community avatar storage cutover
+# Private community avatar setup and tests
 
-Community avatar images must be moved out of the public `nexus-avatars` bucket.
-Profile avatars remain public. The application change and migration `069_private_community_avatars.sql`
-introduce the private `nexus-community-avatars` bucket and serve community images through
-`/api/uploads/community-avatars/{uploadId}/content`.
+The application is not publicly available and there is no legacy user-upload population to migrate.
+No object copy, backfill, URL rewrite, or legacy public-object deletion process is required.
 
-## Required rollout sequence
+Migration `069_private_community_avatars.sql` is an application schema/configuration migration,
+not a data migration. It creates the private `nexus-community-avatars` Storage bucket and updates
+the upload and community RPCs to use it. Apply it only to the isolated test/development database
+used to validate this change before using the application.
 
-1. Take and retain a database backup and a Storage inventory.
-2. Confirm every non-empty `communities.picture` that references a managed legacy community avatar
-   maps to exactly one `media_files` row with `purpose = 'community-avatar'`, the legacy bucket
-   `nexus-avatars`, and the expected object path. Stop on missing, duplicate, or unexpected rows.
-3. Apply migration 069 and deploy the backend and BFF changes together. The BFF must proxy the
-   new route as binary; public profile avatars remain on the existing public route.
-4. Copy each referenced object from `nexus-avatars` to `nexus-community-avatars` using the same
-   path. Verify the destination exists and its byte length and MIME type match the source before
-   changing any database reference.
-5. In one database transaction, update each matching `media_files.bucket` to
-   `nexus-community-avatars` and replace `communities.picture` with
-   `/api/uploads/community-avatars/{media_files.id}/content`. Recheck that every migrated
-   community avatar has exactly one matching row and every profile avatar still references
-   `nexus-avatars`.
-6. Remove the legacy community-avatar objects from the public bucket only after the destination
-   and database references have been verified. Never remove paths referenced by profile avatars.
-7. Verify reads for public, unlisted, and private communities using member, non-member, and
-   anonymous sessions. Verify that changing a private community's membership immediately changes
-   avatar access. Check upload, replacement, deletion, and ordinary metadata edits.
+## Test coverage
 
-## Important
+- Community-avatar uploads are signed into the private `nexus-community-avatars` bucket.
+- Profile avatars continue to use the existing public `nexus-avatars` bucket.
+- Community-avatar reads pass through the backend and are checked against the current community
+  privacy and effective owner-inherited profile type.
+- Anonymous and non-member reads of private-community avatars are denied before Storage bytes
+  are requested.
+- Community creation, avatar replacement, metadata-only edits, avatar removal, and cleanup preserve
+  media ownership and attachment invariants.
+- The BFF proxies the community-avatar route as binary and preserves `private, no-store` headers.
 
-This migration file creates the private bucket and changes application RPC behavior; it does not
-copy or delete Storage objects, nor rewrite existing community picture URLs. Until the object
-cutover is completed, old community-avatar URLs in the public bucket remain publicly retrievable.
-Do not describe the privacy issue as fully remediated until the inventory, copy, database update,
-old-object removal, and access tests above have all passed.
-
-Do not make the cutover against production without an explicit rollout approval and a tested backup
-and rollback plan. Do not change the visibility of `nexus-avatars`: profile avatars still use it.
+No production data or Storage objects need to be migrated for this application state. Do not run
+migration 069 against production as part of this test task.
