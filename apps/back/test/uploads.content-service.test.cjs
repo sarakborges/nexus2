@@ -2,7 +2,11 @@ const assert = require('node:assert/strict')
 const { test } = require('node:test')
 const { UploadsContentService } = require('../dist/api/uploads/uploads.content.service.js')
 
-const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+const png = Buffer.from([
+  137, 80, 78, 71, 13, 10, 26, 10,
+  0, 0, 0, 13, 73, 72, 68, 82,
+  0, 0, 0, 1, 0, 0, 0, 1
+])
 
 function createService(record, response) {
   const data = {
