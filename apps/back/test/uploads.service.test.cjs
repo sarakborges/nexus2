@@ -7,7 +7,11 @@ const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.s
 const { UploadsContentService } = require('../dist/api/uploads/uploads.content.service.js')
 const { UploadsAvatarService } = require('../dist/api/uploads/uploads.avatar.service.js')
 
-const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+const pngHeader = Buffer.from([
+  137, 80, 78, 71, 13, 10, 26, 10,
+  0, 0, 0, 13, 73, 72, 68, 82,
+  0, 0, 0, 1, 0, 0, 0, 1
+])
 const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
@@ -592,12 +596,12 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   const { service, collections } = createHarness({ media_files: [file] })
   withFetch(t, async (_url, init) => {
     assert.equal(init.method, 'GET')
-    assert.equal(new Headers(init.headers).get('range'), 'bytes=0-63')
+    assert.equal(new Headers(init.headers).get('range'), 'bytes=0-262143')
     return new Response(pngHeader, {
       status: 206,
       headers: {
-        'content-range': 'bytes 0-7/8',
-        'content-length': '8'
+        'content-range': 'bytes 0-23/24',
+        'content-length': '24'
       }
     })
   })
@@ -638,7 +642,7 @@ test('completion rejects a full Storage response instead of buffering the whole 
   assert.equal(collections.get('media_files')[0].status, 'pending')
 })
 
-test('completion bounds a malformed partial response to 64 bytes', async t => {
+test('completion bounds a malformed partial response to 256 KiB', async t => {
   const file = {
     id: '143e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'user-1',
@@ -657,13 +661,13 @@ test('completion bounds a malformed partial response to 64 bytes', async t => {
     messageFromProfileId: null,
     messageToProfileId: null
   }
-  const oversizedBody = new Uint8Array(65)
+  const oversizedBody = new Uint8Array(256 * 1024 + 1)
   pngHeader.copy(oversizedBody)
   const { service, collections } = createHarness({ media_files: [file] })
   withFetch(t, async () => new Response(oversizedBody, {
     status: 206,
     headers: {
-      'content-range': 'bytes 0-63/80',
+      'content-range': 'bytes 0-262143/262200',
       'content-length': String(oversizedBody.byteLength)
     }
   }))
