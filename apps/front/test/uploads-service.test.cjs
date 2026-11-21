@@ -97,7 +97,7 @@ test('uploadFile completes presign, direct Storage transfer and backend completi
   })
 })
 
-test('uploadFile rejects unsupported or oversized files before requesting a signed URL', async () => {
+test('uploadFile rejects unsupported files and files above one MiB before requesting a signed URL', async () => {
   const calls = []
   const api = {
     async post(...args) { calls.push(args); throw new Error('Should not request a signed URL') },
@@ -112,7 +112,7 @@ test('uploadFile rejects unsupported or oversized files before requesting a sign
     error => error.message === 'INVALID_UPLOAD_TYPE'
   )
   await assert.rejects(
-    uploadFile({ type: 'image/png', size: 10 * 1024 * 1024 + 1 }, 'editor-image'),
+    uploadFile({ type: 'image/png', size: 1024 * 1024 + 1 }, 'editor-image'),
     error => error.message === 'INVALID_UPLOAD_SIZE'
   )
   await assert.rejects(
@@ -120,6 +120,28 @@ test('uploadFile rejects unsupported or oversized files before requesting a sign
     error => error.message === 'INVALID_UPLOAD_SIZE'
   )
   assert.deepEqual(calls, [])
+})
+
+test('uploadFile accepts the exact one-MiB limit for avatar and editor images', async () => {
+  const requested = []
+  const api = {
+    async post(endpoint) {
+      requested.push(endpoint)
+      throw new Error('PRESIGN_REQUESTED')
+    },
+    async delete() {}
+  }
+  const { uploadFile } = loadTypeScriptModule('Services/Uploads/uploads.service.ts', {
+    '../Http/api': { api }
+  })
+
+  for (const purpose of ['profile-avatar', 'community-avatar', 'editor-image']) {
+    await assert.rejects(
+      uploadFile({ type: 'image/png', size: 1024 * 1024 }, purpose),
+      error => error.message === 'PRESIGN_REQUESTED'
+    )
+  }
+  assert.deepEqual(requested, ['/uploads/presign', '/uploads/presign', '/uploads/presign'])
 })
 
 test('uploadFile removes pending metadata when backend completion fails', async t => {
