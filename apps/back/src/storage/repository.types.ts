@@ -6,6 +6,8 @@ export type AccountRepositoryRecord = AuthenticatedUser & {
   preferences?: UserPreferences
 }
 
+export type AccountCredentialsRecord = Pick<AccountRepositoryRecord, 'id' | 'email' | 'password'>
+
 export type RefreshTokenWrite = {
   id: string
   userId: string
