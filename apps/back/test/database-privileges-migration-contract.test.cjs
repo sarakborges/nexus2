@@ -27,6 +27,22 @@ function extractAclRoles(statement, direction) {
     : []
 }
 
+
+function getTableAclStatements(sql, tableName) {
+  const escapedName = escapeRegExp(tableName)
+  const targetPattern = new RegExp(
+    '\\bon\\s+(?:table\\s+)?public\\.' + escapedName + '\\b',
+    'i'
+  )
+  return sql
+    .replace(/--.*$/gm, '')
+    .split(';')
+    .map(statement => statement.trim())
+    .filter(statement =>
+      /^(?:grant|revoke)\b/i.test(statement) && targetPattern.test(statement)
+    )
+}
+
 function getFunctionAclStatements(sql, functionName) {
   const escapedName = escapeRegExp(functionName)
   const pattern = new RegExp(
@@ -142,6 +158,20 @@ test('public RPCs created after the privilege-hardening baseline revoke PUBLIC E
   )
 })
 
+test('table ACL scanning isolates statements and matches the exact target table', () => {
+  const sql = [
+    'grant select on table public.other_table to authenticated;',
+    'revoke all on table public.target_table from public;',
+    'grant select on table public.target_table to anon;',
+    'grant select on table public.target_table_archive to authenticated;'
+  ].join('\n')
+
+  const statements = getTableAclStatements(sql, 'target_table')
+  assert.equal(statements.length, 2)
+  assert.deepEqual(extractAclRoles(statements[0] + ';', 'from'), ['public'])
+  assert.deepEqual(extractAclRoles(statements[1] + ';', 'to'), ['anon'])
+})
+
 test('public tables created after the privilege-hardening baseline declare explicit safe ACLs', () => {
   const missingAcl = []
   const unsafeGrants = []
@@ -152,12 +182,7 @@ test('public tables created after the privilege-hardening baseline declare expli
 
     for (const match of sql.matchAll(tablePattern)) {
       const tableName = match[2]
-      const escapedName = escapeRegExp(tableName)
-      const aclPattern = new RegExp(
-        '\\b(?:grant|revoke)\\b[\\s\\S]*?\\bon\\s+(?:table\\s+)?public\\.' + escapedName + '\\b[\\s\\S]*?;',
-        'gi'
-      )
-      const statements = [...sql.matchAll(aclPattern)].map(item => item[0])
+      const statements = getTableAclStatements(sql, tableName)
       if (statements.length === 0) {
         missingAcl.push(file + ': public.' + tableName)
       }
