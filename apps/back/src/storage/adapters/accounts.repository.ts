@@ -1,4 +1,4 @@
-import type { AccountProfileChange, AccountRepositoryRecord, CreateAccountWithRefreshTokenWrite, RefreshTokenRotation, RefreshTokenWrite, UserPreferences } from '../repository.types'
+import type { AccountCredentialsRecord, AccountProfileChange, AccountRepositoryRecord, CreateAccountWithRefreshTokenWrite, RefreshTokenRotation, RefreshTokenWrite, UserPreferences } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
 import type { AccountRepository } from '../contracts/accounts.repository.interface'
 
@@ -31,10 +31,23 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     )
   }
 
-  async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
+  async findAccountByEmail(email: string): Promise<AccountCredentialsRecord | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
-    const [account] = await this.readAccounts(rows)
-    return (account as AccountRepositoryRecord | undefined) ?? null
+    const [row] = rows
+    if (!row) return null
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.email !== 'string' ||
+      typeof row.password_hash !== 'string' ||
+      typeof row.password_salt !== 'string'
+    ) {
+      throw new Error('Supabase account credential lookup returned an invalid row.')
+    }
+    return {
+      id: row.id,
+      email: row.email,
+      password: { hash: row.password_hash, salt: row.password_salt }
+    }
   }
 
   async consumeAuthRateLimit(keyHash: string, windowMs: number, maxRequests: number): Promise<boolean> {
