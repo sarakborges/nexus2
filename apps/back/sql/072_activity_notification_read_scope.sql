@@ -8,7 +8,6 @@ create or replace function private.nexus_visible_activity_ids_for_account(
 )
 returns table (activity_id text)
 language plpgsql
-stable
 security invoker
 set search_path = ''
 as $function$
