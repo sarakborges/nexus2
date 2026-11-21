@@ -1510,6 +1510,61 @@ test('updates a profile avatar and attaches its metadata in one transaction', as
   assert.equal(collections.get('media_files')[0].resourceId, 'profile-1')
 })
 
+test('committed avatar updates remain successful when previous-file cleanup scheduling fails', async () => {
+  const previousPicture = supabaseUrl +
+    '/storage/v1/object/public/nexus-avatars/profiles/user-1/previous.png'
+  const previousFile = {
+    id: '323e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/previous.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    completedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const nextFile = {
+    ...previousFile,
+    id: '423e4567-e89b-42d3-a456-426614174001',
+    path: 'profiles/user-1/next.png',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    resourceType: null,
+    resourceId: null
+  }
+  const { service, collections, data } = createHarness({
+    accounts: [{
+      id: 'user-1',
+      email: 'user@example.test',
+      profiles: ['profile-1'],
+      currentProfile: 'profile-1'
+    }],
+    profiles: [{ id: 'profile-1', picture: previousPicture, type: 'social' }],
+    media_files: [previousFile, nextFile]
+  })
+  data.schedulePreviousAvatarDeletion = async () => {
+    throw new Error('simulated cleanup database outage')
+  }
+
+  const result = await service.setProfileAvatar('user-1', 'profile-1', nextFile.id)
+  const savedProfile = collections.get('profiles')[0]
+  const savedNextFile = collections.get('media_files').find(item => item.id === nextFile.id)
+
+  assert.equal(result.picture, supabaseUrl +
+    '/storage/v1/object/public/nexus-avatars/' + nextFile.path)
+  assert.equal(savedProfile.picture, result.picture)
+  assert.equal(savedNextFile.resourceType, 'profile')
+  assert.equal(savedNextFile.resourceId, 'profile-1')
+})
+
 test('rejects invalid avatar metadata without changing the profile or media collection', async () => {
   const file = {
     id: '323e4567-e89b-42d3-a456-426614174000',
