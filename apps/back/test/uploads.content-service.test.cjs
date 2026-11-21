@@ -96,3 +96,22 @@ test('managed image metadata cannot request downloads above the purpose limit', 
   assert.equal(requested, true)
   assert.equal(response.bodyUsed, true)
 })
+
+
+test('maps a failed Storage response stream to service unavailable', async () => {
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.error(new Error('simulated Storage body failure'))
+    }
+  })
+  const service = createService(
+    editorImage(),
+    new Response(stream, { status: 200 })
+  )
+
+  await assert.rejects(
+    service.getEditorImage('account-1', 'image-1'),
+    error => error.getStatus() === 503 &&
+      error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+})
