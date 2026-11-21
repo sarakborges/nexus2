@@ -39,3 +39,45 @@ test('account deletion revokes refresh tokens before locking the account row', (
   assert.ok(tokenDeleteIndex >= 0)
   assert.ok(accountUpdateIndex > tokenDeleteIndex)
 })
+
+
+const concurrencyMigration = readFileSync(
+  join(__dirname, '../sql/070_prevent_refresh_cleanup_deadlocks.sql'),
+  'utf8'
+)
+
+test('expired-token cleanup skips rows locked by concurrent account deletion', () => {
+  const functionStart = concurrencyMigration.indexOf(
+    'create or replace function public.nexus_issue_refresh_token'
+  )
+  assert.notEqual(functionStart, -1)
+  const issueFunction = concurrencyMigration.slice(functionStart).toLowerCase()
+  const previousTokenLockIndex = issueFunction.indexOf('for update;')
+  const cleanupStart = issueFunction.indexOf(
+    'with expired_token_ids as materialized'
+  )
+  const skipLockedIndex = issueFunction.indexOf('for update skip locked', cleanupStart)
+  const cleanupDeleteIndex = issueFunction.indexOf(
+    'delete from public.refresh_tokens token'
+  )
+  const accountLockIndex = issueFunction.indexOf('for share', cleanupDeleteIndex)
+
+  assert.ok(previousTokenLockIndex >= 0, 'lock the presented refresh token first')
+  assert.ok(cleanupStart > previousTokenLockIndex, 'run expiration cleanup after validating the presented token')
+  assert.ok(skipLockedIndex > cleanupStart, 'never wait on rows held by account deletion or another cleanup')
+  assert.ok(cleanupDeleteIndex > skipLockedIndex, 'delete only rows successfully claimed by the SKIP LOCKED CTE')
+  assert.ok(accountLockIndex > cleanupDeleteIndex, 'acquire the account lock after token-row maintenance')
+  assert.match(issueFunction, /order by token\.id\s+for update skip locked/)
+  assert.doesNotMatch(
+    issueFunction,
+    /delete from public\.refresh_tokens\s+where expires_at_ms <= p_now_ms/
+  )
+  assert.match(
+    issueFunction,
+    /revoke all on function public\.nexus_issue_refresh_token[\s\S]*from public, authenticated/
+  )
+  assert.match(
+    issueFunction,
+    /grant execute on function public\.nexus_issue_refresh_token[\s\S]*to anon/
+  )
+})
