@@ -127,6 +127,14 @@ export class UpdateCommunityDto implements CreateCommunityInput {
   privacy!: CommunityPrivacy
 }
 
+export class RemoveProfileRelationDto {
+  @IsUUID()
+  sourceProfileId!: string
+
+  @IsUUID()
+  targetProfileId!: string
+}
+
 export class ProfileRelationDto {
   @IsUUID()
   sourceProfileId!: string
