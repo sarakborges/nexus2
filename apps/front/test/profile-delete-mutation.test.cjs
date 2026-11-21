@@ -5,7 +5,7 @@ const path = require('node:path')
 const test = require('node:test')
 const ts = require('typescript')
 
-function loadDeleteProfileMutation(queryClient) {
+function loadDeleteProfileMutation(queryClient, services = {}) {
   const filename = path.resolve(
     __dirname,
     '../src/Hooks/Profile/useDeleteProfileMutation.hook.ts'
@@ -41,10 +41,10 @@ function loadDeleteProfileMutation(queryClient) {
       }
     }
     if (request === '@/Services/Auth') {
-      return { getCurrentAuthSession: async () => null }
+      return { getCurrentAuthSession: services.getCurrentAuthSession ?? (async () => null) }
     }
     if (request === '@/Services/Profile') {
-      return { deleteUserProfile: async () => undefined }
+      return { deleteUserProfile: services.deleteUserProfile ?? (async () => undefined) }
     }
     if (request === '@/Services/Query/queryKeys') {
       return { queryKeys: { auth: { session: ['auth', 'session'] } } }
@@ -83,6 +83,7 @@ test('profile deletion invalidates profile, relationship, community membership a
     .map(call => call.args[0].queryKey)
 
   for (const expected of [
+    ['auth', 'session'],
     ['relationships'],
     ['community-relationships'],
     ['community-members'],
@@ -96,4 +97,60 @@ test('profile deletion invalidates profile, relationship, community membership a
       'expected invalidation for ' + expected.join('/')
     )
   }
+})
+
+
+test('profile deletion remains successful with a locally corrected session when session refresh fails', async () => {
+  const previousSession = {
+    user: {
+      id: 'account-1',
+      profiles: ['deleted-profile', 'remaining-profile'],
+      currentProfile: 'deleted-profile'
+    },
+    currentProfile: { id: 'deleted-profile' },
+    currentProfileSettings: { messageAudience: 'friends' },
+    suggestedCommunities: [{ id: 'community-1' }],
+    activities: [{ id: 'activity-1' }],
+    activityCursor: { id: 'activity-1', updatedAt: 100 },
+    hasMoreActivities: true
+  }
+  const calls = []
+  const queryClient = {
+    getQueryData: () => previousSession,
+    setQueryData: (...args) => calls.push({ type: 'setQueryData', args }),
+    invalidateQueries: async (...args) => calls.push({ type: 'invalidateQueries', args })
+  }
+  const { getOptions } = loadDeleteProfileMutation(queryClient, {
+    async deleteUserProfile(profileId) {
+      calls.push({ type: 'deleteUserProfile', profileId })
+    },
+    async getCurrentAuthSession() {
+      throw new Error('temporary /auth/me failure')
+    }
+  })
+  const options = getOptions()
+  const result = await options.mutationFn('deleted-profile')
+
+  assert.deepEqual(result.user.profiles, ['remaining-profile'])
+  assert.equal(result.user.currentProfile, null)
+  assert.equal(result.currentProfile, null)
+  assert.equal(result.currentProfileSettings, null)
+  assert.deepEqual(result.suggestedCommunities, [])
+  assert.deepEqual(result.activities, [])
+  assert.equal(result.activityCursor, null)
+  assert.equal(result.hasMoreActivities, false)
+  assert.ok(calls.some(call =>
+    call.type === 'deleteUserProfile' && call.profileId === 'deleted-profile'
+  ))
+
+  await options.onSuccess(result)
+
+  const sessionUpdate = calls.find(call => call.type === 'setQueryData')
+  assert.deepEqual(sessionUpdate.args, [['auth', 'session'], result])
+  const invalidated = calls
+    .filter(call => call.type === 'invalidateQueries')
+    .map(call => call.args[0].queryKey)
+  assert.ok(invalidated.some(key =>
+    key.length === 2 && key[0] === 'auth' && key[1] === 'session'
+  ))
 })
