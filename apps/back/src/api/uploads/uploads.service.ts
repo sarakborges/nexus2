@@ -233,7 +233,7 @@ export class UploadsService {
   async getCommunityAvatarPath(userId: string, url: string): Promise<string | null> {
     const uploadId = this.storage.getCommunityAvatarId(url)
     if (uploadId) return this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
-    return this.storage.getAvatarPath(url)
+    return null
   }
 
   getEditorImageIds(html: string): string[] {

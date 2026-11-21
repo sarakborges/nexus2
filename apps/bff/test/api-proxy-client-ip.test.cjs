@@ -76,3 +76,40 @@ test('API proxy does not add client IP metadata to unrelated routes', async () =
     body: undefined
   }, createResponse())
 })
+
+test('API proxy forwards private community avatar images as binary and preserves no-store headers', async () => {
+  let forwardedConfig
+  const forwardedHeaders = {}
+  const body = Buffer.from([137, 80, 78, 71])
+  const controller = new ApiProxyController({
+    axiosRef: {
+      async request(config) {
+        forwardedConfig = config
+        return {
+          status: 200,
+          headers: {
+            'content-type': 'image/png',
+            'content-length': String(body.length),
+            'cache-control': 'private, no-store, max-age=0',
+            'x-content-type-options': 'nosniff'
+          },
+          data: body
+        }
+      }
+    }
+  })
+  const response = createResponse()
+  response.setHeader = function (name, value) { forwardedHeaders[name] = value; return this }
+  await controller.proxy({
+    path: '/api/uploads/community-avatars/123e4567-e89b-42d3-a456-426614174000/content',
+    method: 'GET',
+    headers: {},
+    query: {},
+    body: undefined
+  }, response)
+
+  assert.equal(forwardedConfig.responseType, 'arraybuffer')
+  assert.deepEqual(response.body, body)
+  assert.equal(forwardedHeaders['cache-control'], 'private, no-store, max-age=0')
+  assert.equal(forwardedHeaders['x-content-type-options'], 'nosniff')
+})

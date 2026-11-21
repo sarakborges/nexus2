@@ -33,7 +33,7 @@ export class ApiProxyController {
         headers['x-nexus-client-ip'] = getClientIp(req)
       }
       const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
-      const isBinaryImage = /^\/api\/uploads\/[0-9a-f-]{36}\/content$/i.test(req.path)
+      const isBinaryImage = /^\/api\/uploads\/(?:[0-9a-f-]{36}|community-avatars\/[0-9a-f-]{36})\/content$/i.test(req.path)
 
       if (isCleanupCron) {
         const cronSecret = process.env.CRON_SECRET
