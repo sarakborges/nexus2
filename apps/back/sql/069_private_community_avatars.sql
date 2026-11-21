@@ -520,6 +520,16 @@ begin
 end;
 $function$;
 
+revoke execute on function public.nexus_create_upload(uuid,uuid,text,text,text,text,bigint,bigint,uuid,uuid) from public;
+revoke execute on function public.nexus_set_community_avatar(uuid,uuid,uuid,uuid,text) from public;
+revoke execute on function public.nexus_create_community(uuid,uuid,uuid,text,text,text,text,text,bigint,text,uuid[]) from public;
+revoke execute on function public.nexus_update_community(uuid,uuid,text,text,text,text,text,bigint,text,uuid[]) from public;
+
+grant execute on function public.nexus_create_upload(uuid,uuid,text,text,text,text,bigint,bigint,uuid,uuid) to anon;
+grant execute on function public.nexus_set_community_avatar(uuid,uuid,uuid,uuid,text) to anon;
+grant execute on function public.nexus_create_community(uuid,uuid,uuid,text,text,text,text,text,bigint,text,uuid[]) to anon;
+grant execute on function public.nexus_update_community(uuid,uuid,text,text,text,text,text,bigint,text,uuid[]) to anon;
+
 revoke all on function public.nexus_get_community_avatar(uuid,uuid) from public,authenticated;
 grant execute on function public.nexus_get_community_avatar(uuid,uuid) to anon;
 revoke all on function public.nexus_schedule_previous_community_avatar_deletion(uuid,uuid,bigint,bigint,bigint) from public,authenticated;
