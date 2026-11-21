@@ -10,6 +10,9 @@ export function getClientIp(req: Request): string {
     req.socket?.remoteAddress
   ]
 
-  return candidates.find((candidate): candidate is string => Boolean(candidate) && isIP(candidate) > 0)
-    ?? 'unknown'
+  for (const candidate of candidates) {
+    if (candidate && isIP(candidate)) return candidate
+  }
+
+  return 'unknown'
 }
