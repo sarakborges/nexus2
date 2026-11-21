@@ -1,11 +1,20 @@
 import { isIP } from 'node:net'
 import type { Request } from 'express'
 
+function firstForwardedAddress(header: string | string[] | undefined): string | undefined {
+  const value = Array.isArray(header) ? header[0] : header
+  return value?.split(',')[0]?.trim()
+}
+
 export function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-vercel-forwarded-for'] ?? req.headers['x-forwarded-for']
-  const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded
+  const vercelForwarded = firstForwardedAddress(
+    req.headers['x-vercel-forwarded-for']
+  )
+  const forwardedValue = vercelForwarded
+    ? vercelForwarded
+    : firstForwardedAddress(req.headers['x-forwarded-for'])
   const candidates = [
-    forwardedValue?.split(',')[0]?.trim(),
+    forwardedValue,
     req.ip,
     req.socket?.remoteAddress
   ]
