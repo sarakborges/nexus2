@@ -198,12 +198,12 @@ test('updating preferences preserves the missing-account error', async () => {
   )
 })
 
-test('selecting a profile not owned by the account is rejected', async () => {
+test('selecting a profile not owned by the account is forbidden', async () => {
   const { service } = createAccountService([account()])
 
   await assert.rejects(
     service.updateCurrentProfile('user-1', 'foreign-profile'),
-    error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
 
