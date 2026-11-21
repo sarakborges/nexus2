@@ -21,6 +21,9 @@ export function useDeleteProfileMutation(): UseDeleteProfileMutationResult {
       )
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
+        queryClient.invalidateQueries({ queryKey: ['relationships'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-relationships'] }),
+        queryClient.invalidateQueries({ queryKey: ['community-members'] }),
         queryClient.invalidateQueries({ queryKey: ['home'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
         queryClient.invalidateQueries({ queryKey: ['communities-page'] }),
