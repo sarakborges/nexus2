@@ -173,7 +173,7 @@ export class SupabaseRepositoryClient {
     const usesDefaultSignal = !init.signal
     const signal = init.signal ?? AbortSignal.timeout(SUPABASE_REQUEST_TIMEOUT_MS)
     try {
-      return await this.fetchWithTimeout(input, { ...init, signal })
+      return await fetch(input, { ...init, signal })
     } catch (error) {
       if (usesDefaultSignal && signal.aborted) {
         throw new ServiceUnavailableException('SUPABASE_REQUEST_TIMEOUT')
