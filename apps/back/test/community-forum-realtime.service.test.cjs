@@ -135,3 +135,36 @@ test('does not let malformed Supabase URL configuration fail the forum mutation'
 
   await assert.doesNotReject(service.publishTopicChanged('topic-123'))
 })
+
+
+test('bounds realtime notification latency and keeps timeout failures non-fatal', async t => {
+  const previousFetch = global.fetch
+  const previousTimeout = AbortSignal.timeout
+  let timeoutMs
+  global.fetch = async (_url, options) => {
+    assert.equal(options.signal.aborted, true)
+    throw options.signal.reason
+  }
+  AbortSignal.timeout = milliseconds => {
+    timeoutMs = milliseconds
+    const controller = new AbortController()
+    controller.abort(new Error('simulated realtime timeout'))
+    return controller.signal
+  }
+  t.after(() => {
+    global.fetch = previousFetch
+    AbortSignal.timeout = previousTimeout
+  })
+
+  const service = new CommunityForumRealtimeService({
+    get: key => ({
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_public',
+      SUPABASE_STORAGE_SECRET_KEY: 'sb_secret_server_only',
+      JWT_REFRESH_SECRET: signingSecret
+    })[key]
+  })
+
+  await assert.doesNotReject(service.publishTopicChanged('topic-123'))
+  assert.equal(timeoutMs, 5000)
+})
