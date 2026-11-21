@@ -12,7 +12,8 @@ const { ProfileMessagesController } = require('../dist/api/domain/profile-messag
 const { UploadsController } = require('../dist/api/uploads/uploads.controller.js')
 const { ProfilesController } = require('../dist/api/domain/profiles.controller.js')
 const { RelationshipsController } = require('../dist/api/domain/relationships.controller.js')
-const { IdsQueryDto } = require('../dist/api/domain/domain.dto.js')
+const { IdsQueryDto, RemoveProfileRelationDto } = require('../dist/api/domain/domain.dto.js')
+const { PaginationDto } = require('../dist/api/pagination/pagination.dto.js')
 
 const validId = '550e8400-e29b-41d4-a716-446655440000'
 const secondId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
@@ -156,4 +157,85 @@ test('every state-changing domain and upload route requires an access-token guar
       )
     }
   }
+})
+
+
+test('remove relationship body uses a runtime DTO and rejects malformed or extra fields', async () => {
+  const parameterTypes = Reflect.getMetadata(
+    'design:paramtypes',
+    RelationshipsController.prototype,
+    'removeRelationship'
+  )
+  assert.equal(parameterTypes?.[1], RemoveProfileRelationDto)
+
+  const validationPipe = new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true
+  })
+  const metadata = { type: 'body', metatype: parameterTypes[1], data: undefined }
+  await assert.rejects(
+    validationPipe.transform({
+      sourceProfileId: 'not-a-uuid',
+      targetProfileId: secondId
+    }, metadata),
+    error => error instanceof BadRequestException && error.getStatus() === 400
+  )
+  await assert.rejects(
+    validationPipe.transform({
+      sourceProfileId: validId,
+      targetProfileId: secondId,
+      type: 'blocked'
+    }, metadata),
+    error => error instanceof BadRequestException && error.getStatus() === 400
+  )
+
+  const body = await validationPipe.transform({
+    sourceProfileId: validId,
+    targetProfileId: secondId
+  }, metadata)
+  const calls = []
+  const controller = new RelationshipsController({
+    removeProfileRelationship(...args) {
+      calls.push(args)
+    }
+  })
+  await controller.removeRelationship({ id: 'account-1' }, body)
+  assert.deepEqual(calls, [['account-1', validId, secondId]])
+})
+
+test('community member tab is validated through PaginationDto instead of an untyped query parameter', async () => {
+  const parameterTypes = Reflect.getMetadata(
+    'design:paramtypes',
+    RelationshipsController.prototype,
+    'members'
+  )
+  assert.equal(parameterTypes?.[2], PaginationDto)
+  const args = routeArguments(RelationshipsController, 'members')
+  assert.ok(
+    Object.values(args).some(argument => argument.index === 2),
+    'members must bind the PaginationDto as a query object'
+  )
+
+  const validationPipe = new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true
+  })
+  const metadata = { type: 'query', metatype: parameterTypes[2], data: undefined }
+  await assert.rejects(
+    validationPipe.transform({ tab: 'unexpected' }, metadata),
+    error => error instanceof BadRequestException && error.getStatus() === 400
+  )
+  const query = await validationPipe.transform({ tab: 'staff' }, metadata)
+  const calls = []
+  const controller = new RelationshipsController({
+    listCommunityMembers(...args) {
+      calls.push(args)
+    }
+  })
+  await controller.members(validId, { id: 'account-1' }, query)
+  assert.equal(calls[0][0], validId)
+  assert.equal(calls[0][1], 'staff')
+  assert.equal(calls[0][3], 'account-1')
 })
