@@ -6,6 +6,8 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { AVATAR_BUCKET } from './uploads.constants'
 
+const STORAGE_REQUEST_TIMEOUT_MS = 15 * 1000
+
 @Injectable()
 export class UploadsStorageService {
   private readonly supabaseUrl: string
@@ -30,7 +32,12 @@ export class UploadsStorageService {
     if (init.body && !headers.has('content-type')) headers.set('content-type', 'application/json')
 
     try {
-      return await fetch(this.supabaseUrl + '/storage/v1' + path, { ...init, headers })
+      const signal = init.signal ?? AbortSignal.timeout(STORAGE_REQUEST_TIMEOUT_MS)
+      return await fetch(this.supabaseUrl + '/storage/v1' + path, {
+        ...init,
+        headers,
+        signal
+      })
     } catch {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     }
