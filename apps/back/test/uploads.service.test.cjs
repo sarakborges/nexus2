@@ -556,6 +556,41 @@ test('creates an owner-scoped signed upload and stores a pending metadata record
   assert.equal(records[0].expiresAt, null)
 })
 
+test('applies the same one-MiB size cap to every image upload purpose', async t => {
+  const { service, collections } = createHarness()
+  const maxSize = 1024 * 1024
+  let signedRequests = 0
+  withFetch(t, async () => {
+    signedRequests += 1
+    return new Response(JSON.stringify({
+      url: '/object/upload/sign/nexus-avatars/file.png?token=signed-token'
+    }), { status: 200, headers: { 'content-type': 'application/json' } })
+  })
+
+  const purposes = ['profile-avatar', 'community-avatar', 'editor-image']
+  for (const purpose of purposes) {
+    await service.createUpload('user-1', {
+      purpose,
+      contentType: 'image/png',
+      size: maxSize
+    })
+  }
+
+  for (const purpose of purposes) {
+    await assert.rejects(
+      service.createUpload('user-1', {
+        purpose,
+        contentType: 'image/png',
+        size: maxSize + 1
+      }),
+      error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD'
+    )
+  }
+
+  assert.equal(signedRequests, purposes.length)
+  assert.equal(collections.get('media_files').length, purposes.length)
+})
+
 test('removes pending upload metadata when Storage cannot sign the upload', async t => {
   const { service, collections } = createHarness()
   withFetch(t, async () => new Response(JSON.stringify({}), {
@@ -574,7 +609,10 @@ test('removes pending upload metadata when Storage cannot sign the upload', asyn
   assert.deepEqual(collections.get('media_files'), [])
 })
 
-test('completion validates the stored bytes and sets editor expiration to 24 hours', async t => {
+test('completion accepts an image exactly at the 1024px-per-edge boundary', async t => {
+  const imageAtLimit = Buffer.from(pngHeader)
+  imageAtLimit.writeUInt32BE(1024, 16)
+  imageAtLimit.writeUInt32BE(1024, 20)
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'user-1',
@@ -582,7 +620,7 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
     bucket: 'nexus-editor-images',
     path: 'editor/user-1/image.png',
     contentType: 'image/png',
-    expectedSize: pngHeader.length,
+    expectedSize: imageAtLimit.length,
     size: null,
     status: 'pending',
     createdAt: Date.now(),
@@ -597,7 +635,7 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   withFetch(t, async (_url, init) => {
     assert.equal(init.method, 'GET')
     assert.equal(new Headers(init.headers).get('range'), 'bytes=0-262143')
-    return new Response(pngHeader, {
+    return new Response(imageAtLimit, {
       status: 206,
       headers: {
         'content-range': 'bytes 0-23/24',
@@ -613,10 +651,10 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   assert.equal(saved.expiresAt - saved.completedAt, 24 * 60 * 60 * 1000)
 })
 
-test('completion rejects images above the pixel budget before making them ready', async t => {
+test('completion rejects images with an edge above 1024px before making them ready', async t => {
   const oversizedImage = Buffer.from(pngHeader)
-  oversizedImage.writeUInt32BE(8192, 16)
-  oversizedImage.writeUInt32BE(2049, 20)
+  oversizedImage.writeUInt32BE(1025, 16)
+  oversizedImage.writeUInt32BE(1, 20)
   const file = {
     id: '133e4567-e89b-42d3-a456-426614174001',
     ownerUserId: 'user-1',
@@ -640,6 +678,42 @@ test('completion rejects images above the pixel budget before making them ready'
     status: 206,
     headers: {
       'content-range': 'bytes 0-23/24',
+      'content-length': '24'
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD_CONTENT'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'deleting')
+})
+
+test('completion rejects objects larger than one MiB before making them ready', async t => {
+  const maxSize = 1024 * 1024
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174010',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/over-one-mib.png',
+    contentType: 'image/png',
+    expectedSize: maxSize + 1,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(pngHeader, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-23/' + (maxSize + 1),
       'content-length': '24'
     }
   }))
@@ -786,8 +860,8 @@ test('ready editor completion does not return a URL after the 24-hour deadline',
 
 test('stored image dimensions are revalidated before content is served', async t => {
   const oversizedImage = Buffer.from(pngHeader)
-  oversizedImage.writeUInt32BE(8192, 16)
-  oversizedImage.writeUInt32BE(2049, 20)
+  oversizedImage.writeUInt32BE(1025, 16)
+  oversizedImage.writeUInt32BE(1, 20)
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174009',
     ownerUserId: 'user-1',
