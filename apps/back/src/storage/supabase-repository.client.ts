@@ -172,12 +172,32 @@ export class SupabaseRepositoryClient {
   ): Promise<Response> {
     const usesDefaultSignal = !init.signal
     const signal = init.signal ?? AbortSignal.timeout(SUPABASE_REQUEST_TIMEOUT_MS)
+    const timeoutError = () => new ServiceUnavailableException('SUPABASE_REQUEST_TIMEOUT')
     try {
-      return await fetch(input, { ...init, signal })
+      const response = await fetch(input, { ...init, signal })
+      return new Proxy(response, {
+        get: (target, property) => {
+          const value = Reflect.get(target, property, target)
+          if (
+            (property === 'json' || property === 'text' ||
+              property === 'arrayBuffer' || property === 'blob' ||
+              property === 'formData') &&
+            typeof value === 'function'
+          ) {
+            return async (...args: unknown[]) => {
+              try {
+                return await value.apply(target, args)
+              } catch (error) {
+                if (usesDefaultSignal && signal.aborted) throw timeoutError()
+                throw error
+              }
+            }
+          }
+          return typeof value === 'function' ? value.bind(target) : value
+        }
+      }) as Response
     } catch (error) {
-      if (usesDefaultSignal && signal.aborted) {
-        throw new ServiceUnavailableException('SUPABASE_REQUEST_TIMEOUT')
-      }
+      if (usesDefaultSignal && signal.aborted) throw timeoutError()
       throw error
     }
   }
