@@ -220,7 +220,7 @@ test('strips remote image URLs from rich text and rejects remote image-only mess
     '<p>Visible text</p><img src="https://tracker.example/pixel.gif" alt="Remote">'
   )
   assert.match(message.content, /Visible text/)
-  assert.doesNotMatch(message.content, /tracker\\.example|<img\\b/i)
+  assert.doesNotMatch(message.content, /tracker\.example|<img\b/i)
 
   await assert.rejects(
     service.sendMessage(
