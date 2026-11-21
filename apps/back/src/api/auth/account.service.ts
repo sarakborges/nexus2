@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Inject,
   Injectable,
   UnauthorizedException
@@ -103,7 +104,7 @@ export class AccountService {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (message.includes('PROFILE_NOT_OWNED')) {
-        throw new UnauthorizedException('PROFILE_NOT_OWNED')
+        throw new ForbiddenException('PROFILE_NOT_OWNED')
       }
       if (message.includes('ACCOUNT_NOT_FOUND')) {
         throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
