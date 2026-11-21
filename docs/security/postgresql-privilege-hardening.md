@@ -9,8 +9,10 @@
 
 - The exposed public schema contains 38 ordinary/partitioned tables. All 38 are owned by postgres and have RLS enabled.
 - 33 tables grant both anon and authenticated the full DML set plus TRUNCATE, REFERENCES, TRIGGER, and PostgreSQL 17's MAINTAIN privilege.
-- The Nexus BFF accesses Postgres through the anon role and a server-only x-nexus-api-secret header. Do not remove the existing anon DML grants on application tables without changing that access design; the RLS policies use the server-secret check.
-- The app uses Nexus-issued JWTs rather than Supabase Auth user JWTs. The BFF does not currently use the authenticated database role.
+- The Nexus BFF accesses Postgres through the anon role and a server-only x-nexus-api-secret header. The repository's Supabase client sends a publishable key and the server-only secret; it does not send a Supabase Auth user JWT.
+- The app uses Nexus-issued JWTs rather than Supabase Auth user JWTs. The BFF does not use the authenticated database role.
+- Production has 33 public RLS policies. All 33 target anon; none target authenticated or PUBLIC.
+- authenticated nevertheless has SELECT, INSERT, UPDATE and DELETE privileges on 33 public tables. There is no current application policy or BFF path requiring those grants. This role can be stripped of all privileges on public tables, sequences, and functions without changing the current Nexus access model.
 - Twenty public tables have RLS enabled but no policies (default-deny). Sixteen of those nevertheless grant DML to both anon and authenticated:
   - jobs_active
   - jobs_contact_outbox
@@ -29,21 +31,21 @@
   - prospects
   - prospects_state
 
-The service_role retains the DML needed by the automation workers. Four other no-policy tables already deny anon/authenticated at the table-grant layer.
+These 16 tables are not referenced by the Nexus2 application source tree. Production pg_stat_statements has no tracked top-level statement text referencing these tables since statistics were reset on 2026-11-01. Table activity counters are also zero. This does not exclude nested SQL, external workers, or other untracked access. The proposed hardening therefore preserves service_role privileges and treats removal of anon DML on these tables as a separate decision pending confirmation of any off-repository workers.
 
 ### Functions
 
 - There are 81 functions in public; six are SECURITY DEFINER.
 - Five of the six definer functions are callable only by service_role among the Data API roles.
 - The remaining definer function, public.nexus_consume_auth_rate_limit(text, bigint, integer), is callable as anon because the BFF uses the existing server-only header. Its body calls private.nexus_server_request_authorized(), validates its parameters, and sets an empty search_path.
-- Five job helper functions have an explicit EXECUTE grant to PUBLIC as well as direct grants to anon, authenticated, and service_role:
+- Five job helper functions currently inherit EXECUTE from PUBLIC and are also directly granted to anon, authenticated, and service_role:
   - jobs_pending_enforce_status()
   - jobs_pending_expected_status(text, text, jsonb)
   - normalize_jobs_source(text)
   - record_jobs_discovery_result(text, text, text, integer, integer, integer, integer, jsonb, text, jsonb)
   - set_jobs_active_id()
 
-The current ACLs show direct grants to service_role for all five. A hardening migration can revoke EXECUTE from PUBLIC, anon, and authenticated, while retaining/granting EXECUTE to service_role.
+All five have direct service_role grants. A hardening migration can revoke PUBLIC and authenticated execution globally while retaining the direct anon and service_role grants. Revoking anon from these helpers is deferred until any off-repository worker dependency is confirmed.
 
 ### Default privileges and ownership
 
@@ -55,6 +57,10 @@ The production default ACLs for both postgres and supabase_admin in public curre
 
 The current database connection acts as postgres, which is not a member of supabase_admin. It can adjust postgres defaults and existing application objects (all 38 public tables are owned by postgres), but cannot adjust supabase_admin default ACLs. Future objects created by supabase_admin would therefore retain that owner's defaults until an appropriately privileged administrator changes them.
 
+### Development environment
+
+No Supabase development branches currently exist for this project. Creating one requires a separate cost check and organization selection. No branch was created and no project billing or production configuration was changed.
+
 ## Proposed hardening SQL
 
 This is a reviewed proposal, **not an applied migration**. Generate the eventual migration with the Supabase CLI and verify it on a development database before applying it to production.
@@ -62,64 +68,24 @@ This is a reviewed proposal, **not an applied migration**. Generate the eventual
 ~~~sql
 begin;
 
--- Keep the existing anon DML path for app-facing Nexus tables.
--- Remove capabilities the browser/API role does not need.
+-- Nexus does not use Supabase Auth's authenticated role.
+-- All current public RLS policies target anon, and the BFF uses anon plus
+-- its server-only secret. Preserve the direct anon and service_role grants.
+revoke all privileges on all tables in schema public from authenticated;
+revoke all privileges on all sequences in schema public from anon, authenticated;
+
+-- Remove the built-in PUBLIC EXECUTE path and all authenticated function access.
+-- Explicit grants to anon and service_role remain intact.
+revoke execute on all functions in schema public from public, authenticated;
+
+-- anon only needs ordinary DML; it does not need database administration powers.
 revoke truncate, references, trigger, maintain
   on all tables in schema public
-  from anon, authenticated;
+  from anon;
 
--- Internal job/prospect tables have RLS enabled but intentionally no policies.
--- They are accessed by the service role, not by the Nexus BFF.
-revoke all privileges on table
-  public.jobs_active,
-  public.jobs_contact_outbox,
-  public.jobs_dedupe,
-  public.jobs_discovery_state,
-  public.jobs_interaction_keys,
-  public.jobs_interactions,
-  public.jobs_legacy_active_snapshot,
-  public.jobs_pending,
-  public.jobs_runs,
-  public.jobs_state,
-  public.prospect_contacts,
-  public.prospect_interactions,
-  public.prospect_pending,
-  public.prospect_runs,
-  public.prospects,
-  public.prospects_state
-  from anon, authenticated;
-
--- The five legacy job helpers need to remain callable by server workers only.
-revoke execute on function public.jobs_pending_enforce_status()
-  from public, anon, authenticated;
-grant execute on function public.jobs_pending_enforce_status()
-  to service_role;
-
-revoke execute on function public.jobs_pending_expected_status(text, text, jsonb)
-  from public, anon, authenticated;
-grant execute on function public.jobs_pending_expected_status(text, text, jsonb)
-  to service_role;
-
-revoke execute on function public.normalize_jobs_source(text)
-  from public, anon, authenticated;
-grant execute on function public.normalize_jobs_source(text)
-  to service_role;
-
-revoke execute on function public.record_jobs_discovery_result(
-  text, text, text, integer, integer, integer, integer, jsonb, text, jsonb
-) from public, anon, authenticated;
-grant execute on function public.record_jobs_discovery_result(
-  text, text, text, integer, integer, integer, integer, jsonb, text, jsonb
-) to service_role;
-
-revoke execute on function public.set_jobs_active_id()
-  from public, anon, authenticated;
-grant execute on function public.set_jobs_active_id()
-  to service_role;
-
--- Public sequences are not used by the Nexus app (UUID identifiers).
-revoke all privileges on all sequences in schema public
-  from anon, authenticated;
+-- Internal job/prospect tables currently have no RLS policies. Do not remove
+-- their anon DML grants until any external worker using anon is ruled out.
+-- service_role retains its current table grants.
 
 -- New public objects must be opt-in.
 alter default privileges for role postgres in schema public
@@ -141,17 +107,22 @@ alter default privileges for role postgres
 commit;
 ~~~
 
-The migration history uses explicit grants for first-time public RPC definitions. The contract test added with this review checks that every first public function declaration in the migration files includes an explicit EXECUTE grant or revoke. Replacements of existing functions retain their current ACLs and do not need to restate them.
+Important consequences:
 
-## Verification required after approval
+- The current direct grants to anon and service_role on existing functions are preserved by the function revocation above; only PUBLIC and authenticated inheritance are removed.
+- Existing service_role table access is retained. New tables, functions, and sequences created by postgres will need explicit grants in their migrations.
+- The new migration contract test requires explicit EXECUTE grants/revokes for first-time public RPC definitions, explicit grants for any new public table after the current baseline (068), and public RLS policies scoped to anon only.
+- Defaults owned by supabase_admin remain unresolved until an appropriately privileged administrator changes them.
+
+## Verification required before production rollout
 
 1. Confirm existing application CRUD still works through anon plus x-nexus-api-secret.
-2. Confirm the 16 internal job/prospect tables deny anon and authenticated at the privilege layer while service_role can still read/write.
-3. Confirm anon/authenticated have no TRUNCATE, REFERENCES, TRIGGER, or MAINTAIN privileges on public tables.
-4. Confirm no anon/authenticated privileges remain on public sequences.
-5. Confirm the five job helpers remain executable by service_role but not anon/authenticated/PUBLIC.
-6. Confirm newly created tables, functions, and sequences receive no unintended default grants.
-7. Run Supabase security advisors and the full workspace CI.
+2. Confirm authenticated has no effective privileges on public tables, sequences, or functions.
+3. Confirm anon has no TRUNCATE, REFERENCES, TRIGGER, or MAINTAIN privileges on public tables.
+4. Confirm anon and service_role retain the function grants required by the application.
+5. Check for off-repository workers before revoking anon DML from the 16 job/prospect tables or anon EXECUTE from their helper functions.
+6. Confirm new public objects receive no unintended default grants under postgres and separately remediate supabase_admin defaults.
+7. Run Supabase security advisors and full workspace CI.
 
 ## References
 

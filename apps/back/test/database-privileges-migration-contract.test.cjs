@@ -46,3 +46,54 @@ test('first public RPC definitions declare an explicit EXECUTE grant or revoke',
     'New public RPCs must opt in to EXECUTE explicitly; do not depend on PostgreSQL default ACLs.'
   )
 })
+
+test('public RLS policies stay scoped to the backend-only anon role', () => {
+  const publicPolicies = []
+
+  for (const file of migrationFiles) {
+    const sql = readFileSync(path.join(migrationDirectory, file), 'utf8')
+    for (const match of sql.matchAll(/create\s+policy\b[\s\S]*?;/gi)) {
+      const statement = match[0]
+      if (!/\bon\s+public\./i.test(statement)) continue
+      publicPolicies.push(file + ': ' + statement)
+    }
+  }
+
+  assert.ok(publicPolicies.length > 0, 'Expected to inspect public RLS policy declarations')
+
+  const invalidPolicies = publicPolicies.filter(statement =>
+    !/\bto\s+anon\b/i.test(statement) ||
+    /\bto\s+(?:authenticated|public)\b/i.test(statement)
+  )
+
+  assert.deepEqual(
+    invalidPolicies,
+    [],
+    'Public RLS policies must stay on the backend-mediated anon role; do not enable Supabase Auth roles implicitly.'
+  )
+})
+
+test('public tables created after the privilege-hardening baseline grant access explicitly', () => {
+  const laterMigrations = migrationFiles.filter(file => Number(file.slice(0, 3)) > 68)
+  const missingGrants = []
+
+  for (const file of laterMigrations) {
+    const sql = readFileSync(path.join(migrationDirectory, file), 'utf8')
+    const tablePattern = /create\s+table(?:\s+if\s+not\s+exists)?\s+public\.("?)([a-zA-Z_][\w$]*)\1/gi
+
+    for (const match of sql.matchAll(tablePattern)) {
+      const tableName = match[2]
+      const grantPattern = new RegExp(
+        '(?:grant\\s+[\\s\\S]*?\\s+on\\s+table\\s+public\\.' + escapeRegExp(tableName) + '\\b)',
+        'i'
+      )
+      if (!grantPattern.test(sql)) missingGrants.push(file + ': public.' + tableName)
+    }
+  }
+
+  assert.deepEqual(
+    missingGrants,
+    [],
+    'New public tables must declare their intended role grants after default privileges become opt-in.'
+  )
+})
