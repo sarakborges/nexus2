@@ -32,8 +32,9 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
       const nextSession: AuthSession = {
         ...currentSession,
         user: result.user,
-        currentProfile: null,
+        currentProfile: result.profile,
         currentProfileSettings: null,
+        suggestedCommunities: [],
         activities: [],
         activityCursor: null,
         hasMoreActivities: false
@@ -43,12 +44,21 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
         () => nextSession
       )
 
-      const refreshedSession = await getCurrentAuthSession()
+      let refreshedSession: AuthSession | null
+      try {
+        refreshedSession = await getCurrentAuthSession()
+      } catch {
+        // The profile write already committed. Keep the complete profile returned
+        // by that write and let the active session query retry in the background.
+        return result
+      }
+
       if (
         !refreshedSession ||
         refreshedSession.user.id !== result.user.id ||
         refreshedSession.user.currentProfile !== result.profile.id
       ) {
+        queryClient.setQueryData(queryKeys.auth.session, null)
         throw new Error('PROFILE_CREATION_SESSION_INCONSISTENT')
       }
 
@@ -63,6 +73,7 @@ export function useCreateProfileMutation(): UseCreateProfileMutationResult {
       )
 
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.session }),
         queryClient.invalidateQueries({ queryKey: ['profiles'] }),
         queryClient.invalidateQueries({ queryKey: ['activity'] }),
         queryClient.invalidateQueries({ queryKey: ['community-forum-topic-page'] }),
