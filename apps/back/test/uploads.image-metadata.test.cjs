@@ -118,13 +118,13 @@ test('reads dimensions from JPEG, PNG, GIF, WebP and AVIF headers', () => {
   }
 })
 
-test('accepts the maximum configured image pixel budget', () => {
-  assert.equal(isImageDimensionsWithinLimits({ width: 8192, height: 2048 }), true)
+test('accepts a 1024-by-1024 image at the configured boundary', () => {
+  assert.equal(isImageDimensionsWithinLimits({ width: 1024, height: 1024 }), true)
 })
 
-test('rejects images exceeding a side limit or total pixel budget', () => {
-  assert.equal(isImageDimensionsWithinLimits({ width: 8193, height: 1 }), false)
-  assert.equal(isImageDimensionsWithinLimits({ width: 8192, height: 2049 }), false)
+test('rejects images with either edge above 1024px', () => {
+  assert.equal(isImageDimensionsWithinLimits({ width: 1025, height: 1 }), false)
+  assert.equal(isImageDimensionsWithinLimits({ width: 1024, height: 1025 }), false)
   assert.equal(isImageDimensionsWithinLimits({ width: 0, height: 1 }), false)
 })
 
