@@ -23,10 +23,17 @@ export class CommunityForumRealtimeService {
     const publishableKey = this.config.get<string>('SUPABASE_PUBLISHABLE_KEY')
     if (!configuredUrl || !publishableKey) return { enabled: false }
 
-    return {
-      enabled: true,
-      supabaseUrl: new URL(configuredUrl).origin,
-      publishableKey
+    try {
+      const url = new URL(configuredUrl)
+      if (!['http:', 'https:'].includes(url.protocol)) return { enabled: false }
+
+      return {
+        enabled: true,
+        supabaseUrl: url.origin,
+        publishableKey
+      }
+    } catch {
+      return { enabled: false }
     }
   }
 
