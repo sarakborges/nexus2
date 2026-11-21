@@ -15,6 +15,9 @@ function createService(record, response) {
   }
   const storage = {
     assertConfigured() {},
+    encodePath(value) {
+      return value.split('/').map(encodeURIComponent).join('/')
+    },
     async request() {
       return response
     }
