@@ -1,5 +1,6 @@
 import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator'
 
+import { IMAGE_MAX_FILE_SIZE } from './uploads.constants'
 import type { UploadPurpose } from './uploads.types'
 
 export class CreateUploadDto {
@@ -13,7 +14,7 @@ export class CreateUploadDto {
 
   @IsInt()
   @Min(1)
-  @Max(10 * 1024 * 1024)
+  @Max(IMAGE_MAX_FILE_SIZE)
   size!: number
 
   @IsOptional()
