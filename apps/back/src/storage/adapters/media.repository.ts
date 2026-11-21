@@ -10,7 +10,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
 
   async createUpload(change: MediaUploadCreateWrite): Promise<void> {
     const record = change.record
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_upload', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_upload', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -31,7 +31,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
     url.searchParams.set('status', 'in.(pending,ready)')
     url.searchParams.set('deleted_at_ms', 'is.null')
     url.searchParams.set('limit', '1')
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows: unknown = await response.json()
     if (!Array.isArray(rows)) throw new Error('Supabase upload lookup returned an invalid result.')
@@ -39,7 +39,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async deletePendingUpload(userId: string, id: string): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_pending_upload', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_pending_upload', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_id: id })
@@ -48,7 +48,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async completeUpload(change: MediaUploadCompletion): Promise<MediaFileRecord> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_complete_upload', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_complete_upload', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -66,7 +66,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async claimExpiredUploads(change: MediaUploadCleanupRequest): Promise<MediaFileRecord[]> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_claim_expired_uploads', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_claim_expired_uploads', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -83,7 +83,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
 
   async finishUploadDeletions(claims: readonly MediaUploadDeletionClaim[]): Promise<number> {
     if (!claims.length) return 0
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_finish_upload_deletions', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_finish_upload_deletions', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -99,7 +99,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async scheduleUploadDeletion(change: MediaUploadDeletionSchedule): Promise<boolean> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_upload_deletion', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_schedule_upload_deletion', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -114,7 +114,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async claimUploadDeletion(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_claim_upload_deletion', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_claim_upload_deletion', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -131,7 +131,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async schedulePreviousAvatarDeletion(change: PreviousAvatarDeletionSchedule): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_avatar_deletion', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_avatar_deletion', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -143,7 +143,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async schedulePreviousCommunityAvatarDeletion(change: PreviousCommunityAvatarDeletionSchedule): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_community_avatar_deletion', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_schedule_previous_community_avatar_deletion', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -155,7 +155,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async getCommunityAvatarRecord(change: CommunityAvatarReadRequest): Promise<MediaFileRecord> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_avatar', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_avatar', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: change.userId, p_id: change.id })
@@ -169,7 +169,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_editor_image', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_editor_image', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: change.userId, p_id: change.id, p_now_ms: change.now })
@@ -194,7 +194,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
     url.searchParams.set('purpose','eq.' + purpose)
     url.searchParams.set('status','eq.ready')
     url.searchParams.set('deleted_at_ms','is.null')
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows: unknown = await response.json()
     if (!Array.isArray(rows)) throw new Error('Supabase avatar upload lookup returned an invalid result.')
@@ -203,7 +203,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async setProfileAvatar(change: ProfileAvatarWrite): Promise<{ previousPicture: string }> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_avatar', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_avatar', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -222,7 +222,7 @@ export class SupabaseMediaRepository extends SupabaseRepositoryClient implements
   }
 
   async setCommunityAvatar(change: CommunityAvatarWrite): Promise<{ previousPicture: string }> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_community_avatar', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_set_community_avatar', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
