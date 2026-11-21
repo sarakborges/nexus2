@@ -144,6 +144,30 @@ test('sign-in verifies the password and normalizes the email', async () => {
   )
 })
 
+test('wrong passwords do not hydrate account memberships or preferences', async () => {
+  const { service, repository } = createAuthHarness()
+  await service.signUp({ email: 'deferred-hydration@example.com', password: 'a-secure-password' })
+
+  const accountReads = []
+  const originalLookup = repository.getAccountById
+  repository.getAccountById = async id => {
+    accountReads.push(id)
+    return originalLookup(id)
+  }
+
+  await assert.rejects(
+    service.signIn({ email: 'deferred-hydration@example.com', password: 'wrong-password' }),
+    error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
+  )
+  assert.deepEqual(accountReads, [])
+
+  const signedIn = await service.signIn({
+    email: 'deferred-hydration@example.com',
+    password: 'a-secure-password'
+  })
+  assert.deepEqual(accountReads, [signedIn.user.id])
+})
+
 test('refresh reads only the account identified by the signed token', async () => {
   const { service, repository } = createAuthHarness()
   const initial = await service.signUp({ email: 'selective@example.com', password: 'a-secure-password' })
