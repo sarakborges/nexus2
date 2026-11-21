@@ -41,7 +41,7 @@ test('self-hosted proxy overwrites untrusted forwarded-IP headers', () => {
     'utf8'
   )
 
-  assert.match(nginx, /proxy_set_header X-Forwarded-For \\$remote_addr;/)
-  assert.match(nginx, /proxy_set_header X-Vercel-Forwarded-For "";/)
-  assert.doesNotMatch(nginx, /proxy_add_x_forwarded_for/)
+  assert.ok(nginx.includes('proxy_set_header X-Forwarded-For $remote_addr;'))
+  assert.ok(nginx.includes('proxy_set_header X-Vercel-Forwarded-For ""'))
+  assert.equal(nginx.includes('proxy_add_x_forwarded_for'), false)
 })
