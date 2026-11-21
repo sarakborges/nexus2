@@ -83,13 +83,12 @@ export class RelationshipsController {
   @UseGuards(OptionalJwtAccessGuard)
   members(
     @Param('communityId', new ParseUUIDPipe()) id: string,
-    @Query('tab') tab: string | undefined,
     @CurrentUser() user: AuthenticatedUserContext | undefined,
     @Query() query: PaginationDto
   ) {
     return this.domain.listCommunityMembers(
       id,
-      tab ?? 'all',
+      query.tab ?? 'all',
       query,
       user?.id ?? null,
       query.actorProfileId
