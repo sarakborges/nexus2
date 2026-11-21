@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
-import { isIP } from 'node:net'
+import { getClientIp } from '../client-ip.util'
 import { HttpService } from '@nestjs/axios'
 import axios from 'axios'
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
@@ -88,19 +88,10 @@ export class AuthController {
     const { data } = await this.request<AuthTokenPair>(
       `${this.backUrl}/auth/${route}`,
       body,
-      { 'x-nexus-client-ip': this.clientIp(req) }
+      { 'x-nexus-client-ip': getClientIp(req) }
     )
     writeAuthCookies(res, data.accessToken, data.refreshToken)
     return { user: data.user, authenticated: true }
   }
 
-  private clientIp(req: Request): string {
-    const forwarded = req.headers['x-vercel-forwarded-for'] ?? req.headers['x-forwarded-for']
-    const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded
-    const candidate = forwardedValue?.split(',')[0]?.trim()
-      || req.ip
-      || req.socket.remoteAddress
-      || ''
-    return isIP(candidate) ? candidate : 'unknown'
-  }
 }

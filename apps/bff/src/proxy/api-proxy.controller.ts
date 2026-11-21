@@ -5,6 +5,7 @@ import type { Request, Response } from 'express'
 import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
 import { assertSameOrigin } from '../origin.util'
+import { getClientIp } from '../client-ip.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
 
@@ -28,6 +29,9 @@ export class ApiProxyController {
       }
 
       const headers: Record<string, string> = {}
+      if (req.method === 'POST' && req.path === '/api/realtime/verify') {
+        headers['x-nexus-client-ip'] = getClientIp(req)
+      }
       const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
       const isBinaryImage = /^\/api\/uploads\/[0-9a-f-]{36}\/content$/i.test(req.path)
 

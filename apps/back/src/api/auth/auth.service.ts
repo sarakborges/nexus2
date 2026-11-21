@@ -33,11 +33,16 @@ export class AuthService {
     this.refreshTtl = Number(config.get('JWT_REFRESH_TTL_SECONDS') ?? 2592000)
   }
 
-  async assertAuthAttemptAllowed(action: 'sign-in' | 'sign-up', clientAddress: string): Promise<void> {
+  async assertAuthAttemptAllowed(
+    action: 'sign-in' | 'sign-up' | 'realtime-verify',
+    clientAddress: string
+  ): Promise<void> {
     const address = isIP(clientAddress) ? clientAddress : 'unknown'
     const policy = action === 'sign-in'
       ? { windowMs: 15 * 60 * 1000, maxRequests: 15 }
-      : { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+      : action === 'sign-up'
+        ? { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+        : { windowMs: 60 * 1000, maxRequests: 120 }
     const secret = this.config.get<string>('AUTH_RATE_LIMIT_SECRET')?.trim()
       || this.config.getOrThrow<string>('JWT_REFRESH_SECRET')
     const keyHash = createHmac('sha256', secret)
