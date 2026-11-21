@@ -88,3 +88,27 @@ test('Supabase repository requests preserve explicit caller abort signals', asyn
 
   assert.equal(passedInit.signal, controller.signal)
 })
+
+test('Supabase response body timeouts become service unavailable after headers arrive', async t => {
+  const originalFetch = global.fetch
+  const originalTimeout = AbortSignal.timeout
+  const controller = new AbortController()
+  AbortSignal.timeout = () => controller.signal
+  global.fetch = async () => new Response(new ReadableStream({
+    start() {
+      controller.abort(new Error('simulated response body timeout'))
+    }
+  }), { status: 200 })
+  t.after(() => {
+    global.fetch = originalFetch
+    AbortSignal.timeout = originalTimeout
+  })
+
+  const response = await new TestRepository().request()
+  await assert.rejects(
+    response.json(),
+    error => error instanceof ServiceUnavailableException &&
+      error.getStatus() === 503 &&
+      error.message === 'SUPABASE_REQUEST_TIMEOUT'
+  )
+})
