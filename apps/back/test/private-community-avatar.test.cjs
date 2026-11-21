@@ -138,6 +138,14 @@ test('private community avatar reads require effective-type matching membership'
   assert.match(sql, /v_privacy is null or v_privacy not in \('public','unlisted','private'\)/i)
 })
 
+test('creating or replacing a managed community avatar requires an owned upload path', () => {
+  const createSql = sqlFunction('nexus_create_community')
+  const updateSql = sqlFunction('nexus_update_community')
+  assert.match(createSql, /p_picture ~\* '\^\/api\/uploads\/community-avatars\//i)
+  assert.match(createSql, /p_avatar_path is null[\s\S]*INVALID_AVATAR_UPLOAD/i)
+  assert.match(updateSql, /v_picture_changed and p_picture ~\*[\s\S]*p_avatar_path is null/i)
+})
+
 test('ordinary community edits only detach old avatars when the image actually changes', () => {
   const sql = sqlFunction('nexus_update_community')
   assert.match(sql, /purpose='editor-image'[\s\S]*not\(public\.media_files\.id=any\(v_image_ids\)\)/i)

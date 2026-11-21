@@ -253,6 +253,10 @@ begin
     raise exception 'INVALID_EDITOR_IMAGE' using errcode='22023';
   end if;
 
+  if p_picture ~* '^/api/uploads/community-avatars/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/content$' and p_avatar_path is null then
+    raise exception 'INVALID_AVATAR_UPLOAD' using errcode='22023';
+  end if;
+
   if p_avatar_path is not null then
     perform file.id from public.media_files file
     where file.owner_user_id=p_user_id and file.purpose='community-avatar'
@@ -335,6 +339,9 @@ begin
 
   v_previous_picture:=v_community.picture;
   v_picture_changed:=v_previous_picture is distinct from p_picture;
+  if v_picture_changed and p_picture ~* '^/api/uploads/community-avatars/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/content$' and p_avatar_path is null then
+    raise exception 'INVALID_AVATAR_UPLOAD' using errcode='22023';
+  end if;
   if v_picture_changed and p_avatar_path is not null then
     perform file.id from public.media_files file
     where file.owner_user_id=p_user_id and file.purpose='community-avatar'
