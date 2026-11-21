@@ -1,11 +1,13 @@
--- Execute the invoker RPC as anon. Without the server header, RLS
+-- Exercise the invoker RPC as anon. Without the server header, RLS
 -- must reject the table write; with the correct header, the same call succeeds.
 set role anon;
 select set_config('request.headers', '{}', false);
 do $deny_without_secret$
 begin
   begin
-    perform public.nexus_consume_auth_rate_limit('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 60000, 5);
+    perform public.nexus_consume_auth_rate_limit(
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 60000, 5
+    );
     raise exception 'rate-limit RPC unexpectedly wrote without the server secret';
   exception
     when insufficient_privilege then
@@ -14,7 +16,9 @@ begin
 end;
 $deny_without_secret$;
 select set_config('request.headers', '{"x-nexus-api-secret":"integration-secret"}', false);
-select public.nexus_consume_auth_rate_limit('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 60000, 5);
+select public.nexus_consume_auth_rate_limit(
+  'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 60000, 5
+);
 reset role;
 
 -- Create future objects after migration 075. No client or PUBLIC privileges
@@ -61,7 +65,7 @@ declare
   has_public_table_privilege boolean;
   has_public_sequence_privilege boolean;
 begin
-  -- Migration 073: RPC is SECURITY INVOKER and has only the intended callers.
+  -- Migration 073: the RPC must be SECURITY INVOKER with intended callers.
   if (select prosecdef
       from pg_proc
       where oid = 'public.nexus_consume_auth_rate_limit(text,bigint,integer)'::regprocedure) then
@@ -71,6 +75,16 @@ begin
      or has_function_privilege('authenticated', 'public.nexus_consume_auth_rate_limit(text,bigint,integer)', 'EXECUTE')
      or not has_function_privilege('service_role', 'public.nexus_consume_auth_rate_limit(text,bigint,integer)', 'EXECUTE') then
     raise exception 'auth rate-limit RPC EXECUTE grants are incorrect';
+  end if;
+  select exists (
+    select 1 from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    where p.oid = 'public.nexus_consume_auth_rate_limit(text,bigint,integer)'::regprocedure
+      and acl.grantee = 0
+      and acl.privilege_type = 'EXECUTE'
+  ) into has_public_execute;
+  if has_public_execute then
+    raise exception 'PUBLIC can execute the auth rate-limit RPC';
   end if;
   if not has_schema_privilege('anon', 'private', 'USAGE')
      or not has_function_privilege('anon', 'private.nexus_server_request_authorized()', 'EXECUTE')
@@ -93,17 +107,19 @@ begin
     raise exception 'auth limiter server-secret RLS policy is missing or incomplete';
   end if;
 
-  -- Migration 074: all client/PUBLIC table rights disappear on worker tables;
-  -- service_role keeps the operations used by the background workers.
+  -- Migration 074: client and PUBLIC table privileges disappear on internal
+  -- worker tables; service_role keeps the operations required by the workers.
   foreach worker_table in array worker_tables
   loop
     if has_table_privilege('anon', format('public.%I', worker_table), 'SELECT')
        or has_table_privilege('anon', format('public.%I', worker_table), 'INSERT')
        or has_table_privilege('authenticated', format('public.%I', worker_table), 'SELECT')
-       or has_table_privilege('authenticated', format('public.%I', worker_table), 'INSERT')
-      select exists (
+       or has_table_privilege('authenticated', format('public.%I', worker_table), 'INSERT') then
+      raise exception 'client row access remains on worker table %', worker_table;
+    end if;
+    select exists (
       select 1 from pg_class c
-      cross join lateral aclexplode(c.relacl) acl
+      cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl
       where c.oid = to_regclass(format('public.%I', worker_table))
         and acl.grantee = 0
     ) into has_public_table_privilege;
@@ -122,7 +138,7 @@ begin
   loop
     select exists (
       select 1 from pg_proc p
-      cross join lateral aclexplode(p.proacl) acl
+      cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
       where p.oid = worker_function::regprocedure
         and acl.grantee = 0
         and acl.privilege_type = 'EXECUTE'
@@ -135,8 +151,8 @@ begin
     end if;
   end loop;
 
-  -- Migration 076: anon retains row operations on app tables but not elevated
-  -- table privileges. service_role privileges remain unchanged.
+  -- Migration 076: anon keeps ordinary row operations, but no elevated table
+  -- privileges. service_role retains its complete worker/application grants.
   if not has_table_privilege('anon', 'public.profiles', 'SELECT')
      or not has_table_privilege('anon', 'public.profiles', 'INSERT')
      or not has_table_privilege('anon', 'public.profiles', 'UPDATE')
@@ -152,7 +168,7 @@ begin
   select exists (
     select 1
     from pg_class c
-    cross join lateral aclexplode(c.relacl) acl
+    cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl
     where c.oid = 'public.profiles'::regclass
       and acl.grantee = 0
       and acl.privilege_type in ('TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN')
@@ -165,12 +181,14 @@ begin
      or not has_table_privilege('service_role', 'public.profiles', 'UPDATE')
      or not has_table_privilege('service_role', 'public.profiles', 'DELETE')
      or not has_table_privilege('service_role', 'public.profiles', 'TRUNCATE')
+     or not has_table_privilege('service_role', 'public.profiles', 'REFERENCES')
+     or not has_table_privilege('service_role', 'public.profiles', 'TRIGGER')
      or not has_table_privilege('service_role', 'public.profiles', 'MAINTAIN') then
     raise exception 'service_role table privileges changed unexpectedly';
   end if;
 
-  -- Migration 077: no existing public table/function/sequence access remains
-  -- for the unused authenticated role. The BFF's anon role remains separate.
+  -- Migration 077: the unused authenticated role loses existing public
+  -- objects. The BFF anon role remains separate.
   if has_table_privilege('authenticated', 'public.profiles', 'SELECT')
      or has_table_privilege('authenticated', 'public.profiles', 'INSERT')
      or has_table_privilege('authenticated', 'public.profiles', 'UPDATE')
@@ -181,7 +199,7 @@ begin
   end if;
   select exists (
     select 1 from pg_class c
-    cross join lateral aclexplode(c.relacl) acl
+    cross join lateral aclexplode(coalesce(c.relacl, acldefault('s', c.relowner))) acl
     where c.oid = 'public.automation_reports_id_seq'::regclass
       and acl.grantee = 0
   ) into has_public_sequence_privilege;
@@ -194,15 +212,23 @@ begin
   end if;
 
   -- Migration 075: future objects created by postgres inherit only the
-  -- service_role grant in public. The global PUBLIC function default is gone.
+  -- service_role grant in public. Global PUBLIC EXECUTE must also be absent.
+  select exists (
+    select 1 from pg_class c
+    cross join lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl
+    where c.oid = 'public.future_default_table'::regclass
+      and acl.grantee = 0
+  ) into has_public_table_privilege;
   if has_table_privilege('anon', 'public.future_default_table', 'SELECT')
      or has_table_privilege('authenticated', 'public.future_default_table', 'SELECT')
+     or has_public_table_privilege
      or not has_table_privilege('service_role', 'public.future_default_table', 'SELECT') then
     raise exception 'future public table default privileges are incorrect';
   end if;
+
   select exists (
     select 1 from pg_class c
-    cross join lateral aclexplode(c.relacl) acl
+    cross join lateral aclexplode(coalesce(c.relacl, acldefault('s', c.relowner))) acl
     where c.oid = 'public.future_default_sequence'::regclass
       and acl.grantee = 0
   ) into has_public_sequence_privilege;
@@ -212,24 +238,33 @@ begin
      or not has_sequence_privilege('service_role', 'public.future_default_sequence', 'USAGE') then
     raise exception 'future public sequence default privileges are incorrect';
   end if;
-  if has_function_privilege('anon', 'public.future_default_function()', 'EXECUTE')
-     or has_function_privilege('authenticated', 'public.future_default_function()', 'EXECUTE')
-     or not has_function_privilege('service_role', 'public.future_default_function()', 'EXECUTE') then
-    raise exception 'future public function default privileges are incorrect';
-  end if;
+
   select exists (
-    select 1
-    from pg_proc p
-    cross join lateral aclexplode(p.proacl) acl
-    where p.oid in (
-      'public.future_default_function()'::regprocedure,
-      'private_future_test.future_private_function()'::regprocedure
-    )
+    select 1 from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    where p.oid = 'public.future_default_function()'::regprocedure
       and acl.grantee = 0
       and acl.privilege_type = 'EXECUTE'
   ) into has_public_execute;
-  if has_public_execute then
-    raise exception 'global PUBLIC EXECUTE default remains for postgres-created functions';
+  if has_function_privilege('anon', 'public.future_default_function()', 'EXECUTE')
+     or has_function_privilege('authenticated', 'public.future_default_function()', 'EXECUTE')
+     or has_public_execute
+     or not has_function_privilege('service_role', 'public.future_default_function()', 'EXECUTE') then
+    raise exception 'future public function default privileges are incorrect';
+  end if;
+
+  select exists (
+    select 1
+    from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    where p.oid = 'private_future_test.future_private_function()'::regprocedure
+      and acl.grantee = 0
+      and acl.privilege_type = 'EXECUTE'
+  ) into has_public_execute;
+  if has_public_execute
+     or has_function_privilege('anon', 'private_future_test.future_private_function()', 'EXECUTE')
+     or has_function_privilege('authenticated', 'private_future_test.future_private_function()', 'EXECUTE') then
+    raise exception 'global PUBLIC function default was not removed for postgres-created functions';
   end if;
 end;
 $assert_privileges$;
