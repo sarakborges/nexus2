@@ -19,7 +19,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     url.searchParams.set('account_id', 'eq.' + userId)
     url.searchParams.set('profile_id', 'eq.' + profileId)
     url.searchParams.set('limit', '1')
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows: unknown = await response.json()
     if (!Array.isArray(rows)) {
@@ -38,7 +38,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async consumeAuthRateLimit(keyHash: string, windowMs: number, maxRequests: number): Promise<boolean> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_consume_auth_rate_limit', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_consume_auth_rate_limit', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -56,7 +56,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -77,7 +77,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     userId: string,
     preferences: Partial<UserPreferences>
   ): Promise<UserPreferences> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -104,7 +104,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     rotation: RefreshTokenRotation | null,
     now: number
   ): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_issue_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_issue_refresh_token', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -125,7 +125,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async deleteRefreshTokenByHash(tokenHash: string): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_revoke_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_revoke_refresh_token', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -137,7 +137,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async deleteAccount(userId: string, now: number): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_account', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_account', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_now_ms: now })
@@ -146,7 +146,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async changeAccountProfile(change: AccountProfileChange): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
       method: 'POST',
       headers: {
         ...this.headers(),
