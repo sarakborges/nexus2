@@ -4,6 +4,8 @@ const { NotFoundException } = require('@nestjs/common')
 const { UploadsStorageService } = require('../dist/api/uploads/uploads.storage.service.js')
 const { UploadsContentService } = require('../dist/api/uploads/uploads.content.service.js')
 const { UploadsService } = require('../dist/api/uploads/uploads.service.js')
+const { UploadsAvatarService } = require('../dist/api/uploads/uploads.avatar.service.js')
+const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.service.js')
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 
@@ -170,4 +172,118 @@ test('private community avatar deletion only schedules files in the private buck
   const sql = sqlFunction('nexus_schedule_previous_community_avatar_deletion')
   assert.match(sql, /file\.purpose='community-avatar'/i)
   assert.match(sql, /file\.bucket='nexus-community-avatars'/i)
+})
+
+
+test('community avatar replacement schedules the previous private record and preserves the new upload', async () => {
+  const oldId = '223e4567-e89b-42d3-a456-426614174000'
+  const newId = '323e4567-e89b-42d3-a456-426614174000'
+  const oldPicture = '/api/uploads/community-avatars/' + oldId + '/content'
+  const newPicture = '/api/uploads/community-avatars/' + newId + '/content'
+  const deletionSchedules = []
+  const avatarWrites = []
+  const cleanupRepository = {
+    async schedulePreviousCommunityAvatarDeletion(change) {
+      deletionSchedules.push(change)
+    },
+    async schedulePreviousAvatarDeletion() {
+      throw new Error('Private community avatars must not use the public profile-avatar cleanup RPC')
+    }
+  }
+  const cleanup = new UploadsCleanupService(
+    cleanupRepository,
+    { get(name) { return name === 'CRON_SECRET' ? 'cron-secret-test' : undefined } },
+    storage()
+  )
+  const repository = {
+    async getAvatarUploadPath(userId, uploadId, purpose) {
+      assert.deepEqual([userId, uploadId, purpose], [
+        'owner-user', newId, 'community-avatar'
+      ])
+      return 'communities/owner-user/new-avatar.png'
+    },
+    async setCommunityAvatar(change) {
+      avatarWrites.push(change)
+      return { previousPicture: oldPicture }
+    }
+  }
+  const service = new UploadsAvatarService(repository, storage(), cleanup)
+  const startedAt = Date.now()
+
+  const result = await service.setCommunityAvatar(
+    'owner-user', 'community-1', 'owner-profile', newId
+  )
+
+  assert.deepEqual(result, { picture: newPicture })
+  assert.deepEqual(avatarWrites, [{
+    userId: 'owner-user',
+    communityId: 'community-1',
+    actorProfileId: 'owner-profile',
+    uploadId: newId,
+    picture: newPicture
+  }])
+  assert.equal(deletionSchedules.length, 1)
+  assert.equal(deletionSchedules[0].id, oldId)
+  assert.equal(deletionSchedules[0].keepId, newId)
+  assert.ok(deletionSchedules[0].deletingAt >= startedAt)
+  assert.equal(deletionSchedules[0].safeAge, 3 * 60 * 60 * 1000)
+  assert.equal(deletionSchedules[0].leaseMs, 5 * 60 * 1000)
+})
+
+test('expired community avatar objects are removed from the private bucket and their records finalized', async t => {
+  const originalFetch = global.fetch
+  t.after(() => { global.fetch = originalFetch })
+  const file = {
+    id: '423e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'owner-user',
+    purpose: 'community-avatar',
+    bucket: 'nexus-community-avatars',
+    path: 'communities/owner-user/expired-avatar.png',
+    contentType: 'image/png',
+    expectedSize: image.length,
+    size: image.length,
+    status: 'deleting',
+    createdAt: 1,
+    completedAt: 2,
+    expiresAt: null,
+    resourceType: 'community',
+    resourceId: 'community-1',
+    deletingAt: 123,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  let storageDelete
+  let finalizedClaims
+  const repository = {
+    async claimExpiredUploads() { return [file] },
+    async finishUploadDeletions(claims) {
+      finalizedClaims = claims
+      return claims.length
+    }
+  }
+  global.fetch = async (url, init) => {
+    storageDelete = { url: String(url), init }
+    return new Response(null, { status: 200 })
+  }
+  const cleanup = new UploadsCleanupService(
+    repository,
+    { get(name) { return name === 'CRON_SECRET' ? 'cron-secret-test' : undefined } },
+    storage()
+  )
+
+  const result = await cleanup.cleanupExpired('cron-secret-test')
+
+  assert.deepEqual(result, { deleted: 1 })
+  assert.equal(
+    storageDelete.url,
+    'https://project.example.supabase.co/storage/v1/object/nexus-community-avatars'
+  )
+  assert.deepEqual(JSON.parse(storageDelete.init.body), {
+    prefixes: ['communities/owner-user/expired-avatar.png']
+  })
+  assert.equal(storageDelete.init.method, 'DELETE')
+  assert.deepEqual(finalizedClaims, [{
+    id: file.id,
+    deletingAt: file.deletingAt
+  }])
 })
