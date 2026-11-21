@@ -2,6 +2,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   ServiceUnavailableException
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -21,6 +22,7 @@ import type { UploadedFileRecord } from './uploads.types'
 
 @Injectable()
 export class UploadsCleanupService {
+  private readonly logger = new Logger(UploadsCleanupService.name)
   private readonly cronSecret: string
 
   constructor(
@@ -94,21 +96,28 @@ export class UploadsCleanupService {
   }
 
   async deletePreviousAvatar(previousUrl: string, keepId?: string): Promise<void> {
-    const deletingAt = Date.now()
-    const communityAvatarId = this.storage.getCommunityAvatarId(previousUrl)
-    if (communityAvatarId) {
-      await this.data.schedulePreviousCommunityAvatarDeletion({
-        id: communityAvatarId, keepId: keepId ?? null, deletingAt,
+    try {
+      const deletingAt = Date.now()
+      const communityAvatarId = this.storage.getCommunityAvatarId(previousUrl)
+      if (communityAvatarId) {
+        await this.data.schedulePreviousCommunityAvatarDeletion({
+          id: communityAvatarId, keepId: keepId ?? null, deletingAt,
+          safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
+        })
+        return
+      }
+      const path = this.storage.getAvatarPath(previousUrl)
+      if (!path) return
+      await this.data.schedulePreviousAvatarDeletion({
+        path, keepId: keepId ?? null, deletingAt,
         safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
       })
-      return
+    } catch {
+      // The entity/avatar write has already committed. Cleanup must not turn
+      // that successful write into a failure that could make clients delete
+      // the newly referenced upload. Keep the failure observable in logs.
+      this.logger.warn('Could not schedule previous avatar cleanup; the saved avatar was left unchanged.')
     }
-    const path = this.storage.getAvatarPath(previousUrl)
-    if (!path) return
-    await this.data.schedulePreviousAvatarDeletion({
-      path, keepId: keepId ?? null, deletingAt,
-      safeAge: UPLOAD_DELETE_SAFE_AGE_MS, leaseMs: DELETE_CLAIM_LEASE_MS
-    })
   }
 
   async scheduleUploadDeletion(
