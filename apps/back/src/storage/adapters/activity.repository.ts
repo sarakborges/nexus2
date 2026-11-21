@@ -12,7 +12,7 @@ export class SupabaseActivityRepository extends SupabaseRepositoryClient impleme
     limit: number,
     cursor: ActivityFeedCursor | null
   ): Promise<ActivityFeedRow[]> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_feed_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_feed_page', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -44,7 +44,7 @@ export class SupabaseActivityRepository extends SupabaseRepositoryClient impleme
 
   async getActivityReadIds(userId: string, activityIds: readonly string[]): Promise<string[]> {
     if (activityIds.length === 0) return []
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_read_ids', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_activity_read_ids', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_activity_ids: [...activityIds] })
@@ -62,7 +62,7 @@ export class SupabaseActivityRepository extends SupabaseRepositoryClient impleme
 
   async markActivitiesRead(userId: string, activityIds: readonly string[], readAt: number): Promise<void> {
     if (activityIds.length === 0) return
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_mark_activities_read', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_mark_activities_read', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
