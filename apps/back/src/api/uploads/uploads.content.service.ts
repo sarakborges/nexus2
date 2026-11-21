@@ -95,6 +95,9 @@ export class UploadsContentService {
         }
         chunks.push(Buffer.from(value))
       }
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     } finally {
       reader.releaseLock()
     }
