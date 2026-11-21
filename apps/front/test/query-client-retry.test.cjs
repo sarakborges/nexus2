@@ -35,7 +35,10 @@ function loadQueryClient() {
   Module._load = function (request, parent, isMain) {
     if (request === '@tanstack/react-query') return { QueryClient }
     if (request === 'axios') {
-      return { isAxiosError: error => Boolean(error?.isAxiosError) }
+      return {
+        isAxiosError: error => Boolean(error?.isAxiosError),
+        isCancel: error => error?.code === 'ERR_CANCELED'
+      }
     }
     return originalLoad.call(this, request, parent, isMain)
   }
@@ -73,6 +76,12 @@ test('query retries only transient HTTP and transport failures', () => {
     retry(0, { isAxiosError: true }),
     true,
     'should retry transport failures without an HTTP response'
+  )
+
+  assert.equal(
+    retry(0, { isAxiosError: true, code: 'ERR_CANCELED' }),
+    false,
+    'must not retry deliberately canceled requests'
   )
 })
 
