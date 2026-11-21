@@ -2,6 +2,7 @@ import sanitizeHtml = require('sanitize-html')
 import type { CommunityForumTopicDetail } from '@nexus/common'
 
 const colorValue = /^(?:#[0-9a-f]{3,8}|(?:rgb|rgba|hsl|hsla)\([\d\s.,%+\-/]+\)|[a-z]{1,20})$/i
+const managedEditorImageSource = /^\/api\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i
 
 const allowedStyles: NonNullable<sanitizeHtml.IOptions['allowedStyles']> = {
   '*': {
@@ -70,11 +71,18 @@ const sanitizerOptions: sanitizeHtml.IOptions = {
         tagName: 'span',
         attribs
       }
+    },
+    img: (_tagName, attributes) => {
+      const src = attributes.src?.trim()
+      if (!src || !managedEditorImageSource.test(src)) {
+        return { tagName: 'span', attribs: {} }
+      }
+      return { tagName: 'img', attribs: { ...attributes, src } }
     }
   },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {
-    img: ['http', 'https']
+    img: []
   },
   allowProtocolRelative: false,
   disallowedTagsMode: 'discard',
