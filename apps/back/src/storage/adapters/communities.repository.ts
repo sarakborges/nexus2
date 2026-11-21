@@ -65,7 +65,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getSuggestedCommunities(profileId: string, limit: number): Promise<Community[]> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_suggested_communities', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_suggested_communities', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_profile_id: profileId, p_limit: limit })
@@ -79,7 +79,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async createCommunity(change: CommunityCreateWrite): Promise<Community> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_community', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_community', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -105,7 +105,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async updateCommunity(change: CommunityUpdateWrite): Promise<{ community: Community; previousPicture: string | null }> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_community', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_update_community', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -134,7 +134,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getPublicCommunities(page: number): Promise<PaginatedResult<Community>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_public_communities', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_list_public_communities', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_page: page })
@@ -150,7 +150,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getCommunityByUrl(url: string, userId: string | null): Promise<Community> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_by_url', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_by_url', {
       method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
     })
@@ -163,7 +163,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getProfileCommunities(profileId: string, page: number): Promise<PaginatedResult<Community>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_communities', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_communities', {
       method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_profile_id: profileId, p_page: page })
     })
@@ -178,7 +178,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getCommunityEditPage(url: string, userId: string | null): Promise<CommunityEditPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_edit_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_edit_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
@@ -192,7 +192,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getCommunityForumComposerPage(url: string, userId: string | null): Promise<CommunityForumComposerPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_composer_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_composer_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
@@ -212,7 +212,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
     sort: ListSort,
     communityTab: 'all' | 'managed'
   ): Promise<CommunitiesPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_communities_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_communities_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -251,7 +251,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
   }
 
   async getCommunityPage(url: string, userId: string | null): Promise<CommunityPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
@@ -300,7 +300,7 @@ export class SupabaseCommunitiesRepository extends SupabaseRepositoryClient impl
     sort: ListSort,
     tab: string | undefined
   ): Promise<CommunityMembersPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_members_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_members_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
