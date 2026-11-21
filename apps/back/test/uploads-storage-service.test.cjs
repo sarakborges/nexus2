@@ -89,3 +89,24 @@ test('Storage transport failures are normalized as service unavailable', async t
       error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
   )
 })
+
+test('Storage response body read failures are normalized as service unavailable', async t => {
+  const originalFetch = global.fetch
+  global.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.error(new Error('simulated response body transport failure'))
+    }
+  }), { status: 200 })
+  t.after(() => { global.fetch = originalFetch })
+
+  const service = createService()
+  const response = await service.request('/object/upload/sign/nexus-editor-images/file.png', {
+    method: 'POST'
+  })
+
+  await assert.rejects(
+    service.readJson(response),
+    error => error.getStatus() === 503 &&
+      error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+})
