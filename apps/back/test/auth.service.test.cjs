@@ -193,7 +193,7 @@ test('a user cannot select a profile that is not linked to their account', async
 
   await assert.rejects(
     service.updateCurrentProfile(user.id, 'profile-owned-by-someone-else'),
-    error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
 
