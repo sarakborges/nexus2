@@ -24,13 +24,17 @@ test('future public functions do not inherit client or PUBLIC EXECUTE', () => {
     migration,
     /alter default privileges for role postgres in schema public\s+revoke execute on functions from public, anon, authenticated/i
   )
+  assert.match(
+    migration,
+    /alter default privileges for role postgres\s+revoke execute on functions from public/i
+  )
 })
 
 test('default privilege changes preserve service_role and Supabase-managed owner defaults', () => {
   assert.doesNotMatch(migration, /revoke [^;]* from [^;]*service_role/i)
   assert.doesNotMatch(migration, /supabase_admin/i)
   assert.equal((migration.match(/for role postgres in schema public/gi) || []).length, 3)
-  assert.equal((migration.match(/alter default privileges/gi) || []).length, 3)
+  assert.equal((migration.match(/alter default privileges/gi) || []).length, 4)
 })
 
 test('default privilege migration affects future objects only', () => {
