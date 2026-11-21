@@ -174,6 +174,7 @@ COMMON_VIEW_ALL: 'View all',
   AUTH_ERROR_EMAIL_EXISTS:
     'An account with this email already exists in this browser.',
   AUTH_ERROR_INVALID_CREDENTIALS: 'The email or password is incorrect.',
+  AUTH_ERROR_RATE_LIMIT: 'Too many attempts. Wait before trying again.',
   AUTH_ERROR_STORAGE:
     'Browser storage is unavailable. Check your browser settings and try again.',
   AUTH_ERROR_CRYPTO:
@@ -396,6 +397,12 @@ COMMON_VIEW_ALL: 'View all',
     'Maximum 8,000 HTML characters.',
   PROFILE_MESSAGES_SEND: 'Send message',
   PROFILE_MESSAGES_ERROR_INVALID: 'Write a message of up to 8,000 HTML characters.',
+  PROFILE_MESSAGES_ERROR_ACCOUNT: 'Your session is no longer valid. Sign in again to send the message.',
+  PROFILE_MESSAGES_ERROR_FRIENDS_ONLY: 'This profile only accepts messages from connected profiles.',
+  PROFILE_MESSAGES_ERROR_PROFILE_TYPE: 'Your active profile is not compatible with this profile.',
+  PROFILE_MESSAGES_ERROR_PROFILE_ACCESS: 'The selected profile is no longer linked to your account. Refresh your session and try again.',
+  PROFILE_MESSAGES_ERROR_PROFILE_NOT_FOUND: 'This profile is no longer available.',
+  PROFILE_MESSAGES_ERROR_IMAGE: 'An attached image has expired or is already linked to other content. Remove it and upload it again.',
   PROFILE_MESSAGES_ERROR_STORAGE: 'The message could not be saved.',
   PROFILE_MESSAGES_NEED_PROFILE:
     'Select one of your profiles to send a message.',

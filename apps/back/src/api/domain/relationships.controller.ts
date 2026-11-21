@@ -1,9 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards
+} from '@nestjs/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
-import { ActorDto, CommunityRelationDto, OwnershipDto, ProfileRelationDto } from './domain.dto'
+import { ActorDto, CommunityRelationDto, OwnershipDto, ProfileRelationDto, RemoveProfileRelationDto } from './domain.dto'
 import { DomainService } from './domain.service'
 
 @Controller()
@@ -14,13 +25,13 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   getRelationships(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Query('profileId') id: string
+    @Query('profileId', new ParseUUIDPipe()) id: string
   ) {
     return this.domain.getProfileRelationships(user.id, id)
   }
 
   @Get('relationships/friends/:profileId')
-  getFriends(@Param('profileId') id: string, @Query() query: PaginationDto) {
+  getFriends(@Param('profileId', new ParseUUIDPipe()) id: string, @Query() query: PaginationDto) {
     return this.domain.getProfileFriends(id, query)
   }
 
@@ -42,7 +53,7 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   async removeRelationship(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Body() body: Omit<ProfileRelationDto, 'type'>
+    @Body() body: RemoveProfileRelationDto
   ) {
     await this.domain.removeProfileRelationship(user.id, body.sourceProfileId, body.targetProfileId)
     return { success: true }
@@ -51,7 +62,7 @@ export class RelationshipsController {
   @Get('communities/:communityId/relationships')
   @UseGuards(OptionalJwtAccessGuard)
   getCommunityRelationships(
-    @Param('communityId') id: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUserContext | undefined
   ) {
     return this.domain.getCommunityRelationships(user?.id ?? null, id)
@@ -61,8 +72,8 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   pendingMembers(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
-    @Query('actorProfileId') actor: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Query('actorProfileId', new ParseUUIDPipe()) actor: string,
     @Query() query: PaginationDto
   ) {
     return this.domain.listPendingMembers(user.id, id, actor, query)
@@ -71,14 +82,13 @@ export class RelationshipsController {
   @Get('communities/:communityId/members')
   @UseGuards(OptionalJwtAccessGuard)
   members(
-    @Param('communityId') id: string,
-    @Query('tab') tab: string | undefined,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
     @CurrentUser() user: AuthenticatedUserContext | undefined,
     @Query() query: PaginationDto
   ) {
     return this.domain.listCommunityMembers(
       id,
-      tab ?? 'all',
+      query.tab ?? 'all',
       query,
       user?.id ?? null,
       query.actorProfileId
@@ -89,8 +99,8 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   updateCommunityRelationship(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') communityId: string,
-    @Param('profileId') profileId: string,
+    @Param('communityId', new ParseUUIDPipe()) communityId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: CommunityRelationDto
   ) {
     return this.domain.updateCommunityRelationship(
@@ -106,8 +116,8 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   async removeCommunityRelationship(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') communityId: string,
-    @Param('profileId') profileId: string,
+    @Param('communityId', new ParseUUIDPipe()) communityId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: ActorDto
   ) {
     await this.domain.removeCommunityRelationship(
@@ -123,8 +133,8 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   async demoteModerator(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') communityId: string,
-    @Param('profileId') profileId: string,
+    @Param('communityId', new ParseUUIDPipe()) communityId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: ActorDto
   ) {
     await this.domain.demoteModerator(user.id, communityId, profileId, body.actorProfileId)
@@ -135,7 +145,7 @@ export class RelationshipsController {
   @UseGuards(JwtAccessGuard)
   async transferOwnership(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') communityId: string,
+    @Param('communityId', new ParseUUIDPipe()) communityId: string,
     @Body() body: OwnershipDto
   ) {
     await this.domain.transferOwnership(

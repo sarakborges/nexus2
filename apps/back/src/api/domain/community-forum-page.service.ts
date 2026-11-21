@@ -3,7 +3,7 @@ import type { CommunityForumPageData } from '@nexus/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { PaginationDto } from '../pagination/pagination.dto'
 import { normalizeEntityUrl } from './domain.utils'
-import { sanitizeRichText } from './rich-text-sanitizer'
+import { sanitizeRichText, sanitizeRichTextPage } from './rich-text-sanitizer'
 
 @Injectable()
 export class CommunityForumPageService {
@@ -23,6 +23,7 @@ export class CommunityForumPageService {
       query.sort
     ).then(page => ({
       ...page,
+      topics: sanitizeRichTextPage(page.topics),
       authors: page.authors.map(profile => ({
         ...profile,
         about: sanitizeRichText(profile.about ?? '')

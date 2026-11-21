@@ -24,7 +24,8 @@ test('community ID lookups read and normalize only the requested communities', a
           url: 'public',
           picture: '',
           about: '<p>Public text</p>',
-          type: 'rp'
+          type: 'rp',
+          privacy: 'public'
         }
       ]
     },

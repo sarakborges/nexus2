@@ -19,8 +19,7 @@ export async function uploadFile(
   actorProfileId?: string
 ): Promise<UploadedFile> {
   if (!imageTypes.has(file.type)) throw new Error('INVALID_UPLOAD_TYPE')
-  const maxSize =
-    purpose === 'editor-image' ? 10 * 1024 * 1024 : 5 * 1024 * 1024
+  const maxSize = 1 * 1024 * 1024
   if (!file.size || file.size > maxSize) throw new Error('INVALID_UPLOAD_SIZE')
 
   const { data: signed } = await api.post<{ id: string; uploadUrl: string }>(

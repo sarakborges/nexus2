@@ -70,6 +70,13 @@ export class DomainAccessService {
     )
   }
 
+  private normalizeCommunityPrivacy(value: unknown): Community['privacy'] {
+    if (value === 'public' || value === 'private' || value === 'unlisted') {
+      return value
+    }
+    throw new Error('INVALID_COMMUNITY_PRIVACY')
+  }
+
   private normalizeCommunities(
     stored: Community[],
     profileTypes: ReadonlyMap<string, Profile['type']> = new Map(),
@@ -78,9 +85,7 @@ export class DomainAccessService {
     return stored.map(community => {
       const ownerProfileId = ownerProfileByCommunityId.get(community.id)
       const inheritedType = ownerProfileId ? profileTypes.get(ownerProfileId) : undefined
-      const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
-        ? community.privacy
-        : 'public'
+      const privacy = this.normalizeCommunityPrivacy(community.privacy)
       const createdAt = Number.isFinite(community.createdAt) ? community.createdAt : 0
       return {
         ...community,
@@ -222,9 +227,10 @@ export class DomainAccessService {
   ): void {
     const community = communities.find(item => item.id === communityId)
     if (!community) throw new NotFoundException('COMMUNITY_NOT_FOUND')
-    const privacy = ['public', 'private', 'unlisted'].includes(community.privacy)
-      ? community.privacy
-      : 'public'
+    const privacy = community.privacy
+    if (privacy !== 'public' && privacy !== 'private' && privacy !== 'unlisted') {
+      throw new NotFoundException('COMMUNITY_NOT_FOUND')
+    }
     if (privacy !== 'private') return
     if (!userId) throw new NotFoundException('COMMUNITY_NOT_FOUND')
 

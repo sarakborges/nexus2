@@ -117,32 +117,20 @@ test('getCommunitiesByIds resolves inherited owner types with targeted relationa
   ])
 })
 
-test('findAccountByEmail filters accounts in Postgres and maps only that account relation data', async t => {
+test('findAccountByEmail filters accounts in Postgres and returns only credential fields', async t => {
   const calls = []
   withFetch(t, async input => {
     const requestUrl = new URL(String(input))
     calls.push(requestUrl)
-    if (requestUrl.pathname.endsWith('/accounts')) {
-      assert.equal(requestUrl.searchParams.get('email'), 'eq.person@example.com')
-      return new Response(JSON.stringify([{
-        id: 'account-1',
-        email: 'person@example.com',
-        password_hash: 'hash',
-        password_salt: 'salt',
-        current_profile_id: 'profile-1'
-      }]), { status: 200 })
-    }
-    if (requestUrl.pathname.endsWith('/account_profiles')) {
-      assert.equal(requestUrl.searchParams.get('account_id'), 'in.("account-1")')
-      return new Response(JSON.stringify([
-        { account_id: 'account-1', profile_id: 'profile-1', position: 0 }
-      ]), { status: 200 })
-    }
-    if (requestUrl.pathname.endsWith('/account_preferences')) {
-      assert.equal(requestUrl.searchParams.get('account_id'), 'in.("account-1")')
-      return new Response(JSON.stringify([]), { status: 200 })
-    }
-    throw new Error('Unexpected request: ' + requestUrl.pathname)
+    assert.equal(requestUrl.pathname, '/rest/v1/accounts')
+    assert.equal(requestUrl.searchParams.get('email'), 'eq.person@example.com')
+    return new Response(JSON.stringify([{
+      id: 'account-1',
+      email: 'person@example.com',
+      password_hash: 'hash',
+      password_salt: 'salt',
+      current_profile_id: 'profile-1'
+    }]), { status: 200 })
   })
 
   const repo = new SupabaseRelationalRepository(url, key, secret)
@@ -151,12 +139,11 @@ test('findAccountByEmail filters accounts in Postgres and maps only that account
   assert.deepEqual(account, {
     id: 'account-1',
     email: 'person@example.com',
-    password: { hash: 'hash', salt: 'salt' },
-    profiles: ['profile-1'],
-    currentProfile: 'profile-1'
+    password: { hash: 'hash', salt: 'salt' }
   })
-  assert.equal(calls.length, 3)
+  assert.equal(calls.length, 1)
 })
+
 
 
 test('creates a profile post through the atomic relational RPC', async t => {

@@ -1,8 +1,9 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
+const { createHmac } = require('node:crypto')
 const { AuthService } = require('../dist/api/auth/auth.service.js')
 
-function createAuthHarness({ failTransaction = false } = {}) {
+function createAuthHarness({ failTransaction = false, authRateLimitSecret } = {}) {
   const collections = new Map([
     ['accounts', []],
     ['refresh_tokens', []]
@@ -96,7 +97,9 @@ function createAuthHarness({ failTransaction = false } = {}) {
     }
   }
   const config = {
-    get() { return undefined },
+    get(key) {
+      return key === 'AUTH_RATE_LIMIT_SECRET' ? authRateLimitSecret : undefined
+    },
     getOrThrow(key) { return `test-secret-${key}` }
   }
   return {
@@ -139,6 +142,30 @@ test('sign-in verifies the password and normalizes the email', async () => {
     service.signIn({ email: 'person@example.com', password: 'wrong-password' }),
     error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
   )
+})
+
+test('wrong passwords do not hydrate account memberships or preferences', async () => {
+  const { service, repository } = createAuthHarness()
+  await service.signUp({ email: 'deferred-hydration@example.com', password: 'a-secure-password' })
+
+  const accountReads = []
+  const originalLookup = repository.getAccountById
+  repository.getAccountById = async id => {
+    accountReads.push(id)
+    return originalLookup(id)
+  }
+
+  await assert.rejects(
+    service.signIn({ email: 'deferred-hydration@example.com', password: 'wrong-password' }),
+    error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
+  )
+  assert.deepEqual(accountReads, [])
+
+  const signedIn = await service.signIn({
+    email: 'deferred-hydration@example.com',
+    password: 'a-secure-password'
+  })
+  assert.deepEqual(accountReads, [signedIn.user.id])
 })
 
 test('refresh reads only the account identified by the signed token', async () => {
@@ -190,7 +217,7 @@ test('a user cannot select a profile that is not linked to their account', async
 
   await assert.rejects(
     service.updateCurrentProfile(user.id, 'profile-owned-by-someone-else'),
-    error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
 
@@ -348,4 +375,105 @@ test('account profile changes use targeted relational writes instead of account 
   assert.deepEqual(finalUser.profiles, ['profile-1'])
   assert.equal(finalUser.currentProfile, 'profile-1')
   assert.deepEqual(changes.map(change => change.action), ['add', 'add', 'select', 'remove'])
+})
+
+
+test('auth attempts use separate shared fixed-window policies and hashed client identifiers', async () => {
+  const { service, repository } = createAuthHarness()
+  const requests = []
+  let allowed = true
+  repository.consumeAuthRateLimit = async (keyHash, windowMs, maxRequests) => {
+    requests.push({ keyHash, windowMs, maxRequests })
+    return allowed
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', '203.0.113.10')
+  await service.assertAuthAttemptAllowed('sign-up', '203.0.113.10')
+
+  assert.equal(requests.length, 2)
+  assert.match(requests[0].keyHash, /^[0-9a-f]{64}$/)
+  assert.match(requests[1].keyHash, /^[0-9a-f]{64}$/)
+  assert.notEqual(requests[0].keyHash, requests[1].keyHash)
+  assert.deepEqual(
+    requests.map(({ windowMs, maxRequests }) => ({ windowMs, maxRequests })),
+    [
+      { windowMs: 15 * 60 * 1000, maxRequests: 15 },
+      { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+    ]
+  )
+
+  allowed = false
+  await assert.rejects(
+    service.assertAuthAttemptAllowed('sign-in', '203.0.113.10'),
+    error => error.getStatus() === 429 && error.message === 'AUTH_RATE_LIMIT_EXCEEDED'
+  )
+})
+
+test('empty dedicated rate-limit secrets fall back to the refresh secret', async () => {
+  const { service, repository } = createAuthHarness({ authRateLimitSecret: '   ' })
+  let capturedKey
+  repository.consumeAuthRateLimit = async keyHash => {
+    capturedKey = keyHash
+    return true
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', '203.0.113.11')
+
+  const expected = createHmac('sha256', 'test-secret-JWT_REFRESH_SECRET')
+    .update('nexus:auth:sign-in:203.0.113.11')
+    .digest('hex')
+  assert.equal(capturedKey, expected)
+})
+
+test('invalid client addresses share a safe fallback bucket', async () => {
+  const { service, repository } = createAuthHarness()
+  let capturedKey
+  repository.consumeAuthRateLimit = async keyHash => {
+    capturedKey = keyHash
+    return true
+  }
+
+  await service.assertAuthAttemptAllowed('sign-in', 'not-an-ip')
+  const firstKey = capturedKey
+  await service.assertAuthAttemptAllowed('sign-in', 'unknown')
+  assert.equal(capturedKey, firstKey)
+})
+
+
+test('sign-in fails closed when the account is deleted between credential verification and refresh-token issue', async () => {
+  const { service, repository } = createAuthHarness()
+  await service.signUp({
+    email: 'deleted-during-login@example.com',
+    password: 'a-secure-password'
+  })
+
+  repository.issueRefreshToken = async () => {
+    throw new Error('Supabase relational request failed (404): {"message":"ACCOUNT_NOT_FOUND"}')
+  }
+
+  await assert.rejects(
+    service.signIn({
+      email: 'deleted-during-login@example.com',
+      password: 'a-secure-password'
+    }),
+    error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})
+
+
+test('sign-in performs a dummy password hash when the email does not exist', async () => {
+  const { service } = createAuthHarness()
+  const salts = []
+  service.hashPassword = async (_password, salt) => {
+    salts.push(Buffer.from(salt))
+    return Buffer.alloc(32)
+  }
+
+  await assert.rejects(
+    service.signIn({ email: 'missing@example.com', password: 'wrong-password' }),
+    error => error.getStatus() === 401 && error.message === 'INVALID_CREDENTIALS'
+  )
+
+  assert.equal(salts.length, 1)
+  assert.deepEqual(salts[0], Buffer.alloc(16))
 })

@@ -1,5 +1,6 @@
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator'
 
+import { IMAGE_MAX_FILE_SIZE } from './uploads.constants'
 import type { UploadPurpose } from './uploads.types'
 
 export class CreateUploadDto {
@@ -7,28 +8,30 @@ export class CreateUploadDto {
   purpose!: UploadPurpose
 
   @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   contentType!: string
 
   @IsInt()
   @Min(1)
-  @Max(10 * 1024 * 1024)
+  @Max(IMAGE_MAX_FILE_SIZE)
   size!: number
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   targetId?: string
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   actorProfileId?: string
 }
 
 export class UpdateAvatarDto {
   @IsOptional()
-  @IsString()
+  @IsUUID()
   uploadId?: string | null
 
   @IsOptional()
-  @IsString()
+  @IsUUID()
   actorProfileId?: string
 }

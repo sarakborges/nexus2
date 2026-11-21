@@ -11,7 +11,10 @@ test('forum page delegates to the relational page query and sanitizes current-pa
     currentProfileType: 'social',
     canReadForum: true,
     canPublish: false,
-    topics: { items: [], page: 2, pageSize: 20, totalItems: 0, totalPages: 1 },
+    topics: {
+      items: [{ id: 'topic-1', content: '<p>Topic</p><script>unsafe()</script>' }],
+      page: 2, pageSize: 20, totalItems: 1, totalPages: 1
+    },
     authors: [{
       id: 'profile-1',
       name: 'Author',
@@ -35,6 +38,8 @@ test('forum page delegates to the relational page query and sanitizes current-pa
   )
   assert.deepEqual(calls, [['community', 'account-1', 2, 'term', 'name-asc']])
   assert.equal(page.authors[0].about.includes('<script>'), false)
+  assert.equal(page.topics.items[0].content.includes('<script>'), false)
+  assert.doesNotMatch(page.topics.items[0].content, /unsafe\(\)/)
   assert.equal(page.topics.pageSize, 20)
 })
 

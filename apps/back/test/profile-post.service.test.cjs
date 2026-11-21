@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { ConflictException, ForbiddenException } = require('@nestjs/common')
+const { ConflictException, ForbiddenException, BadRequestException } = require('@nestjs/common')
 const { ProfilePostService } = require('../dist/api/domain/profile-post.service.js')
 
 function makeRepository() {
@@ -98,4 +98,23 @@ test('rejects empty posts before invoking the relational write', async () => {
     error => error instanceof ConflictException && error.message === 'INVALID_POST'
   )
   assert.equal(writeCalled, false)
+})
+
+
+test('maps invalid profile post RPC input to a client error', async () => {
+  const repository = {
+    async createProfilePost() {
+      throw new Error('INVALID_PROFILE_POST')
+    }
+  }
+  const service = new ProfilePostService(repository, {
+    getEditorImageIds() { return [] }
+  })
+
+  await assert.rejects(
+    service.createProfilePost('user-1', 'profile-1', '<p>Hello</p>'),
+    error => error instanceof BadRequestException &&
+      error.getStatus() === 400 &&
+      error.message === 'INVALID_PROFILE_POST'
+  )
 })

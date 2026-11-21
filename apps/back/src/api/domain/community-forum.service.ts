@@ -4,7 +4,8 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  Optional
+  Optional,
+  UnauthorizedException
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import type {
@@ -17,7 +18,12 @@ import type {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { ForumTopicModerationChanges } from './domain.types'
 import type { PaginationDto } from '../pagination/pagination.dto'
-import { getRichTextPlainText, sanitizeRichText } from './rich-text-sanitizer'
+import {
+  getRichTextPlainText,
+  sanitizeCommunityForumTopicDetail,
+  sanitizeRichText,
+  sanitizeRichTextPage
+} from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import { CommunityForumRealtimeService } from './community-forum-realtime.service'
 
@@ -31,7 +37,9 @@ export class CommunityForumService {
 
   async listCommunityForumTopics(communityId: string, q: PaginationDto, userId: string | null = null): Promise<PaginatedResult<CommunityForumTopicSummary>> {
     try {
-      return await this.data.listCommunityForumTopics(communityId, userId, q.page)
+      return sanitizeRichTextPage(
+        await this.data.listCommunityForumTopics(communityId, userId, q.page)
+      )
     } catch (error) {
       this.throwRelationalWriteError(error)
     }
@@ -39,7 +47,9 @@ export class CommunityForumService {
 
   async getCommunityForumTopic(communityId: string, topicId: string, q: PaginationDto, userId: string | null = null): Promise<CommunityForumTopicDetail> {
     try {
-      return await this.data.getCommunityForumTopic(communityId, topicId, userId, q.page)
+      return sanitizeCommunityForumTopicDetail(
+        await this.data.getCommunityForumTopic(communityId, topicId, userId, q.page)
+      )
     } catch (error) {
       this.throwRelationalWriteError(error)
     }
@@ -100,7 +110,7 @@ export class CommunityForumService {
         userId, communityId, topicId, actorProfileId: profileId, ...changes, updatedAt: now
       })
       await this.realtime?.publishTopicChanged(topicId)
-      return updated
+      return { ...updated, content: sanitizeRichText(updated.content ?? '') }
     } catch (error) {
       this.throwRelationalWriteError(error)
     }
@@ -130,7 +140,7 @@ export class CommunityForumService {
 
   private throwRelationalWriteError(error: unknown): never {
     const message = error instanceof Error ? error.message : String(error)
-    if (message.includes('ACCOUNT_NOT_FOUND')) throw new NotFoundException('ACCOUNT_NOT_FOUND')
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     if (message.includes('PROFILE_NOT_OWNED')) throw new ForbiddenException('PROFILE_NOT_OWNED')
     if (message.includes('PROFILE_NOT_FOUND')) throw new NotFoundException('PROFILE_NOT_FOUND')
     if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')

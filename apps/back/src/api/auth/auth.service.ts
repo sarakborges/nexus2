@@ -1,10 +1,13 @@
-import { ConflictException, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
+import { ConflictException, HttpException, HttpStatus, Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { AccountService } from './account.service'
 import { JwtService } from '@nestjs/jwt'
-import { createHash, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, randomUUID, pbkdf2, timingSafeEqual } from 'node:crypto'
+import { isIP } from 'node:net'
 import type { AuthenticatedUser, AuthTokenPair, SignInCredentials, SignUpCredentials, UserPreferences } from '@nexus/common'
-import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
+import { DATA_REPOSITORY, type AccountCredentialsRecord, type DataRepository } from '../../storage/repository.interface'
+const DUMMY_PASSWORD_SALT = Buffer.alloc(16)
+
 import type {
   AccountRecord,
   JwtPayload,
@@ -30,6 +33,30 @@ export class AuthService {
     this.refreshTtl = Number(config.get('JWT_REFRESH_TTL_SECONDS') ?? 2592000)
   }
 
+  async assertAuthAttemptAllowed(
+    action: 'sign-in' | 'sign-up' | 'realtime-verify',
+    clientAddress: string
+  ): Promise<void> {
+    const address = isIP(clientAddress) ? clientAddress : 'unknown'
+    const policy = action === 'sign-in'
+      ? { windowMs: 15 * 60 * 1000, maxRequests: 15 }
+      : action === 'sign-up'
+        ? { windowMs: 60 * 60 * 1000, maxRequests: 5 }
+        : { windowMs: 60 * 1000, maxRequests: 120 }
+    const secret = this.config.get<string>('AUTH_RATE_LIMIT_SECRET')?.trim()
+      || this.config.getOrThrow<string>('JWT_REFRESH_SECRET')
+    const keyHash = createHmac('sha256', secret)
+      .update('nexus:auth:' + action + ':' + address)
+      .digest('hex')
+
+    const allowed = await this.repository.consumeAuthRateLimit(
+      keyHash,
+      policy.windowMs,
+      policy.maxRequests
+    )
+    if (!allowed) throw new HttpException('AUTH_RATE_LIMIT_EXCEEDED', HttpStatus.TOO_MANY_REQUESTS)
+  }
+
   async signUp(credentials: SignUpCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
     const salt = randomBytes(16)
@@ -47,8 +74,23 @@ export class AuthService {
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
-    const account = await this.repository.findAccountByEmail(email)
-    if (!account || !(await this.verifyPassword(credentials.password, account))) {
+    const credentialRecord = await this.repository.findAccountByEmail(email)
+    // Keep the missing-account path close to the wrong-password path so login
+    // timing does not reveal whether an email address is registered. Avoid
+    // loading profile memberships/preferences until the password is verified.
+    const passwordMatches = credentialRecord
+      ? await this.verifyPassword(credentials.password, credentialRecord)
+      : (await this.hashPassword(credentials.password, DUMMY_PASSWORD_SALT), false)
+    if (!credentialRecord || !passwordMatches) {
+      throw new UnauthorizedException('INVALID_CREDENTIALS')
+    }
+
+    const account = await this.repository.getAccountById(credentialRecord.id)
+    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    if (
+      account.password.hash !== credentialRecord.password.hash ||
+      account.password.salt !== credentialRecord.password.salt
+    ) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
     return this.issueTokens(account, { kind: 'sign-in' })
@@ -173,6 +215,9 @@ export class AuthService {
         if (message.includes('REFRESH_TOKEN_REVOKED')) {
           throw new UnauthorizedException('REFRESH_TOKEN_REVOKED')
         }
+        if (message.includes('ACCOUNT_NOT_FOUND')) {
+          throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+        }
         throw error
       }
     }
@@ -207,7 +252,7 @@ export class AuthService {
     })
   }
 
-  private async verifyPassword(password: string, account: AccountRecord): Promise<boolean> {
+  private async verifyPassword(password: string, account: AccountCredentialsRecord): Promise<boolean> {
     try {
       const actual = await this.hashPassword(password, Buffer.from(account.password.salt, 'base64'))
       const expected = Buffer.from(account.password.hash, 'base64')

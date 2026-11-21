@@ -34,7 +34,7 @@ To run only the frontend while sending API requests to the production BFF:
 npm run dev:front:prod-bff
 ```
 
-Open http://localhost:5173. The Vite server proxies `/api` to `https://nexus2-yoggsaras-projects.vercel.app`; browser requests remain same-origin with localhost, so the BFF's HttpOnly session cookies are stored for the local development host instead of requiring a direct cross-origin request. This mode does not start the local BFF or backend and does not require their `.env` files.
+Open http://localhost:5173. The Vite server proxies `/api` to `https://nexus-hope.vercel.app`; browser requests remain same-origin with localhost, so the BFF's HttpOnly session cookies are stored for the local development host instead of requiring a direct cross-origin request. This mode does not start the local BFF or backend and does not require their `.env` files.
 
 **This mode uses production accounts and data.** Sign-ups, profile changes, messages, relationship actions and other writes affect the production environment. Use it only when you intend to work against production data.
 
@@ -75,15 +75,15 @@ Create the following variables in the Vercel project for Preview and Production:
 - `SUPABASE_STORAGE_SECRET_KEY`: a separate Supabase server-side Secret API key used by the backend for Storage operations and to publish forum-topic change events to Realtime. Create it under Supabase Project Settings → API Keys. Do not use `SUPABASE_API_SECRET` here.
 - `CRON_SECRET`: a long random value shared by the BFF and backend to authenticate the daily cleanup cron.
 
-The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. Forum topic broadcasts carry only a change notification; the topic's content is always loaded through the existing authorized backend API. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
+The TTL values must match on the BFF and backend because they control token validity and cookie lifetime. `AUTH_RATE_LIMIT_SECRET` is optional; when configured, it provides a dedicated HMAC key for authentication rate-limit bucket identifiers. If omitted, the backend derives those identifiers from `JWT_REFRESH_SECRET`. Forum topic broadcasts carry only a change notification; the topic's content is always loaded through the existing authorized backend API. Environment variables must not use a `VITE_` prefix. The Supabase publishable key is not a secret; the API secret and JWT secrets must be stored as sensitive values in Vercel and must never be committed or included in the frontend bundle.
 
 ### Persistent storage
 
 All environments use `SupabaseRelationalRepository`. Account, profile, community, relationship, post, message, forum, upload and token data are persisted as normalized PostgreSQL rows.
 
-Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 006 is intentionally absent.
+For a fresh database, apply the numbered SQL files in ascending order. Migration `006_repair_missing_collection_rpcs.sql` is a recovery script for the transitional JSONB storage: it restores the legacy collection RPCs when they are missing and must run before migration 007. Production environments may record the equivalent recovery under a timestamped migration name, so check the Supabase migration history before replaying historical SQL. Do not run migration 006 after migration 042 has removed the JSONB collection table.
 
-1. `001`–`005` establish the transitional Nexus storage, private backend access, upload buckets and initial collection RPCs.
+1. `001`–`005` establish the transitional Nexus storage, private backend access, upload buckets and initial collection RPCs; `006` restores missing transitional collection RPCs when required.
 2. `007_relational_social_schema.sql` creates normalized account/social/media tables and transfers the existing records.
 3. `008`–`041` add relational indexes, feed projection and triggers, targeted transactional writes, SQL-side page queries, search, pagination and integrity guards.
 4. `042_retire_json_collection_storage.sql` removes the obsolete JSONB collection table and its legacy RPCs.
@@ -96,6 +96,26 @@ Apply every SQL file in `apps/back/sql` in ascending filename order. Migration 0
 11. `055_activity_notification_reads.sql` persists notification read state, and `056_active_profile_activity_feed.sql` scopes the feed to the active profile.
 12. `058_logical_deletion_and_exclusive_profiles.sql` applies the complete profile/account lifecycle atomically: exclusive profile ownership, logical deletion and cascades, explicit active-profile clearing, feed/read-state tombstones, and retained media metadata for asynchronous Storage cleanup.
 13. `059_harden_soft_delete_read_state_access.sql` changes notification read-state RPCs to `SECURITY INVOKER`, grants only the required backend insert privilege under the server-only RLS policy, and indexes the activity foreign key.
+14. `060_allow_server_soft_delete_tombstones.sql` corrects restrictive RLS checks so authorized backend soft-delete writes can persist tombstones.
+15. `061_refresh_tokens_physical_deletion.sql` makes refresh-token revocation and account-deletion cascades physically delete credentials rather than tombstone them.
+16. `062_remove_refresh_token_tombstone_state.sql` removes the obsolete refresh-token tombstone column and cascade behavior.
+17. `063_auth_rate_limits.sql` (introduced with the authentication-hardening change) creates a private shared rate-limit table and server-authorized RPC.
+18. `064_require_active_account_for_refresh_token.sql` serializes refresh-token issuance against account deletion and rejects token issuance for missing or tombstoned accounts.
+19. `065_fix_refresh_token_issue_lock_order.sql` keeps expired-token cleanup ahead of account-row locking during refresh-token issuance, matching the account-deletion lock order and avoiding a token/account deadlock. Apply migrations `063`–`065` before deploying the authentication-hardening backend code.
+20. `066_harden_private_community_read_membership_type.sql` requires a private-community membership profile to match the community's effective owner-inherited type before forum or member-list reads are authorized.
+21. `067_harden_private_community_metadata_reads.sql` applies the same owner-inherited profile-type check to community detail/edit/composer reads and private editor-image delivery.
+22. `068_harden_managed_communities_profile_type.sql` requires the manager's owned profile to match the community's effective type in both managed-community count and result queries.
+23. `069_private_community_avatars.sql` creates a dedicated private bucket for community avatars and updates community upload/read RPCs; profile avatars remain in the public profile bucket.
+24. `070_prevent_refresh_cleanup_deadlocks.sql` makes expired refresh-token cleanup skip rows locked by concurrent account deletion.
+25. `071_limit_managed_image_file_size.sql` sets the Storage file-size ceiling to 1 MiB for all three managed image buckets.
+26. `072_activity_notification_read_scope.sql` validates notification read-state IDs against the full active-profile feed visibility rules, rather than limiting validation to the first 51 feed entries.
+27. `073_auth_rate_limit_invoker_rls.sql` converts the auth rate-limit RPC to `SECURITY INVOKER` and grants only the necessary table operations under the backend-secret RLS policy.
+28. `074_revoke_client_access_to_internal_jobs.sql` removes `PUBLIC`, `anon` and `authenticated` table privileges from the internal jobs/prospects state tables and restricts their SQL/trigger helper execution to `service_role`.
+29. `075_opt_in_public_default_privileges.sql` removes inherited `PUBLIC`, `anon` and `authenticated` privileges from future tables, sequences and functions created by `postgres` in `public`; it also removes PostgreSQL's global default `PUBLIC EXECUTE` for future functions created by `postgres` (schema-local revokes cannot subtract that global default). Later migrations must explicitly grant only what each object needs.
+30. `076_revoke_elevated_client_table_privileges.sql` removes `TRUNCATE`, `REFERENCES`, `TRIGGER` and `MAINTAIN` from `PUBLIC`, `anon` and `authenticated` on existing public tables, preserving ordinary row operations and `service_role` grants.
+31. `077_revoke_unused_authenticated_role_access.sql` removes the unused Supabase `authenticated` role's existing grants on public tables, sequences and functions; it also revokes client access to the worker-only automation sequence. The BFF continues using `anon`.
+
+Migrations `068`–`077` are present in this branch but have not been applied to production. Validate them against an isolated development database and apply them in numeric order before deploying the code that depends on them.
 
 The migrations leave the existing tracker tables and their migration history untouched. User-facing data deletion is logical: records and dependent content receive `deleted_at_ms`, remain available as retained history, and are excluded from normal reads. Profiles have exactly one account owner; there is no profile-sharing or unlink-only ownership state. Relationships, forum/message content, account/profile settings, notification read states and feed projection rows also retain tombstones. Storage objects are removed asynchronously after being marked for deletion, while their database metadata remains as a tombstone. The feed remains a derived projection, but removing a feed item does not erase its stored deletion history. The production domain data lives in relational tables with primary keys, foreign keys, uniqueness constraints and row-level security. The `private` schema contains the backend-header validation helper used by internal database RPCs; it is not exposed through the Data API. The database stores only the SHA-256 hash of `SUPABASE_API_SECRET`. The small `public.nexus_collection_versions` table remains as concurrency metadata for atomic relational writes; it is not a domain-data store.
 
@@ -103,7 +123,7 @@ Configure `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_API_SECRET`, and
 
 ### File uploads
 
-The Supabase Storage setup uses two buckets: `nexus-avatars` is public and stores profile/community avatars permanently (up to 5 MB per image); `nexus-editor-images` is private and stores editor images (up to 10 MB). Both accept JPEG, PNG, WebP, GIF and AVIF. The backend issues short-lived signed upload URLs, and the browser uploads directly to Storage. No Storage secret is sent to the browser.
+The Supabase Storage setup uses three buckets: `nexus-avatars` is public and stores profile avatars; `nexus-community-avatars` is private and stores community avatars; `nexus-editor-images` is private and stores rich-text/editor images. All three accept JPEG, PNG, WebP, GIF and AVIF, with a maximum file size of 1 MiB and a maximum edge length of 1,024 px. The backend validates MIME signatures and image dimensions at upload completion and again when serving managed images; Storage also enforces the 1 MiB file-size ceiling through migration 071. Community avatars are served through an authorization-checked backend endpoint rather than a public Storage URL. The backend issues short-lived signed upload URLs, and the browser uploads directly to Storage. No Storage secret is sent to the browser.
 
 Editor image references are stored in sanitized HTML as Nexus upload routes. Unattached editor images expire after 24 hours. When an image is attached to content, its upload expiry is suspended; if the attachment is removed, a new 24-hour orphan-cleanup window starts. Access to message images is checked against the sender/recipient profiles; images attached to public profile/community About content are publicly readable through the backend, while private-community content follows membership permissions. A daily Vercel Cron removes expired objects and abandoned avatar uploads. The scheduled cleanup runs at 04:00 UTC; physical deletion may happen after the access deadline, but expired unattached images are already inaccessible.
 
@@ -127,7 +147,7 @@ Open http://localhost:8080 by default.
 
 The backend issues separate access and refresh JWTs. The access token defaults to 15 minutes; the refresh token defaults to 30 days and rotates after use. The BFF stores them in HttpOnly cookies, forwards the access token to the backend and automatically refreshes expired sessions. Browser JavaScript does not receive either token.
 
-Passwords remain hashed with PBKDF2-SHA256 using 310,000 iterations and the same base64 salt/hash representation used by the previous frontend, so existing password hashes remain compatible once account records are imported.
+Passwords remain hashed with PBKDF2-SHA256 using 310,000 iterations and the same base64 salt/hash representation used by the previous frontend, so existing password hashes remain compatible once account records are imported. Sign-in attempts are limited to 15 per client IP per 15-minute window; sign-up attempts are limited to 5 per client IP per hour. The BFF forwards Vercel's client-address header and the backend stores only an HMAC hash of each route/IP bucket. The database migration for this limiter must be applied before deploying the code that calls it.
 
 ## Pagination
 

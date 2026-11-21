@@ -8,6 +8,7 @@
     "prebuild": "npm --prefix ../.. run build --workspace @nexus/common",
     "build": "tsc -b && vite build --outDir build",
     "lint": "eslint .",
+    "test": "node --test test/*.test.cjs",
     "preview": "vite preview --host 0.0.0.0 --outDir build",
     "prettier": "prettier --write .",
     "storybook": "storybook dev -p 6006",

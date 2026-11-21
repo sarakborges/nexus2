@@ -50,3 +50,34 @@ test('profile messages page maps a missing account from the relational query', a
       error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
   )
 })
+
+
+test('paginated message reads hide recipient-only favorite state from senders', async () => {
+  const result = {
+    profile: { id: 'profile-1', about: '' },
+    viewerRelationship: null,
+    currentProfileType: 'social',
+    isProfileOwner: false,
+    messageTab: 'all',
+    messages: {
+      items: [{
+        id: 'message-1',
+        content: '<p>Message</p>',
+        isFavorite: true
+      }],
+      page: 1, pageSize: 20, totalItems: 1, totalPages: 1
+    },
+    senders: [],
+    messagePermissions: {}
+  }
+  const service = new ProfileMessagesPageService({
+    async getProfileMessagesPage() { return result }
+  })
+  const page = await service.getProfileMessagesPage(
+    'profile',
+    { page: 1, sort: 'activity-desc', messageTab: 'all' },
+    'sender-user'
+  )
+
+  assert.equal(page.messages.items[0].isFavorite, false)
+})

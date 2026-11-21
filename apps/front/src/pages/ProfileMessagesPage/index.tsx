@@ -48,7 +48,7 @@ export function ProfileMessagesPage() {
     uploadEditorImage,
     isSendingMessage,
     hasSendMessageError,
-    isInvalidMessageError,
+    sendMessageErrorCode,
     handleSubmit
   } = useProfileMessagesPage()
 
@@ -97,7 +97,7 @@ export function ProfileMessagesPage() {
           canSubmitMessage={canSubmitMessage}
           isSendingMessage={isSendingMessage}
           hasSendMessageError={hasSendMessageError}
-          isInvalidMessageError={isInvalidMessageError}
+          sendMessageErrorCode={sendMessageErrorCode}
           onUploadImage={uploadEditorImage}
           onSubmit={handleSubmit}
           replyToName={replyTo?.name}

@@ -7,7 +7,11 @@ const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.s
 const { UploadsContentService } = require('../dist/api/uploads/uploads.content.service.js')
 const { UploadsAvatarService } = require('../dist/api/uploads/uploads.avatar.service.js')
 
-const pngHeader = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+const pngHeader = Buffer.from([
+  137, 80, 78, 71, 13, 10, 26, 10,
+  0, 0, 0, 13, 73, 72, 68, 82,
+  0, 0, 0, 1, 0, 0, 0, 1
+])
 const supabaseUrl = 'https://project.example.supabase.co'
 const storageSecret = 'sb_secret_test'
 const cronSecret = 'cron-secret-test'
@@ -39,7 +43,7 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
     resourceType === 'community-forum-topic' ||
     resourceType === 'community-forum-reply'
   ) {
-    collections.push('accounts', 'communities', 'community_relationships')
+    collections.push('accounts', 'profiles', 'communities', 'community_relationships')
     if (resourceType === 'community-forum-topic') collections.push('community_forum_topics')
     if (resourceType === 'community-forum-reply') collections.push('community_forum_replies')
   }
@@ -102,11 +106,15 @@ async function resolveEditorImageRecord(data, { userId, id, now }) {
         const account = current.accounts.find(item => item.id === userId)
         if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
         const ownedProfiles = new Set(account.profiles)
-        const canRead = current.community_relationships.some(relationship =>
-          relationship.profiles[1] === communityId &&
-          ownedProfiles.has(relationship.profiles[0]) &&
-          ['owner', 'moderator', 'connection'].includes(relationship.type)
-        )
+        const canRead = current.community_relationships.some(relationship => {
+          const memberProfile = current.profiles.find(profile =>
+            profile.id === relationship.profiles[0]
+          )
+          return relationship.profiles[1] === communityId &&
+            ownedProfiles.has(relationship.profiles[0]) &&
+            memberProfile?.type === community.type &&
+            ['owner', 'moderator', 'connection'].includes(relationship.type)
+        })
         if (!canRead) throw new NotFoundException('UPLOAD_NOT_FOUND')
       }
       return { records: current, result: latest }
@@ -548,6 +556,41 @@ test('creates an owner-scoped signed upload and stores a pending metadata record
   assert.equal(records[0].expiresAt, null)
 })
 
+test('applies the same one-MiB size cap to every image upload purpose', async t => {
+  const { service, collections } = createHarness()
+  const maxSize = 1024 * 1024
+  let signedRequests = 0
+  withFetch(t, async () => {
+    signedRequests += 1
+    return new Response(JSON.stringify({
+      url: '/object/upload/sign/nexus-avatars/file.png?token=signed-token'
+    }), { status: 200, headers: { 'content-type': 'application/json' } })
+  })
+
+  const purposes = ['profile-avatar', 'community-avatar', 'editor-image']
+  for (const purpose of purposes) {
+    await service.createUpload('user-1', {
+      purpose,
+      contentType: 'image/png',
+      size: maxSize
+    })
+  }
+
+  for (const purpose of purposes) {
+    await assert.rejects(
+      service.createUpload('user-1', {
+        purpose,
+        contentType: 'image/png',
+        size: maxSize + 1
+      }),
+      error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD'
+    )
+  }
+
+  assert.equal(signedRequests, purposes.length)
+  assert.equal(collections.get('media_files').length, purposes.length)
+})
+
 test('removes pending upload metadata when Storage cannot sign the upload', async t => {
   const { service, collections } = createHarness()
   withFetch(t, async () => new Response(JSON.stringify({}), {
@@ -566,7 +609,10 @@ test('removes pending upload metadata when Storage cannot sign the upload', asyn
   assert.deepEqual(collections.get('media_files'), [])
 })
 
-test('completion validates the stored bytes and sets editor expiration to 24 hours', async t => {
+test('completion accepts an image exactly at the 1024px-per-edge boundary', async t => {
+  const imageAtLimit = Buffer.from(pngHeader)
+  imageAtLimit.writeUInt32BE(1024, 16)
+  imageAtLimit.writeUInt32BE(1024, 20)
   const file = {
     id: '123e4567-e89b-42d3-a456-426614174000',
     ownerUserId: 'user-1',
@@ -574,7 +620,7 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
     bucket: 'nexus-editor-images',
     path: 'editor/user-1/image.png',
     contentType: 'image/png',
-    expectedSize: pngHeader.length,
+    expectedSize: imageAtLimit.length,
     size: null,
     status: 'pending',
     createdAt: Date.now(),
@@ -588,12 +634,12 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   const { service, collections } = createHarness({ media_files: [file] })
   withFetch(t, async (_url, init) => {
     assert.equal(init.method, 'GET')
-    assert.equal(new Headers(init.headers).get('range'), 'bytes=0-63')
-    return new Response(pngHeader, {
+    assert.equal(new Headers(init.headers).get('range'), 'bytes=0-262143')
+    return new Response(imageAtLimit, {
       status: 206,
       headers: {
-        'content-range': 'bytes 0-7/8',
-        'content-length': '8'
+        'content-range': 'bytes 0-23/24',
+        'content-length': '24'
       }
     })
   })
@@ -603,6 +649,183 @@ test('completion validates the stored bytes and sets editor expiration to 24 hou
   assert.equal(result.url, '/api/uploads/' + file.id + '/content')
   assert.equal(saved.status, 'ready')
   assert.equal(saved.expiresAt - saved.completedAt, 24 * 60 * 60 * 1000)
+})
+
+test('completion rejects images with an edge above 1024px before making them ready', async t => {
+  const oversizedImage = Buffer.from(pngHeader)
+  oversizedImage.writeUInt32BE(1025, 16)
+  oversizedImage.writeUInt32BE(1, 20)
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-image.png',
+    contentType: 'image/png',
+    expectedSize: oversizedImage.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedImage, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-23/24',
+      'content-length': '24'
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD_CONTENT'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'deleting')
+})
+
+test('completion rejects objects larger than one MiB before making them ready', async t => {
+  const maxSize = 1024 * 1024
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174010',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/over-one-mib.png',
+    contentType: 'image/png',
+    expectedSize: maxSize + 1,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(pngHeader, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-23/' + (maxSize + 1),
+      'content-length': '24'
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD_CONTENT'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'deleting')
+})
+
+test('completion rejects a full Storage response instead of buffering the whole object', async t => {
+  const file = {
+    id: '133e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/full-response.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(pngHeader, { status: 200 }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_RANGE_UNSUPPORTED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
+test('completion bounds a malformed partial response to 256 KiB', async t => {
+  const file = {
+    id: '143e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-range.png',
+    contentType: 'image/png',
+    expectedSize: 80,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const oversizedBody = new Uint8Array(256 * 1024 + 1)
+  pngHeader.copy(oversizedBody)
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedBody, {
+    status: 206,
+    headers: {
+      'content-range': 'bytes 0-262143/262200',
+      'content-length': String(oversizedBody.byteLength)
+    }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 && error.message === 'UPLOAD_STORAGE_RANGE_INVALID'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
+})
+
+test('completion normalizes partial Storage stream failures as retryable unavailability', async t => {
+  const file = {
+    id: '153e4567-e89b-42d3-a456-426614174000',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/interrupted-range.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: null,
+    status: 'pending',
+    createdAt: Date.now(),
+    completedAt: null,
+    expiresAt: null,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service, collections } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.error(new Error('simulated Storage stream interruption'))
+    }
+  }), {
+    status: 206,
+    headers: { 'content-range': 'bytes 0-23/24' }
+  }))
+
+  await assert.rejects(
+    service.completeUpload('user-1', file.id),
+    error => error.getStatus() === 503 &&
+      error.message === 'UPLOAD_STORAGE_REQUEST_FAILED'
+  )
+  assert.equal(collections.get('media_files')[0].status, 'pending')
 })
 
 test('ready editor completion does not return a URL after the 24-hour deadline', async t => {
@@ -632,6 +855,37 @@ test('ready editor completion does not return a URL after the 24-hour deadline',
   await assert.rejects(
     service.completeUpload('user-1', file.id),
     error => error.getStatus() === 404 && error.message === 'UPLOAD_EXPIRED'
+  )
+})
+
+test('stored image dimensions are revalidated before content is served', async t => {
+  const oversizedImage = Buffer.from(pngHeader)
+  oversizedImage.writeUInt32BE(1025, 16)
+  oversizedImage.writeUInt32BE(1, 20)
+  const file = {
+    id: '123e4567-e89b-42d3-a456-426614174009',
+    ownerUserId: 'user-1',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/user-1/oversized-stored-image.png',
+    contentType: 'image/png',
+    expectedSize: oversizedImage.length,
+    size: oversizedImage.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: null,
+    resourceId: null,
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({ media_files: [file] })
+  withFetch(t, async () => new Response(oversizedImage, { status: 200 }))
+
+  await assert.rejects(
+    service.getEditorImage('user-1', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
   )
 })
 
@@ -786,7 +1040,8 @@ test('private community images are readable only by members', async t => {
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ]
@@ -803,6 +1058,43 @@ test('private community images are readable only by members', async t => {
   )
   const memberImage = await service.getEditorImage('community-member-user', file.id)
   assert.deepEqual(memberImage.body, pngHeader)
+})
+
+test('private community images reject memberships with a mismatched profile type', async t => {
+  const file = {
+    id: '333e4567-e89b-42d3-a456-426614174099',
+    ownerUserId: 'author-user',
+    purpose: 'editor-image',
+    bucket: 'nexus-editor-images',
+    path: 'editor/author-user/wrong-profile-type.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    resourceType: 'community',
+    resourceId: 'private-community',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const { service } = createHarness({
+    media_files: [file],
+    profiles: [{ id: 'community-member-profile', type: 'business' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    community_relationships: [
+      { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
+    ]
+  })
+  withFetch(t, async () => {
+    throw new Error('Mismatched profile types must not fetch private storage objects')
+  })
+
+  await assert.rejects(
+    service.getEditorImage('community-member-user', file.id),
+    error => error.getStatus() === 404 && error.message === 'UPLOAD_NOT_FOUND'
+  )
 })
 
 test('forum topic images inherit their community privacy rules', async t => {
@@ -826,7 +1118,8 @@ test('forum topic images inherit their community privacy rules', async t => {
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ],
@@ -1364,6 +1657,61 @@ test('updates a profile avatar and attaches its metadata in one transaction', as
   assert.equal(collections.get('media_files')[0].resourceId, 'profile-1')
 })
 
+test('committed avatar updates remain successful when previous-file cleanup scheduling fails', async () => {
+  const previousPicture = supabaseUrl +
+    '/storage/v1/object/public/nexus-avatars/profiles/user-1/previous.png'
+  const previousFile = {
+    id: '323e4567-e89b-42d3-a456-426614174001',
+    ownerUserId: 'user-1',
+    purpose: 'profile-avatar',
+    bucket: 'nexus-avatars',
+    path: 'profiles/user-1/previous.png',
+    contentType: 'image/png',
+    expectedSize: pngHeader.length,
+    size: pngHeader.length,
+    status: 'ready',
+    createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    completedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
+    expiresAt: null,
+    resourceType: 'profile',
+    resourceId: 'profile-1',
+    messageFromProfileId: null,
+    messageToProfileId: null
+  }
+  const nextFile = {
+    ...previousFile,
+    id: '423e4567-e89b-42d3-a456-426614174001',
+    path: 'profiles/user-1/next.png',
+    createdAt: Date.now(),
+    completedAt: Date.now(),
+    resourceType: null,
+    resourceId: null
+  }
+  const { service, collections, data } = createHarness({
+    accounts: [{
+      id: 'user-1',
+      email: 'user@example.test',
+      profiles: ['profile-1'],
+      currentProfile: 'profile-1'
+    }],
+    profiles: [{ id: 'profile-1', picture: previousPicture, type: 'social' }],
+    media_files: [previousFile, nextFile]
+  })
+  data.schedulePreviousAvatarDeletion = async () => {
+    throw new Error('simulated cleanup database outage')
+  }
+
+  const result = await service.setProfileAvatar('user-1', 'profile-1', nextFile.id)
+  const savedProfile = collections.get('profiles')[0]
+  const savedNextFile = collections.get('media_files').find(item => item.id === nextFile.id)
+
+  assert.equal(result.picture, supabaseUrl +
+    '/storage/v1/object/public/nexus-avatars/' + nextFile.path)
+  assert.equal(savedProfile.picture, result.picture)
+  assert.equal(savedNextFile.resourceType, 'profile')
+  assert.equal(savedNextFile.resourceId, 'profile-1')
+})
+
 test('rejects invalid avatar metadata without changing the profile or media collection', async () => {
   const file = {
     id: '323e4567-e89b-42d3-a456-426614174000',
@@ -1470,7 +1818,8 @@ test('private community image access rechecks membership from the storage-read s
   }
   const { service } = createHarness({
     media_files: [file],
-    communities: [{ id: 'private-community', privacy: 'private' }],
+    communities: [{ id: 'private-community', privacy: 'private', type: 'social' }],
+    profiles: [{ id: 'community-member-profile', type: 'social' }],
     community_relationships: [
       { profiles: ['community-member-profile', 'private-community'], type: 'connection' }
     ]
@@ -2106,4 +2455,83 @@ test('expired pending upload metadata is recovered when Storage signing rollback
 
   assert.equal(cleanup.deleted, 1)
   assert.deepEqual(collections.get('media_files'), [])
+})
+
+
+test('upload creation maps a missing relational account to an authentication error', async () => {
+  const service = new UploadsService(
+    {
+      async createUpload() {
+        throw new Error('ACCOUNT_NOT_FOUND')
+      }
+    },
+    { assertConfigured() {} },
+    {},
+    {},
+    {}
+  )
+
+  await assert.rejects(
+    service.createUpload('deleted-user', {
+      purpose: 'editor-image',
+      contentType: 'image/png',
+      size: pngHeader.length
+    }),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})
+
+test('avatar RPCs map a missing relational account to an authentication error', async () => {
+  const repository = {
+    async setProfileAvatar() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    },
+    async setCommunityAvatar() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  }
+  const avatars = new UploadsAvatarService(repository, {}, {})
+
+  await assert.rejects(
+    avatars.setProfileAvatar('deleted-user', 'profile-1', null),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+  await assert.rejects(
+    avatars.setCommunityAvatar('deleted-user', 'community-1', 'profile-1', null),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})
+
+
+test('rejects inherited object-property names as MIME types before writing or signing', async t => {
+  const { service, collections } = createHarness()
+  let storageRequests = 0
+  withFetch(t, async () => {
+    storageRequests += 1
+    return new Response(JSON.stringify({ url: '/object/upload/sign/fake' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' }
+    })
+  })
+
+  for (const contentType of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    await assert.rejects(
+      service.createUpload('user-1', {
+        purpose: 'editor-image',
+        contentType,
+        size: pngHeader.length
+      }),
+      error => error.getStatus() === 400 && error.message === 'INVALID_UPLOAD',
+      contentType + ' must not be treated as a registered MIME type'
+    )
+  }
+
+  assert.equal(storageRequests, 0)
+  assert.deepEqual(collections.get('media_files') ?? [], [])
 })

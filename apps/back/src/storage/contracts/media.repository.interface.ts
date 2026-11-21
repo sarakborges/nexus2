@@ -1,4 +1,4 @@
-import type { CommunityAvatarWrite, EditorImageReadRequest, MediaFileRecord, MediaUploadCleanupRequest, MediaUploadCompletion, MediaUploadCreateWrite, MediaUploadDeletionClaim, MediaUploadDeletionRequest, MediaUploadDeletionSchedule, PreviousAvatarDeletionSchedule, ProfileAvatarWrite } from '../repository.types'
+import type { CommunityAvatarReadRequest, CommunityAvatarWrite, EditorImageReadRequest, MediaFileRecord, MediaUploadCleanupRequest, MediaUploadCompletion, MediaUploadCreateWrite, MediaUploadDeletionClaim, MediaUploadDeletionRequest, MediaUploadDeletionSchedule, PreviousAvatarDeletionSchedule, PreviousCommunityAvatarDeletionSchedule, ProfileAvatarWrite } from '../repository.types'
 
 export interface MediaRepository {
   createUpload(change: MediaUploadCreateWrite): Promise<void>
@@ -10,7 +10,9 @@ export interface MediaRepository {
   scheduleUploadDeletion(change: MediaUploadDeletionSchedule): Promise<boolean>
   claimUploadDeletion(change: MediaUploadDeletionRequest): Promise<MediaFileRecord | null>
   schedulePreviousAvatarDeletion(change: PreviousAvatarDeletionSchedule): Promise<void>
+  schedulePreviousCommunityAvatarDeletion(change: PreviousCommunityAvatarDeletionSchedule): Promise<void>
   getEditorImageRecord(change: EditorImageReadRequest): Promise<MediaFileRecord>
+  getCommunityAvatarRecord(change: CommunityAvatarReadRequest): Promise<MediaFileRecord>
   getAvatarUploadPath(
     userId: string,
     uploadId: string,

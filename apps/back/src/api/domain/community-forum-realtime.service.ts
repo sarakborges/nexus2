@@ -1,9 +1,16 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
 export type PublicRealtimeConfig =
   | { enabled: false }
   | { enabled: true; supabaseUrl: string; publishableKey: string }
+
+const TOPIC_CHANGE_SIGNATURE_CONTEXT = 'nexus:forum-topic-changed:v1'
+const TOPIC_CHANGE_MAX_AGE_MS = 2 * 60 * 1000
+const TOPIC_CHANGE_FUTURE_SKEW_MS = 30 * 1000
+const TOPIC_CHANGE_PUBLISH_TIMEOUT_MS = 5 * 1000
+const SIGNATURE_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 @Injectable()
 export class CommunityForumRealtimeService {
@@ -16,33 +23,65 @@ export class CommunityForumRealtimeService {
     const publishableKey = this.config.get<string>('SUPABASE_PUBLISHABLE_KEY')
     if (!configuredUrl || !publishableKey) return { enabled: false }
 
-    return {
-      enabled: true,
-      supabaseUrl: new URL(configuredUrl).origin,
-      publishableKey
+    try {
+      const url = new URL(configuredUrl)
+      if (!['http:', 'https:'].includes(url.protocol)) return { enabled: false }
+
+      return {
+        enabled: true,
+        supabaseUrl: url.origin,
+        publishableKey
+      }
+    } catch {
+      return { enabled: false }
     }
   }
 
+  verifyTopicChanged(topicId: string, changedAt: number, signature: string): boolean {
+    const secret = this.config.get<string>('JWT_REFRESH_SECRET')?.trim()
+    if (!secret || !Number.isSafeInteger(changedAt) || !SIGNATURE_PATTERN.test(signature)) {
+      return false
+    }
+
+    const now = Date.now()
+    if (
+      changedAt < now - TOPIC_CHANGE_MAX_AGE_MS ||
+      changedAt > now + TOPIC_CHANGE_FUTURE_SKEW_MS
+    ) {
+      return false
+    }
+
+    const expected = Buffer.from(
+      this.createTopicChangedSignature(topicId, changedAt, secret),
+      'base64url'
+    )
+    const supplied = Buffer.from(signature, 'base64url')
+    return supplied.length === expected.length && timingSafeEqual(supplied, expected)
+  }
+
   async publishTopicChanged(topicId: string): Promise<void> {
-    const config = this.getPublicConfig()
-    const secretKey = this.config.get<string>('SUPABASE_STORAGE_SECRET_KEY')
-    if (!config.enabled || !secretKey) return
-
-    const topic = `nexus-forum-topic-${topicId}`
-    const endpoint = new URL('/realtime/v1/api/broadcast', config.supabaseUrl)
-
     try {
+      const config = this.getPublicConfig()
+      const storageSecret = this.config.get<string>('SUPABASE_STORAGE_SECRET_KEY')
+      const signingSecret = this.config.get<string>('JWT_REFRESH_SECRET')?.trim()
+      if (!config.enabled || !storageSecret || !signingSecret) return
+
+      const changedAt = Date.now()
+      const signature = this.createTopicChangedSignature(topicId, changedAt, signingSecret)
+      const topic = `nexus-forum-topic-${topicId}`
+      const endpoint = new URL('/realtime/v1/api/broadcast', config.supabaseUrl)
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
-          apikey: secretKey,
+          apikey: storageSecret,
           'Content-Type': 'application/json'
         },
+        signal: AbortSignal.timeout(TOPIC_CHANGE_PUBLISH_TIMEOUT_MS),
         body: JSON.stringify({
           messages: [{
             topic,
             event: 'topic_changed',
-            payload: { changedAt: Date.now() }
+            payload: { changedAt, signature }
           }]
         })
       })
@@ -55,5 +94,11 @@ export class CommunityForumRealtimeService {
         `Realtime notification for topic ${topicId} failed: ${error instanceof Error ? error.message : 'unknown error'}`
       )
     }
+  }
+
+  private createTopicChangedSignature(topicId: string, changedAt: number, secret: string): string {
+    return createHmac('sha256', secret)
+      .update(`${TOPIC_CHANGE_SIGNATURE_CONTEXT}\n${topicId}\n${changedAt}`)
+      .digest('base64url')
   }
 }

@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards
+} from '@nestjs/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
@@ -7,6 +18,7 @@ import { CommunityMembersPageDto } from './community-members-page.dto'
 import {
   CommunitiesPageDto,
   CreateCommunityDto,
+  IdsQueryDto,
   CreateForumReplyDto,
   CreateForumTopicDto,
   ForumActorDto,
@@ -96,12 +108,12 @@ export class CommunitiesController {
   }
 
   @Get('communities/ids')
-  getCommunities(@Query('ids') ids: string | string[]) {
-    return this.domain.getCommunitiesByIds(Array.isArray(ids) ? ids : ids ? [ids] : [])
+  getCommunities(@Query() query: IdsQueryDto) {
+    return this.domain.getCommunitiesByIds(query.ids)
   }
 
   @Get('communities/profile/:profileId')
-  profileCommunities(@Param('profileId') id: string, @Query() query: PaginationDto) {
+  profileCommunities(@Param('profileId', new ParseUUIDPipe()) id: string, @Query() query: PaginationDto) {
     return this.domain.listProfileCommunities(id, query)
   }
 
@@ -119,7 +131,7 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   updateCommunity(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
     @Body() body: UpdateCommunityDto
   ) {
     return this.domain.updateCommunity(user.id, id, body)
@@ -128,7 +140,7 @@ export class CommunitiesController {
   @Get('communities/:communityId/forum/topics')
   @UseGuards(OptionalJwtAccessGuard)
   forumTopics(
-    @Param('communityId') id: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
     @Query() query: PaginationDto,
     @CurrentUser() user: AuthenticatedUserContext | undefined
   ) {
@@ -149,7 +161,7 @@ export class CommunitiesController {
   @UseGuards(OptionalJwtAccessGuard)
   getCommunityForumTopicPage(
     @Param('url') url: string,
-    @Param('topicId') topicId: string,
+    @Param('topicId', new ParseUUIDPipe()) topicId: string,
     @Query() query: PaginationDto,
     @CurrentUser() user: AuthenticatedUserContext | undefined
   ) {
@@ -164,8 +176,8 @@ export class CommunitiesController {
   @Get('communities/:communityId/forum/topics/:topicId')
   @UseGuards(OptionalJwtAccessGuard)
   forumTopic(
-    @Param('communityId') id: string,
-    @Param('topicId') topicId: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Param('topicId', new ParseUUIDPipe()) topicId: string,
     @Query() query: PaginationDto,
     @CurrentUser() user: AuthenticatedUserContext | undefined
   ) {
@@ -176,7 +188,7 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   createForumTopic(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
     @Body() body: CreateForumTopicDto
   ) {
     return this.domain.createCommunityForumTopic(
@@ -192,8 +204,8 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   createForumReply(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
-    @Param('topicId') topicId: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Param('topicId', new ParseUUIDPipe()) topicId: string,
     @Body() body: CreateForumReplyDto
   ) {
     return this.domain.createCommunityForumReply(
@@ -209,8 +221,8 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   moderateForumTopic(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
-    @Param('topicId') topicId: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Param('topicId', new ParseUUIDPipe()) topicId: string,
     @Body() body: ForumModerationDto
   ) {
     const { profileId, ...changes } = body
@@ -221,8 +233,8 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   async deleteForumTopic(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
-    @Param('topicId') topicId: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Param('topicId', new ParseUUIDPipe()) topicId: string,
     @Body() body: ForumActorDto
   ) {
     await this.domain.deleteCommunityForumTopic(user.id, id, topicId, body.profileId)
@@ -233,8 +245,8 @@ export class CommunitiesController {
   @UseGuards(JwtAccessGuard)
   async deleteForumReply(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('communityId') id: string,
-    @Param('replyId') replyId: string,
+    @Param('communityId', new ParseUUIDPipe()) id: string,
+    @Param('replyId', new ParseUUIDPipe()) replyId: string,
     @Body() body: ForumActorDto
   ) {
     await this.domain.deleteCommunityForumReply(user.id, id, replyId, body.profileId)

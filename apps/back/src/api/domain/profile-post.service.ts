@@ -35,6 +35,9 @@ export class ProfilePostService {
       if (message.includes('PROFILE_NOT_OWNED')) {
         throw new ForbiddenException('PROFILE_NOT_OWNED')
       }
+      if (message.includes('INVALID_PROFILE_POST')) {
+        throw new BadRequestException('INVALID_PROFILE_POST')
+      }
       if (message.includes('INVALID_EDITOR_IMAGE') || message.includes('EDITOR_IMAGE_ALREADY_ATTACHED')) {
         throw new BadRequestException('INVALID_EDITOR_IMAGE')
       }

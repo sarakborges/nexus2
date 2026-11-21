@@ -1,8 +1,14 @@
 export const AVATAR_BUCKET = 'nexus-avatars'
+export const COMMUNITY_AVATAR_BUCKET = 'nexus-community-avatars'
 export const EDITOR_BUCKET = 'nexus-editor-images'
 
-export const AVATAR_MAX_SIZE = 5 * 1024 * 1024
-export const EDITOR_MAX_SIZE = 10 * 1024 * 1024
+export const IMAGE_MAX_FILE_SIZE = 1 * 1024 * 1024
+export const AVATAR_MAX_SIZE = IMAGE_MAX_FILE_SIZE
+export const EDITOR_MAX_SIZE = IMAGE_MAX_FILE_SIZE
+
+export const IMAGE_HEADER_MAX_SIZE = 256 * 1024
+export const IMAGE_MAX_DIMENSION = 1024
+export const IMAGE_MAX_PIXELS = IMAGE_MAX_DIMENSION * IMAGE_MAX_DIMENSION
 
 export const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
 export const SIGNED_UPLOAD_DELETE_GRACE_MS = 60 * 60 * 1000

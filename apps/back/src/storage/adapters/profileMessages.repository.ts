@@ -8,7 +8,7 @@ export class SupabaseProfileMessagesRepository extends SupabaseRepositoryClient 
   }
 
   async createProfileMessage(change: ProfileMessageWrite): Promise<ProfileMessage> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_send_profile_message', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_send_profile_message', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -52,7 +52,7 @@ export class SupabaseProfileMessagesRepository extends SupabaseRepositoryClient 
   }
 
   async deleteProfileMessage(change: ProfileMessageRemoval): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile_message', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile_message', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -69,7 +69,7 @@ export class SupabaseProfileMessagesRepository extends SupabaseRepositoryClient 
   }
 
   async setProfileMessageFavorite(change: ProfileMessageFavoriteChange): Promise<ProfileMessage> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_message_favorite', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_set_profile_message_favorite', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -115,7 +115,7 @@ export class SupabaseProfileMessagesRepository extends SupabaseRepositoryClient 
     userId: string | null,
     page: number
   ): Promise<import('@nexus/common').PaginatedResult<ProfileMessage>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_messages', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_messages', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -190,7 +190,7 @@ export class SupabaseProfileMessagesRepository extends SupabaseRepositoryClient 
     sort: ListSort,
     messageTab: 'all' | 'favorites'
   ): Promise<ProfileMessagesPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_messages_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_messages_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({

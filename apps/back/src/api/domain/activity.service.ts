@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import type { ActivityFeedCursor, ActivityFeedPage, RecentActivity } from '@nexus/common'
 import {
   DATA_REPOSITORY,
@@ -17,11 +17,11 @@ export class ActivityService {
     cursor: ActivityFeedCursor | null = null
   ): Promise<ActivityFeedPage> {
     const safeLimit = Math.min(Math.max(Math.trunc(limit) || 10, 1), 50)
-    const rows = await this.data.getActivityFeedRows(userId, safeLimit, cursor)
+    const rows = await this.withRelationalError(() => this.data.getActivityFeedRows(userId, safeLimit, cursor))
     const hasMore = rows.length > safeLimit
     const pageRows = hasMore ? rows.slice(0, safeLimit) : rows
     const readIds = pageRows.length > 0
-      ? new Set(await this.data.getActivityReadIds(userId, pageRows.map(row => row.id)))
+      ? new Set(await this.withRelationalError(() => this.data.getActivityReadIds(userId, pageRows.map(row => row.id))))
       : new Set<string>()
     const items = pageRows.map(row => this.toRecentActivity(row, readIds.has(row.id)))
     const lastItem = pageRows[pageRows.length - 1]
@@ -91,8 +91,30 @@ export class ActivityService {
   async markActivitiesRead(userId: string, activityIds: readonly string[]): Promise<void> {
     const uniqueIds = [...new Set(activityIds.filter(id => typeof id === 'string' && id.length > 0))]
     if (uniqueIds.length === 0) return
-    if (uniqueIds.length > 50) throw new Error('ACTIVITY_READ_BATCH_TOO_LARGE')
-    await this.data.markActivitiesRead(userId, uniqueIds, Date.now())
+    if (uniqueIds.length > 50) throw new BadRequestException('ACTIVITY_READ_BATCH_TOO_LARGE')
+    await this.withRelationalError(() => this.data.markActivitiesRead(userId, uniqueIds, Date.now()))
+  }
+
+
+  private async withRelationalError<T>(operation: () => Promise<T>): Promise<T> {
+    try {
+      return await operation()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const authenticationCode = [
+        'ACCOUNT_NOT_FOUND',
+        'ACTIVITY_FEED_USER_REQUIRED',
+        'ACTIVITY_READ_USER_REQUIRED'
+      ].find(code => message.includes(code))
+      if (authenticationCode) throw new UnauthorizedException(authenticationCode)
+
+      const inputCode = [
+        'ACTIVITY_FEED_CURSOR_INVALID',
+        'ACTIVITY_READ_INPUT_INVALID'
+      ].find(code => message.includes(code))
+      if (inputCode) throw new BadRequestException(inputCode)
+      throw error
+    }
   }
 
   async getRecentActivity(userId: string): Promise<RecentActivity[]> {
@@ -100,7 +122,7 @@ export class ActivityService {
     const items: RecentActivity[] = []
     let cursor: ActivityFeedCursor | null = null
     for (;;) {
-      const rows = await this.data.getActivityFeedRows(userId, limit + 1, cursor)
+      const rows = await this.withRelationalError(() => this.data.getActivityFeedRows(userId, limit + 1, cursor))
       const hasMore = rows.length > limit
       const pageRows = hasMore ? rows.slice(0, limit) : rows
       items.push(...pageRows.map(row => this.toRecentActivity(row)))

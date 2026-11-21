@@ -1,8 +1,10 @@
 import type { Community, Profile } from '@nexus/common'
+import { ServiceUnavailableException } from '@nestjs/common'
 import type { AccountRepositoryRecord, MediaFileRecord } from './repository.types'
 
 export type DatabaseRow = Record<string, unknown>
 const MAX_FILTERED_ROWS = 1000
+const SUPABASE_REQUEST_TIMEOUT_MS = 25 * 1000
 
 export class SupabaseRepositoryClient {
   protected readonly baseUrl: string
@@ -64,7 +66,7 @@ export class SupabaseRepositoryClient {
       url.searchParams.set(filterColumn, expression)
     }
     url.searchParams.set('limit', String(Math.max(values.length * 10, MAX_FILTERED_ROWS)))
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows = await response.json() as DatabaseRow[]
     if (!Array.isArray(rows)) {
@@ -82,7 +84,7 @@ export class SupabaseRepositoryClient {
     url.searchParams.set('select', '*')
     url.searchParams.set(column, expression)
     url.searchParams.set('limit', '2')
-    const response = await fetch(url, { method: 'GET', headers: this.headers() })
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
     await this.assertSuccess(response)
     const rows = await response.json() as DatabaseRow[]
     if (!Array.isArray(rows)) {
@@ -161,6 +163,42 @@ export class SupabaseRepositoryClient {
       about: row.about, type: row.type as Community['type'],
       privacy: row.privacy as Community['privacy'],
       createdAt: Number(row.created_at_ms), lastActivity: Number(row.last_activity_ms)
+    }
+  }
+
+  protected async fetchWithTimeout(
+    input: string | URL,
+    init: RequestInit
+  ): Promise<Response> {
+    const usesDefaultSignal = !init.signal
+    const signal = init.signal ?? AbortSignal.timeout(SUPABASE_REQUEST_TIMEOUT_MS)
+    const timeoutError = () => new ServiceUnavailableException('SUPABASE_REQUEST_TIMEOUT')
+    try {
+      const response = await fetch(input, { ...init, signal })
+      return new Proxy(response, {
+        get: (target, property) => {
+          const value = Reflect.get(target, property, target)
+          if (
+            (property === 'json' || property === 'text' ||
+              property === 'arrayBuffer' || property === 'blob' ||
+              property === 'formData') &&
+            typeof value === 'function'
+          ) {
+            return async (...args: unknown[]) => {
+              try {
+                return await value.apply(target, args)
+              } catch (error) {
+                if (usesDefaultSignal && signal.aborted) throw timeoutError()
+                throw error
+              }
+            }
+          }
+          return typeof value === 'function' ? value.bind(target) : value
+        }
+      }) as Response
+    } catch (error) {
+      if (usesDefaultSignal && signal.aborted) throw timeoutError()
+      throw error
     }
   }
 

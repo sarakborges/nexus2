@@ -24,7 +24,7 @@ import { sanitizeRichText } from './rich-text-sanitizer'
 import { UploadsService } from '../uploads/uploads.service'
 import { DomainAccessService } from './domain-access.service'
 import { ProfileRelationshipService } from './profile-relationship.service'
-import { normalizeEntityUrl } from './domain.utils'
+import { isValidPictureUrl, normalizeEntityUrl } from './domain.utils'
 import { getEntityUrlCandidate, isEntityUrlAlreadyInUse } from './entity-url.utils'
 
 @Injectable()
@@ -95,8 +95,8 @@ export class ProfileService {
     if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
       !['social', 'rp', 'business'].includes(input.type) ||
-      (picture && !/^https?:\/\//i.test(picture))) {
-      throw new ConflictException('INVALID_PROFILE')
+      !isValidPictureUrl(picture)) {
+      throw new BadRequestException('INVALID_PROFILE')
     }
 
     const profile: Profile = {
@@ -145,6 +145,12 @@ export class ProfileService {
     const picture = input.picture.trim()
     const about = sanitizeRichText(input.about)
     const lastActivity = Date.now()
+    if (!name || about.length > 8000 ||
+      !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
+      !isValidPictureUrl(picture)) {
+      throw new BadRequestException('INVALID_PROFILE')
+    }
+
     let result: { profile: Profile; previousPicture: string | null }
     try {
       result = await this.data.updateProfile({

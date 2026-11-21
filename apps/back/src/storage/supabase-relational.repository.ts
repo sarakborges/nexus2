@@ -40,8 +40,16 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.accounts.getAccountById(...args)
   }
 
+  accountOwnsProfile(...args: Parameters<DataRepository['accountOwnsProfile']>): ReturnType<DataRepository['accountOwnsProfile']> {
+    return this.accounts.accountOwnsProfile(...args)
+  }
+
   findAccountByEmail(...args: Parameters<DataRepository['findAccountByEmail']>): ReturnType<DataRepository['findAccountByEmail']> {
     return this.accounts.findAccountByEmail(...args)
+  }
+
+  consumeAuthRateLimit(...args: Parameters<DataRepository['consumeAuthRateLimit']>): ReturnType<DataRepository['consumeAuthRateLimit']> {
+    return this.accounts.consumeAuthRateLimit(...args)
   }
 
   deleteAccount(...args: Parameters<DataRepository['deleteAccount']>): ReturnType<DataRepository['deleteAccount']> {
@@ -104,8 +112,16 @@ export class SupabaseRelationalRepository implements DataRepository {
     return this.media.schedulePreviousAvatarDeletion(...args)
   }
 
+  schedulePreviousCommunityAvatarDeletion(...args: Parameters<DataRepository['schedulePreviousCommunityAvatarDeletion']>): ReturnType<DataRepository['schedulePreviousCommunityAvatarDeletion']> {
+    return this.media.schedulePreviousCommunityAvatarDeletion(...args)
+  }
+
   getEditorImageRecord(...args: Parameters<DataRepository['getEditorImageRecord']>): ReturnType<DataRepository['getEditorImageRecord']> {
     return this.media.getEditorImageRecord(...args)
+  }
+
+  getCommunityAvatarRecord(...args: Parameters<DataRepository['getCommunityAvatarRecord']>): ReturnType<DataRepository['getCommunityAvatarRecord']> {
+    return this.media.getCommunityAvatarRecord(...args)
   }
 
   getAvatarUploadPath(...args: Parameters<DataRepository['getAvatarUploadPath']>): ReturnType<DataRepository['getAvatarUploadPath']> {

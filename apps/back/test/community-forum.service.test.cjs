@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
-const { ConflictException, BadRequestException } = require('@nestjs/common')
+const { ConflictException, BadRequestException, UnauthorizedException } = require('@nestjs/common')
 const { CommunityForumService } = require('../dist/api/domain/community-forum.service.js')
 
 function createService() {
@@ -22,7 +22,7 @@ function createService() {
         communityId: change.communityId,
         profileId: change.actorProfileId,
         title: 'Topic',
-        content: '<p>Hello</p>',
+        content: '<p>Hello</p><script>unsafeModerated()</script>',
         createdAt: 1,
         updatedAt: change.updatedAt,
         isPinned: Boolean(change.isPinned),
@@ -64,6 +64,7 @@ test('forum mutations use direct relational operations and keep realtime notific
   assert.equal(topic.title, 'A topic')
   assert.equal(reply.topicId, 'topic-1')
   assert.equal(moderated.isPinned, true)
+  assert.doesNotMatch(moderated.content, /unsafeModerated\(\)/)
   assert.deepEqual(calls.map(call => call[0]), [
     'topic', 'reply', 'moderate', 'delete-topic', 'delete-reply'
   ])
@@ -96,13 +97,19 @@ test('legacy forum list and topic reads use targeted relational queries without 
   const repository = {
     async listCommunityForumTopics(communityId, userId, page) {
       calls.push(['topics',communityId,userId,page])
-      return { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
+      return {
+        items: [{ id: 'topic-legacy', content: '<p>Topic</p><script>unsafeTopic()</script>' }],
+        page, pageSize: 20, totalItems: 1, totalPages: 1
+      }
     },
     async getCommunityForumTopic(communityId, topicId, userId, page) {
       calls.push(['topic',communityId,topicId,userId,page])
       return {
-        topic: { id: topicId, replyCount: 0 },
-        replies: { items: [], page, pageSize: 20, totalItems: 0, totalPages: 1 }
+        topic: { id: topicId, replyCount: 1, content: '<p>Topic</p><script>unsafeTopic()</script>' },
+        replies: {
+          items: [{ id: 'reply-legacy', content: '<p>Reply</p><script>unsafeReply()</script>' }],
+          page, pageSize: 20, totalItems: 1, totalPages: 1
+        }
       }
     },
   }
@@ -111,8 +118,28 @@ test('legacy forum list and topic reads use targeted relational queries without 
   const topic = await service.getCommunityForumTopic('community-1','topic-1',{page:3},null)
   assert.equal(topics.page,2)
   assert.equal(topic.topic.id,'topic-1')
+  assert.doesNotMatch(topics.items[0].content, /unsafeTopic\(\)/)
+  assert.doesNotMatch(topic.topic.content, /unsafeTopic\(\)/)
+  assert.doesNotMatch(topic.replies.items[0].content, /unsafeReply\(\)/)
   assert.deepEqual(calls,[
     ['topics','community-1','account-1',2],
     ['topic','community-1','topic-1',null,3]
   ])
+})
+
+
+test('missing accounts in forum RPCs map to an authentication error', async () => {
+  const repository = {
+    async listCommunityForumTopics() {
+      throw new Error('ACCOUNT_NOT_FOUND')
+    }
+  }
+  const service = new CommunityForumService(repository)
+
+  await assert.rejects(
+    service.listCommunityForumTopics('community-1', { page: 1 }),
+    error => error instanceof UnauthorizedException &&
+      error.getStatus() === 401 &&
+      error.message === 'ACCOUNT_NOT_FOUND'
+  )
 })

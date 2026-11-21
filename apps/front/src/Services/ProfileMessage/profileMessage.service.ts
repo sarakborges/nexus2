@@ -1,11 +1,20 @@
-import { api } from '../Http/api'
+import { api, getApiErrorCode } from '../Http/api'
 import type {
   PaginatedResult,
   PaginationParams,
   ProfileMessage
 } from '@nexus/common'
 
-export type ProfileMessageErrorCode = 'INVALID_MESSAGE' | 'STORAGE_UNAVAILABLE'
+export type ProfileMessageErrorCode =
+  | 'INVALID_MESSAGE'
+  | 'ACCOUNT_NOT_FOUND'
+  | 'PROFILE_MESSAGE_FRIENDS_ONLY'
+  | 'PROFILE_TYPE_MISMATCH'
+  | 'PROFILE_NOT_OWNED'
+  | 'PROFILE_NOT_FOUND'
+  | 'INVALID_EDITOR_IMAGE'
+  | 'EDITOR_IMAGE_ALREADY_ATTACHED'
+  | 'STORAGE_UNAVAILABLE'
 export class ProfileMessageError extends Error {
   code: ProfileMessageErrorCode
   constructor(code: ProfileMessageErrorCode) {
@@ -36,10 +45,21 @@ export async function createProfileMessage(
     )
     return data
   } catch (error) {
-    const message = (error as { response?: { data?: { message?: string } } })
-      ?.response?.data?.message
+    const code = getApiErrorCode(error, 'STORAGE_UNAVAILABLE')
+    const knownCodes = new Set<ProfileMessageErrorCode>([
+      'INVALID_MESSAGE',
+      'ACCOUNT_NOT_FOUND',
+      'PROFILE_MESSAGE_FRIENDS_ONLY',
+      'PROFILE_TYPE_MISMATCH',
+      'PROFILE_NOT_OWNED',
+      'PROFILE_NOT_FOUND',
+      'INVALID_EDITOR_IMAGE',
+      'EDITOR_IMAGE_ALREADY_ATTACHED'
+    ])
     throw new ProfileMessageError(
-      message === 'INVALID_MESSAGE' ? 'INVALID_MESSAGE' : 'STORAGE_UNAVAILABLE'
+      knownCodes.has(code as ProfileMessageErrorCode)
+        ? code as ProfileMessageErrorCode
+        : 'STORAGE_UNAVAILABLE'
     )
   }
 }

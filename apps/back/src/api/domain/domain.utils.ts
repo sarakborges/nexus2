@@ -1,3 +1,7 @@
+export function isValidPictureUrl(value: string): boolean {
+  return value === '' || /^https?:\/\//i.test(value)
+}
+
 export function normalizeEntityUrl(value: string): string {
   return value
     .normalize('NFKD')

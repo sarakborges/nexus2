@@ -1,6 +1,8 @@
 import sanitizeHtml = require('sanitize-html')
+import type { CommunityForumTopicDetail } from '@nexus/common'
 
 const colorValue = /^(?:#[0-9a-f]{3,8}|(?:rgb|rgba|hsl|hsla)\([\d\s.,%+\-/]+\)|[a-z]{1,20})$/i
+const managedEditorImageSource = /^\/api\/uploads\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/content$/i
 
 const allowedStyles: NonNullable<sanitizeHtml.IOptions['allowedStyles']> = {
   '*': {
@@ -69,11 +71,18 @@ const sanitizerOptions: sanitizeHtml.IOptions = {
         tagName: 'span',
         attribs
       }
+    },
+    img: (_tagName, attributes) => {
+      const src = attributes.src?.trim()
+      if (!src || !managedEditorImageSource.test(src)) {
+        return { tagName: 'span', attribs: {} }
+      }
+      return { tagName: 'img', attribs: { ...attributes, src } }
     }
   },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {
-    img: ['http', 'https']
+    img: []
   },
   allowProtocolRelative: false,
   disallowedTagsMode: 'discard',
@@ -87,6 +96,33 @@ const sanitizerOptions: sanitizeHtml.IOptions = {
 
 export function sanitizeRichText(value: string): string {
   return sanitizeHtml(typeof value === 'string' ? value : '', sanitizerOptions).trim()
+}
+
+export function sanitizeRichTextItems<T extends { content: string }>(items: readonly T[]): T[] {
+  return items.map(item => ({
+    ...item,
+    content: sanitizeRichText(item.content ?? '')
+  }))
+}
+
+export function sanitizeRichTextPage<T extends { items: Array<{ content: string }> }>(page: T): T {
+  return {
+    ...page,
+    items: sanitizeRichTextItems(page.items)
+  } as T
+}
+
+export function sanitizeCommunityForumTopicDetail(
+  detail: CommunityForumTopicDetail
+): CommunityForumTopicDetail {
+  return {
+    ...detail,
+    topic: {
+      ...detail.topic,
+      content: sanitizeRichText(detail.topic.content ?? '')
+    },
+    replies: sanitizeRichTextPage(detail.replies)
+  }
 }
 
 export function getRichTextPlainText(value: string): string {

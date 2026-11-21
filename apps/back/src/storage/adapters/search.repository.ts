@@ -8,7 +8,7 @@ export class SupabaseSearchRepository extends SupabaseRepositoryClient implement
   }
 
   async searchEntities(query: string, scope: SearchScope, page: number, sort: ListSort): Promise<PaginatedResult<SearchResultItem>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_search_entities', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_search_entities', {
       method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_query: query, p_scope: scope, p_page: page, p_sort: sort })
     })

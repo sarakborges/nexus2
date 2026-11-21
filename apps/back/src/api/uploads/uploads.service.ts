@@ -5,19 +5,26 @@ import {
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import {
   AVATAR_BUCKET,
+  COMMUNITY_AVATAR_BUCKET,
   AVATAR_MAX_SIZE,
   EDITOR_BUCKET,
   EDITOR_MAX_SIZE,
   EDITOR_RETENTION_MS,
   MIME_EXTENSIONS,
   PENDING_MAX_AGE,
+  IMAGE_HEADER_MAX_SIZE,
 } from './uploads.constants'
-import { detectMime, getTotalSize } from './uploads.utils'
+import {
+  detectMime,
+  getImageDimensions,
+  isImageDimensionsWithinLimits
+} from './uploads.utils'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { UploadsContentService } from './uploads.content.service'
@@ -49,7 +56,9 @@ export class UploadsService {
 
   async createUpload(userId: string, input: CreateUploadInput): Promise<{ id: string; uploadUrl: string }> {
     this.storage.assertConfigured()
-    const extension = MIME_EXTENSIONS[input.contentType]
+    const extension = Object.hasOwn(MIME_EXTENSIONS, input.contentType)
+      ? MIME_EXTENSIONS[input.contentType]
+      : undefined
     const maxSize = input.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
     if (!extension || !Number.isSafeInteger(input.size) || input.size < 1 || input.size > maxSize) {
       throw new BadRequestException('INVALID_UPLOAD')
@@ -59,7 +68,9 @@ export class UploadsService {
     }
 
     const id = randomUUID()
-    const bucket = input.purpose === 'editor-image' ? EDITOR_BUCKET : AVATAR_BUCKET
+    const bucket = input.purpose === 'editor-image'
+      ? EDITOR_BUCKET
+      : (input.purpose === 'community-avatar' ? COMMUNITY_AVATAR_BUCKET : AVATAR_BUCKET)
     const folder = input.purpose === 'editor-image'
       ? 'editor/' + userId
       : (input.purpose === 'profile-avatar' ? 'profiles/' : 'communities/') + userId
@@ -136,7 +147,7 @@ export class UploadsService {
 
     const response = await this.storage.request(
       '/object/' + record.bucket + '/' + this.storage.encodePath(record.path),
-      { method: 'GET', headers: { Range: 'bytes=0-63' } }
+      { method: 'GET', headers: { Range: 'bytes=0-' + (IMAGE_HEADER_MAX_SIZE - 1) } }
     )
     if (response.status === 404) {
       throw new BadRequestException('UPLOAD_NOT_FOUND_IN_STORAGE')
@@ -144,21 +155,39 @@ export class UploadsService {
     if (!response.ok) {
       throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
     }
+    if (response.status !== 206) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_UNSUPPORTED')
+    }
 
-    const bytes = Buffer.from(await response.arrayBuffer())
-    const totalSize = getTotalSize(
-      response.headers.get('content-range'),
-      response.headers.get('content-length'),
-      bytes.length
-    )
+    const contentRange = response.headers.get('content-range')
+    const rangeMatch = contentRange?.match(/^bytes 0-(\d+)\/(\d+)$/i)
+    const rangeEnd = rangeMatch ? Number(rangeMatch[1]) : Number.NaN
+    const totalSize = rangeMatch ? Number(rangeMatch[2]) : Number.NaN
+    if (
+      !Number.isSafeInteger(rangeEnd) ||
+      rangeEnd < 0 ||
+      rangeEnd >= IMAGE_HEADER_MAX_SIZE ||
+      !Number.isSafeInteger(totalSize) ||
+      totalSize < 1 ||
+      rangeEnd >= totalSize
+    ) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+    }
+
+    const bytes = await this.readBoundedRange(response, rangeEnd + 1)
+    if (bytes.length !== rangeEnd + 1) {
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+    }
     const detectedMime = detectMime(bytes)
+    const dimensions = getImageDimensions(bytes, record.contentType)
     const maxSize = record.purpose === 'editor-image' ? EDITOR_MAX_SIZE : AVATAR_MAX_SIZE
 
     if (
       totalSize < 1 ||
       totalSize > maxSize ||
       totalSize !== record.expectedSize ||
-      detectedMime !== record.contentType
+      detectedMime !== record.contentType ||
+      !isImageDimensionsWithinLimits(dimensions)
     ) {
       await this.cleanup.scheduleUploadDeletion(id, userId)
       throw new BadRequestException('INVALID_UPLOAD_CONTENT')
@@ -198,6 +227,20 @@ export class UploadsService {
 
   async getEditorImage(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
     return this.content.getEditorImage(userId, id)
+  }
+
+  async getCommunityAvatar(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
+    return this.content.getCommunityAvatar(userId, id)
+  }
+
+  isCommunityAvatarUrl(url: string): boolean {
+    return this.storage.getCommunityAvatarId(url) !== null
+  }
+
+  async getCommunityAvatarPath(userId: string, url: string): Promise<string | null> {
+    const uploadId = this.storage.getCommunityAvatarId(url)
+    if (uploadId) return this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
+    return null
   }
 
   getEditorImageIds(html: string): string[] {
@@ -283,10 +326,36 @@ export class UploadsService {
     await this.cleanup.deletePreviousAvatar(previousUrl, keepId)
   }
 
+  private async readBoundedRange(response: Response, maxBytes: number): Promise<Buffer> {
+    const reader = response.body?.getReader()
+    if (!reader) throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+
+    const chunks: Buffer[] = []
+    let size = 0
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        size += value.byteLength
+        if (size > maxBytes) {
+          await reader.cancel().catch(() => undefined)
+          throw new ServiceUnavailableException('UPLOAD_STORAGE_RANGE_INVALID')
+        }
+        chunks.push(Buffer.from(value))
+      }
+    } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error
+      throw new ServiceUnavailableException('UPLOAD_STORAGE_REQUEST_FAILED')
+    } finally {
+      reader.releaseLock()
+    }
+    return Buffer.concat(chunks, size)
+  }
+
   private getUploadUrl(record: UploadedFileRecord): string {
-    return record.purpose === 'editor-image'
-      ? '/api/uploads/' + record.id + '/content'
-      : this.storage.publicAvatarUrl(record.path)
+    if (record.purpose === 'editor-image') return '/api/uploads/' + record.id + '/content'
+    if (record.purpose === 'community-avatar') return this.storage.communityAvatarUrl(record.id)
+    return this.storage.publicAvatarUrl(record.path)
   }
 
   private throwUploadWriteError(error: unknown): never {
@@ -295,7 +364,7 @@ export class UploadsService {
     if (message.includes('PROFILE_TYPE_MISMATCH')) throw new ForbiddenException('PROFILE_TYPE_MISMATCH')
     if (message.includes('COMMUNITY_NOT_FOUND')) throw new NotFoundException('COMMUNITY_NOT_FOUND')
     if (message.includes('COMMUNITY_STAFF_REQUIRED')) throw new ForbiddenException('COMMUNITY_STAFF_REQUIRED')
-    if (message.includes('ACCOUNT_NOT_FOUND')) throw new NotFoundException('ACCOUNT_NOT_FOUND')
+    if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
     throw error
   }
 

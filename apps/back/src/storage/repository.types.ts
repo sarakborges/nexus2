@@ -6,6 +6,8 @@ export type AccountRepositoryRecord = AuthenticatedUser & {
   preferences?: UserPreferences
 }
 
+export type AccountCredentialsRecord = Pick<AccountRepositoryRecord, 'id' | 'email' | 'password'>
+
 export type RefreshTokenWrite = {
   id: string
   userId: string
@@ -253,6 +255,14 @@ export type PreviousAvatarDeletionSchedule = {
   leaseMs: number
 }
 export type EditorImageReadRequest = { userId: string | null; id: string; now: number }
+export type CommunityAvatarReadRequest = { userId: string | null; id: string }
+export type PreviousCommunityAvatarDeletionSchedule = {
+  id: string
+  keepId: string | null
+  deletingAt: number
+  safeAge: number
+  leaseMs: number
+}
 
 export type ActivityFeedRow = {
   id: string

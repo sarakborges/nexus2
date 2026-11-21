@@ -8,7 +8,13 @@ export function getCookie(request: Request, name: string): string | null {
   if (!header) return null
   const prefix = `${name}=`
   const entry = header.split(';').map(value => value.trim()).find(value => value.startsWith(prefix))
-  return entry ? decodeURIComponent(entry.slice(prefix.length)) : null
+  if (!entry) return null
+
+  try {
+    return decodeURIComponent(entry.slice(prefix.length))
+  } catch {
+    return null
+  }
 }
 
 export function writeAuthCookies(response: Response, accessToken: string, refreshToken: string): void {

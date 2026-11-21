@@ -13,22 +13,22 @@ The backend builds that response from one repository transaction/snapshot whenev
 3. Expose one route for the page aggregate. Keep authorization and private-data filtering in the backend.
 4. Add a focused frontend service function and one React Query entry keyed by route identity and relevant viewer context.
 
-Viewer-specific page state belongs in the same aggregate snapshot when it is needed for the initial render. Resolve the visitor's valid active profile from the authenticated account record, then return relationship state and active-profile type alongside the page data. Include both the viewer account ID and active profile ID in the query key so switching profiles cannot reuse a result calculated for the previous identity. Do not make a follow-up request just to load the active profile or determine whether the viewer is connected, a member, or awaiting approval.
+Viewer-specific page state belongs in the same page response when it is needed for the initial render. Resolve the visitor's active profile from the normalized account-profile relationship and fetch only the required relational profile row. Return relationship state and active-profile type alongside the page data. Include both the viewer account ID and active profile ID in the query key so switching profiles cannot reuse a result calculated for the previous identity. Do not make a follow-up request just to load the active profile or determine whether the viewer is connected, a member, or awaiting approval.
 5. Pass the same query state and result to visual components. Components should render their own slice of the shared response and retry the aggregate query, rather than firing new requests.
 6. Invalidate the aggregate query after mutations that affect any part of its response.
 
 ## When separate requests are correct
 
-A page aggregate covers the initial view, not every possible interaction. The persistent global navigation is shell state rather than page content: load only the active profile needed for its avatar and routes at startup, and defer the full profile inventory until the user opens the profile switcher. Resolve the active profile through the repository's `readByIds` operation so the Supabase adapter returns only matching JSONB records; the file adapter may still read its local collection file before filtering. The Supabase RPC still scans the JSONB array internally, so it reduces transferred and decoded data rather than eliminating the database-side collection scan. Keep independent queries for user-driven pagination, filters, search, infinite scrolling, and data that is intentionally refreshed independently. A forum topic's reply-page change, for example, should not reload unrelated page chrome. Those queries must be driven by an explicit interaction or separate lifecycle, not by an N+1 dependency discovered after another response arrives.
+A page aggregate covers the initial view, not every possible interaction. The persistent global navigation is shell state rather than page content: load only the active profile needed for its avatar and routes at startup, and defer the full profile inventory until the user opens the profile switcher. Resolve the active profile through targeted relational reads; do not load whole account, profile or community collections just to resolve one navigation item. The application uses the normalized Supabase PostgreSQL repository in every environment; there is no JSON-file storage adapter. Keep independent queries for user-driven pagination, filters, search, infinite scrolling, and data that is intentionally refreshed independently. A forum topic's reply-page change, for example, should not reload unrelated page chrome. Those queries must be driven by an explicit interaction or separate lifecycle, not by an N+1 dependency discovered after another response arrives.
 
 ## Storage and performance requirements
 
-- The page aggregate should use one consistent repository snapshot.
-- On the JSONB-backed Supabase repository, load required collection snapshots in one filtered request rather than one REST request per collection.
+- The page aggregate should use one consistent relational query/RPC snapshot for related state.
+- Read normalized PostgreSQL rows through targeted repository methods. Use SQL joins, filters, indexes and keyset pagination rather than JSONB collection snapshots.
 - Never fetch one profile per activity, forum topic, message, or membership. Return the necessary author/profile projection alongside its parent records.
-- Preserve server-side authorization, visibility, privacy and profile-type rules.
+- Preserve server-side authorization, visibility, privacy and profile-type rules in backend services and transactional RPCs.
 - Keep payloads bounded to the actual page needs (first-page previews, counts and visible entities).
-- Test both the returned projection and the number of repository transactions / storage reads.
+- Test both the returned projection and the number of relational reads / RPC calls.
 
 ## Initial adopters
 

@@ -4,6 +4,8 @@ import axios, { type AxiosRequestConfig, type Method } from 'axios'
 import type { Request, Response } from 'express'
 import { ACCESS_COOKIE, clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from '../auth/cookie.util'
 import { getBackendUrl } from '../backend-url.util'
+import { assertSameOrigin } from '../origin.util'
+import { getClientIp } from '../client-ip.util'
 
 type AuthTokenPair = { accessToken: string; refreshToken: string }
 
@@ -16,6 +18,7 @@ export class ApiProxyController {
 
   @All('{*path}')
   async proxy(@Req() req: Request, @Res() res: Response): Promise<void> {
+    assertSameOrigin(req)
     let accessToken = getCookie(req, ACCESS_COOKIE)
     const refreshToken = getCookie(req, REFRESH_COOKIE)
     try {
@@ -26,8 +29,11 @@ export class ApiProxyController {
       }
 
       const headers: Record<string, string> = {}
+      if (req.method === 'POST' && req.path === '/api/realtime/verify') {
+        headers['x-nexus-client-ip'] = getClientIp(req)
+      }
       const isCleanupCron = req.path === '/api/internal/cleanup-uploads'
-      const isBinaryImage = /^\/api\/uploads\/[0-9a-f-]{36}\/content$/i.test(req.path)
+      const isBinaryImage = /^\/api\/uploads\/(?:[0-9a-f-]{36}|community-avatars\/[0-9a-f-]{36})\/content$/i.test(req.path)
 
       if (isCleanupCron) {
         const cronSecret = process.env.CRON_SECRET
@@ -78,7 +84,12 @@ export class ApiProxyController {
       }
       res.status(result.status).send(result.data)
     } catch (error) {
-      this.logger.error('BFF could not forward request to the domain API.', error)
+      const upstreamStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+      this.logger.error(
+        upstreamStatus
+          ? `BFF could not forward request to the domain API (upstream status: ${upstreamStatus}).`
+          : 'BFF could not forward request to the domain API (no upstream response).'
+      )
       res.status(HttpStatus.BAD_GATEWAY).json({ statusCode: HttpStatus.BAD_GATEWAY, message: 'BACKEND_UNAVAILABLE' })
     }
   }

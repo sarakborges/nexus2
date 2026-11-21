@@ -12,6 +12,10 @@ function makeService(collections, ownedProfiles = ['sender'], uploads, beforeTra
     }])
   }
   const data = {
+    async accountOwnsProfile(userId, profileId) {
+      const account = (collections.get('accounts') ?? []).find(item => item.id === userId)
+      return Boolean(account?.profiles.includes(profileId))
+    },
     async getProfileByUrl(url) {
       const profile = (collections.get('profiles') ?? []).find(item => item.url === url)
       if (!profile) throw new Error('PROFILE_NOT_FOUND')
@@ -196,7 +200,36 @@ test('passes uploaded image IDs to the relational message write', async () => {
   assert.ok(calls[0].html.includes(imageReference))
   assert.equal(calls[1].method, 'createProfileMessage')
   assert.deepEqual(calls[1].imageIds, [imageId])
+  assert.ok(message.content.includes(imageReference))
   assert.equal(calls[1].message.id, message.id)
+})
+
+
+test('strips remote image URLs from rich text and rejects remote image-only messages', async () => {
+  const collections = new Map([
+    ['profiles', [
+      { id: 'sender', name: 'Sender', url: 'sender', picture: '', about: '', type: 'social' },
+      { id: 'recipient', name: 'Recipient', url: 'recipient', picture: '', about: '', type: 'social' }
+    ]],
+    ['profile_messages', []]
+  ])
+  const service = makeService(collections)
+
+  const message = await service.sendMessage(
+    'user', 'sender', 'recipient',
+    '<p>Visible text</p><img src="https://tracker.example/pixel.gif" alt="Remote">'
+  )
+  assert.match(message.content, /Visible text/)
+  assert.doesNotMatch(message.content, /tracker\.example|<img\b/i)
+
+  await assert.rejects(
+    service.sendMessage(
+      'user', 'sender', 'recipient',
+      '<img src="https://tracker.example/pixel.gif" alt="Remote">'
+    ),
+    error => error.getStatus() === 409 && error.message === 'INVALID_MESSAGE'
+  )
+  assert.equal(collections.get('profile_messages').length, 1)
 })
 
 

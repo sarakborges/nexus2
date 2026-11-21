@@ -198,12 +198,12 @@ test('updating preferences preserves the missing-account error', async () => {
   )
 })
 
-test('selecting a profile not owned by the account is rejected', async () => {
+test('selecting a profile not owned by the account is forbidden', async () => {
   const { service } = createAccountService([account()])
 
   await assert.rejects(
     service.updateCurrentProfile('user-1', 'foreign-profile'),
-    error => error.getStatus() === 401 && error.message === 'PROFILE_NOT_OWNED'
+    error => error.getStatus() === 403 && error.message === 'PROFILE_NOT_OWNED'
   )
 })
 
@@ -221,5 +221,19 @@ test('deleteAccount preserves the missing-account error', async () => {
   await assert.rejects(
     service.deleteAccount('missing-user'),
     error => error.getStatus() === 401 && error.message === 'ACCOUNT_NOT_FOUND'
+  )
+})
+
+
+test('selecting a nonexistent profile returns not found rather than an authentication error', async () => {
+  const service = new AccountService({
+    async changeAccountProfile() {
+      throw new Error('PROFILE_NOT_FOUND')
+    }
+  })
+
+  await assert.rejects(
+    service.updateCurrentProfile('user-1', 'missing-profile'),
+    error => error.getStatus() === 404 && error.message === 'PROFILE_NOT_FOUND'
   )
 })

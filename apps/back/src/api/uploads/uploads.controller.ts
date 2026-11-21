@@ -6,6 +6,7 @@ import {
   Get,
   Headers,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Res,
@@ -29,13 +30,13 @@ export class UploadsController {
 
   @Post(':id/complete')
   @UseGuards(JwtAccessGuard)
-  completeUpload(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+  completeUpload(@CurrentUser() user: { id: string }, @Param('id', new ParseUUIDPipe()) id: string) {
     return this.uploads.completeUpload(user.id, id)
   }
 
   @Delete(':id')
   @UseGuards(JwtAccessGuard)
-  async deleteUpload(@CurrentUser() user: { id: string }, @Param('id') id: string) {
+  async deleteUpload(@CurrentUser() user: { id: string }, @Param('id', new ParseUUIDPipe()) id: string) {
     await this.uploads.deleteUpload(user.id, id)
     return { success: true }
   }
@@ -44,10 +45,25 @@ export class UploadsController {
   @UseGuards(OptionalJwtAccessGuard)
   async getContent(
     @CurrentUser() user: { id: string } | undefined,
-    @Param('id') id: string,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Res() response: Response
   ) {
     const file = await this.uploads.getEditorImage(user?.id ?? null, id)
+    response.setHeader('Content-Type', file.contentType)
+    response.setHeader('Content-Length', String(file.body.byteLength))
+    response.setHeader('Cache-Control', 'private, no-store, max-age=0')
+    response.setHeader('X-Content-Type-Options', 'nosniff')
+    response.send(file.body)
+  }
+
+  @Get('community-avatars/:id/content')
+  @UseGuards(OptionalJwtAccessGuard)
+  async getCommunityAvatarContent(
+    @CurrentUser() user: { id: string } | undefined,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Res() response: Response
+  ) {
+    const file = await this.uploads.getCommunityAvatar(user?.id ?? null, id)
     response.setHeader('Content-Type', file.contentType)
     response.setHeader('Content-Length', String(file.body.byteLength))
     response.setHeader('Cache-Control', 'private, no-store, max-age=0')
@@ -59,7 +75,7 @@ export class UploadsController {
   @UseGuards(JwtAccessGuard)
   setProfileAvatar(
     @CurrentUser() user: { id: string },
-    @Param('profileId') profileId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: UpdateAvatarDto
   ) {
     return this.uploads.setProfileAvatar(user.id, profileId, body.uploadId ?? null)
@@ -69,7 +85,7 @@ export class UploadsController {
   @UseGuards(JwtAccessGuard)
   setCommunityAvatar(
     @CurrentUser() user: { id: string },
-    @Param('communityId') communityId: string,
+    @Param('communityId', new ParseUUIDPipe()) communityId: string,
     @Body() body: UpdateAvatarDto
   ) {
     if (!body.actorProfileId) throw new BadRequestException('ACTOR_PROFILE_REQUIRED')

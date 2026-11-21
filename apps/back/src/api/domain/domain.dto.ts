@@ -1,8 +1,12 @@
+import { Transform } from 'class-transformer'
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsIn,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   MinLength
 } from 'class-validator'
@@ -16,6 +20,14 @@ import type {
   RelationshipType,
   SearchScope
 } from '@nexus/common'
+
+export class IdsQueryDto {
+  @Transform(({ value }) => value === undefined ? [] : Array.isArray(value) ? value : [value])
+  @IsArray()
+  @ArrayMaxSize(100)
+  @IsUUID(undefined, { each: true })
+  ids: string[] = []
+}
 
 export class SearchDto extends PaginationDto {
   @IsString()
@@ -34,9 +46,11 @@ export class CreateProfileDto implements CreateProfileInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -54,9 +68,11 @@ export class UpdateProfileDto implements Omit<CreateProfileInput, 'type'> {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -71,9 +87,11 @@ export class CreateCommunityDto implements CreateCommunityInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -83,7 +101,7 @@ export class CreateCommunityDto implements CreateCommunityInput {
   @IsIn(['public', 'private', 'unlisted'])
   privacy!: CommunityPrivacy
 
-  @IsString()
+  @IsUUID()
   ownerProfileId!: string
 }
 
@@ -94,9 +112,11 @@ export class UpdateCommunityDto implements CreateCommunityInput {
 
   @IsOptional()
   @IsString()
+  @MaxLength(2048)
   url?: string
 
   @IsString()
+  @MaxLength(2048)
   picture!: string
 
   @IsString()
@@ -107,11 +127,19 @@ export class UpdateCommunityDto implements CreateCommunityInput {
   privacy!: CommunityPrivacy
 }
 
-export class ProfileRelationDto {
-  @IsString()
+export class RemoveProfileRelationDto {
+  @IsUUID()
   sourceProfileId!: string
 
-  @IsString()
+  @IsUUID()
+  targetProfileId!: string
+}
+
+export class ProfileRelationDto {
+  @IsUUID()
+  sourceProfileId!: string
+
+  @IsUUID()
   targetProfileId!: string
 
   @IsIn(['connection', 'requested', 'blocked'])
@@ -119,7 +147,7 @@ export class ProfileRelationDto {
 }
 
 export class CommunityRelationDto {
-  @IsString()
+  @IsUUID()
   actorProfileId!: string
 
   @IsIn(['connection', 'requested', 'blocked', 'moderator'])
@@ -127,17 +155,17 @@ export class CommunityRelationDto {
 }
 
 export class ActorDto {
-  @IsString()
+  @IsUUID()
   actorProfileId!: string
 }
 
 export class OwnershipDto extends ActorDto {
-  @IsString()
+  @IsUUID()
   newOwnerProfileId!: string
 }
 
 export class MessageDto {
-  @IsString()
+  @IsUUID()
   fromProfileId!: string
 
   @IsString()
@@ -147,7 +175,7 @@ export class MessageDto {
 }
 
 export class CreateForumTopicDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 
   @IsString()
@@ -162,7 +190,7 @@ export class CreateForumTopicDto {
 }
 
 export class CreateForumReplyDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 
   @IsString()
@@ -172,7 +200,7 @@ export class CreateForumReplyDto {
 }
 
 export class ForumActorDto {
-  @IsString()
+  @IsUUID()
   profileId!: string
 }
 

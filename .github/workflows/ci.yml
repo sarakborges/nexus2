@@ -80,8 +80,49 @@ jobs:
           }
           NODE
 
-      - name: Test backend authentication, authorization and Supabase persistence
-        run: npm test --workspace @nexus/back
+      - name: Test backend and frontend utilities
+        run: npm test
+
+      - name: Start disposable PostgreSQL 17 for privilege migration tests
+        run: |
+          docker run --detach --name nexus-privilege-migration-db \
+            -e POSTGRES_PASSWORD=nexus-test-only \
+            -e POSTGRES_DB=nexus_privilege_tests \
+            -p 5432:5432 \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            postgres:17-alpine
+          ready=false
+          for attempt in $(seq 1 45); do
+            if docker exec -e PGPASSWORD=nexus-test-only nexus-privilege-migration-db \
+              psql -h 127.0.0.1 -U postgres -d nexus_privilege_tests -tAc "SELECT 1" >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != "true" ]; then
+            docker logs nexus-privilege-migration-db
+            exit 1
+          fi
+
+      - name: Execute privilege migrations on PostgreSQL 17
+        run: |
+          if ! docker exec -e PGPASSWORD=nexus-test-only nexus-privilege-migration-db \
+            psql -h 127.0.0.1 -U postgres -d nexus_privilege_tests -v ON_ERROR_STOP=1 \
+              -f /workspace/apps/back/test/fixtures/privilege-migrations.setup.sql \
+              -f /workspace/apps/back/sql/073_auth_rate_limit_invoker_rls.sql \
+              -f /workspace/apps/back/sql/074_revoke_client_access_to_internal_jobs.sql \
+              -f /workspace/apps/back/sql/075_opt_in_public_default_privileges.sql \
+              -f /workspace/apps/back/sql/076_revoke_elevated_client_table_privileges.sql \
+              -f /workspace/apps/back/sql/077_revoke_unused_authenticated_role_access.sql \
+              -f /workspace/apps/back/test/fixtures/privilege-migrations.assertions.sql; then
+            docker logs nexus-privilege-migration-db
+            exit 1
+          fi
+
+      - name: Stop disposable PostgreSQL 17 migration database
+        if: always()
+        run: docker rm --force nexus-privilege-migration-db || true
 
       - name: Test BFF token refresh concurrency
         run: npm test --workspace @nexus/bff

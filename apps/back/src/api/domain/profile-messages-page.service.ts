@@ -32,7 +32,7 @@ export class ProfileMessagesPageService {
         items: page.messages.items.map(message => ({
           ...message,
           content: sanitizeRichText(message.content ?? ''),
-          isFavorite: message.isFavorite === true
+          isFavorite: page.isProfileOwner && message.isFavorite === true
         }))
       },
       senders: page.senders.map(sender => ({

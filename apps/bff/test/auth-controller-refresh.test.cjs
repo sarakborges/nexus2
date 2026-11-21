@@ -10,8 +10,18 @@ const user = {
   currentProfile: null
 }
 
-function createRequest(cookie = 'nexus_refresh=valid-refresh') {
-  return { headers: { cookie } }
+function createRequest(cookie = 'nexus_refresh=valid-refresh', headers = {}) {
+  return {
+    method: 'POST',
+    protocol: 'http',
+    headers: {
+      cookie,
+      origin: 'http://localhost:5173',
+      host: 'localhost:5173',
+      'x-forwarded-proto': 'http',
+      ...headers
+    }
+  }
 }
 
 function createResponse() {
@@ -104,6 +114,24 @@ test('a backend network failure becomes 502 without clearing cookies', async () 
   assert.equal(response.headers['set-cookie'], undefined)
 })
 
+test('a malformed refresh cookie is treated as missing and clears stale cookies', async () => {
+  let requestCount = 0
+  const controller = createController(async () => {
+    requestCount += 1
+    return { data: {} }
+  })
+  const response = createResponse()
+
+  await assert.rejects(
+    controller.refresh(createRequest('nexus_refresh=%E0%A4%A'), response),
+    error => error.getStatus?.() === 401 && error.message === 'REFRESH_TOKEN_MISSING'
+  )
+
+  assert.equal(requestCount, 0)
+  assert.match(response.headers['set-cookie'][0], /Max-Age=0/)
+  assert.match(response.headers['set-cookie'][1], /Max-Age=0/)
+})
+
 test('a missing refresh cookie clears stale auth cookies and returns 401', async () => {
   let requestCount = 0
   const controller = createController(async () => {
@@ -120,4 +148,45 @@ test('a missing refresh cookie clears stale auth cookies and returns 401', async
   assert.equal(requestCount, 0)
   assert.match(response.headers['set-cookie'][0], /Max-Age=0/)
   assert.match(response.headers['set-cookie'][1], /Max-Age=0/)
+})
+
+async function assertAuthRouteForwardsServerDerivedClientIp(route) {
+  let upstreamRequest
+  const controller = createController(async (url, body, config) => {
+    upstreamRequest = { url, body, config }
+    return {
+      data: {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        expiresIn: 900,
+        user
+      }
+    }
+  })
+  const response = createResponse()
+  const request = createRequest('', {
+    'x-vercel-forwarded-for': '203.0.113.42, 10.0.0.1',
+    'x-forwarded-for': '198.51.100.20',
+    'x-nexus-client-ip': '192.0.2.55'
+  })
+  const credentials = { email: 'person@example.com', password: 'correct-horse' }
+
+  const result = route === 'sign-in'
+    ? await controller.signIn(credentials, request, response)
+    : await controller.signUp(credentials, request, response)
+
+  assert.equal(upstreamRequest.url.endsWith('/auth/' + route), true)
+  assert.deepEqual(upstreamRequest.body, credentials)
+  assert.equal(upstreamRequest.config.headers['x-nexus-client-ip'], '203.0.113.42')
+  assert.deepEqual(result, { user, authenticated: true })
+  assert.match(response.headers['set-cookie'][0], /nexus_access=access-token/)
+  assert.match(response.headers['set-cookie'][1], /nexus_refresh=refresh-token/)
+}
+
+test('sign-in forwards the platform-derived client IP and ignores client-supplied IP metadata', async () => {
+  await assertAuthRouteForwardsServerDerivedClientIp('sign-in')
+})
+
+test('sign-up forwards the platform-derived client IP and ignores client-supplied IP metadata', async () => {
+  await assertAuthRouteForwardsServerDerivedClientIp('sign-up')
 })

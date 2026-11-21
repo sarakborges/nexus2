@@ -1,9 +1,20 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  UseGuards
+} from '@nestjs/common'
 import { CurrentUser } from '../auth/current-user.decorator'
 import type { AuthenticatedUserContext } from '../auth/auth.types'
 import { JwtAccessGuard, OptionalJwtAccessGuard } from '../auth/jwt-access.guard'
 import { PaginationDto } from '../pagination/pagination.dto'
-import { CreateProfileDto, UpdateProfileDto } from './domain.dto'
+import { CreateProfileDto, IdsQueryDto, UpdateProfileDto } from './domain.dto'
 import { DomainService } from './domain.service'
 import { ProfilePageService } from './profile-page.service'
 import { ProfileDirectoryPageService } from './profile-directory-page.service'
@@ -54,7 +65,7 @@ export class ProfilesController {
   @UseGuards(JwtAccessGuard)
   getProfileSettings(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string
+    @Param('profileId', new ParseUUIDPipe()) profileId: string
   ) {
     return this.profileSettings.getSettings(user.id, profileId)
   }
@@ -63,7 +74,7 @@ export class ProfilesController {
   @UseGuards(JwtAccessGuard)
   updateProfileSettings(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string,
+    @Param('profileId', new ParseUUIDPipe()) profileId: string,
     @Body() body: UpdateProfileSettingsDto
   ) {
     return this.profileSettings.updateSettings(user.id, profileId, body)
@@ -89,8 +100,8 @@ export class ProfilesController {
   }
 
   @Get('profiles/ids')
-  getProfiles(@Query('ids') ids: string | string[]) {
-    return this.domain.getProfilesByIds(Array.isArray(ids) ? ids : ids ? [ids] : [])
+  getProfiles(@Query() query: IdsQueryDto) {
+    return this.domain.getProfilesByIds(query.ids)
   }
 
   @Post('profiles')
@@ -106,7 +117,7 @@ export class ProfilesController {
   @UseGuards(JwtAccessGuard)
   deleteProfile(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') profileId: string
+    @Param('profileId', new ParseUUIDPipe()) profileId: string
   ) {
     return this.domain.deleteProfile(user.id, profileId)
   }
@@ -115,7 +126,7 @@ export class ProfilesController {
   @UseGuards(JwtAccessGuard)
   updateProfile(
     @CurrentUser() user: AuthenticatedUserContext,
-    @Param('profileId') id: string,
+    @Param('profileId', new ParseUUIDPipe()) id: string,
     @Body() body: UpdateProfileDto
   ) {
     return this.domain.updateProfile(user.id, id, body)

@@ -17,7 +17,7 @@
     "lint": "npm run lint --workspace @nexus/front",
     "storybook": "npm run storybook --workspace @nexus/front",
     "format": "prettier --write .",
-    "test": "npm test --workspace @nexus/back",
+    "test": "npm test --workspace @nexus/back && npm test --workspace @nexus/front",
     "build-storybook": "npm run build-storybook --workspace @nexus/front",
     "dev:front:prod-bff": "npm run build --workspace @nexus/common && npm run dev:prod-bff --workspace @nexus/front"
   },

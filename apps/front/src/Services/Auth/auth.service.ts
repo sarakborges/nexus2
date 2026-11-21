@@ -12,6 +12,7 @@ import axios from 'axios'
 export type AuthErrorCode =
   | 'EMAIL_ALREADY_EXISTS'
   | 'INVALID_CREDENTIALS'
+  | 'AUTH_RATE_LIMIT_EXCEEDED'
   | 'STORAGE_UNAVAILABLE'
   | 'CRYPTO_UNAVAILABLE'
   | 'NETWORK_ERROR'
@@ -31,11 +32,19 @@ const toSession = (response: AuthMeResponse): AuthSession => ({
 const AUTH_CODES = [
   'EMAIL_ALREADY_EXISTS',
   'INVALID_CREDENTIALS',
+  'AUTH_RATE_LIMIT_EXCEEDED',
   'STORAGE_UNAVAILABLE',
   'CRYPTO_UNAVAILABLE',
   'NETWORK_ERROR'
 ] as const
 function toAuthError(error: unknown, fallback: AuthErrorCode): AuthError {
+  if (
+    axios.isAxiosError(error) &&
+    (!error.response || error.response.status >= 500)
+  ) {
+    return new AuthError('NETWORK_ERROR')
+  }
+
   const code = getApiErrorCode(error, fallback)
   return new AuthError(
     AUTH_CODES.includes(code as (typeof AUTH_CODES)[number])

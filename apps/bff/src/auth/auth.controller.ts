@@ -1,19 +1,21 @@
 import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
+import { getClientIp } from '../client-ip.util'
 import { HttpService } from '@nestjs/axios'
 import axios from 'axios'
-import { IsEmail, IsString, MinLength } from 'class-validator'
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
 import type { Request, Response } from 'express'
 import type { AuthTokenPair } from '@nexus/common'
 import { clearAuthCookies, getCookie, REFRESH_COOKIE, writeAuthCookies } from './cookie.util'
 import { getBackendUrl } from '../backend-url.util'
+import { assertSameOrigin } from '../origin.util'
 
 class CredentialsDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(1) password!: string
+  @IsEmail() @MaxLength(254) email!: string
+  @IsString() @MinLength(1) @MaxLength(128) password!: string
 }
 class SignUpDto {
-  @IsEmail() email!: string
-  @IsString() @MinLength(8) password!: string
+  @IsEmail() @MaxLength(254) email!: string
+  @IsString() @MinLength(8) @MaxLength(128) password!: string
 }
 type AuthResponse = { user: AuthTokenPair['user']; authenticated: true }
 
@@ -23,17 +25,20 @@ export class AuthController {
   constructor(private readonly http: HttpService) {}
 
   @Post('sign-up')
-  async signUp(@Body() body: SignUpDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
-    return this.authenticate('sign-up', body, res)
+  async signUp(@Body() body: SignUpDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
+    return this.authenticate('sign-up', body, req, res)
   }
   @Post('sign-in')
   @HttpCode(200)
-  async signIn(@Body() body: CredentialsDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
-    return this.authenticate('sign-in', body, res)
+  async signIn(@Body() body: CredentialsDto, @Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
+    return this.authenticate('sign-in', body, req, res)
   }
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponse> {
+    assertSameOrigin(req)
     const token = getCookie(req, REFRESH_COOKIE)
     if (!token) {
       clearAuthCookies(res)
@@ -57,13 +62,14 @@ export class AuthController {
   @Post('sign-out')
   @HttpCode(200)
   async signOut(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<{ success: true }> {
+    assertSameOrigin(req)
     const token = getCookie(req, REFRESH_COOKIE)
     try { if (token) await this.http.axiosRef.post(`${this.backUrl}/auth/sign-out`, { refreshToken: token }) }
     finally { clearAuthCookies(res) }
     return { success: true }
   }
-  private async request<T>(url: string, body: unknown): Promise<{ data: T }> {
-    try { return await this.http.axiosRef.post<T>(url, body) }
+  private async request<T>(url: string, body: unknown, headers: Record<string, string> = {}): Promise<{ data: T }> {
+    try { return await this.http.axiosRef.post<T>(url, body, { headers }) }
     catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status ?? HttpStatus.BAD_GATEWAY
@@ -73,9 +79,19 @@ export class AuthController {
       throw error
     }
   }
-  private async authenticate(route: 'sign-in' | 'sign-up', body: CredentialsDto | SignUpDto, res: Response): Promise<AuthResponse> {
-    const { data } = await this.request<AuthTokenPair>(`${this.backUrl}/auth/${route}`, body)
+  private async authenticate(
+    route: 'sign-in' | 'sign-up',
+    body: CredentialsDto | SignUpDto,
+    req: Request,
+    res: Response
+  ): Promise<AuthResponse> {
+    const { data } = await this.request<AuthTokenPair>(
+      `${this.backUrl}/auth/${route}`,
+      body,
+      { 'x-nexus-client-ip': getClientIp(req) }
+    )
     writeAuthCookies(res, data.accessToken, data.refreshToken)
     return { user: data.user, authenticated: true }
   }
+
 }

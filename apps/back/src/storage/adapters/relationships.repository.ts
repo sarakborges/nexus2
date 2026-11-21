@@ -8,7 +8,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
   }
 
   async upsertProfileRelationship(change: ProfileRelationshipWrite): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_upsert_profile_relationship', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_upsert_profile_relationship', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -26,7 +26,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
   }
 
   async removeProfileRelationship(change: ProfileRelationshipRemoval): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_remove_profile_relationship', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_remove_profile_relationship', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -43,7 +43,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
   }
 
   async changeCommunityRelationship(change: CommunityRelationshipChange): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_community_relationship', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_change_community_relationship', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -62,7 +62,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
   }
 
   async getProfileRelationships(userId: string, profileId: string): Promise<Relationship[]> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_relationships', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_relationships', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_profile_id: profileId })
@@ -74,7 +74,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
   }
 
   async getCommunityRelationships(userId: string | null, communityId: string): Promise<CommunityRelationship[]> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_relationships', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_relationships', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_community_id: communityId })
@@ -92,7 +92,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
     userId: string | null,
     actorProfileId?: string
   ): Promise<PaginatedResult<CommunityMember>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_community_members', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_list_community_members', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -119,7 +119,7 @@ export class SupabaseRelationshipsRepository extends SupabaseRepositoryClient im
     actorProfileId: string,
     page: number
   ): Promise<PaginatedResult<CommunityMember>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_pending_members', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_list_pending_members', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({

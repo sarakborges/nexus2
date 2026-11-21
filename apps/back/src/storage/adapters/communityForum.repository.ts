@@ -12,7 +12,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
     userId: string | null,
     page: number
   ): Promise<PaginatedResult<CommunityForumTopicSummary>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topics', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topics', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_community_id: communityId, p_user_id: userId, p_page: page })
@@ -33,7 +33,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
     userId: string | null,
     page: number
   ): Promise<CommunityForumTopicDetail> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -58,7 +58,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -105,7 +105,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
     query: string | undefined,
     sort: ListSort
   ): Promise<CommunityForumTopicPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_community_forum_topic_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -146,7 +146,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
   }
 
   async createCommunityForumTopic(change: CommunityForumTopicWrite): Promise<CommunityForumTopic> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_community_forum_topic', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_community_forum_topic', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -191,7 +191,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
   }
 
   async createCommunityForumReply(change: CommunityForumReplyWrite): Promise<CommunityForumReply> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_community_forum_reply', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_community_forum_reply', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -233,7 +233,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
   }
 
   async moderateCommunityForumTopic(change: CommunityForumTopicModerationWrite): Promise<CommunityForumTopic> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_moderate_community_forum_topic', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_moderate_community_forum_topic', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -277,7 +277,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
   }
 
   async deleteCommunityForumTopic(change: CommunityForumTopicRemoval): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_community_forum_topic', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_community_forum_topic', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -292,7 +292,7 @@ export class SupabaseCommunityForumRepository extends SupabaseRepositoryClient i
   }
 
   async deleteCommunityForumReply(change: CommunityForumReplyRemoval): Promise<string> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_community_forum_reply', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_community_forum_reply', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({

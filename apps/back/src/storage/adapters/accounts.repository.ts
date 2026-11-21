@@ -1,4 +1,4 @@
-import type { AccountProfileChange, AccountRepositoryRecord, CreateAccountWithRefreshTokenWrite, RefreshTokenRotation, RefreshTokenWrite, UserPreferences } from '../repository.types'
+import type { AccountCredentialsRecord, AccountProfileChange, AccountRepositoryRecord, CreateAccountWithRefreshTokenWrite, RefreshTokenRotation, RefreshTokenWrite, UserPreferences } from '../repository.types'
 import { SupabaseRepositoryClient } from '../supabase-repository.client'
 import type { AccountRepository } from '../contracts/accounts.repository.interface'
 
@@ -13,14 +13,63 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     return (account as AccountRepositoryRecord | undefined) ?? null
   }
 
-  async findAccountByEmail(email: string): Promise<AccountRepositoryRecord | null> {
+  async accountOwnsProfile(userId: string, profileId: string): Promise<boolean> {
+    const url = new URL(this.baseUrl + '/rest/v1/account_profiles')
+    url.searchParams.set('select', 'profile_id')
+    url.searchParams.set('account_id', 'eq.' + userId)
+    url.searchParams.set('profile_id', 'eq.' + profileId)
+    url.searchParams.set('limit', '1')
+    const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.headers() })
+    await this.assertSuccess(response)
+    const rows: unknown = await response.json()
+    if (!Array.isArray(rows)) {
+      throw new Error('Supabase account profile ownership lookup returned an invalid result.')
+    }
+    return rows.some(row =>
+      typeof row === 'object' && row !== null &&
+      (row as Record<string, unknown>).profile_id === profileId
+    )
+  }
+
+  async findAccountByEmail(email: string): Promise<AccountCredentialsRecord | null> {
     const rows = await this.selectRowsByField('accounts', 'email', 'eq.' + email)
-    const [account] = await this.readAccounts(rows)
-    return (account as AccountRepositoryRecord | undefined) ?? null
+    const [row] = rows
+    if (!row) return null
+    if (
+      typeof row.id !== 'string' ||
+      typeof row.email !== 'string' ||
+      typeof row.password_hash !== 'string' ||
+      typeof row.password_salt !== 'string'
+    ) {
+      throw new Error('Supabase account credential lookup returned an invalid row.')
+    }
+    return {
+      id: row.id,
+      email: row.email,
+      password: { hash: row.password_hash, salt: row.password_salt }
+    }
+  }
+
+  async consumeAuthRateLimit(keyHash: string, windowMs: number, maxRequests: number): Promise<boolean> {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_consume_auth_rate_limit', {
+      method: 'POST',
+      headers: { ...this.headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_key_hash: keyHash,
+        p_window_ms: windowMs,
+        p_max_requests: maxRequests
+      })
+    })
+    await this.assertSuccess(response)
+    const allowed: unknown = await response.json()
+    if (typeof allowed !== 'boolean') {
+      throw new Error('Supabase auth rate-limit RPC returned an invalid result.')
+    }
+    return allowed
   }
 
   async createAccountWithRefreshToken(change: CreateAccountWithRefreshTokenWrite): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_account_with_refresh_token', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -41,7 +90,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     userId: string,
     preferences: Partial<UserPreferences>
   ): Promise<UserPreferences> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_update_account_preferences', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -68,7 +117,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
     rotation: RefreshTokenRotation | null,
     now: number
   ): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_issue_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_issue_refresh_token', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -89,7 +138,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async deleteRefreshTokenByHash(tokenHash: string): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_revoke_refresh_token', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_revoke_refresh_token', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -101,7 +150,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async deleteAccount(userId: string, now: number): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_account', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_account', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_now_ms: now })
@@ -110,7 +159,7 @@ export class SupabaseAccountRepository extends SupabaseRepositoryClient implemen
   }
 
   async changeAccountProfile(change: AccountProfileChange): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_change_account_profile', {
       method: 'POST',
       headers: {
         ...this.headers(),
