@@ -436,7 +436,7 @@ begin
     return;
   end if;
 
-  if v_file.resource_type<>'community' or v_file.resource_id is null then
+  if v_file.resource_type is distinct from 'community' or v_file.resource_id is null then
     raise exception 'UPLOAD_NOT_FOUND' using errcode='P0002';
   end if;
 

@@ -56,7 +56,7 @@ export class UploadsStorageService {
   }
 
   getCommunityAvatarId(url: string): string | null {
-    const match = url.match(/^\/api\/uploads\/community-avatars\/([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/content(?:[?#].*)?$/i)
+    const match = url.match(/^\/api\/uploads\/community-avatars\/([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/content$/)
     return match?.[1] ?? null
   }
 

@@ -120,6 +120,8 @@ test('community avatar URL parser rejects foreign origins and malformed UUIDs', 
   assert.equal(instance.getCommunityAvatarId('/api/uploads/community-avatars/' + id + '/content'), id)
   assert.equal(instance.getCommunityAvatarId('https://evil.example/api/uploads/community-avatars/' + id + '/content'), null)
   assert.equal(instance.getCommunityAvatarId('/api/uploads/community-avatars/not-a-uuid/content'), null)
+  assert.equal(instance.getCommunityAvatarId('/api/uploads/community-avatars/' + id + '/content?cache=1'), null)
+  assert.equal(instance.getCommunityAvatarId('/API/uploads/community-avatars/' + id + '/content'), null)
 })
 
 test('migration defines a non-public dedicated bucket while keeping profile avatars public', () => {
@@ -146,6 +148,7 @@ test('private community avatar reads require effective-type matching membership'
   assert.match(sql, /coalesce\([\s\S]*owner_profile\.type[\s\S]*community\.type/i)
   assert.match(sql, /member_profile\.type=v_community_type/i)
   assert.match(sql, /relation\.type in \('owner','moderator','connection'\)/i)
+  assert.match(sql, /resource_type is distinct from 'community'/i)
   assert.match(sql, /v_privacy is null or v_privacy not in \('public','unlisted','private'\)/i)
 })
 
