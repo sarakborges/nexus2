@@ -110,7 +110,7 @@ export class CommunityService {
     const privacy = input.privacy ?? 'public'
     if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      ((!isValidPictureUrl(picture) && !this.uploads?.isCommunityAvatarUrl(picture)) && !this.uploads?.isCommunityAvatarUrl(picture))) {
+      (!isValidPictureUrl(picture) && !this.uploads?.isCommunityAvatarUrl(picture))) {
       throw new BadRequestException('INVALID_COMMUNITY')
     }
     const createdAt = Date.now()
@@ -156,7 +156,7 @@ export class CommunityService {
     const lastActivity = Date.now()
     if (!name || about.length > 8000 ||
       !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(url) ||
-      !isValidPictureUrl(picture)) {
+      (!isValidPictureUrl(picture) && !this.uploads?.isCommunityAvatarUrl(picture))) {
       throw new BadRequestException('INVALID_COMMUNITY')
     }
 
