@@ -9,7 +9,11 @@ const { UploadsCleanupService } = require('../dist/api/uploads/uploads.cleanup.s
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 
-const image = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 0])
+const image = Buffer.from([
+  137, 80, 78, 71, 13, 10, 26, 10,
+  0, 0, 0, 13, 73, 72, 68, 82,
+  0, 0, 0, 1, 0, 0, 0, 1
+])
 const migration = readFileSync(join(__dirname, '../sql/069_private_community_avatars.sql'), 'utf8')
 const serverAuth = readFileSync(join(__dirname, '../sql/002_nexus_collection_private_rls.sql'), 'utf8')
 const relationalSchema = readFileSync(join(__dirname, '../sql/007_relational_social_schema.sql'), 'utf8')
