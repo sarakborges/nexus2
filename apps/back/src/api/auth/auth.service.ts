@@ -74,13 +74,23 @@ export class AuthService {
 
   async signIn(credentials: SignInCredentials): Promise<AuthTokenPair> {
     const email = this.normalizeEmail(credentials.email)
-    const account = await this.repository.findAccountByEmail(email)
+    const credentialRecord = await this.repository.findAccountByEmail(email)
     // Keep the missing-account path close to the wrong-password path so login
-    // timing does not reveal whether an email address is registered.
-    const passwordMatches = account
-      ? await this.verifyPassword(credentials.password, account)
+    // timing does not reveal whether an email address is registered. Avoid
+    // loading profile memberships/preferences until the password is verified.
+    const passwordMatches = credentialRecord
+      ? await this.verifyPassword(credentials.password, credentialRecord)
       : (await this.hashPassword(credentials.password, DUMMY_PASSWORD_SALT), false)
-    if (!account || !passwordMatches) {
+    if (!credentialRecord || !passwordMatches) {
+      throw new UnauthorizedException('INVALID_CREDENTIALS')
+    }
+
+    const account = await this.repository.getAccountById(credentialRecord.id)
+    if (!account) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+    if (
+      account.password.hash !== credentialRecord.password.hash ||
+      account.password.salt !== credentialRecord.password.salt
+    ) {
       throw new UnauthorizedException('INVALID_CREDENTIALS')
     }
     return this.issueTokens(account, { kind: 'sign-in' })
