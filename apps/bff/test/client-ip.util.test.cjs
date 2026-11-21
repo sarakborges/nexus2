@@ -1,5 +1,7 @@
 const assert = require('node:assert/strict')
 const { test } = require('node:test')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
 const { getClientIp } = require('../dist/client-ip.util.js')
 
 test('prefers Vercel trusted forwarding metadata over generic forwarded headers', () => {
@@ -30,4 +32,16 @@ test('falls back to the socket address and normalizes invalid input to the share
     ip: undefined,
     socket: { remoteAddress: 'also-not-an-ip' }
   }), 'unknown')
+})
+
+
+test('self-hosted proxy overwrites untrusted forwarded-IP headers', () => {
+  const nginx = readFileSync(
+    join(__dirname, '../../front/nginx.conf'),
+    'utf8'
+  )
+
+  assert.match(nginx, /proxy_set_header X-Forwarded-For \\$remote_addr;/)
+  assert.match(nginx, /proxy_set_header X-Vercel-Forwarded-For "";/)
+  assert.doesNotMatch(nginx, /proxy_add_x_forwarded_for/)
 })
