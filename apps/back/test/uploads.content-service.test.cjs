@@ -79,11 +79,11 @@ test('managed image download cancels the stream as soon as it exceeds the record
   assert.equal(pulls, 1)
 })
 
-test('managed image metadata cannot request downloads above the purpose limit', async () => {
+test('managed image metadata cannot request downloads above the shared one-MiB image limit', async () => {
   let requested = false
   const response = new Response(png, { status: 200 })
   const service = createService(
-    editorImage({ size: 10 * 1024 * 1024 + 1 }),
+    editorImage({ size: 1024 * 1024 + 1 }),
     response
   )
   service.storage.request = async () => {
