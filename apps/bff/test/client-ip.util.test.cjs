@@ -21,6 +21,29 @@ test('uses the first address from the forwarded chain when Vercel metadata is ab
   }), '198.51.100.20')
 })
 
+
+test('uses the self-hosted forwarded address when Vercel metadata is explicitly empty', () => {
+  assert.equal(getClientIp({
+    headers: {
+      'x-vercel-forwarded-for': '',
+      'x-forwarded-for': '203.0.113.10, 10.0.0.2'
+    },
+    ip: '192.0.2.1',
+    socket: { remoteAddress: '172.18.0.2' }
+  }), '203.0.113.10')
+})
+
+test('does not trust generic forwarded headers when non-empty Vercel metadata is invalid', () => {
+  assert.equal(getClientIp({
+    headers: {
+      'x-vercel-forwarded-for': 'not-an-ip',
+      'x-forwarded-for': '203.0.113.10'
+    },
+    ip: '192.0.2.1',
+    socket: { remoteAddress: '172.18.0.2' }
+  }), '192.0.2.1')
+})
+
 test('falls back to the socket address and normalizes invalid input to the shared unknown bucket', () => {
   assert.equal(getClientIp({
     headers: { 'x-forwarded-for': 'not-an-ip' },
