@@ -24,7 +24,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async deleteProfile(userId: string, profileId: string): Promise<void> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_delete_profile', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_profile_id: profileId })
@@ -33,7 +33,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async createProfile(change: ProfileCreateWrite): Promise<AuthenticatedUser> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_profile', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_profile', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -73,7 +73,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async updateProfile(change: ProfileUpdateWrite): Promise<{ profile: Profile; previousPicture: string | null }> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_update_profile', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_update_profile', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -105,7 +105,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
     post: ProfilePost,
     imageIds: readonly string[]
   ): Promise<ProfilePost> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_create_profile_post', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_create_profile_post', {
       method: 'POST',
       headers: {
         ...this.headers(),
@@ -163,7 +163,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getProfilesPage(page: number): Promise<PaginatedResult<Profile>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_list_profiles', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_list_profiles', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_page: page })
@@ -179,7 +179,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getProfileByUrl(url: string): Promise<Profile> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_by_url', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_by_url', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url })
@@ -193,7 +193,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getOwnedProfiles(userId: string, page: number): Promise<PaginatedResult<Profile>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_owned_profiles', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_owned_profiles', {
       method: 'POST', headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_user_id: userId, p_page: page })
     })
@@ -208,7 +208,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getProfileFriends(profileId: string, page: number): Promise<PaginatedResult<Profile>> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_friends', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_friends', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_profile_id: profileId, p_page: page })
@@ -224,7 +224,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getProfileEditPage(url: string, userId: string | null): Promise<ProfileEditPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_edit_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_edit_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
@@ -245,7 +245,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
     query: string | undefined,
     sort: ListSort
   ): Promise<ProfileDirectoryPageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_directory_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_directory_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -309,7 +309,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
   }
 
   async getProfilePage(url: string, userId: string | null): Promise<ProfilePageData> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_page', {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/nexus_get_profile_page', {
       method: 'POST',
       headers: { ...this.headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_url: url, p_user_id: userId })
@@ -347,7 +347,7 @@ export class SupabaseProfilesRepository extends SupabaseRepositoryClient impleme
     rpcName: string,
     body: Record<string, unknown>
   ): Promise<ProfileSettings> {
-    const response = await fetch(this.baseUrl + '/rest/v1/rpc/' + rpcName, {
+    const response = await this.fetchWithTimeout(this.baseUrl + '/rest/v1/rpc/' + rpcName, {
       method: 'POST',
       headers: {
         ...this.headers(),
