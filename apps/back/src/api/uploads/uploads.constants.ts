@@ -5,6 +5,10 @@ export const EDITOR_BUCKET = 'nexus-editor-images'
 export const AVATAR_MAX_SIZE = 5 * 1024 * 1024
 export const EDITOR_MAX_SIZE = 10 * 1024 * 1024
 
+export const IMAGE_HEADER_MAX_SIZE = 256 * 1024
+export const IMAGE_MAX_DIMENSION = 8192
+export const IMAGE_MAX_PIXELS = 16 * 1024 * 1024
+
 export const PENDING_MAX_AGE = 2 * 60 * 60 * 1000
 export const SIGNED_UPLOAD_DELETE_GRACE_MS = 60 * 60 * 1000
 export const UPLOAD_DELETE_SAFE_AGE_MS =
