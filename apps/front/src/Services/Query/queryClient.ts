@@ -10,9 +10,9 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: false,
       refetchInterval: false,
       retry: (failureCount, error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 404)
-          return false
-        return failureCount < 1
+        if (failureCount >= 1 || !axios.isAxiosError(error)) return false
+        const status = error.response?.status
+        return status === undefined || status === 408 || status >= 500
       }
     },
     mutations: {
