@@ -9,7 +9,8 @@ import {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { UploadsStorageService } from './uploads.storage.service'
 import { detectMime } from './uploads.utils'
-import type { CommunityAvatarReadRequest, UploadedFileRecord } from '../../storage/repository.types'
+import type { CommunityAvatarReadRequest } from '../../storage/repository.types'
+import type { UploadedFileRecord } from './uploads.types'
 
 @Injectable()
 export class UploadsContentService {
