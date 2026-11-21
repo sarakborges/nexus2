@@ -11,6 +11,7 @@ import { randomUUID } from 'node:crypto'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import {
   AVATAR_BUCKET,
+  COMMUNITY_AVATAR_BUCKET,
   AVATAR_MAX_SIZE,
   EDITOR_BUCKET,
   EDITOR_MAX_SIZE,
@@ -62,7 +63,9 @@ export class UploadsService {
     }
 
     const id = randomUUID()
-    const bucket = input.purpose === 'editor-image' ? EDITOR_BUCKET : AVATAR_BUCKET
+    const bucket = input.purpose === 'editor-image'
+      ? EDITOR_BUCKET
+      : (input.purpose === 'community-avatar' ? COMMUNITY_AVATAR_BUCKET : AVATAR_BUCKET)
     const folder = input.purpose === 'editor-image'
       ? 'editor/' + userId
       : (input.purpose === 'profile-avatar' ? 'profiles/' : 'communities/') + userId
@@ -219,6 +222,20 @@ export class UploadsService {
     return this.content.getEditorImage(userId, id)
   }
 
+  async getCommunityAvatar(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
+    return this.content.getCommunityAvatar(userId, id)
+  }
+
+  isCommunityAvatarUrl(url: string): boolean {
+    return this.storage.getCommunityAvatarId(url) !== null
+  }
+
+  async getCommunityAvatarPath(userId: string, url: string): Promise<string | null> {
+    const uploadId = this.storage.getCommunityAvatarId(url)
+    if (uploadId) return this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
+    return this.storage.getAvatarPath(url)
+  }
+
   getEditorImageIds(html: string): string[] {
     return extractEditorImageIds(html)
   }
@@ -326,9 +343,9 @@ export class UploadsService {
   }
 
   private getUploadUrl(record: UploadedFileRecord): string {
-    return record.purpose === 'editor-image'
-      ? '/api/uploads/' + record.id + '/content'
-      : this.storage.publicAvatarUrl(record.path)
+    if (record.purpose === 'editor-image') return '/api/uploads/' + record.id + '/content'
+    if (record.purpose === 'community-avatar') return this.storage.communityAvatarUrl(record.id)
+    return this.storage.publicAvatarUrl(record.path)
   }
 
   private throwUploadWriteError(error: unknown): never {

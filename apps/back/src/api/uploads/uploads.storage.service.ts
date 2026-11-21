@@ -50,6 +50,16 @@ export class UploadsStorageService {
       AVATAR_BUCKET + '/' + this.encodePath(path)
   }
 
+
+  communityAvatarUrl(uploadId: string): string {
+    return '/api/uploads/community-avatars/' + uploadId + '/content'
+  }
+
+  getCommunityAvatarId(url: string): string | null {
+    const match = url.match(/^\/api\/uploads\/community-avatars\/([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\/content(?:[?#].*)?$/i)
+    return match?.[1] ?? null
+  }
+
   getAvatarPath(url: string): string | null {
     if (!url) return null
     const prefix = this.supabaseUrl + '/storage/v1/object/public/' + AVATAR_BUCKET + '/'

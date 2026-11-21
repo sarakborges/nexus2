@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common'
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import type { AccountRecord } from '../auth/auth.types'
-import { AVATAR_BUCKET } from './uploads.constants'
+import { AVATAR_BUCKET, COMMUNITY_AVATAR_BUCKET } from './uploads.constants'
 import { UploadsStorageService } from './uploads.storage.service'
 import { UploadsCleanupService } from './uploads.cleanup.service'
 import { isWithinAvatarDraftRetention } from './uploads.utils'
@@ -30,9 +30,15 @@ export class UploadsAvatarService {
     resourceType: 'profile' | 'community',
     resourceId: string
   ): UploadedFileRecord[] {
+    const uploadId = purpose === 'community-avatar'
+      ? this.storage.getCommunityAvatarId(url)
+      : null
     const path = this.storage.getAvatarPath(url)
-    if (!path) return records
-    const record = records.find(item => item.bucket === AVATAR_BUCKET && item.path === path)
+    if (!uploadId && !path) return records
+    const record = records.find(item => purpose === 'community-avatar'
+      ? (uploadId !== null && item.id === uploadId && item.bucket === COMMUNITY_AVATAR_BUCKET) ||
+        (path !== null && item.bucket === AVATAR_BUCKET && item.path === path)
+      : item.bucket === AVATAR_BUCKET && item.path === path)
     if (!record || record.ownerUserId !== userId || record.purpose !== purpose ||
       record.status !== 'ready' || record.resourceType ||
       !isWithinAvatarDraftRetention(record)) {
@@ -79,7 +85,7 @@ export class UploadsAvatarService {
       ? await this.data.getAvatarUploadPath(userId, uploadId, 'community-avatar')
       : null
     if (uploadId && !path) throw new BadRequestException('INVALID_AVATAR_UPLOAD')
-    const picture = path ? this.storage.publicAvatarUrl(path) : ''
+    const picture = path && uploadId ? this.storage.communityAvatarUrl(uploadId) : ''
     let result: { previousPicture: string }
     try {
       result = await this.data.setCommunityAvatar({

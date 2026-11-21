@@ -1,4 +1,5 @@
 export const AVATAR_BUCKET = 'nexus-avatars'
+export const COMMUNITY_AVATAR_BUCKET = 'nexus-community-avatars'
 export const EDITOR_BUCKET = 'nexus-editor-images'
 
 export const AVATAR_MAX_SIZE = 5 * 1024 * 1024

@@ -9,7 +9,7 @@ import {
 import { DATA_REPOSITORY, type DataRepository } from '../../storage/repository.interface'
 import { UploadsStorageService } from './uploads.storage.service'
 import { detectMime } from './uploads.utils'
-import type { UploadedFileRecord } from './uploads.types'
+import type { CommunityAvatarReadRequest, UploadedFileRecord } from '../../storage/repository.types'
 
 @Injectable()
 export class UploadsContentService {
@@ -30,10 +30,26 @@ export class UploadsContentService {
       if (message.includes('UPLOAD_NOT_FOUND')) throw new NotFoundException('UPLOAD_NOT_FOUND')
       throw error
     }
-    return this.downloadEditorImage(record)
+    return this.downloadManagedImage(record)
   }
 
-  private async downloadEditorImage(record: UploadedFileRecord): Promise<{ body: Buffer; contentType: string }> {
+  async getCommunityAvatar(userId: string | null, id: string): Promise<{ body: Buffer; contentType: string }> {
+    this.storage.assertConfigured()
+    let record: UploadedFileRecord
+    try {
+      const request: CommunityAvatarReadRequest = { userId, id }
+      record = await this.data.getCommunityAvatarRecord(request)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      if (message.includes('UPLOAD_ACCESS_DENIED')) throw new ForbiddenException('UPLOAD_ACCESS_DENIED')
+      if (message.includes('ACCOUNT_NOT_FOUND')) throw new UnauthorizedException('ACCOUNT_NOT_FOUND')
+      if (message.includes('UPLOAD_NOT_FOUND')) throw new NotFoundException('UPLOAD_NOT_FOUND')
+      throw error
+    }
+    return this.downloadManagedImage(record)
+  }
+
+  private async downloadManagedImage(record: UploadedFileRecord): Promise<{ body: Buffer; contentType: string }> {
     const response = await this.storage.request(
       '/object/' + record.bucket + '/' + this.storage.encodePath(record.path),
       { method: 'GET' }
