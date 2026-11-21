@@ -22,3 +22,10 @@ used to validate this change before using the application.
 
 No production data or Storage objects need to be migrated for this application state. Do not run
 migration 069 against production as part of this test task.
+
+## Managed image limits
+
+Migration `071_limit_managed_image_file_size.sql` sets the Storage file-size limit to 1 MiB
+for `nexus-avatars`, `nexus-community-avatars`, and `nexus-editor-images`.
+The API independently rejects images above 1 MiB or above 1024 px on either edge.
+The migration changes bucket configuration only; it does not rewrite or delete existing objects.
