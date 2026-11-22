@@ -11,19 +11,17 @@
     > span {
       flex: 1;
     }
-
-    > svg,
-    .floating-navigation__profile-chevron {
-      width: var(--nexus-icon-size, 20px);
-      height: var(--nexus-icon-size, 20px);
-      flex: 0 0 var(--nexus-icon-size, 20px);
-    }
   }
 
+  &__profile-toggle > svg,
   &__profile-chevron {
-    &.is-open {
-      transform: rotate(180deg);
-    }
+    width: var(--nexus-icon-size, 20px);
+    height: var(--nexus-icon-size, 20px);
+    flex: 0 0 var(--nexus-icon-size, 20px);
+  }
+
+  &__profile-chevron.is-open {
+    transform: rotate(180deg);
   }
 
   &__profile-list {
