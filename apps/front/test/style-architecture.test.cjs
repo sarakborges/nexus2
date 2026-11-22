@@ -287,3 +287,12 @@ test('Nexus card tokens are consumed by card components instead of global select
   })
   assert.deepEqual(references, [])
 })
+
+
+test('image sizing has one low-specificity global definition', () => {
+  const reset = readFileSync(path.join(sourceRoot, 'Assets/reset.css'), 'utf8')
+  const mainStyles = readFileSync(path.join(sourceRoot, 'Assets/main.css'), 'utf8')
+
+  assert.equal(reset.includes('img {\\n  max-width: 100%;\\n}'), false)
+  assert.ok(mainStyles.includes(':where(img, video, canvas) {\\n  max-width: 100%;\\n}'))
+})

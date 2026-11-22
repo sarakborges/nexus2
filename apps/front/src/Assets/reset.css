@@ -130,9 +130,6 @@ select {
   outline: none;
   margin: 0;
 }
-img {
-  max-width: 100%;
-}
 * {
   box-sizing: border-box;
   font-size: 0;
