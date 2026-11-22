@@ -5,13 +5,11 @@
   --nexus-button-font-size: 15px;
   --nexus-button-font-weight: 500;
   --nexus-button-primary-active-background: var(--color-secondary-strong);
-  --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
   --nexus-accent-glow: rgb(103 90 218 / 22%);
   --nexus-input-focus-border: var(--color-primary-weak);
   --nexus-input-focus-shadow: 0 0 0 2px var(--nexus-accent-glow);
-  --nexus-accent-highlight: var(--color-brand-accent);
   --nexus-icon-button-size: 40px;
   --nexus-icon-size: 20px;
   --avatar-shape-radius: 0;
@@ -22,7 +20,6 @@
 .social-sidebar-card,
 .social-panel,
 .social-preview-panel,
-.auth-card,
 .entity-form-page__card,
 .profile-message-form,
 .profile-message,
@@ -37,7 +34,6 @@
 .social-sidebar-card,
 .social-panel,
 .social-preview-panel,
-.auth-card,
 .entity-form-page__card,
 .profile-message-form,
 .profile-message,

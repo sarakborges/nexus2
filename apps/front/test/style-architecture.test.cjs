@@ -181,3 +181,29 @@ test('shared form error atom replaces legacy auth-specific error classes', () =>
 
   assert.deepEqual(references, [])
 })
+
+
+test('Nexus theme contains no unconsumed tokens or obsolete auth-card selectors', () => {
+  const themePath = path.join(sourceRoot, 'Assets/Themes/nexus.theme.css')
+  const unusedTokens = ['--nexus-control-shadow', '--nexus-accent-highlight']
+  const tokenReferences = sourceFiles.flatMap(file => {
+    if (file === themePath) return []
+    const content = readFileSync(file, 'utf8')
+    return unusedTokens
+      .filter(token => [
+        `var(${token})`,
+        `var(${token},`,
+        `getPropertyValue('${token}')`,
+        `getPropertyValue("${token}")`,
+        `setProperty('${token}'`,
+        `setProperty("${token}"`
+      ].some(reference => content.includes(reference)))
+      .map(token => ({ file, token }))
+  })
+  const authCardReferences = codeFiles.filter(file =>
+    readFileSync(file, 'utf8').includes('auth-card')
+  )
+
+  assert.deepEqual(tokenReferences, [])
+  assert.deepEqual(authCardReferences, [])
+})
