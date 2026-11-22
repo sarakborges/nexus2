@@ -220,3 +220,23 @@ test('entity directory styles are nested under the owning AccountCard block', ()
   assert.ok(styles.includes('&--card {'))
   assert.equal(styles.includes('.account-card__profile-entry {'), false)
 })
+
+
+test('community page and member directory styles use component-scoped BEM nesting', () => {
+  const forumPreviewStyles = readFileSync(
+    path.join(sourceRoot, 'Components/Organisms/CommunityPageForumPreview/CommunityPageForumPreview.style.scss'),
+    'utf8'
+  )
+  const memberDirectoryStyles = readFileSync(
+    path.join(sourceRoot, 'Components/Organisms/CommunityMemberDirectory/CommunityMemberDirectory.style.scss'),
+    'utf8'
+  )
+
+  assert.ok(forumPreviewStyles.startsWith('.community-page {'))
+  assert.ok(forumPreviewStyles.includes('&__forum {'))
+  assert.equal(forumPreviewStyles.includes('.community-page__forum {'), false)
+
+  assert.ok(memberDirectoryStyles.startsWith('.community-member-directory {'))
+  assert.ok(memberDirectoryStyles.includes('&__tabs {'))
+  assert.equal(memberDirectoryStyles.includes('.community-member-directory__tabs {'), false)
+})

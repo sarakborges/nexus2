@@ -1,4 +1,6 @@
-.community-page__forum {
-  width: 100%;
-  min-width: 0;
+.community-page {
+  &__forum {
+    width: 100%;
+    min-width: 0;
+  }
 }

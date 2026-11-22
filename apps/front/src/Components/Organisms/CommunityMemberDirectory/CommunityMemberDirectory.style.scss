@@ -1,3 +1,5 @@
-.community-member-directory__tabs {
-  padding-bottom: var(--nexus-space-1);
+.community-member-directory {
+  &__tabs {
+    padding-bottom: var(--nexus-space-1);
+  }
 }
