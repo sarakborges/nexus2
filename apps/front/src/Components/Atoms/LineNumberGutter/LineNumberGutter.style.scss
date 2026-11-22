@@ -11,15 +11,13 @@
   line-height: 1.6;
   text-align: right;
   user-select: none;
-}
 
-.line-number-gutter span {
-  display: block;
-  height: 1.6em;
-}
+  span {
+    display: block;
+    height: 1.6em;
+  }
 
-@media (max-width: 560px) {
-  .line-number-gutter {
+  @media (max-width: 560px) {
     padding-inline: var(--nexus-space-1);
     font-size: 11px;
   }

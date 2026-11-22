@@ -53,7 +53,7 @@ body {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
 
-/* Motion is opt-in at the component level; the loading indicator is one such component. */
+/* Motion is opt-in at the component level. */
 :where(*, *::before, *::after) {
   transition: none;
   animation: none;
@@ -94,7 +94,13 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :where(*, *::before, *::after) {
+  /*
+   * The root-qualified selector intentionally outranks component class selectors,
+   * so reduced-motion preferences cannot be bypassed by opt-in component animation.
+   */
+  html:root *,
+  html:root *::before,
+  html:root *::after {
     scroll-behavior: auto;
     animation: none;
     transition: none;

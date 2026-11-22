@@ -12,6 +12,14 @@ function walk(directory) {
   })
 }
 
+function walkDirectories(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    if (!entry.isDirectory()) return []
+    const entryPath = path.join(directory, entry.name)
+    return [entryPath, ...walkDirectories(entryPath)]
+  })
+}
+
 const sourceFiles = walk(sourceRoot)
 const styleFiles = sourceFiles.filter(file => /\.(?:css|scss|sass)$/i.test(file))
 const codeFiles = sourceFiles.filter(file => /\.(?:ts|tsx|js|jsx)$/i.test(file))
@@ -89,12 +97,25 @@ test('loading indicator provides an accessible reduced-motion-aware spin', () =>
   assert.match(indicator, /@media\s*\(prefers-reduced-motion:\s*reduce\)/)
 })
 
-test('source page and route directories use PascalCase names', () => {
+test('reduced-motion reset outranks component-level animation declarations', () => {
+  const globalStyles = readFileSync(path.join(sourceRoot, 'Assets/main.css'), 'utf8')
+  assert.match(globalStyles, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*html:root\s+\*/)
+  assert.match(globalStyles, /html:root\s+\*::before/)
+  assert.match(globalStyles, /html:root\s+\*::after/)
+})
+
+test('source directories use PascalCase consistently', () => {
+  const invalidDirectories = walkDirectories(sourceRoot).filter(directory => {
+    const name = path.basename(directory)
+    return !/^[A-Z][A-Za-z0-9]*$/.test(name)
+  })
+
+  assert.deepEqual(invalidDirectories, [])
   assert.ok(existsSync(path.join(sourceRoot, 'Pages')))
   assert.ok(existsSync(path.join(sourceRoot, 'Routes')))
-  assert.equal(existsSync(path.join(sourceRoot, 'pages')), false)
-  assert.equal(existsSync(path.join(sourceRoot, 'routes')), false)
+})
 
+test('page and route imports use the standardized directory names', () => {
   const staleImports = codeFiles.flatMap(file => {
     const content = readFileSync(file, 'utf8')
     return /@\/pages\/|@\/routes(?:['"])/.test(content) ? [file] : []

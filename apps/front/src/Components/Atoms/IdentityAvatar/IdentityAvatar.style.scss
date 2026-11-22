@@ -6,25 +6,25 @@
   container-name: identity-avatar;
   line-height: 1;
   text-align: center;
-}
 
-.identity-avatar__initial {
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  max-width: 100%;
-  font-size: clamp(8px, 42cqi, 96px);
-  font-weight: var(--font-weight-bold);
-  line-height: 1;
-  text-align: center;
-}
+  &__initial {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    font-size: clamp(8px, 42cqi, 96px);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+    text-align: center;
+  }
 
-.identity-avatar__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
+  &__image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
 }

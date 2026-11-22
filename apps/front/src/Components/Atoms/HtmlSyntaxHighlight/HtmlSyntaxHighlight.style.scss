@@ -1,32 +1,33 @@
-.rich-text-editor__token--tag {
-  color: #b894fa;
-}
+.rich-text-editor {
+  &__token {
+    &--tag {
+      color: #b894fa;
+    }
 
-.rich-text-editor__token--name {
-  color: #e3c86d;
-}
+    &--name,
+    &--doctype {
+      color: #e3c86d;
+    }
 
-.rich-text-editor__token--attribute {
-  color: #8ed27b;
-}
+    &--attribute {
+      color: #8ed27b;
+    }
 
-.rich-text-editor__token--punctuation {
-  color: #b3adc2;
-}
+    &--punctuation {
+      color: #b3adc2;
+    }
 
-.rich-text-editor__token--string {
-  color: #d9a0d8;
-}
+    &--string {
+      color: #d9a0d8;
+    }
 
-.rich-text-editor__token--comment {
-  color: #777284;
-  font-style: italic;
-}
+    &--comment {
+      color: #777284;
+      font-style: italic;
+    }
 
-.rich-text-editor__token--entity {
-  color: #78c8d4;
-}
-
-.rich-text-editor__token--doctype {
-  color: #e3c86d;
+    &--entity {
+      color: #78c8d4;
+    }
+  }
 }
