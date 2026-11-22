@@ -12,24 +12,9 @@
   }
 
   &__menu-item {
-    display: flex;
-    align-items: center;
     box-sizing: border-box;
-    width: 100%;
     min-width: 0;
-    min-height: 44px;
-    gap: var(--nexus-space-3, 12px);
-    padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    color: var(--text-color);
-    font: inherit;
-    font-size: 14px;
     line-height: 1.4;
-    text-align: left;
-    text-decoration: none;
-    cursor: pointer;
 
     svg {
       display: block;
@@ -49,11 +34,6 @@
         border: 0;
         background: var(--color-background);
       }
-    }
-
-    &:hover:not(:disabled) {
-      border: 0;
-      background: var(--color-background);
     }
 
     &:focus-visible {
