@@ -280,8 +280,9 @@ test('Nexus card tokens are consumed by card components instead of global select
   const obsoleteForumSelectors = ['community-forum__topic', 'community-forum__composer']
   const references = codeFiles.flatMap(file => {
     const source = readFileSync(file, 'utf8')
+    const classTokens = source.match(/[A-Za-z0-9_-]+/g) ?? []
     return obsoleteForumSelectors
-      .filter(className => source.includes(className))
+      .filter(className => classTokens.includes(className))
       .map(className => ({ file, className }))
   })
   assert.deepEqual(references, [])
