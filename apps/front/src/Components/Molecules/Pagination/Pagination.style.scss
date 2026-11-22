@@ -5,16 +5,14 @@
   flex-wrap: wrap;
   gap: var(--nexus-space-3, 12px);
   padding-top: var(--nexus-space-2, 8px);
-}
 
-.pagination__status {
-  color: var(--color-neutral);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
+  &__status {
+    color: var(--color-neutral);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
 
-@media (max-width: 680px) {
-  .pagination {
+  @media (max-width: 680px) {
     gap: var(--nexus-space-2, 8px);
   }
 }
