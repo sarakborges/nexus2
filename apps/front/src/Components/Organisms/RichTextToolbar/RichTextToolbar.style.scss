@@ -72,9 +72,23 @@
   line-height: 1;
 }
 
+.rich-text-editor__format-select.select {
+  flex: 0 0 128px;
+  width: 128px;
+  min-width: 88px;
+  max-width: 128px;
+  padding-inline: var(--nexus-space-2, 8px);
+  font-size: 12px;
+}
+
 @media (max-width: 560px) {
   .rich-text-editor .rsw-toolbar {
     gap: 2px;
     padding: var(--nexus-space-1, 4px);
+  }
+
+  .rich-text-editor__format-select.select {
+    flex-basis: 112px;
+    min-width: 80px;
   }
 }

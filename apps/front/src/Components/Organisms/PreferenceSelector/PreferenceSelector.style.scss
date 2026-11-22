@@ -20,4 +20,14 @@
     gap: var(--nexus-space-2, 8px);
     min-width: 0;
   }
+
+  .preference-option {
+    box-shadow: none;
+
+    &:hover,
+    &:focus-visible,
+    &--selected {
+      box-shadow: none;
+    }
+  }
 }
