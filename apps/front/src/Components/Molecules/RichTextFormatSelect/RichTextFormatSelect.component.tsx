@@ -4,8 +4,6 @@ import { useEditorState } from 'react-simple-wysiwyg'
 import { Select } from '@/DesignSystem'
 import type { RichTextFormatSelectProps } from './RichTextFormatSelect.types'
 
-import './RichTextFormatSelect.style.scss'
-
 export function RichTextFormatSelect({ command, label, options }: RichTextFormatSelectProps) {
   const editorState = useEditorState()
   const savedRange = useRef<Range | null>(null)

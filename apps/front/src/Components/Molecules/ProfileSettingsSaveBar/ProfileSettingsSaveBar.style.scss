@@ -6,12 +6,15 @@
   gap: var(--nexus-space-3, 12px);
   padding-top: var(--nexus-space-4, 16px);
 
-  &__success { color: var(--color-success, #18794e); }
-  &__error { color: var(--color-error, #b42318); }
-}
+  &__success {
+    color: var(--color-success, #18794e);
+  }
 
-@media (max-width: 560px) {
-  .profile-settings-save-bar {
+  &__error {
+    color: var(--color-error, #b42318);
+  }
+
+  @media (max-width: 560px) {
     align-items: stretch;
   }
 }

@@ -5,7 +5,8 @@
   padding: var(--nexus-space-5, 20px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
-  background: var(--color-surface-raised);
+  background: var(--nexus-card-background, var(--color-surface));
+  box-shadow: var(--nexus-card-shadow);
 }
 
 .profile-message-form__reply-context {

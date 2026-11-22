@@ -44,22 +44,19 @@ body {
   color: var(--text-color);
 }
 
-main {
-  animation: none !important;
-}
-
 :where(a) {
   color: var(--nexus-link-color, var(--color-primary-weak));
-  transition: none !important;
+  transition: none;
 }
 
 :where(a:hover) {
   color: var(--nexus-link-hover-color, var(--color-primary));
 }
 
+/* Motion is opt-in at the component level. */
 :where(*, *::before, *::after) {
-  transition: none !important;
-  animation: none !important;
+  transition: none;
+  animation: none;
 }
 
 :where(
@@ -73,10 +70,11 @@ main {
   *:focus-visible::before,
   *:focus-visible::after
 ) {
-  transform: none !important;
-  scale: none !important;
-  translate: none !important;
+  transform: none;
+  scale: none;
+  translate: none;
 }
+
 :where(img, video, canvas) {
   max-width: 100%;
 }
@@ -96,11 +94,15 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation: none !important;
-    transition: none !important;
+  /*
+   * The root-qualified selector intentionally outranks component class selectors,
+   * so reduced-motion preferences cannot be bypassed by opt-in component animation.
+   */
+  html:root *,
+  html:root *::before,
+  html:root *::after {
+    scroll-behavior: auto;
+    animation: none;
+    transition: none;
   }
 }

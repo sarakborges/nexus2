@@ -1,3 +1,9 @@
+@keyframes loading-indicator-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
 .loading-indicator {
   display: inline-block;
   flex: 0 0 auto;
@@ -5,19 +11,24 @@
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-right-color: transparent;
   border-radius: 50%;
-}
+  animation: loading-indicator-spin 800ms linear infinite;
 
-.loading-indicator--small {
-  width: 16px;
-  height: 16px;
-}
+  &--small {
+    width: 16px;
+    height: 16px;
+  }
 
-.loading-indicator--medium {
-  width: 20px;
-  height: 20px;
-}
+  &--medium {
+    width: 20px;
+    height: 20px;
+  }
 
-.loading-indicator--large {
-  width: 28px;
-  height: 28px;
+  &--large {
+    width: 28px;
+    height: 28px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }

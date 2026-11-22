@@ -8,10 +8,8 @@
   margin: 0 auto;
   padding: 104px var(--main-content-gutter) 40px;
   color: var(--text-color);
-}
 
-@media (max-width: 600px) {
-  .search-page {
+  @media (max-width: 600px) {
     padding-top: 88px;
   }
 }

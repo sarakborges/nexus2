@@ -1,0 +1,21 @@
+.community-forum {
+  gap: var(--nexus-space-6, 24px);
+
+  &__replies {
+    display: grid;
+    gap: var(--nexus-space-3, 12px);
+
+    > .request-state {
+      width: 100%;
+    }
+  }
+
+  &__join {
+    display: grid;
+    gap: var(--nexus-space-2, 8px);
+  }
+
+  &__topic-detail-card &__replies {
+    gap: var(--nexus-space-2, 8px);
+  }
+}

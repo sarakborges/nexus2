@@ -14,7 +14,7 @@
     box-shadow: 0 8px 28px rgb(0 0 0 / 12%);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
-  
+
   }
   &__content {
 
@@ -25,9 +25,8 @@
     width: 100%;
     min-height: 64px;
     padding: var(--nexus-space-2) var(--nexus-space-3);
-  
+
   }
-  &__icon-button,
   &__account-trigger.button {
 
     display: inline-flex;
@@ -38,32 +37,7 @@
     background: transparent;
     color: var(--text-color);
     cursor: pointer;
-  
-  }
-  &__icon-button {
 
-    position: relative;
-    box-sizing: border-box;
-    width: var(--nexus-icon-button-size, 40px);
-    height: var(--nexus-icon-button-size, 40px);
-    min-height: var(--nexus-icon-button-size, 40px);
-    flex: 0 0 var(--nexus-icon-button-size, 40px);
-    padding: 0;
-    aspect-ratio: 1;
-  
-  }
-  &__icon-button::after {
-
-    content: none;
-  
-  }
-  &__icon-button svg {
-
-    display: block;
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
-  
   }
   &__brand {
 
@@ -78,26 +52,23 @@
     letter-spacing: .14em;
     text-decoration: none;
     white-space: nowrap;
-  
-  }
-  &__brand img {
 
-    display: block;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    object-fit: contain;
-  
-  }
-  &__brand span {
+    img {
+      display: block;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      object-fit: contain;
+    }
 
-    display: block;
-  
+    span {
+      display: block;
+    }
   }
   &__spacer {
 
     flex: 1;
-  
+
   }
   &__account-trigger.button {
 
@@ -107,7 +78,7 @@
     padding: var(--nexus-space-2);
     border-radius: 0;
     text-align: left;
-  
+
   }
   &__account-icon {
 
@@ -115,14 +86,14 @@
     width: var(--nexus-icon-size, 20px);
     height: var(--nexus-icon-size, 20px);
     flex: 0 0 var(--nexus-icon-size, 20px);
-  
+
   }
   &__account-label {
 
     display: grid;
     min-width: 0;
     gap: var(--nexus-space-1);
-  
+
   }
   &__account-chevron {
 
@@ -130,22 +101,20 @@
     height: var(--nexus-icon-size, 20px);
     flex: 0 0 var(--nexus-icon-size, 20px);
     color: var(--color-neutral);
-  
+
   }
-  &__icon-button:hover,
   &__account-trigger.button:hover {
 
     background: var(--color-background);
-  
+
   }
-  &__icon-button:focus-visible,
   &__sidebar-link:focus-visible,
   &__account-trigger.button:focus-visible,
   &__menu-item:focus-visible {
 
     outline: 2px solid var(--color-primary-strong);
     outline-offset: 2px;
-  
+
   }
   &__sidebar {
 
@@ -186,20 +155,10 @@
     font-size: 14px;
     text-align: left;
     cursor: pointer;
-  
-  }
-  &__sidebar-toggle.button:hover {
 
-    background: var(--color-background);
-  
-  }
-  &__sidebar-toggle svg {
-
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
-    color: var(--color-neutral);
-  
+    &:hover {
+      background: var(--color-background);
+    }
   }
   &__menu {
 
@@ -235,26 +194,22 @@
     text-align: left;
     text-decoration: none;
     cursor: pointer;
-  
-  }
-  &__menu-item svg {
 
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
-    color: var(--color-neutral);
-  
-  }
-  &__menu-item:hover:not(:disabled) {
+    svg {
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+      flex: 0 0 var(--nexus-icon-size, 20px);
+      color: var(--color-neutral);
+    }
 
-    background: var(--color-background);
-  
-  }
-  &__menu-item:disabled {
+    &:hover:not(:disabled) {
+      background: var(--color-background);
+    }
 
-    cursor: wait;
-    opacity: .6;
-  
+    &:disabled {
+      cursor: wait;
+      opacity: .6;
+    }
   }
   &__notification-container {
 
@@ -262,7 +217,7 @@
     display: flex;
     align-items: center;
     flex: 0 0 40px;
-  
+
   }
   &__topbar-avatar {
 
@@ -276,164 +231,150 @@
     border: var(--nexus-border-width, 2px) solid var(--color-border);
     border-radius: 0;
     background: var(--avatar-background);
-  
-  }
-  &__topbar-avatar img {
 
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
   &__sidebar-backdrop {
 
     display: none;
-  
+
   }
-}
-.floating-navigation.is-collapsed .floating-navigation__sidebar {
 
-  width: 68px;
-  padding-inline: var(--nexus-space-2);
+  &__sidebar-toggle {
+    svg {
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+      flex: 0 0 var(--nexus-icon-size, 20px);
+      color: var(--color-neutral);
+    }
+  }
+  &.is-collapsed &__sidebar {
+    width: 68px;
+    padding-inline: var(--nexus-space-2);
+  }
 
-}
-.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle.button {
+  &.is-collapsed &__sidebar-toggle.button {
+    justify-content: flex-start;
+    padding-inline: var(--nexus-space-3);
+  }
 
-  justify-content: flex-start;
-  padding-inline: var(--nexus-space-3);
+  &.is-collapsed &__sidebar-toggle span {
+    display: none;
+  }
+  @media (min-width: 681px) and (max-width: 1100px) {
+    &__sidebar {
+      width: 216px;
+    }
 
+    &__content {
+      gap: var(--nexus-space-3);
+    }
+  }
+
+  @media (max-width: 680px) {
+    &__bar,
+    &__content {
+      min-height: 58px;
+    }
+
+    &__content {
+      gap: var(--nexus-space-2);
+      padding-inline: var(--nexus-space-2);
+    }
+
+    &__sidebar {
+      top: 58px;
+      width: min(248px, calc(100vw - 64px));
+    }
+
+    &.is-collapsed &__sidebar {
+      width: 64px;
+    }
+
+    &__sidebar-backdrop {
+      position: fixed;
+      z-index: 118;
+      inset: 58px 0 0;
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      height: calc(100dvh - 58px);
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: rgb(0 0 0 / 38%);
+      cursor: default;
+    }
+
+    &.is-collapsed &__sidebar-backdrop {
+      display: none;
+    }
+
+    &__brand {
+      gap: var(--nexus-space-2);
+      font-size: 14px;
+      letter-spacing: .1em;
+
+      img {
+        width: 20px;
+        height: 20px;
+        flex-basis: 20px;
+      }
+    }
+
+    &__account-trigger.button {
+      width: 40px;
+      min-width: 40px;
+      flex: 0 0 40px;
+      gap: 0;
+      padding: var(--nexus-space-1);
+    }
+
+    &__account-label,
+    &__account-chevron {
+      display: none;
+    }
+
+    &__account-icon {
+      display: block;
+    }
+  }
 }
 
 html.has-global-navigation {
-
   --nexus-global-sidebar-offset: 248px;
 
-}
-html.has-global-navigation.global-navigation-collapsed {
-
-  --nexus-global-sidebar-offset: 68px;
-
-}
-html.has-global-navigation .social-page,
-html.has-global-navigation .account-page,
-html.has-global-navigation .search-page,
-html.has-global-navigation .auth-page {
-
-  box-sizing: border-box;
-  width: calc(100% - var(--nexus-global-sidebar-offset));
-  margin-left: var(--nexus-global-sidebar-offset);
-
-}
-@media (min-width: 681px) and (max-width: 1100px) {
-  html.has-global-navigation {
-
-    --nexus-global-sidebar-offset: 216px;
-  
-  }
-  html.has-global-navigation.global-navigation-collapsed {
-
+  &.global-navigation-collapsed {
     --nexus-global-sidebar-offset: 68px;
-  
   }
-  .floating-navigation__sidebar {
 
-    width: 216px;
-  
-  }
-  .floating-navigation__content {
-
-    gap: var(--nexus-space-3);
-  
-  }
-}
-@media (max-width: 680px) {
-  html.has-global-navigation,
-  html.has-global-navigation.global-navigation-collapsed {
-
-    --nexus-global-sidebar-offset: 64px;
-  
-  }
-  .floating-navigation__bar,
-  .floating-navigation__content {
-
-    min-height: 58px;
-  
-  }
-  .floating-navigation__content {
-
-    gap: var(--nexus-space-2);
-    padding-inline: var(--nexus-space-2);
-  
-  }
-  .floating-navigation__sidebar {
-
-    top: 58px;
-    width: min(248px, calc(100vw - 64px));
-  
-  }
-  .floating-navigation.is-collapsed .floating-navigation__sidebar {
-
-    width: 64px;
-  
-  }
-  .floating-navigation__sidebar-backdrop {
-
-    position: fixed;
-    z-index: 118;
-    inset: 58px 0 0;
-    display: block;
+  .social-page,
+  .account-page,
+  .search-page,
+  .auth-page {
     box-sizing: border-box;
-    width: 100%;
-    height: calc(100dvh - 58px);
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    background: rgb(0 0 0 / 38%);
-    cursor: default;
-  
+    width: calc(100% - var(--nexus-global-sidebar-offset));
+    margin-left: var(--nexus-global-sidebar-offset);
   }
-  .floating-navigation.is-collapsed .floating-navigation__sidebar-backdrop {
 
-    display: none;
-  
+  @media (min-width: 681px) and (max-width: 1100px) {
+    --nexus-global-sidebar-offset: 216px;
+
+    &.global-navigation-collapsed {
+      --nexus-global-sidebar-offset: 68px;
+    }
   }
-  .floating-navigation__brand {
 
-    gap: var(--nexus-space-2);
-    font-size: 14px;
-    letter-spacing: .1em;
-  
+  @media (max-width: 680px) {
+    --nexus-global-sidebar-offset: 64px;
+
+    &.global-navigation-collapsed {
+      --nexus-global-sidebar-offset: 64px;
+    }
   }
-  .floating-navigation__brand img {
-
-    width: 20px;
-    height: 20px;
-    flex-basis: 20px;
-  
-  }
-  .floating-navigation__account-trigger.button {
-
-    width: 40px;
-    min-width: 40px;
-    flex: 0 0 40px;
-    gap: 0;
-    padding: var(--nexus-space-1);
-  
-  }
-  .floating-navigation__account-label,
-  .floating-navigation__account-chevron {
-
-    display: none;
-  
-  }
-  .floating-navigation__account-icon {
-
-    display: block;
-  
-  }
-}
-
-.floating-navigation.is-collapsed .floating-navigation__sidebar-toggle span {
-  display: none;
 }

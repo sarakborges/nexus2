@@ -1,11 +1,7 @@
 import type { PreferenceOptionProps } from './PreferenceOption.types'
 import { FaCheck } from 'react-icons/fa'
 
-
 import { Button, Text } from '@/DesignSystem'
-
-import './PreferenceOption.style.scss'
-
 
 export function PreferenceOption({
   label,

@@ -1,88 +1,7 @@
 :root {
   --nexus-border-width: 2px;
   --nexus-card-radius: 0;
-  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 30%);
-  --nexus-control-radius: 0;
-  --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
-  --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
-  --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
-  --nexus-accent-glow: rgb(103 90 218 / 22%);
-  --nexus-accent-highlight: #ff00ff;
-  --nexus-icon-button-size: 40px;
-  --nexus-icon-size: 20px;
-  --avatar-shape-radius: 0;
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-
-  --color-background: #0b0b0f;
-  --color-surface: #1d1b25;
-  --color-surface-raised: #282431;
-  --color-neutral-weak: #0a090d;
-  --color-neutral: #b3adc2;
-  --color-neutral-strong: #f0f0f5;
-  --text-color: #f0f0f5;
-  --color-border: rgb(140 128 168 / 62%);
-
-  --color-primary-strong: #675ada;
-  --color-primary: #8080ff;
-  --color-primary-weak: #a7a7f9;
-  --color-secondary-strong: #5720be;
-  --color-secondary: #6228c6;
-  --color-secondary-weak: #a7a7f9;
-
-  --color-success: #8ed27b;
-  --color-success-weak: rgb(142 210 123 / 18%);
-  --color-success-strong: #8ed27b;
-  --color-warning: #e3c86d;
-  --color-warning-weak: rgb(227 200 109 / 16%);
-  --color-warning-strong: #e3c86d;
-  --color-error: #c73333;
-  --color-error-weak: rgb(199 51 51 / 20%);
-  --color-error-strong: #c73333;
-
-  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 38%);
-}
-
-:root[data-theme='light'] {
-  --color-primary-strong: #5720be;
-  --color-primary: #675ada;
-  --color-primary-weak: #5720be;
-  --color-secondary-strong: #0000ff;
-  --color-secondary: #6228c6;
-  --color-secondary-weak: #675ada;
-  --color-border: rgb(99 72 134 / 44%);
-
-  --nexus-card-shadow: 0 5px 14px rgb(19 13 31 / 8%);
-}
-
-/* Square, edged surfaces and controls follow the Nexus visual language. */
-.account-card,
-.social-sidebar-card,
-.social-panel,
-.social-preview-panel,
-.auth-card,
-.entity-form-page__card,
-.profile-message-form,
-.profile-message,
-.community-forum__topic,
-.community-forum__composer {
-  border-width: var(--nexus-border-width);
-  border-radius: var(--nexus-card-radius);
-  box-shadow: var(--nexus-card-shadow);
-}
-
-.account-card,
-.social-sidebar-card,
-.social-panel,
-.social-preview-panel,
-.auth-card,
-.entity-form-page__card,
-.profile-message-form,
-.profile-message,
-.community-forum__topic {
-  background:
+  --nexus-card-background:
     linear-gradient(
       to bottom,
       var(--color-frosted-highlight, rgb(148 107 199 / 5%)) 0%,
@@ -90,66 +9,18 @@
       rgb(0 0 0 / 2%) 100%
     ),
     var(--color-surface);
-}
-
-.button {
-  border-width: var(--nexus-border-width);
-  border-radius: var(--nexus-control-radius);
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.button:not(:disabled):not([aria-disabled='true']):hover {
-  box-shadow: var(--nexus-control-shadow-hover);
-}
-
-.button:not(:disabled):not([aria-disabled='true']):active {
-  box-shadow: var(--nexus-control-shadow-pressed);
-}
-
-.button--primary {
-  border-color: var(--color-border-strong, var(--color-primary-weak));
-  background-color: var(--color-primary-strong);
-}
-
-.button--primary:not(:disabled):hover {
-  background-color: var(--color-primary);
-}
-
-.button--primary:not(:disabled):active {
-  background-color: var(--color-secondary-strong);
-}
-
-.button--secondary {
-  border-color: var(--color-border);
-  background-color: var(--color-surface-raised);
-}
-
-.button--cancel {
-  border-color: var(--color-border);
-  background-color: var(--color-error-strong);
-}
-
-.input {
-  padding: 8px 12px;
-  border: var(--nexus-border-width) solid var(--color-border);
-  border-radius: 0;
-  background: var(--color-neutral-weak);
-  color: var(--text-color);
-  font-size: 14px;
-}
-
-.input:not(:disabled):focus {
-  border-color: var(--color-primary-weak);
-  box-shadow: 0 0 0 2px var(--nexus-accent-glow);
-}
-
-.auth-card__error,
-.form-field__error {
-  border: var(--nexus-border-width) solid var(--color-error-strong);
-  border-radius: 0;
-  background: var(--color-error-weak);
-  color: var(--text-color);
+  --nexus-control-radius: 0;
+  --nexus-button-font-size: 15px;
+  --nexus-button-font-weight: 500;
+  --nexus-button-primary-active-background: var(--color-secondary-strong);
+  --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
+  --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
+  --nexus-accent-glow: rgb(103 90 218 / 22%);
+  --nexus-input-focus-border: var(--color-primary-weak);
+  --nexus-input-focus-shadow: 0 0 0 2px var(--nexus-accent-glow);
+  --nexus-icon-button-size: 40px;
+  --nexus-icon-size: 20px;
+  --avatar-shape-radius: 0;
 }
 
 :where(a, button, input, textarea, select):focus-visible {

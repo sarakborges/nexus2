@@ -1,21 +1,24 @@
-.home-page__activity {
-  display: grid;
-  gap: var(--nexus-space-3, 12px);
-  min-width: 0;
-}
+.home-page {
+  &__activity {
+    display: grid;
+    gap: var(--nexus-space-3, 12px);
+    min-width: 0;
+  }
 
-.home-page__activity-title {
-  color: var(--text-color);
-  font-size: 18px;
-  font-weight: var(--font-weight-bold);
-}
+  &__activity-title {
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: var(--font-weight-bold);
+  }
 
-.home-page__activity-list {
-  display: grid;
-  gap: var(--nexus-space-3, 12px);
-}
-.home-page__activity-more {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--nexus-space-1, 4px);
+  &__activity-list {
+    display: grid;
+    gap: var(--nexus-space-3, 12px);
+  }
+
+  &__activity-more {
+    display: flex;
+    justify-content: center;
+    padding-top: var(--nexus-space-1, 4px);
+  }
 }

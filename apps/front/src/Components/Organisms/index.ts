@@ -1,6 +1,5 @@
 export { CommunityForumTopicList } from './CommunityForumTopicList'
 export type { CommunityForumTopicListProps } from './CommunityForumTopicList'
-export { CommunityMemberList } from './CommunityMemberList'
 export { IdentityAvatarGrid } from './IdentityAvatarGrid'
 export type { IdentityAvatarGridEntry, IdentityAvatarGridProps } from './IdentityAvatarGrid'
 export { CommunityPrivacySelector } from './CommunityPrivacySelector'

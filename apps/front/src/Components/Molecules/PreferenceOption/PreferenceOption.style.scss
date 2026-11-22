@@ -1,13 +1,3 @@
-.preference-selector .preference-option {
-  box-shadow: none;
-}
-
-.preference-selector .preference-option:hover,
-.preference-selector .preference-option:focus-visible,
-.preference-selector .preference-option--selected {
-  box-shadow: none;
-}
-
 .preference-option {
   display: flex;
   align-items: center;
@@ -16,7 +6,7 @@
   width: 100%;
   height: auto;
   min-height: var(--nexus-control-height, 40px);
-  padding: var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
+  padding: var(--nexus-space-3, 12px);
   text-align: left;
 
   &__content {
@@ -46,13 +36,13 @@
     flex: 0 0 14px;
     color: var(--color-primary-weak);
   }
-}
 
-.preference-option--selected {
-  border-color: var(--color-primary-strong);
-  background: color-mix(
-    in srgb,
-    var(--color-primary) 12%,
-    var(--color-surface)
-  );
+  &--selected {
+    border-color: var(--color-primary-strong);
+    background: color-mix(
+      in srgb,
+      var(--color-primary) 12%,
+      var(--color-surface)
+    );
+  }
 }

@@ -42,7 +42,9 @@
   width: 100%;
   padding: var(--nexus-space-6, 24px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: var(--nexus-card-radius, 0);
+  background: var(--nexus-card-background, var(--color-surface));
+  box-shadow: var(--nexus-card-shadow);
 }
 
 .entity-form-page__actions {

@@ -2,106 +2,91 @@
   display: grid;
   gap: var(--nexus-space-2);
   min-width: 0;
-}
 
-.avatar-upload-field__label {
-  color: var(--text-color);
-  font-size: 13px;
-  font-weight: var(--font-weight-semibold);
-}
-
-.avatar-upload-field__preview {
-  display: grid;
-  place-items: center;
-  width: 88px;
-  height: 88px;
-  overflow: hidden;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  background: var(--avatar-background);
-  color: var(--avatar-fallback-color);
-  font-size: 11px;
-  text-align: center;
-}
-
-.avatar-upload-field__preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-upload-field__fallback {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  color: var(--color-neutral-strong);
-  font-size: 34px;
-  font-weight: var(--font-weight-bold);
-}
-
-.avatar-upload-field__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--nexus-space-2);
-}
-
-.avatar-upload-field__button.button,
-.avatar-upload-field__remove.button {
-  padding-inline: var(--nexus-space-3);
-  font-size: 12px;
-}
-
-.avatar-upload-field__remove.button {
-  color: var(--color-danger, var(--text-color));
-}
-
-.avatar-upload-field__remove.button:hover:not(:disabled) {
-  color: var(--color-danger, var(--text-color));
-}
-
-.avatar-upload-field__input.input {
-  display: none;
-}
-
-.avatar-upload-field__error {
-  margin: 0;
-  color: var(--color-danger, #c33);
-  font-size: 12px;
-}
-
-/* Avatar preview keeps its 88px width and accepts portraits up to 176px tall. */
-.avatar-upload-field__preview {
-  height: auto;
-  max-height: 176px;
-}
-
-.avatar-upload-field__preview img {
-  height: auto;
-  max-height: inherit;
-  object-fit: cover;
-}
-
-.avatar-upload-field__fallback {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  height: auto;
-  max-height: inherit;
-}
-
-.avatar-upload-field__fallback svg {
-  width: 24px;
-  height: 24px;
-}
-
-@media (max-width: 560px) {
-  .avatar-upload-field__actions {
-    align-items: stretch;
+  &__label {
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: var(--font-weight-semibold);
   }
 
-  .avatar-upload-field__button,
-  .avatar-upload-field__remove {
-    flex: 1 1 132px;
-    min-height: var(--nexus-control-height, 40px);
+  &__preview {
+    display: grid;
+    place-items: center;
+    width: 88px;
+    height: auto;
+    max-height: 176px;
+    overflow: hidden;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+    background: var(--avatar-background);
+    color: var(--avatar-fallback-color);
+    font-size: 11px;
+    text-align: center;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: inherit;
+      object-fit: cover;
+    }
+  }
+
+  &__fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: auto;
+    max-height: inherit;
+    aspect-ratio: 1 / 1;
+    color: var(--color-neutral-strong);
+    font-size: 34px;
+    font-weight: var(--font-weight-bold);
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--nexus-space-2);
+  }
+
+  &__button.button,
+  &__remove.button {
+    padding-inline: var(--nexus-space-3);
+    font-size: 12px;
+  }
+
+  &__remove.button {
+    color: var(--color-danger, var(--text-color));
+
+    &:hover:not(:disabled) {
+      color: var(--color-danger, var(--text-color));
+    }
+  }
+
+  &__input.input {
+    display: none;
+  }
+
+  &__error {
+    margin: 0;
+    color: var(--color-danger, #c33);
+    font-size: 12px;
+  }
+
+  @media (max-width: 560px) {
+    &__actions {
+      align-items: stretch;
+    }
+
+    &__button,
+    &__remove {
+      flex: 1 1 132px;
+      min-height: var(--nexus-control-height, 40px);
+    }
   }
 }

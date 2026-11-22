@@ -1,0 +1,33 @@
+.communities-page {
+  &__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--nexus-space-4, 16px);
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 26px;
+    font-weight: var(--font-weight-bold);
+    line-height: 1.2;
+  }
+
+  &__create-action {
+    justify-self: end;
+  }
+
+  @media (max-width: 680px) {
+    &__header {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: stretch;
+    }
+
+    &__create-action {
+      justify-self: stretch;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+}

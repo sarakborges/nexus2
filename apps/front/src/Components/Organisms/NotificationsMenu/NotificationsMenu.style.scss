@@ -12,20 +12,20 @@
     background: transparent;
     color: var(--text-color);
     cursor: pointer;
-  }
 
-  &__notification-trigger.button:hover {
-    background: var(--color-background);
-  }
+    &:hover {
+      background: var(--color-background);
+    }
 
-  &__notification-trigger.button:focus-visible {
-    outline: 2px solid var(--color-primary-strong);
-    outline-offset: 2px;
-  }
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-strong);
+      outline-offset: 2px;
+    }
 
-  &__notification-trigger svg {
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
+    svg {
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+    }
   }
 
   &__notification-count {
@@ -48,15 +48,15 @@
     display: grid;
     gap: var(--nexus-space-1, 4px);
     padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
-  }
 
-  &__notifications-heading span {
-    color: var(--color-neutral);
-    font-size: 11px;
+    span {
+      color: var(--color-neutral);
+      font-size: 11px;
+    }
   }
 
   &__notifications-state {
-    padding: var(--nexus-space-3, 12px) var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-3, 12px);
     color: var(--color-neutral);
     font-size: 13px;
   }
@@ -75,11 +75,11 @@
     right: 0;
     width: min(360px, calc(100vw - 32px));
   }
-}
 
-@media (max-width: 680px) {
-  .floating-navigation__menu--notifications {
-    right: 0;
-    width: min(360px, calc(100vw - 16px));
+  @media (max-width: 680px) {
+    &__menu--notifications {
+      right: 0;
+      width: min(360px, calc(100vw - 16px));
+    }
   }
 }

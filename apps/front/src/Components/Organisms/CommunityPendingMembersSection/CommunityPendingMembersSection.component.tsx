@@ -1,4 +1,4 @@
-import { CommunityMemberList } from '@/Components/Organisms/CommunityMemberList'
+import { CommunityMemberList } from '@/Components/Molecules/CommunityMemberList'
 import { Pagination } from '@/Components/Molecules/Pagination'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { useTranslations } from '@/Hooks/Language'
