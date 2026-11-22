@@ -215,8 +215,8 @@ test('entity directory styles are nested under the owning AccountCard block', ()
     'utf8'
   )
 
-  assert.match(styles, /^\\.account-card\\s*\\{/m)
-  assert.match(styles, /&__profile-entry\\s*\\{/)
-  assert.match(styles, /&--card\\s*\\{/)
-  assert.doesNotMatch(styles, /^\\.account-card__profile-entry/m)
+  assert.ok(styles.startsWith('.account-card {'))
+  assert.ok(styles.includes('&__profile-entry {'))
+  assert.ok(styles.includes('&--card {'))
+  assert.equal(styles.includes('.account-card__profile-entry {'), false)
 })
