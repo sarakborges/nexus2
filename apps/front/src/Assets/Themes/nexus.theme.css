@@ -52,14 +52,6 @@
     var(--color-surface);
 }
 
-.auth-card__error,
-.form-field__error {
-  border: var(--nexus-border-width) solid var(--color-error-strong);
-  border-radius: 0;
-  background: var(--color-error-weak);
-  color: var(--text-color);
-}
-
 :where(a, button, input, textarea, select):focus-visible {
   outline-color: var(--color-primary-weak);
   outline-offset: 3px;

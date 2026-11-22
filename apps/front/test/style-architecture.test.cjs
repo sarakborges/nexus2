@@ -168,3 +168,16 @@ test('modal close control has a single component-scoped size definition', () => 
   assert.ok(modal.includes('width: var(--nexus-icon-button-size, 40px)'))
   assert.ok(modal.includes('height: var(--nexus-icon-button-size, 40px)'))
 })
+
+
+test('obsolete auth error classes are not referenced by frontend code', () => {
+  const obsoleteClasses = ['auth-card__error', 'form-field__error']
+  const references = codeFiles.flatMap(file => {
+    const content = readFileSync(file, 'utf8')
+    return obsoleteClasses
+      .filter(className => content.includes(className))
+      .map(className => ({ file, className }))
+  })
+
+  assert.deepEqual(references, [])
+})
