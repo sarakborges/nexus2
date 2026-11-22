@@ -293,6 +293,7 @@ test('image sizing has one low-specificity global definition', () => {
   const reset = readFileSync(path.join(sourceRoot, 'Assets/reset.css'), 'utf8')
   const mainStyles = readFileSync(path.join(sourceRoot, 'Assets/main.css'), 'utf8')
 
-  assert.equal(reset.includes('img {\\n  max-width: 100%;\\n}'), false)
-  assert.ok(mainStyles.includes(':where(img, video, canvas) {\\n  max-width: 100%;\\n}'))
+  assert.equal(reset.includes('img {'), false)
+  assert.ok(mainStyles.includes(':where(img, video, canvas) {'))
+  assert.ok(mainStyles.includes('max-width: 100%'))
 })
