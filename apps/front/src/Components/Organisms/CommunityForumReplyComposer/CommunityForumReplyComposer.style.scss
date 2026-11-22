@@ -2,16 +2,16 @@
   display: grid;
   gap: var(--nexus-space-3, 12px);
   width: 100%;
-}
 
-.community-forum-reply-composer .rich-text-editor {
-  width: 100%;
-}
+  .rich-text-editor {
+    width: 100%;
+  }
 
-.community-forum-reply-composer__card {
-  width: 100%;
-}
+  &__card {
+    width: 100%;
 
-.community-forum-reply-composer__card > .community-forum__join {
-  width: 100%;
+    > .community-forum__join {
+      width: 100%;
+    }
+  }
 }

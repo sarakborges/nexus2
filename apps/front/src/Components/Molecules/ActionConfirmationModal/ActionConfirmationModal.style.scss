@@ -17,15 +17,15 @@
     flex-wrap: wrap;
     gap: var(--nexus-space-3, 12px);
   }
-}
 
-@media (max-width: 420px) {
-  .action-confirmation-modal__actions {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
+  @media (max-width: 420px) {
+    &__actions {
+      display: grid;
+      grid-template-columns: 1fr;
 
-  .action-confirmation-modal__actions .button {
-    width: 100%;
+      .button {
+        width: 100%;
+      }
+    }
   }
 }

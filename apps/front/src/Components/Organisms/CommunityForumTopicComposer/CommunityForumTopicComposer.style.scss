@@ -5,8 +5,8 @@
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
   background: var(--color-surface);
-}
 
-.community-forum-topic-composer .rich-text-editor {
-  width: 100%;
+  .rich-text-editor {
+    width: 100%;
+  }
 }
