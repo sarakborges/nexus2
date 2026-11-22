@@ -36,18 +36,18 @@
     font-size: 20px;
     font-weight: var(--font-weight-bold);
     text-decoration: none;
-  }
 
-  &__author-avatar img {
-    display: block;
-    width: 100%;
-    height: auto;
-    max-height: inherit;
-    object-fit: cover;
-  }
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: inherit;
+      object-fit: cover;
+    }
 
-  &__author-avatar:not(:has(img)) {
-    aspect-ratio: 1 / 2;
+    &:not(:has(img)) {
+      aspect-ratio: 1 / 2;
+    }
   }
 
   &__main {
@@ -64,17 +64,17 @@
     gap: var(--nexus-space-2);
     color: var(--color-neutral);
     font-size: 12px;
-  }
 
-  &__header a {
-    color: var(--text-color);
-    text-decoration: none;
-  }
+    a {
+      color: var(--text-color);
+      text-decoration: none;
 
-  &__header a:hover {
-    color: var(--color-primary-weak);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+      &:hover {
+        color: var(--color-primary-weak);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+    }
   }
 
   &__content {
@@ -82,11 +82,15 @@
     line-height: 1.7;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-  }
 
-  &__content p:first-child { margin-top: 0; }
-  &__content p:last-child { margin-bottom: 0; }
-  &__content img { max-width: 100%; height: auto; }
+    p:first-child { margin-top: 0; }
+    p:last-child { margin-bottom: 0; }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  }
 
   &__actions {
     display: flex;
@@ -105,21 +109,19 @@
   &--reply {
     padding: var(--nexus-space-3) 0;
   }
-}
 
-@media (max-width: 600px) {
-  .community-forum-entry {
+  @media (max-width: 600px) {
     grid-template-columns: 44px minmax(0, 1fr);
     gap: var(--nexus-space-2);
     padding: var(--nexus-space-3);
-  }
 
-  .community-forum-entry__author-link,
-  .community-forum-entry__author-avatar {
-    width: 44px;
-  }
+    &__author-link,
+    &__author-avatar {
+      width: 44px;
+    }
 
-  .community-forum-entry__author-avatar {
-    max-height: 88px;
+    &__author-avatar {
+      max-height: 88px;
+    }
   }
 }
