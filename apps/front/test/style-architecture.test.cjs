@@ -163,8 +163,8 @@ test('modal close control has a single component-scoped size definition', () => 
     'utf8'
   )
 
-  assert.equal((modal.match(/&__close\\s*\\{/g) ?? []).length, 2)
-  assert.equal((modal.match(/\\.modal__close\\s*\\{/g) ?? []).length, 0)
+  assert.equal(modal.split('&__close {').length - 1, 2)
+  assert.equal(modal.includes('.modal__close {'), false)
   assert.ok(modal.includes('width: var(--nexus-icon-button-size, 40px)'))
   assert.ok(modal.includes('height: var(--nexus-icon-button-size, 40px)'))
 })
