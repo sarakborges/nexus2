@@ -39,6 +39,7 @@
   --color-surface: #191827;
   --color-surface-raised: #242238;
   --color-border: #39334f;
+  --nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 38%);
 
   --theme-image: none;
 }

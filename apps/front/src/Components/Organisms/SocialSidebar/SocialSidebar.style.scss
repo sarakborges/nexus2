@@ -5,8 +5,8 @@
   padding: var(--nexus-space-3, 12px);
   border: var(--nexus-border-width, 2px) solid var(--color-border);
   border-radius: var(--nexus-card-radius, 0);
-  background: var(--color-surface);
-  box-shadow: 0 10px 28px rgb(0 0 0 / 8%);
+  background: var(--nexus-card-background, var(--color-surface));
+  box-shadow: var(--nexus-card-shadow);
 }
 
 .social-identity {

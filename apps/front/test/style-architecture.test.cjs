@@ -240,3 +240,49 @@ test('community page and member directory styles use component-scoped BEM nestin
   assert.ok(memberDirectoryStyles.includes('&__tabs {'))
   assert.equal(memberDirectoryStyles.includes('.community-member-directory__tabs {'), false)
 })
+
+
+test('Nexus card tokens are consumed by card components instead of global selector overrides', () => {
+  const theme = readFileSync(path.join(sourceRoot, 'Assets/Themes/nexus.theme.css'), 'utf8')
+  const mainTheme = readFileSync(path.join(sourceRoot, 'Assets/Themes/main.theme.css'), 'utf8')
+  const darkTheme = readFileSync(path.join(sourceRoot, 'Assets/Themes/dark.theme.css'), 'utf8')
+  const cardStyles = [
+    'Components/Atoms/AccountCard/AccountCard.style.scss',
+    'Components/Atoms/SocialPanel/SocialPanel.style.scss',
+    'Components/Organisms/SocialSidebar/SocialSidebar.style.scss',
+    'Components/Templates/EntityFormPageLayout/EntityFormPageLayout.style.scss',
+    'Components/Organisms/ProfileMessageComposer/ProfileMessageComposer.style.scss',
+    'Components/Molecules/ProfileMessageItem/ProfileMessageItem.style.scss'
+  ]
+
+  assert.ok(theme.includes('--nexus-card-background:'))
+  assert.ok(mainTheme.includes('--nexus-card-shadow: 0 8px 18px rgb(0 0 0 / 38%)'))
+  assert.equal(darkTheme.includes('--nexus-card-shadow:'), false)
+
+  for (const file of cardStyles) {
+    const styles = readFileSync(path.join(sourceRoot, file), 'utf8')
+    assert.ok(styles.includes('background: var(--nexus-card-background, var(--color-surface))'), file)
+    assert.ok(styles.includes('box-shadow: var(--nexus-card-shadow)'), file)
+  }
+
+  for (const selector of [
+    '.account-card,',
+    '.social-sidebar-card,',
+    '.social-panel,',
+    '.social-preview-panel,',
+    '.entity-form-page__card,',
+    '.profile-message-form,',
+    '.profile-message,'
+  ]) {
+    assert.equal(theme.includes(selector), false, `${selector} must be styled by its component`)
+  }
+
+  const obsoleteForumSelectors = ['community-forum__topic', 'community-forum__composer']
+  const references = codeFiles.flatMap(file => {
+    const source = readFileSync(file, 'utf8')
+    return obsoleteForumSelectors
+      .filter(className => source.includes(className))
+      .map(className => ({ file, className }))
+  })
+  assert.deepEqual(references, [])
+})

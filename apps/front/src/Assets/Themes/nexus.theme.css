@@ -1,6 +1,14 @@
 :root {
   --nexus-border-width: 2px;
   --nexus-card-radius: 0;
+  --nexus-card-background:
+    linear-gradient(
+      to bottom,
+      var(--color-frosted-highlight, rgb(148 107 199 / 5%)) 0%,
+      transparent 24%,
+      rgb(0 0 0 / 2%) 100%
+    ),
+    var(--color-surface);
   --nexus-control-radius: 0;
   --nexus-button-font-size: 15px;
   --nexus-button-font-weight: 500;
@@ -13,39 +21,6 @@
   --nexus-icon-button-size: 40px;
   --nexus-icon-size: 20px;
   --avatar-shape-radius: 0;
-}
-
-/* Square, edged surfaces and controls follow the Nexus visual language. */
-.account-card,
-.social-sidebar-card,
-.social-panel,
-.social-preview-panel,
-.entity-form-page__card,
-.profile-message-form,
-.profile-message,
-.community-forum__topic,
-.community-forum__composer {
-  border-width: var(--nexus-border-width);
-  border-radius: var(--nexus-card-radius);
-  box-shadow: var(--nexus-card-shadow);
-}
-
-.account-card,
-.social-sidebar-card,
-.social-panel,
-.social-preview-panel,
-.entity-form-page__card,
-.profile-message-form,
-.profile-message,
-.community-forum__topic {
-  background:
-    linear-gradient(
-      to bottom,
-      var(--color-frosted-highlight, rgb(148 107 199 / 5%)) 0%,
-      transparent 24%,
-      rgb(0 0 0 / 2%) 100%
-    ),
-    var(--color-surface);
 }
 
 :where(a, button, input, textarea, select):focus-visible {
