@@ -51,20 +51,20 @@
     padding: 0;
     aspect-ratio: 1;
   
-  }
-  &__icon-button::after {
-
-    content: none;
   
-  }
-  &__icon-button svg {
+    &::after {
+      content: none;
+    }
 
-    display: block;
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
+    svg {
+      display: block;
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+      flex: 0 0 var(--nexus-icon-size, 20px);
+    }
+}
   
-  }
+  
   &__brand {
 
     display: inline-flex;
@@ -79,21 +79,21 @@
     text-decoration: none;
     white-space: nowrap;
   
-  }
-  &__brand img {
-
-    display: block;
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    object-fit: contain;
   
-  }
-  &__brand span {
+    img {
+      display: block;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      object-fit: contain;
+    }
 
-    display: block;
+    span {
+      display: block;
+    }
+}
   
-  }
+  
   &__spacer {
 
     flex: 1;
@@ -141,12 +141,7 @@
   &__icon-button:focus-visible,
   &__sidebar-link:focus-visible,
   &__account-trigger.button:focus-visible,
-  &__menu-item:focus-visible {
-
-    outline: 2px solid var(--color-primary-strong);
-    outline-offset: 2px;
   
-  }
   &__sidebar {
 
     position: fixed;
@@ -187,20 +182,20 @@
     text-align: left;
     cursor: pointer;
   
-  }
-  &__sidebar-toggle.button:hover {
-
-    background: var(--color-background);
   
-  }
-  &__sidebar-toggle svg {
+    &:hover {
+      background: var(--color-background);
+    }
 
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
-    color: var(--color-neutral);
+    svg {
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+      flex: 0 0 var(--nexus-icon-size, 20px);
+      color: var(--color-neutral);
+    }
+}
   
-  }
+  
   &__menu {
 
     position: absolute;
@@ -236,26 +231,31 @@
     text-decoration: none;
     cursor: pointer;
   
-  }
-  &__menu-item svg {
-
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-    flex: 0 0 var(--nexus-icon-size, 20px);
-    color: var(--color-neutral);
   
-  }
-  &__menu-item:hover:not(:disabled) {
+    svg {
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
+      flex: 0 0 var(--nexus-icon-size, 20px);
+      color: var(--color-neutral);
+    }
 
-    background: var(--color-background);
-  
-  }
-  &__menu-item:disabled {
+    &:hover:not(:disabled) {
+      background: var(--color-background);
+    }
 
-    cursor: wait;
-    opacity: .6;
+    &:disabled {
+      cursor: wait;
+      opacity: .6;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-strong);
+      outline-offset: 2px;
+    }
+}
   
-  }
+  
+  
   &__notification-container {
 
     position: relative;
@@ -277,15 +277,15 @@
     border-radius: 0;
     background: var(--avatar-background);
   
-  }
-  &__topbar-avatar img {
-
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
   
-  }
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+}
+  
   &__sidebar-backdrop {
 
     display: none;
