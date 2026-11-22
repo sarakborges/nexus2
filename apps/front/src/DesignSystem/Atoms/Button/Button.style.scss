@@ -18,6 +18,14 @@
 
   &:not(:disabled):not([aria-disabled='true']) {
     cursor: pointer;
+
+    &:hover {
+      box-shadow: var(--nexus-control-shadow-hover);
+    }
+
+    &:active {
+      box-shadow: var(--nexus-control-shadow-pressed);
+    }
   }
 
   &:disabled,
@@ -38,6 +46,10 @@
 
     &:not(:disabled):not([aria-disabled='true']):hover {
       background-color: var(--color-primary);
+    }
+
+    &:not(:disabled):active {
+      background-color: var(--nexus-button-primary-active-background, var(--color-secondary-strong));
     }
   }
 

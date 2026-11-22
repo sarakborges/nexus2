@@ -3,6 +3,11 @@
 .input {
   @include formControl.base;
   @include formControl.focus;
+
+  &:not(:disabled):focus {
+    border-color: var(--nexus-input-focus-border, var(--color-primary-weak));
+    box-shadow: var(--nexus-input-focus-shadow, 0 0 0 2px var(--nexus-accent-glow));
+  }
 }
 
 .input:disabled {

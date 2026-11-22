@@ -43,8 +43,10 @@
     right: 14px;
     display: grid;
     place-items: center;
-    width: 36px;
-    height: 36px;
+    box-sizing: border-box;
+    width: var(--nexus-icon-button-size, 40px);
+    height: var(--nexus-icon-button-size, 40px);
+    padding: 0;
     border: 0;
     border-radius: var(--nexus-control-radius, 0);
     background: transparent;
@@ -60,27 +62,11 @@
       outline-offset: 2px;
     }
     svg {
-      width: 18px;
-      height: 18px;
+      width: var(--nexus-icon-size, 20px);
+      height: var(--nexus-icon-size, 20px);
     }
   }
 }
-
-/* Modal close is an icon-only control and follows the shared 40px square size. */
-.modal__close {
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: var(--nexus-icon-button-size, 40px);
-  height: var(--nexus-icon-button-size, 40px);
-  padding: 0;
-
-  svg {
-    width: var(--nexus-icon-size, 20px);
-    height: var(--nexus-icon-size, 20px);
-  }
-}
-
 
 @media (max-width: 560px) {
   .modal {

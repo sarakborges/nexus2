@@ -130,11 +130,20 @@ test('Nexus control theme uses tokens instead of redeclaring Button and Input ba
     path.join(sourceRoot, 'DesignSystem/Atoms/Button/Button.style.scss'),
     'utf8'
   )
+  const input = readFileSync(
+    path.join(sourceRoot, 'DesignSystem/Atoms/Input/Input.style.scss'),
+    'utf8'
+  )
 
   assert.ok(theme.includes('--nexus-button-font-size: 15px'))
   assert.ok(theme.includes('--nexus-button-font-weight: 500'))
   assert.ok(button.includes('font-size: var(--nexus-button-font-size, 14px)'))
   assert.ok(button.includes('font-weight: var(--nexus-button-font-weight, 400)'))
+  assert.ok(button.includes('box-shadow: var(--nexus-control-shadow-hover)'))
+  assert.ok(button.includes('box-shadow: var(--nexus-control-shadow-pressed)'))
+  assert.ok(button.includes('var(--nexus-button-primary-active-background, var(--color-secondary-strong))'))
+  assert.ok(input.includes('border-color: var(--nexus-input-focus-border, var(--color-primary-weak))'))
+  assert.ok(input.includes('box-shadow: var(--nexus-input-focus-shadow, 0 0 0 2px var(--nexus-accent-glow))'))
 
   for (const selector of [
     '.button {',
@@ -145,4 +154,17 @@ test('Nexus control theme uses tokens instead of redeclaring Button and Input ba
   ]) {
     assert.equal(theme.includes(selector), false, `${selector} must be owned by its component`)
   }
+})
+
+
+test('modal close control has a single component-scoped size definition', () => {
+  const modal = readFileSync(
+    path.join(sourceRoot, 'DesignSystem/Organisms/Modal/Modal.style.scss'),
+    'utf8'
+  )
+
+  assert.equal((modal.match(/&__close\\s*\\{/g) ?? []).length, 2)
+  assert.equal((modal.match(/\\.modal__close\\s*\\{/g) ?? []).length, 0)
+  assert.ok(modal.includes('width: var(--nexus-icon-button-size, 40px)'))
+  assert.ok(modal.includes('height: var(--nexus-icon-button-size, 40px)'))
 })

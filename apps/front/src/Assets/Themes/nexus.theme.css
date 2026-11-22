@@ -4,10 +4,13 @@
   --nexus-control-radius: 0;
   --nexus-button-font-size: 15px;
   --nexus-button-font-weight: 500;
+  --nexus-button-primary-active-background: var(--color-secondary-strong);
   --nexus-control-shadow: 0 3px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-hover: 0 2px 0 rgb(5 5 5 / 72%);
   --nexus-control-shadow-pressed: 0 1px 0 rgb(5 5 5 / 72%);
   --nexus-accent-glow: rgb(103 90 218 / 22%);
+  --nexus-input-focus-border: var(--color-primary-weak);
+  --nexus-input-focus-shadow: 0 0 0 2px var(--nexus-accent-glow);
   --nexus-accent-highlight: var(--color-brand-accent);
   --nexus-icon-button-size: 40px;
   --nexus-icon-size: 20px;
@@ -47,23 +50,6 @@
       rgb(0 0 0 / 2%) 100%
     ),
     var(--color-surface);
-}
-
-.button:not(:disabled):not([aria-disabled='true']):hover {
-  box-shadow: var(--nexus-control-shadow-hover);
-}
-
-.button:not(:disabled):not([aria-disabled='true']):active {
-  box-shadow: var(--nexus-control-shadow-pressed);
-}
-
-.button--primary:not(:disabled):active {
-  background-color: var(--color-secondary-strong);
-}
-
-.input:not(:disabled):focus {
-  border-color: var(--color-primary-weak);
-  box-shadow: 0 0 0 2px var(--nexus-accent-glow);
 }
 
 .auth-card__error,
