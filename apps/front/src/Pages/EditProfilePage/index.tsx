@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
 import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { Button } from '@/DesignSystem'
@@ -56,9 +57,7 @@ export function EditProfilePage() {
             onUploadImage={uploadEditorImage}
           />
           {errorMessage && (
-            <p className="auth-card__error" role="alert">
-              {errorMessage}
-            </p>
+            <FormErrorMessage>{errorMessage}</FormErrorMessage>
           )}
           <div className="entity-form-page__actions">
             <Button

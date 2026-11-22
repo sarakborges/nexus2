@@ -1,6 +1,8 @@
 .form-error-message {
   padding: var(--nexus-space-2, 8px) var(--nexus-space-3, 12px);
-  color: var(--color-error-strong);
+  border: var(--nexus-border-width, 2px) solid var(--color-error-strong);
+  border-radius: var(--nexus-control-radius, 0);
+  color: var(--text-color);
   background: var(--color-error-weak);
   font-size: 13px;
   line-height: 1.4;

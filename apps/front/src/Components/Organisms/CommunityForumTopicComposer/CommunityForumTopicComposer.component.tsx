@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { ComposerActions } from '@/Components/Molecules/ComposerActions'
 import { RichTextComposerField } from '@/Components/Organisms/RichTextComposerField'
 import { Button, FormField } from '@/DesignSystem'
@@ -42,9 +43,7 @@ export function CommunityForumTopicComposer({
         placeholder={t('RICH_TEXT_PLACEHOLDER')}
       />
       {hasError && (
-        <p className="auth-card__error" role="alert">
-          {t('FORUM_TOPIC_ERROR')}
-        </p>
+        <FormErrorMessage>{t('FORUM_TOPIC_ERROR')}</FormErrorMessage>
       )}
       <ComposerActions>
         <Button

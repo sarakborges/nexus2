@@ -170,7 +170,7 @@ test('modal close control has a single component-scoped size definition', () => 
 })
 
 
-test('obsolete auth error classes are not referenced by frontend code', () => {
+test('shared form error atom replaces legacy auth-specific error classes', () => {
   const obsoleteClasses = ['auth-card__error', 'form-field__error']
   const references = codeFiles.flatMap(file => {
     const content = readFileSync(file, 'utf8')

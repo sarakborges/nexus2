@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { Link } from 'react-router'
 
 import { ComposerActions } from '@/Components/Molecules/ComposerActions'
@@ -55,9 +56,7 @@ export function CommunityForumReplyComposer({
             placeholder={t('RICH_TEXT_PLACEHOLDER')}
           />
           {hasError && (
-            <p className="auth-card__error" role="alert">
-              {t('FORUM_TOPIC_ERROR')}
-            </p>
+            <FormErrorMessage>{t('FORUM_TOPIC_ERROR')}</FormErrorMessage>
           )}
           <ComposerActions>
             <Button

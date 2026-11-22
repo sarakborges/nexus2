@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { EntityDetailsFields } from '@/Components/Organisms/EntityDetailsFields'
 import { CommunityPrivacySelector } from '@/Components/Organisms/CommunityPrivacySelector'
 import { EntityEditPageLayout } from '@/Components/Templates/EntityEditPageLayout'
@@ -58,9 +59,7 @@ export function EditCommunityPage() {
             onUploadImage={uploadEditorImage}
           />
           {errorMessage && (
-            <p className="auth-card__error" role="alert">
-              {errorMessage}
-            </p>
+            <FormErrorMessage>{errorMessage}</FormErrorMessage>
           )}
           <CommunityPrivacySelector
             value={form.privacy}

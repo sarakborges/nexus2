@@ -1,3 +1,4 @@
+import { FormErrorMessage } from '@/Components/Atoms/FormErrorMessage'
 import { Link } from 'react-router'
 
 import { ComposerActions } from '@/Components/Molecules/ComposerActions'
@@ -79,9 +80,9 @@ export function ProfileMessageComposer({
         placeholder={t('RICH_TEXT_PLACEHOLDER')}
       />
       {hasSendMessageError && (
-        <p className="auth-card__error" role="alert">
+        <FormErrorMessage>
           {t(ERROR_TRANSLATIONS[sendMessageErrorCode ?? 'STORAGE_UNAVAILABLE'])}
-        </p>
+        </FormErrorMessage>
       )}
       <ComposerActions>
         <Button
