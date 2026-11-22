@@ -4,6 +4,17 @@
   min-width: 0;
   color: var(--text-color);
   font-size: 14px;
+
+  &__file-input.input {
+    display: none;
+  }
+
+  &__upload-error {
+    flex-basis: 100%;
+    padding: var(--nexus-space-1) var(--nexus-space-2);
+    color: var(--color-danger, #c33);
+    font-size: 12px;
+  }
 }
 
 .rich-text-editor .rsw-editor {
