@@ -10,10 +10,10 @@
   border: var(--nexus-border-width, 2px) solid transparent;
   border-radius: var(--nexus-control-radius, 0);
   color: var(--text-color);
-  font-size: 14px;
+  font-size: var(--nexus-button-font-size, 14px);
   line-height: 1.2;
   text-decoration: none;
-  font-weight: 400;
+  font-weight: var(--nexus-button-font-weight, 400);
   transition: none;
 
   &:not(:disabled):not([aria-disabled='true']) {
@@ -32,6 +32,7 @@
   }
 
   &--primary {
+    border-color: var(--color-border-strong, var(--color-primary-weak));
     background-color: var(--color-primary-strong);
     color: #fff;
 
@@ -52,6 +53,7 @@
   }
 
   &--cancel {
+    border-color: var(--color-border);
     background-color: var(--color-error-strong);
 
     &:not(:disabled):not([aria-disabled='true']):hover {

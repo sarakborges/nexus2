@@ -123,3 +123,18 @@ test('page and route imports use the standardized directory names', () => {
 
   assert.deepEqual(staleImports, [])
 })
+
+
+test('Nexus control theme uses tokens instead of redeclaring Button and Input base styles', () => {
+  const theme = readFileSync(path.join(sourceRoot, 'Assets/Themes/nexus.theme.css'), 'utf8')
+  const button = readFileSync(
+    path.join(sourceRoot, 'DesignSystem/Atoms/Button/Button.style.scss'),
+    'utf8'
+  )
+
+  assert.match(theme, /--nexus-button-font-size:\\s*15px/)
+  assert.match(theme, /--nexus-button-font-weight:\\s*500/)
+  assert.match(button, /font-size:\\s*var\\(--nexus-button-font-size,\\s*14px\\)/)
+  assert.match(button, /font-weight:\\s*var\\(--nexus-button-font-weight,\\s*400\\)/)
+  assert.doesNotMatch(theme, /^\\.(?:button|button--primary|button--secondary|button--cancel|input)\\s*\\{/m)
+})
