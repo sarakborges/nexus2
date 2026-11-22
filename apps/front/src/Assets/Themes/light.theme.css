@@ -9,12 +9,7 @@
   --color-background: #f7f4fb;
   --color-surface: #ffffff;
   --color-surface-raised: #ffffff;
-  --color-border: #ded6ec;
+  --color-border: rgb(99 72 134 / 44%);
 
-  --color-primary: #675ada;
-  --color-primary-weak: #5720be;
-  --color-primary-strong: #5720be;
-  --color-secondary: #6228c6;
-  --color-secondary-weak: #6228c6;
-  --color-secondary-strong: #0000ff;
+  --nexus-card-shadow: 0 5px 14px rgb(19 13 31 / 8%);
 }

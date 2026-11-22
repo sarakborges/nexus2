@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 
 import { ToastViewport } from '@/Components/Organisms/ToastViewport'
-import { AppRoutes } from '@/routes'
+import { AppRoutes } from '@/Routes'
 
 import { useAppInitialization } from './useAppInitialization'
 

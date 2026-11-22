@@ -1,5 +1,5 @@
 import { ProfileTypeNotice } from '@/Components/Atoms/ProfileTypeNotice'
-import { CommunityMemberList } from '@/Components/Organisms/CommunityMemberList'
+import { CommunityMemberEntry } from '@/Components/Molecules/CommunityMemberEntry'
 import { Pagination } from '@/Components/Molecules/Pagination'
 import { RequestState } from '@/Components/Molecules/RequestState'
 import { Tabs } from '@/DesignSystem'
@@ -64,14 +64,19 @@ export function CommunityMemberDirectory({
         )}
         onRetry={() => void pageQuery.refetch()}
       >
-        <CommunityMemberList
-          members={members}
-          relationships={relationships}
-          communityId={communityId}
-          actorProfileId={actorProfileId}
-          actorRole={actorRole}
-          isStaff={isStaff}
-        />
+        <div className="account-card__profile-list account-card__profile-list--grid">
+          {members.map(profile => (
+            <CommunityMemberEntry
+              key={profile.id}
+              profile={profile}
+              relationships={relationships}
+              communityId={communityId}
+              actorProfileId={actorProfileId}
+              actorRole={actorRole}
+              isStaff={isStaff}
+            />
+          ))}
+        </div>
       </RequestState>
       {totalMembers > 0 && (
         <Pagination

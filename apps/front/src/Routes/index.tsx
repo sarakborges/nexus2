@@ -11,67 +11,67 @@ import { RouteLoadingState } from './RouteLoadingState.component'
 import { ROUTES } from '@/Constants/routes'
 
 const CommunitiesPage = lazy(() =>
-  import('@/pages/CommunitiesPage').then(module => ({ default: module.CommunitiesPage }))
+  import('@/Pages/CommunitiesPage').then(module => ({ default: module.CommunitiesPage }))
 )
 const CommunityForumPage = lazy(() =>
-  import('@/pages/CommunityForumPage').then(module => ({ default: module.CommunityForumPage }))
+  import('@/Pages/CommunityForumPage').then(module => ({ default: module.CommunityForumPage }))
 )
 const CommunityForumTopicPage = lazy(() =>
-  import('@/pages/CommunityForumTopicPage').then(module => ({ default: module.CommunityForumTopicPage }))
+  import('@/Pages/CommunityForumTopicPage').then(module => ({ default: module.CommunityForumTopicPage }))
 )
 const CommunityMembersPage = lazy(() =>
-  import('@/pages/CommunityMembersPage').then(module => ({ default: module.CommunityMembersPage }))
+  import('@/Pages/CommunityMembersPage').then(module => ({ default: module.CommunityMembersPage }))
 )
 const CommunityPage = lazy(() =>
-  import('@/pages/CommunityPage').then(module => ({ default: module.CommunityPage }))
+  import('@/Pages/CommunityPage').then(module => ({ default: module.CommunityPage }))
 )
 const CreateCommunityForumTopicPage = lazy(() =>
-  import('@/pages/CreateCommunityForumTopicPage').then(module => ({ default: module.CreateCommunityForumTopicPage }))
+  import('@/Pages/CreateCommunityForumTopicPage').then(module => ({ default: module.CreateCommunityForumTopicPage }))
 )
 const CreateCommunityPage = lazy(() =>
-  import('@/pages/CreateCommunityPage').then(module => ({ default: module.CreateCommunityPage }))
+  import('@/Pages/CreateCommunityPage').then(module => ({ default: module.CreateCommunityPage }))
 )
 const CreateProfilePage = lazy(() =>
-  import('@/pages/CreateProfilePage').then(module => ({ default: module.CreateProfilePage }))
+  import('@/Pages/CreateProfilePage').then(module => ({ default: module.CreateProfilePage }))
 )
 const EditCommunityPage = lazy(() =>
-  import('@/pages/EditCommunityPage').then(module => ({ default: module.EditCommunityPage }))
+  import('@/Pages/EditCommunityPage').then(module => ({ default: module.EditCommunityPage }))
 )
 const EditProfilePage = lazy(() =>
-  import('@/pages/EditProfilePage').then(module => ({ default: module.EditProfilePage }))
+  import('@/Pages/EditProfilePage').then(module => ({ default: module.EditProfilePage }))
 )
 const GettingStartedPage = lazy(() =>
-  import('@/pages/GettingStartedPage').then(module => ({ default: module.GettingStartedPage }))
+  import('@/Pages/GettingStartedPage').then(module => ({ default: module.GettingStartedPage }))
 )
 const HomePage = lazy(() =>
-  import('@/pages/HomePage').then(module => ({ default: module.HomePage }))
+  import('@/Pages/HomePage').then(module => ({ default: module.HomePage }))
 )
 const MyProfilesPage = lazy(() =>
-  import('@/pages/MyProfilesPage').then(module => ({ default: module.MyProfilesPage }))
+  import('@/Pages/MyProfilesPage').then(module => ({ default: module.MyProfilesPage }))
 )
 const NotFoundPage = lazy(() =>
-  import('@/pages/NotFoundPage').then(module => ({ default: module.NotFoundPage }))
+  import('@/Pages/NotFoundPage').then(module => ({ default: module.NotFoundPage }))
 )
 const ProfileCommunitiesPage = lazy(() =>
-  import('@/pages/ProfileCommunitiesPage').then(module => ({ default: module.ProfileCommunitiesPage }))
+  import('@/Pages/ProfileCommunitiesPage').then(module => ({ default: module.ProfileCommunitiesPage }))
 )
 const ProfileFriendsPage = lazy(() =>
-  import('@/pages/ProfileFriendsPage').then(module => ({ default: module.ProfileFriendsPage }))
+  import('@/Pages/ProfileFriendsPage').then(module => ({ default: module.ProfileFriendsPage }))
 )
 const ProfileMessagesPage = lazy(() =>
-  import('@/pages/ProfileMessagesPage').then(module => ({ default: module.ProfileMessagesPage }))
+  import('@/Pages/ProfileMessagesPage').then(module => ({ default: module.ProfileMessagesPage }))
 )
 const ProfilePage = lazy(() =>
-  import('@/pages/ProfilePage').then(module => ({ default: module.ProfilePage }))
+  import('@/Pages/ProfilePage').then(module => ({ default: module.ProfilePage }))
 )
 const SearchPage = lazy(() =>
-  import('@/pages/SearchPage').then(module => ({ default: module.SearchPage }))
+  import('@/Pages/SearchPage').then(module => ({ default: module.SearchPage }))
 )
 const SignInPage = lazy(() =>
-  import('@/pages/SignInPage').then(module => ({ default: module.SignInPage }))
+  import('@/Pages/SignInPage').then(module => ({ default: module.SignInPage }))
 )
 const SignUpPage = lazy(() =>
-  import('@/pages/SignUpPage').then(module => ({ default: module.SignUpPage }))
+  import('@/Pages/SignUpPage').then(module => ({ default: module.SignUpPage }))
 )
 
 export function AppRoutes() {

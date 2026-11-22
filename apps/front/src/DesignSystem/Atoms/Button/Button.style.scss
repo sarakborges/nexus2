@@ -15,62 +15,62 @@
   text-decoration: none;
   font-weight: 400;
   transition: none;
-}
 
-.button:not(:disabled):not([aria-disabled='true']) {
-  cursor: pointer;
-}
+  &:not(:disabled):not([aria-disabled='true']) {
+    cursor: pointer;
+  }
 
-.button:disabled,
-.button[aria-disabled='true'] {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 
-.button:focus-visible {
-  outline: 2px solid var(--color-primary-strong);
-  outline-offset: 3px;
-}
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-strong);
+    outline-offset: 3px;
+  }
 
-.button--primary {
-  background-color: var(--color-primary-strong);
-  color: #fff;
-}
+  &--primary {
+    background-color: var(--color-primary-strong);
+    color: #fff;
 
-.button--primary:not(:disabled):not([aria-disabled='true']):hover {
-  background-color: var(--color-primary);
-}
+    &:not(:disabled):not([aria-disabled='true']):hover {
+      background-color: var(--color-primary);
+    }
+  }
 
-.button--secondary {
-  border-color: var(--color-border);
-  background-color: var(--color-surface-raised);
-  color: var(--text-color);
-}
+  &--secondary {
+    border-color: var(--color-border);
+    background-color: var(--color-surface-raised);
+    color: var(--text-color);
 
-.button--secondary:not(:disabled):not([aria-disabled='true']):hover {
-  border-color: var(--color-primary-weak);
-  background-color: var(--color-surface);
-}
+    &:not(:disabled):not([aria-disabled='true']):hover {
+      border-color: var(--color-primary-weak);
+      background-color: var(--color-surface);
+    }
+  }
 
-.button--cancel {
-  background-color: var(--color-error-strong);
-}
+  &--cancel {
+    background-color: var(--color-error-strong);
 
-.button--cancel:not(:disabled):not([aria-disabled='true']):hover {
-  background-color: var(--color-error);
-}
+    &:not(:disabled):not([aria-disabled='true']):hover {
+      background-color: var(--color-error);
+    }
+  }
 
-.button--transparent {
-  border-color: transparent;
-  background-color: transparent;
-}
+  &--transparent {
+    border-color: transparent;
+    background-color: transparent;
 
-.button--transparent:not(:disabled):not([aria-disabled='true']):hover {
-  border-color: var(--color-border);
-  background-color: var(--color-surface-raised);
-}
+    &:not(:disabled):not([aria-disabled='true']):hover {
+      border-color: var(--color-border);
+      background-color: var(--color-surface-raised);
+    }
+  }
 
-.button:active {
-  transform: none;
-  scale: none;
+  &:active {
+    transform: none;
+    scale: none;
+  }
 }
