@@ -1,97 +1,101 @@
-.account-card__profile-entry {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--nexus-space-3, 12px);
-  padding: var(--nexus-space-3, 12px) 0;
-}
+.account-card {
+  &__profile-entry {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--nexus-space-3, 12px);
+    padding: var(--nexus-space-3, 12px) 0;
 
-.account-card__profile-entry--card {
-  min-width: 0;
-  min-height: 88px;
-  padding: var(--nexus-space-3, 12px);
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  border-radius: var(--nexus-card-radius, 0);
-  background: var(--color-surface-raised);
-}
-
-.account-card__profile-entry-identity {
-  display: flex;
-  align-items: center;
-  flex: 1 1 180px;
-  gap: var(--nexus-space-3, 12px);
-  min-width: 0;
-  color: var(--text-color);
-  text-decoration: none;
-}
-
-.account-card__profile-entry-avatar {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: auto;
-  max-height: 112px;
-  flex: 0 0 56px;
-  overflow: hidden;
-  border: var(--nexus-border-width, 2px) solid var(--color-border);
-  border-radius: var(--avatar-shape-radius);
-  background: var(--avatar-background);
-  color: var(--avatar-fallback-color);
-  font-size: 20px;
-  font-weight: var(--font-weight-bold);
-  aspect-ratio: 1 / 1;
-}
-
-.account-card__profile-entry-avatar img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: inherit;
-  object-fit: cover;
-}
-
-.account-card__profile-entry-copy {
-  display: grid;
-  gap: var(--nexus-space-2, 8px);
-  min-width: 0;
-}
-
-.account-card__profile-entry-copy .account-card__link {
-  overflow-wrap: anywhere;
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
-}
-
-.account-card__profile-entry-identity:hover .account-card__link {
-  color: var(--color-primary-weak);
-}
-
-.account-card__profile-entry-secondary {
-  color: var(--color-neutral);
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 900px) {
-  .account-card__profile-entry--card {
-    align-items: flex-start;
+    &--card {
+      min-width: 0;
+      min-height: 88px;
+      padding: var(--nexus-space-3, 12px);
+      border: var(--nexus-border-width, 2px) solid var(--color-border);
+      border-radius: var(--nexus-card-radius, 0);
+      background: var(--color-surface-raised);
+    }
   }
 
-  .account-card__profile-entry-identity {
+  &__profile-entry-identity {
+    display: flex;
+    align-items: center;
+    flex: 1 1 180px;
+    gap: var(--nexus-space-3, 12px);
     min-width: 0;
-  }
-}
+    color: var(--text-color);
+    text-decoration: none;
 
-@media (max-width: 680px) {
-  .account-card__profile-entry--card {
-    align-items: flex-start;
+    &:hover {
+      .account-card__link {
+        color: var(--color-primary-weak);
+      }
+    }
+  }
+
+  &__profile-entry-avatar {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: auto;
+    max-height: 112px;
+    flex: 0 0 56px;
+    overflow: hidden;
+    border: var(--nexus-border-width, 2px) solid var(--color-border);
+    border-radius: var(--avatar-shape-radius);
+    background: var(--avatar-background);
+    color: var(--avatar-fallback-color);
+    font-size: 20px;
+    font-weight: var(--font-weight-bold);
+    aspect-ratio: 1 / 1;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: inherit;
+      object-fit: cover;
+    }
+  }
+
+  &__profile-entry-copy {
+    display: grid;
     gap: var(--nexus-space-2, 8px);
-  }
-}
+    min-width: 0;
 
-@media (max-width: 420px) {
-  .account-card__profile-entry--card {
-    padding: var(--nexus-space-2, 8px);
+    .account-card__link {
+      overflow-wrap: anywhere;
+      font-weight: var(--font-weight-bold);
+      text-decoration: none;
+    }
+  }
+
+  &__profile-entry-secondary {
+    color: var(--color-neutral);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  @media (max-width: 900px) {
+    &__profile-entry--card {
+      align-items: flex-start;
+    }
+
+    &__profile-entry-identity {
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 680px) {
+    &__profile-entry--card {
+      align-items: flex-start;
+      gap: var(--nexus-space-2, 8px);
+    }
+  }
+
+  @media (max-width: 420px) {
+    &__profile-entry--card {
+      padding: var(--nexus-space-2, 8px);
+    }
   }
 }

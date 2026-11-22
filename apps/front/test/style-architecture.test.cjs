@@ -207,3 +207,16 @@ test('Nexus theme contains no unconsumed tokens or obsolete auth-card selectors'
   assert.deepEqual(tokenReferences, [])
   assert.deepEqual(authCardReferences, [])
 })
+
+
+test('entity directory styles are nested under the owning AccountCard block', () => {
+  const styles = readFileSync(
+    path.join(sourceRoot, 'Components/Organisms/EntityDirectoryGrid/EntityDirectoryGrid.style.scss'),
+    'utf8'
+  )
+
+  assert.match(styles, /^\\.account-card\\s*\\{/m)
+  assert.match(styles, /&__profile-entry\\s*\\{/)
+  assert.match(styles, /&--card\\s*\\{/)
+  assert.doesNotMatch(styles, /^\\.account-card__profile-entry/m)
+})
