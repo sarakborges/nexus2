@@ -18,10 +18,15 @@
   @media (max-width: 680px) {
     &__relationship-actions {
       width: 100%;
+
+      & > .profile-page__action {
+        width: fit-content;
+        min-width: 0;
+        flex: 0 1 auto;
+      }
     }
 
-    &__relationship-actions &__action,
-    &__action {
+    .social-panel__header-actions > &__action {
       width: fit-content;
       min-width: 0;
       flex: 0 1 auto;
